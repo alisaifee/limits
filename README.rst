@@ -12,7 +12,7 @@ limits
 *************
 |travis-ci| |coveralls| |pypi| |license|
 
-*limits* provides rate limiting utilities to implement rate limiting using
+*limits* provides utilities to implement rate limiting using
 various strategies and storage backends such as redis & memcached.
 
 `Read more at <http://limits.readthedocs.org>`_

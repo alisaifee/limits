@@ -40,6 +40,9 @@ class RateLimiter(object):
 
 
 class MovingWindowRateLimiter(RateLimiter):
+    """
+    Reference: :ref:`moving-window`
+    """
 
     def __init__(self, storage):
         if not (hasattr(storage, "acquire_entry") or hasattr(storage, "get_moving_window")):
@@ -74,6 +77,9 @@ class MovingWindowRateLimiter(RateLimiter):
 
 
 class FixedWindowRateLimiter(RateLimiter):
+    """
+    Reference: :ref:`fixed-window`
+    """
     def hit(self, item, *identifiers):
         """
         creates a hit on the rate limit and returns True if successful.
@@ -102,6 +108,10 @@ class FixedWindowRateLimiter(RateLimiter):
         return (reset, remaining)
 
 class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
+    """
+    Reference: :ref:`fixed-window-elastic`
+    """
+
     def hit(self, item, *identifiers):
         """
         creates a hit on the rate limit and returns True if successful.

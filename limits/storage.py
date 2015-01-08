@@ -45,11 +45,11 @@ class StorageRegistry(type):
 @six.add_metaclass(StorageRegistry)
 @six.add_metaclass(ABCMeta)
 class Storage(object):
+    """
+    Base class to extend when implementing a storage backend.
+    """
+
     def __init__(self, uri=None):
-        """
-
-
-        """
         self.lock = threading.RLock()
 
     @abstractmethod
@@ -91,7 +91,8 @@ class LockableEntry(threading._RLock):
 class MemoryStorage(Storage):
     """
     rate limit storage using :class:`collections.Counter`
-    as an in memory storage.
+    as an in memory storage for fixed and elastic window strategies,
+    and a simple list to implement moving window strategy.
 
     """
     STORAGE_SCHEME = "memory"
