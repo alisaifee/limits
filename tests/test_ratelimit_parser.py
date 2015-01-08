@@ -1,6 +1,6 @@
 import unittest
-from flask_limiter.util import parse, granularity_from_string
-from flask_limiter import limits
+from limits.util import parse, granularity_from_string
+from limits import limits
 
 class RatelimitParserTests(unittest.TestCase):
     def test_singles(self):

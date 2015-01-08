@@ -7,12 +7,13 @@ from uuid import uuid4
 import hiro
 import redis
 
-from flask.ext.limiter.strategies import FixedWindowRateLimiter, \
-    MovingWindowRateLimiter
-from flask.ext.limiter.errors import ConfigurationError
-from flask.ext.limiter.limits import PER_MINUTE, PER_SECOND
-from flask.ext.limiter.storage import MemoryStorage, RedisStorage, MemcachedStorage, \
+from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
+from limits.errors import ConfigurationError
+from limits.limits import PER_MINUTE, PER_SECOND
+from limits.storage import (
+    MemoryStorage, RedisStorage, MemcachedStorage,
     Storage, storage_from_string
+)
 
 
 class StorageTests(unittest.TestCase):

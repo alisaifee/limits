@@ -9,11 +9,11 @@ import hiro
 import redis
 import pymemcache.client
 
-from flask.ext.limiter.limits import PER_SECOND, PER_MINUTE
-from flask.ext.limiter.storage import (
+from limits.limits import PER_SECOND, PER_MINUTE
+from limits.storage import (
     MemoryStorage, RedisStorage,MemcachedStorage
 )
-from flask.ext.limiter.strategies import (
+from limits.strategies import (
     MovingWindowRateLimiter,
     FixedWindowElasticExpiryRateLimiter,
     FixedWindowRateLimiter

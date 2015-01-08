@@ -1,9 +1,9 @@
 [run]
 include = 
-    **/flask_limiter/*
+    **/limits/*
 omit =
-    /*/flask_limiter/_version*
-    /*/flask_limiter/backports/*
+    /*/limits/_version*
+    /*/limits/backports/*
 
 [report]
 exclude_lines =

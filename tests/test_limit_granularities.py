@@ -1,5 +1,5 @@
 import unittest
-from flask_limiter import limits
+from limits import limits
 
 
 class GranularityTests(unittest.TestCase):
