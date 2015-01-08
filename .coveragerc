@@ -1,6 +1,6 @@
 [run]
 include = 
-    **/limits/*
+    limits/*
 omit =
     /*/limits/_version*
     /*/limits/backports/*
