@@ -16,7 +16,7 @@ TIME_TYPES = dict(
     SECOND=(1, "second")
 )
 
-GRANULARITIES = []
+GRANULARITIES = {}
 
 
 class RateLimitItemMeta(type):
@@ -24,7 +24,7 @@ class RateLimitItemMeta(type):
         granularity = super(RateLimitItemMeta, cls).__new__(cls, name, parents,
                                                    dct)
         if 'granularity' in dct:
-            GRANULARITIES.append(granularity)
+            GRANULARITIES[dct['granularity'][1]] = granularity
         return granularity
 
 

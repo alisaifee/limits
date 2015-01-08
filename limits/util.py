@@ -52,7 +52,7 @@ def granularity_from_string(granularity_string):
     :return: a :class:`flask_ratelimit.limits.Item`
     :raise ValueError:
     """
-    for granularity in GRANULARITIES:
+    for granularity in GRANULARITIES.values():
         if granularity.check_granularity_string(granularity_string):
             return granularity
     raise ValueError("no granularity matched for %s" % granularity_string)
