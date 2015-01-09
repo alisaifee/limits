@@ -36,7 +36,7 @@ circumvent bursts.
 Moving Window
 =============
 .. warning:: The moving window strategy is only implemented for the ``redis`` and ``in-memory``
-storage backends. The strategy requires using a list with fast random access which
+    storage backends. The strategy requires using a list with fast random access which
     is not very convenient to implement with a memcached storage.
 
 This strategy is the most effective for preventing bursts from by-passing the

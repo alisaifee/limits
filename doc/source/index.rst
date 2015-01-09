@@ -49,6 +49,11 @@ Test the limits::
     assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
 
 
+Projects using *limits*
+-------------------------
+* `Flask-Limiter <http://flask-limiter.readthedocs.org>`_ : Rate limiting extension for Flask applications.
+* `djlimiter <http://djlimiter.readthedocs.org>`_: Rate limiting middleware for Django applications.
+
 References
 ----------
 * `Redis rate limiting pattern #2 <http://redis.io/commands/INCR>`_
