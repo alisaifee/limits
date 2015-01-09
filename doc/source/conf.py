@@ -25,7 +25,7 @@ extensions = [
 source_suffix = '.rst'
 master_doc = 'index'
 project = u'limits'
-copyright = u'2014, Ali-Akber Saifee'
+copyright = u'2015, Ali-Akber Saifee'
 
 version = release = limits.__version__
 exclude_patterns = []
