@@ -23,6 +23,8 @@ SCHEMES = {}
 
 def storage_from_string(storage_string):
     """
+    factory function to get the storage class based on the url of
+    the storage
 
     :param storage_string: a string of the form method://host:port
     :return: a subclass of :class:`flask_limiter.storage.Storage`

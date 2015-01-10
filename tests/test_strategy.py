@@ -9,7 +9,7 @@ import hiro
 import redis
 import pymemcache.client
 
-from limits.limits import PER_SECOND, PER_MINUTE
+from limits.limits import RateLimitItemPerSecond, RateLimitItemPerMinute
 from limits.storage import (
     MemoryStorage, RedisStorage,MemcachedStorage
 )
@@ -31,7 +31,7 @@ class WindowTests(unittest.TestCase):
         limiter = FixedWindowRateLimiter(storage)
         with hiro.Timeline().freeze() as timeline:
             start = int(time.time())
-            limit = PER_SECOND(10, 2)
+            limit = RateLimitItemPerSecond(10, 2)
             self.assertTrue(all([limiter.hit(limit) for _ in range(0,10)]))
             timeline.forward(1)
             self.assertFalse(limiter.hit(limit))
@@ -46,7 +46,7 @@ class WindowTests(unittest.TestCase):
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         with hiro.Timeline().freeze() as timeline:
             start = int(time.time())
-            limit = PER_SECOND(10, 2)
+            limit = RateLimitItemPerSecond(10, 2)
             self.assertTrue(all([limiter.hit(limit) for _ in range(0,10)]))
             timeline.forward(1)
             self.assertFalse(limiter.hit(limit))
@@ -64,7 +64,7 @@ class WindowTests(unittest.TestCase):
     def test_fixed_window_with_elastic_expiry_memcache(self):
         storage = MemcachedStorage('memcached://localhost:11211')
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        limit = PER_SECOND(10, 2)
+        limit = RateLimitItemPerSecond(10, 2)
         self.assertTrue(all([limiter.hit(limit) for _ in range(0,10)]))
         time.sleep(1)
         self.assertFalse(limiter.hit(limit))
@@ -75,7 +75,7 @@ class WindowTests(unittest.TestCase):
         storage = MemcachedStorage('memcached://localhost:11211')
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         start = int(time.time())
-        limit = PER_SECOND(100, 2)
+        limit = RateLimitItemPerSecond(100, 2)
         def _c():
             for i in range(0,50):
                 limiter.hit(limit)
@@ -89,7 +89,7 @@ class WindowTests(unittest.TestCase):
     def test_fixed_window_with_elastic_expiry_redis(self):
         storage = RedisStorage('redis://localhost:6379')
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        limit = PER_SECOND(10, 2)
+        limit = RateLimitItemPerSecond(10, 2)
         self.assertTrue(all([limiter.hit(limit) for _ in range(0,10)]))
         time.sleep(1)
         self.assertFalse(limiter.hit(limit))
@@ -100,7 +100,7 @@ class WindowTests(unittest.TestCase):
         storage = MemoryStorage()
         limiter = MovingWindowRateLimiter(storage)
         with hiro.Timeline().freeze() as timeline:
-            limit = PER_MINUTE(10)
+            limit = RateLimitItemPerMinute(10)
             for i in range(0,5):
                 self.assertTrue(limiter.hit(limit))
                 self.assertTrue(limiter.hit(limit))
@@ -121,7 +121,7 @@ class WindowTests(unittest.TestCase):
     def test_moving_window_redis(self):
         storage = RedisStorage("redis://localhost:6379")
         limiter = MovingWindowRateLimiter(storage)
-        limit = PER_SECOND(10, 2)
+        limit = RateLimitItemPerSecond(10, 2)
         for i in range(0,10):
             self.assertTrue(limiter.hit(limit))
             self.assertEqual(limiter.get_window_stats(limit)[1], 10 - (i + 1))

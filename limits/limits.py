@@ -8,12 +8,12 @@ except ImportError: # pragma: no cover
     from .backports.total_ordering import total_ordering # pragma: no cover
 
 TIME_TYPES = dict(
-    DAY=(60 * 60 * 24, "day"),
-    MONTH=(60 * 60 * 24 * 30, "month"),
-    YEAR=(60 * 60 * 24 * 30 * 12, "year"),
-    HOUR=(60 * 60, "hour"),
-    MINUTE=(60, "minute"),
-    SECOND=(1, "second")
+    day=(60 * 60 * 24, "day"),
+    month=(60 * 60 * 24 * 30, "month"),
+    year=(60 * 60 * 24 * 30 * 12, "year"),
+    hour=(60 * 60, "hour"),
+    minute=(60, "minute"),
+    second=(1, "second")
 )
 
 GRANULARITIES = {}
@@ -33,8 +33,12 @@ class RateLimitItemMeta(type):
 @total_ordering
 class RateLimitItem(object):
     """
-    defines a Rate limited resource which contains characteristics
-     namespace, amount and granularity of rate limiting window.
+    defines a Rate limited resource which contains the characteristic
+    namespace, amount and granularity multiples of the rate limiting window.
+
+    :param int amount: the rate limit amount
+    :param int multiples: multiple of the 'per' granularity (e.g. 'n' per 'm' seconds)
+    :param string namespace: category for the specific rate limit
     """
     __metaclass__ = RateLimitItemMeta
     __slots__ = ["namespace", "amount", "multiples", "granularity"]
@@ -85,27 +89,44 @@ class RateLimitItem(object):
     def __lt__(self, other):
         return self.granularity[0] < other.granularity[0]
 
-#pylint: disable=invalid-name
-class PER_YEAR(RateLimitItem):
-    granularity = TIME_TYPES["YEAR"]
+class RateLimitItemPerYear(RateLimitItem):
+    """
+    per year rate limited resource.
+    """
+    granularity = TIME_TYPES["year"]
 
 
-class PER_MONTH(RateLimitItem):
-    granularity = TIME_TYPES["MONTH"]
+class RateLimitItemPerMonth(RateLimitItem):
+    """
+    per month rate limited resource.
+    """
+    granularity = TIME_TYPES["month"]
 
 
-class PER_DAY(RateLimitItem):
-    granularity = TIME_TYPES["DAY"]
+class RateLimitItemPerDay(RateLimitItem):
+    """
+    per day rate limited resource.
+    """
+    granularity = TIME_TYPES["day"]
 
 
-class PER_HOUR(RateLimitItem):
-    granularity = TIME_TYPES["HOUR"]
+class RateLimitItemPerHour(RateLimitItem):
+    """
+    per hour rate limited resource.
+    """
+    granularity = TIME_TYPES["hour"]
 
 
-class PER_MINUTE(RateLimitItem):
-    granularity = TIME_TYPES["MINUTE"]
+class RateLimitItemPerMinute(RateLimitItem):
+    """
+    per minute rate limited resource.
+    """
+    granularity = TIME_TYPES["minute"]
 
 
-class PER_SECOND(RateLimitItem):
-    granularity = TIME_TYPES["SECOND"]
+class RateLimitItemPerSecond(RateLimitItem):
+    """
+    per second rate limited resource.
+    """
+    granularity = TIME_TYPES["second"]
 

@@ -26,21 +26,30 @@ def get_dependency(dep):
 
 def parse_many(limit_string):
     """
+    parses rate limits in string notation containing multiple rate limits
+    (e.g. '1/second; 5/minute')
 
-    :param limit_string:
-    :raise ValueError:
+    :param string limit_string: rate limit string using :ref:`ratelimit-string`
+    :raise ValueError: if the string notation is invalid.
+    :return: a list of :class:`RateLimitItem` instances.
+
     """
     if not EXPR.match(limit_string):
         raise ValueError("couldn't parse rate limit string '%s'" % limit_string)
+    limits = []
     for amount, _, multiples, granularity_string in  EXPR.findall(limit_string):
         granularity = granularity_from_string(granularity_string)
-        yield granularity(amount, multiples)
+        limits.append(granularity(amount, multiples))
+    return limits
 
 def parse(limit_string):
     """
+    parses a single rate limit in string notation (e.g. '1/second' or '1 per second'
 
-    :param limit_string:
-    :return:
+    :param string limit_string: rate limit string using :ref:`ratelimit-string`
+    :raise ValueError: if the string notation is invalid.
+    :return: an instance of :class:`RateLimitItem`
+
     """
     return list(parse_many(limit_string))[0]
 
@@ -49,7 +58,7 @@ def granularity_from_string(granularity_string):
     """
 
     :param granularity_string:
-    :return: a :class:`flask_ratelimit.limits.Item`
+    :return: a subclass of :class:`RateLimitItem`
     :raise ValueError:
     """
     for granularity in GRANULARITIES.values():

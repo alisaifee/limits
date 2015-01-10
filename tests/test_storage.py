@@ -9,7 +9,7 @@ import redis
 
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 from limits.errors import ConfigurationError
-from limits.limits import PER_MINUTE, PER_SECOND
+from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import (
     MemoryStorage, RedisStorage, MemcachedStorage,
     Storage, storage_from_string
@@ -30,7 +30,7 @@ class StorageTests(unittest.TestCase):
         with hiro.Timeline().freeze() as timeline:
             storage = MemoryStorage()
             limiter = FixedWindowRateLimiter(storage)
-            per_min = PER_MINUTE(10)
+            per_min = RateLimitItemPerMinute(10)
             for i in range(0,10):
                 self.assertTrue(limiter.hit(per_min))
             self.assertFalse(limiter.hit(per_min))
@@ -41,12 +41,12 @@ class StorageTests(unittest.TestCase):
         with hiro.Timeline().freeze() as timeline:
             storage = MemoryStorage()
             limiter = FixedWindowRateLimiter(storage)
-            per_min = PER_MINUTE(10)
+            per_min = RateLimitItemPerMinute(10)
             for i in range(0,10):
                 self.assertTrue(limiter.hit(per_min))
             timeline.forward(60)
             # touch another key and yield
-            limiter.hit(PER_SECOND(1))
+            limiter.hit(RateLimitItemPerSecond(1))
             time.sleep(0.1)
             self.assertTrue(per_min.key_for() not in storage.storage)
 
@@ -54,8 +54,8 @@ class StorageTests(unittest.TestCase):
         with hiro.Timeline().freeze() as timeline:
             storage = MemoryStorage()
             limiter = MovingWindowRateLimiter(storage)
-            per_min = PER_MINUTE(10)
-            per_sec = PER_SECOND(1)
+            per_min = RateLimitItemPerMinute(10)
+            per_sec = RateLimitItemPerSecond(1)
             for i in range(0,2):
                 for i in range(0,10):
                     self.assertTrue(limiter.hit(per_min))
@@ -68,7 +68,7 @@ class StorageTests(unittest.TestCase):
     def test_redis(self):
         storage = RedisStorage("redis://localhost:6379")
         limiter = FixedWindowRateLimiter(storage)
-        per_min = PER_SECOND(10)
+        per_min = RateLimitItemPerSecond(10)
         start = time.time()
         count = 0
         while time.time() - start < 0.5 and count < 10:
@@ -121,7 +121,7 @@ class StorageTests(unittest.TestCase):
     def test_memcached(self):
         storage = MemcachedStorage("memcached://localhost:11211")
         limiter = FixedWindowRateLimiter(storage)
-        per_min = PER_SECOND(10)
+        per_min = RateLimitItemPerSecond(10)
         start = time.time()
         count = 0
         while time.time() - start < 0.5 and count < 10:
@@ -136,7 +136,7 @@ class StorageTests(unittest.TestCase):
     def test_large_dataset_redis_moving_window_expiry(self):
         storage = RedisStorage("redis://localhost:6379")
         limiter = MovingWindowRateLimiter(storage)
-        limit = PER_SECOND(1000)
+        limit = RateLimitItemPerSecond(1000)
         keys_start = storage.storage.keys('%s/*' % limit.namespace)
         # 100 routes
         fake_routes = [uuid4().hex for _ in range(0,100)]

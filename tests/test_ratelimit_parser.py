@@ -7,32 +7,32 @@ class RatelimitParserTests(unittest.TestCase):
         for rl_string in ["1 per hour", "1/HOUR", "1/Hour"]:
             self.assertEqual(
                 parse( rl_string),
-                limits.PER_HOUR(1)
+                limits.RateLimitItemPerHour(1)
             )
         for rl_string in ["1 per minute", "1/MINUTE", "1/Minute"]:
             self.assertEqual(
                 parse( rl_string),
-                limits.PER_MINUTE(1)
+                limits.RateLimitItemPerMinute(1)
             )
         for rl_string in ["1 per second", "1/SECOND", "1 / Second"]:
             self.assertEqual(
                 parse( rl_string),
-                limits.PER_SECOND(1)
+                limits.RateLimitItemPerSecond(1)
             )
         for rl_string in ["1 per day", "1/DAY", "1 / Day"]:
             self.assertEqual(
                 parse( rl_string),
-                limits.PER_DAY(1)
+                limits.RateLimitItemPerDay(1)
             )
         for rl_string in ["1 per month", "1/MONTH", "1 / Month"]:
             self.assertEqual(
                 parse( rl_string),
-                limits.PER_MONTH(1)
+                limits.RateLimitItemPerMonth(1)
             )
         for rl_string in ["1 per year", "1/Year", "1 / year"]:
             self.assertEqual(
                 parse( rl_string),
-                limits.PER_YEAR(1)
+                limits.RateLimitItemPerYear(1)
             )
 
     def test_multiples(self):

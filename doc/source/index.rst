@@ -29,13 +29,13 @@ Build a rate limiter with the :ref:`moving-window`::
 
 Build a rate limit using the :ref:`ratelimit-string`::
 
-    from limits.util import parse
+    from limits import parse
     one_per_minute = parse("1/minute")
 
-Build a rate limit explicitely::
+Build a rate limit explicitly using a subclass of :class:`RateLimitItem`::
 
-    from limits.limits import GRANULARITIES
-    one_per_second = GRANULARITIES["second"](1)
+    from limits import RateLimitItemPerSecond
+    one_per_second = RateLimitItemPerSecond(1, 1)
 
 Test the limits::
 
