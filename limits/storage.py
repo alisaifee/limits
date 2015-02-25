@@ -80,6 +80,13 @@ class Storage(object):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def configure(self, options):
+        """
+        :param dict options: the options to set on the storage client
+        """
+        raise NotImplementedError
+
 
 
 
@@ -332,6 +339,18 @@ class MemcachedStorage(Storage):
         self.local_storage = threading.local()
         self.local_storage.storage = None
 
+    def configure(self, options):
+        """
+        :param dict options: pylibmc behaviors to set
+        :raise ConfigurationError: when pymemcache doesn't have the behavior
+        """
+
+        for key, value in options.items():
+            if not hasattr(self.storage, key):
+                raise ConfigurationError("pymemcache does not support the config key"
+                                         " %s. Please see http://goo.gl/SaNi8j" % key)
+            self.storage.behaviors[key] = value
+
     @property
     def storage(self):
         """
@@ -410,6 +429,18 @@ class SaslMemcachedStorage(MemcachedStorage):
                                      " please install pylibmc")  # pragma: no cover
         self.local_storage = threading.local()
         self.local_storage.storage = None
+
+    def configure(self, options):
+        """
+        :param dict options: pylibmc behaviors to set
+        :raise ConfigurationError: when pylibmc doesn't have the behavior
+        """
+
+        for key, value in options.items():
+            if key not in self.storage.behaviors:
+                raise ConfigurationError("pylibmc does not support the behavior"
+                                         " %s. Please see http://goo.gl/JVqjlM" % key)
+            self.storage.behaviors[key] = value
 
     @property
     def storage(self):
