@@ -381,3 +381,71 @@ class MemcachedStorage(Storage):
         """
         return int(float(self.storage.get(key + "/expires") or time.time()))
 
+
+class SaslMemcachedStorage(MemcachedStorage):
+    """
+    rate limit storage with memcached as backend
+    """
+    MAX_CAS_RETRIES = 10
+    STORAGE_SCHEME = "saslmemcached"
+
+    def __init__(self, uri):
+        """
+        :param str username: memcached username
+        :param str password: memcached password
+        :param str host: memcached host
+        :param int port: memcached port
+        :raise ConfigurationError: when pymemcached is not available
+        """
+
+        uri = uri[16:]
+        userinfo, uri = uri.split("@")
+        self.username, self.password = userinfo.split(":")
+        self.cluster = []
+        for loc in uri.split(","):
+            self.cluster.append(loc)
+
+        if not get_dependency("pylibmc"):
+            raise ConfigurationError("memcached prerequisite not available."
+                                     " please install pylibmc")  # pragma: no cover
+        self.local_storage = threading.local()
+        self.local_storage.storage = None
+
+    @property
+    def storage(self):
+        """
+        lazily creates a memcached client instance using a thread local
+        """
+        if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
+            self.local_storage.storage = get_dependency(
+                "pylibmc"
+            ).Client(self.cluster, username=self.username,
+                     password=self.password, binary=True)
+        return self.local_storage.storage
+
+    def incr(self, key, expiry, elastic_expiry=False):
+        """
+        increments the counter for a given rate limit key
+
+        :param str key: the key to increment
+        :param int expiry: amount in seconds for the key to expire in
+        :param bool elastic_expiry: whether to keep extending the rate limit
+         window every hit.
+        """
+        if not self.storage.add(key, 1, expiry):
+            if elastic_expiry:
+                value, cas = self.storage.gets(key)
+                retry = 0
+                while (
+                        not self.storage.cas(key, int(value or 0)+1, cas, expiry)
+                        and retry < self.MAX_CAS_RETRIES
+                ):
+                    value, cas = self.storage.gets(key)
+                    retry += 1
+                self.storage.set(key + "/expires", expiry + time.time(), time=expiry)
+                return int(value or 0) + 1
+            else:
+                return self.storage.incr(key, 1)
+        self.storage.set(key + "/expires", expiry + time.time(), time=expiry)
+        return 1
+
