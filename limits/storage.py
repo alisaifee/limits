@@ -421,6 +421,7 @@ class SaslMemcachedStorage(MemcachedStorage):
                 "pylibmc"
             ).Client(self.cluster, username=self.username,
                      password=self.password, binary=True)
+            self.local_storage.storage.behaviors['cas'] = 1
         return self.local_storage.storage
 
     def incr(self, key, expiry, elastic_expiry=False):
