@@ -421,7 +421,6 @@ class SaslMemcachedStorage(MemcachedStorage):
                 "pylibmc"
             ).Client(self.cluster, username=self.username,
                      password=self.password, binary=True)
-            self.local_storage.storage.behaviors['cas'] = 1
         return self.local_storage.storage
 
     def incr(self, key, expiry, elastic_expiry=False):
@@ -433,6 +432,10 @@ class SaslMemcachedStorage(MemcachedStorage):
         :param bool elastic_expiry: whether to keep extending the rate limit
          window every hit.
         """
+
+        if elastic_expiry and not self.storage.behaviors.get('cas'):
+            self.storage.behaviors['cas'] = 1
+
         if not self.storage.add(key, 1, expiry):
             if elastic_expiry:
                 value, cas = self.storage.gets(key)
