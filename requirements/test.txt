@@ -4,5 +4,6 @@ mock
 coverage
 nose-cov
 git+https://github.com/alisaifee/pymemcache.git#egg=pymemcache
+pylibmc
 redis
 hiro>0.1.6

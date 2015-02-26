@@ -80,6 +80,13 @@ class Storage(object):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def configure(self, options):
+        """
+        :param dict options: the options to set on the storage client
+        """
+        raise NotImplementedError
+
 
 
 
@@ -323,14 +330,25 @@ class MemcachedStorage(Storage):
         parsed = urllib.parse.urlparse(uri)
         self.cluster = []
         for loc in parsed.netloc.split(","):
-            host, port = loc.split(":")
-            self.cluster.append((host, int(port)))
+            self.cluster.append(loc)
 
-        if not get_dependency("pymemcache"):
+        if not get_dependency("bmemcached"):
             raise ConfigurationError("memcached prerequisite not available."
-                                     " please install pymemcache")  # pragma: no cover
+                                     " please install bmemcached")  # pragma: no cover
         self.local_storage = threading.local()
         self.local_storage.storage = None
+
+    def configure(self, options):
+        """
+        :param dict options: pylibmc behaviors to set
+        :raise ConfigurationError: when pymemcache doesn't have the behavior
+        """
+
+        for key, value in options.items():
+            if not hasattr(self.storage, key):
+                raise ConfigurationError("bmemcached does not support the "
+                                         "config key %s." % key)
+            self.storage.behaviors[key] = value
 
     @property
     def storage(self):
@@ -339,8 +357,8 @@ class MemcachedStorage(Storage):
         """
         if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
             self.local_storage.storage = get_dependency(
-                "pymemcache.client"
-            ).Client(*self.cluster)
+                "bmemcached"
+            ).Client(self.cluster)
         return self.local_storage.storage
 
     def get(self, key):
@@ -358,7 +376,7 @@ class MemcachedStorage(Storage):
         :param bool elastic_expiry: whether to keep extending the rate limit
          window every hit.
         """
-        if not self.storage.add(key, 1, expiry, noreply=False):
+        if not self.storage.add(key, 1, expiry):
             if elastic_expiry:
                 value, cas = self.storage.gets(key)
                 retry = 0
@@ -368,11 +386,11 @@ class MemcachedStorage(Storage):
                 ):
                     value, cas = self.storage.gets(key)
                     retry += 1
-                self.storage.set(key + "/expires", expiry + time.time(), expire=expiry, noreply=False)
+                self.storage.set(key + "/expires", expiry + time.time(), expiry)
                 return int(value or 0) + 1
             else:
                 return self.storage.incr(key, 1)
-        self.storage.set(key + "/expires", expiry + time.time(), expire=expiry, noreply=False)
+        self.storage.set(key + "/expires", expiry + time.time(), expiry)
         return 1
 
     def get_expiry(self, key):
@@ -381,3 +399,42 @@ class MemcachedStorage(Storage):
         """
         return int(float(self.storage.get(key + "/expires") or time.time()))
 
+
+class SaslMemcachedStorage(MemcachedStorage):
+    """
+    rate limit storage with memcached as backend
+    """
+    STORAGE_SCHEME = "saslmemcached"
+
+    def __init__(self, uri):
+        """
+        :param str username: memcached username
+        :param str password: memcached password
+        :param str host: memcached host
+        :param int port: memcached port
+        :raise ConfigurationError: when pymemcached is not available
+        """
+
+        uri = uri[16:]
+        userinfo, uri = uri.split("@")
+        self.username, self.password = userinfo.split(":")
+        self.cluster = []
+        for loc in uri.split(","):
+            self.cluster.append(loc)
+
+        if not get_dependency("bmemcached"):
+            raise ConfigurationError("memcached prerequisite not available."
+                                     " please install bmemcached")  # pragma: no cover
+        self.local_storage = threading.local()
+        self.local_storage.storage = None
+
+    @property
+    def storage(self):
+        """
+        lazily creates a memcached client instance using a thread local
+        """
+        if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
+            self.local_storage.storage = get_dependency(
+                "bmemcached"
+            ).Client(self.cluster, self.username, self.password)
+        return self.local_storage.storage

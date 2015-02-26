@@ -12,7 +12,7 @@ from limits.errors import ConfigurationError
 from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import (
     MemoryStorage, RedisStorage, MemcachedStorage,
-    Storage, storage_from_string
+    SaslMemcachedStorage, Storage, storage_from_string
 )
 
 
@@ -24,6 +24,8 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(isinstance(storage_from_string("memory://"), MemoryStorage))
         self.assertTrue(isinstance(storage_from_string("redis://localhost:6379"), RedisStorage))
         self.assertTrue(isinstance(storage_from_string("memcached://localhost:11211"), MemcachedStorage))
+        self.assertTrue(isinstance(storage_from_string("saslmemcached://username:password@localhost:11211"), SaslMemcachedStorage))
+        self.assertTrue(isinstance(storage_from_string("saslmemcached://username:password@localhost:11211,localhost:11211"), SaslMemcachedStorage))
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
 
     def test_in_memory(self):
