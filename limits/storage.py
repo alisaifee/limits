@@ -330,12 +330,11 @@ class MemcachedStorage(Storage):
         parsed = urllib.parse.urlparse(uri)
         self.cluster = []
         for loc in parsed.netloc.split(","):
-            host, port = loc.split(":")
-            self.cluster.append((host, int(port)))
+            self.cluster.append(loc)
 
-        if not get_dependency("pymemcache"):
+        if not get_dependency("bmemcached"):
             raise ConfigurationError("memcached prerequisite not available."
-                                     " please install pymemcache")  # pragma: no cover
+                                     " please install bmemcached")  # pragma: no cover
         self.local_storage = threading.local()
         self.local_storage.storage = None
 
@@ -347,8 +346,8 @@ class MemcachedStorage(Storage):
 
         for key, value in options.items():
             if not hasattr(self.storage, key):
-                raise ConfigurationError("pymemcache does not support the config key"
-                                         " %s. Please see http://goo.gl/SaNi8j" % key)
+                raise ConfigurationError("bmemcached does not support the "
+                                         "config key %s." % key)
             self.storage.behaviors[key] = value
 
     @property
@@ -358,8 +357,8 @@ class MemcachedStorage(Storage):
         """
         if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
             self.local_storage.storage = get_dependency(
-                "pymemcache.client"
-            ).Client(*self.cluster)
+                "bmemcached"
+            ).Client(self.cluster)
         return self.local_storage.storage
 
     def get(self, key):
@@ -377,7 +376,7 @@ class MemcachedStorage(Storage):
         :param bool elastic_expiry: whether to keep extending the rate limit
          window every hit.
         """
-        if not self.storage.add(key, 1, expiry, noreply=False):
+        if not self.storage.add(key, 1, expiry):
             if elastic_expiry:
                 value, cas = self.storage.gets(key)
                 retry = 0
@@ -387,11 +386,11 @@ class MemcachedStorage(Storage):
                 ):
                     value, cas = self.storage.gets(key)
                     retry += 1
-                self.storage.set(key + "/expires", expiry + time.time(), expire=expiry, noreply=False)
+                self.storage.set(key + "/expires", expiry + time.time(), expiry)
                 return int(value or 0) + 1
             else:
                 return self.storage.incr(key, 1)
-        self.storage.set(key + "/expires", expiry + time.time(), expire=expiry, noreply=False)
+        self.storage.set(key + "/expires", expiry + time.time(), expiry)
         return 1
 
     def get_expiry(self, key):
@@ -405,7 +404,6 @@ class SaslMemcachedStorage(MemcachedStorage):
     """
     rate limit storage with memcached as backend
     """
-    MAX_CAS_RETRIES = 10
     STORAGE_SCHEME = "saslmemcached"
 
     def __init__(self, uri):
@@ -424,23 +422,11 @@ class SaslMemcachedStorage(MemcachedStorage):
         for loc in uri.split(","):
             self.cluster.append(loc)
 
-        if not get_dependency("pylibmc"):
+        if not get_dependency("bmemcached"):
             raise ConfigurationError("memcached prerequisite not available."
-                                     " please install pylibmc")  # pragma: no cover
+                                     " please install bmemcached")  # pragma: no cover
         self.local_storage = threading.local()
         self.local_storage.storage = None
-
-    def configure(self, options):
-        """
-        :param dict options: pylibmc behaviors to set
-        :raise ConfigurationError: when pylibmc doesn't have the behavior
-        """
-
-        for key, value in options.items():
-            if key not in self.storage.behaviors:
-                raise ConfigurationError("pylibmc does not support the behavior"
-                                         " %s. Please see http://goo.gl/JVqjlM" % key)
-            self.storage.behaviors[key] = value
 
     @property
     def storage(self):
@@ -449,38 +435,6 @@ class SaslMemcachedStorage(MemcachedStorage):
         """
         if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
             self.local_storage.storage = get_dependency(
-                "pylibmc"
-            ).Client(self.cluster, username=self.username,
-                     password=self.password, binary=True)
+                "bmemcached"
+            ).Client(self.cluster, self.username, self.password)
         return self.local_storage.storage
-
-    def incr(self, key, expiry, elastic_expiry=False):
-        """
-        increments the counter for a given rate limit key
-
-        :param str key: the key to increment
-        :param int expiry: amount in seconds for the key to expire in
-        :param bool elastic_expiry: whether to keep extending the rate limit
-         window every hit.
-        """
-
-        if elastic_expiry and not self.storage.behaviors.get('cas'):
-            self.storage.behaviors['cas'] = 1
-
-        if not self.storage.add(key, 1, expiry):
-            if elastic_expiry:
-                value, cas = self.storage.gets(key)
-                retry = 0
-                while (
-                        not self.storage.cas(key, int(value or 0)+1, cas, expiry)
-                        and retry < self.MAX_CAS_RETRIES
-                ):
-                    value, cas = self.storage.gets(key)
-                    retry += 1
-                self.storage.set(key + "/expires", expiry + time.time(), time=expiry)
-                return int(value or 0) + 1
-            else:
-                return self.storage.incr(key, 1)
-        self.storage.set(key + "/expires", expiry + time.time(), time=expiry)
-        return 1
-
