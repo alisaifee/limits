@@ -2,6 +2,10 @@
 
 Changelog
 ---------
+* Remove non standard arguments to memcache calls 
+
+1.0.4 2015-03-20
+================
 
 1.0.3 2015-03-20
 ================
@@ -19,6 +23,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
