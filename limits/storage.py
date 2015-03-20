@@ -21,7 +21,7 @@ from .util import get_dependency
 
 SCHEMES = {}
 
-def storage_from_string(storage_string):
+def storage_from_string(storage_string, **options):
     """
     factory function to get the storage class based on the url of
     the storage
@@ -32,7 +32,7 @@ def storage_from_string(storage_string):
     scheme = urllib.parse.urlparse(storage_string).scheme
     if not scheme in SCHEMES:
         raise ConfigurationError("unknown storage scheme : %s" % storage_string)
-    return SCHEMES[scheme](storage_string)
+    return SCHEMES[scheme](storage_string, **options)
 
 class StorageRegistry(type):
     def __new__(mcs, name, bases, dct):
@@ -51,7 +51,7 @@ class Storage(object):
     Base class to extend when implementing a storage backend.
     """
 
-    def __init__(self, uri=None):
+    def __init__(self, uri=None, **options):
         self.lock = threading.RLock()
 
     @abstractmethod
@@ -99,7 +99,7 @@ class MemoryStorage(Storage):
     """
     STORAGE_SCHEME = "memory"
 
-    def __init__(self, uri=None):
+    def __init__(self, uri=None, **_):
         self.storage = Counter()
         self.expirations = {}
         self.events = {}
@@ -227,7 +227,7 @@ class RedisStorage(Storage):
         return {oldest, a}
         """
 
-    def __init__(self, uri):
+    def __init__(self, uri, **_):
         """
         :param str redis_url: url of the form 'redis://host:port'
         :raise ConfigurationError: when the redis library is not available
@@ -314,7 +314,7 @@ class MemcachedStorage(Storage):
     MAX_CAS_RETRIES = 10
     STORAGE_SCHEME = "memcached"
 
-    def __init__(self, uri):
+    def __init__(self, uri, **options):
         """
         :param str host: memcached host
         :param int port: memcached port
@@ -325,12 +325,23 @@ class MemcachedStorage(Storage):
         for loc in parsed.netloc.split(","):
             host, port = loc.split(":")
             self.cluster.append((host, int(port)))
+        self.library = options.get('library', 'pymemcache.client')
+        self.client_getter = options.get('client_getter', self.get_client)
 
-        if not get_dependency("pymemcache"):
+        if not get_dependency(self.library):
             raise ConfigurationError("memcached prerequisite not available."
-                                     " please install pymemcache")  # pragma: no cover
+                                     " please install %s" % self.library)  # pragma: no cover
         self.local_storage = threading.local()
         self.local_storage.storage = None
+
+    def get_client(self, module, hosts):
+        """
+        returns a memcached client.
+        :param module: the memcached module
+        :param hosts: list of memcached hosts
+        :return:
+        """
+        return module.Client(*hosts)
 
     @property
     def storage(self):
@@ -338,9 +349,7 @@ class MemcachedStorage(Storage):
         lazily creates a memcached client instance using a thread local
         """
         if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
-            self.local_storage.storage = get_dependency(
-                "pymemcache.client"
-            ).Client(*self.cluster)
+            self.local_storage.storage = self.client_getter(get_dependency(self.library), self.cluster)
         return self.local_storage.storage
 
     def get(self, key):
