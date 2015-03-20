@@ -2,6 +2,7 @@
 
 """
 from abc import abstractmethod, ABCMeta
+import inspect
 
 from six.moves import urllib
 
@@ -343,6 +344,13 @@ class MemcachedStorage(Storage):
         """
         return module.Client(*hosts)
 
+    def call_memcached_func(self, func, *args, **kwargs):
+        if 'noreply' in kwargs:
+            if 'noreply' not in inspect.getargspec(func).args:
+                kwargs.pop('noreply')
+        return func(*args, **kwargs)
+
+
     @property
     def storage(self):
         """
@@ -367,21 +375,21 @@ class MemcachedStorage(Storage):
         :param bool elastic_expiry: whether to keep extending the rate limit
          window every hit.
         """
-        if not self.storage.add(key, 1, expiry, noreply=False):
+        if not self.call_memcached_func(self.storage.add, key, 1, expiry, noreply=False):
             if elastic_expiry:
                 value, cas = self.storage.gets(key)
                 retry = 0
                 while (
-                        not self.storage.cas(key, int(value or 0)+1, cas, expiry)
+                        not self.call_memcached_func(self.storage.cas, key, int(value or 0)+1, cas, expiry)
                         and retry < self.MAX_CAS_RETRIES
                 ):
                     value, cas = self.storage.gets(key)
                     retry += 1
-                self.storage.set(key + "/expires", expiry + time.time(), expire=expiry, noreply=False)
+                self.call_memcached_func(self.storage.set, key + "/expires", expiry + time.time(), expire=expiry, noreply=False)
                 return int(value or 0) + 1
             else:
                 return self.storage.incr(key, 1)
-        self.storage.set(key + "/expires", expiry + time.time(), expire=expiry, noreply=False)
+        self.call_memcached_func(self.storage.set, key + "/expires", expiry + time.time(), expire=expiry, noreply=False)
         return 1
 
     def get_expiry(self, key):
