@@ -3,6 +3,10 @@
 Changelog
 ---------
 
+1.0.3 2015-03-20
+================
+* Add support for passing options to storage backend
+
 1.0.2 2015-01-10
 ================
 * Improved documentation
@@ -15,5 +19,6 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
