@@ -199,7 +199,7 @@ class MemoryStorage(Storage):
         """
         timestamp = time.time()
         acquired = self.get_num_acquired(key, expiry)
-        for item in self.events.get(key):
+        for item in self.events.get(key, []):
             if item.atime >= timestamp - expiry:
                 return int(item.atime), acquired
         return int(timestamp), acquired
