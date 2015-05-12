@@ -26,6 +26,19 @@ class RateLimiter(object):
         raise NotImplementedError
 
     @abstractmethod
+    def test(self, item, *identifiers):
+        """
+        checks  the rate limit and returns True if it is not
+        currently exceeded.
+
+        :param item: a :class:`RateLimitItem` instance
+        :param identifiers: variable list of strings to uniquely identify the
+         limit
+        :return: True/False
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def get_window_stats(self, item, *identifiers):
         """
         returns the number of requests remaining and reset of this limit.
@@ -58,7 +71,26 @@ class MovingWindowRateLimiter(RateLimiter):
          limit
         :return: True/False
         """
-        return self.storage().acquire_entry(item.key_for(*identifiers), item.amount, item.get_expiry())
+        return self.storage().acquire_entry(
+            item.key_for(*identifiers), item.amount,
+            item.get_expiry()
+        )
+
+    def test(self, item, *identifiers):
+        """
+        checks  the rate limit and returns True if it is not
+        currently exceeded.
+
+        :param item: a :class:`RateLimitItem` instance
+        :param identifiers: variable list of strings to uniquely identify the
+         limit
+        :return: True/False
+        """
+        return self.storage().acquire_entry(
+            item.key_for(*identifiers),
+            item.amount, item.get_expiry(),
+            no_add=True
+        )
 
     def get_window_stats(self, item, *identifiers):
         """
@@ -93,6 +125,18 @@ class FixedWindowRateLimiter(RateLimiter):
             self.storage().incr(item.key_for(*identifiers), item.get_expiry())
             <= item.amount
         )
+
+    def test(self, item, *identifiers):
+        """
+        checks  the rate limit and returns True if it is not
+        currently exceeded.
+
+        :param item: a :class:`RateLimitItem` instance
+        :param identifiers: variable list of strings to uniquely identify the
+         limit
+        :return: True/False
+        """
+        return self.storage().get(item.key_for(*identifiers)) <= item.amount
 
     def get_window_stats(self, item, *identifiers):
         """

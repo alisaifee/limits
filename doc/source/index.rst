@@ -48,6 +48,12 @@ Test the limits::
     time.sleep(1)
     assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
 
+Check specific limits without hitting them::
+
+    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
+    while not moving_window.test(one_per_second, "test_namespace", "foo"):
+        time.sleep(0.01)
+    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
 
 Projects using *limits*
 -------------------------
