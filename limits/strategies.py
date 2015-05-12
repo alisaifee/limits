@@ -86,11 +86,10 @@ class MovingWindowRateLimiter(RateLimiter):
          limit
         :return: True/False
         """
-        return self.storage().acquire_entry(
+        return self.storage().get_moving_window(
             item.key_for(*identifiers),
             item.amount, item.get_expiry(),
-            no_add=True
-        )
+        )[1] < item.amount
 
     def get_window_stats(self, item, *identifiers):
         """
@@ -136,7 +135,7 @@ class FixedWindowRateLimiter(RateLimiter):
          limit
         :return: True/False
         """
-        return self.storage().get(item.key_for(*identifiers)) <= item.amount
+        return self.storage().get(item.key_for(*identifiers)) < item.amount
 
     def get_window_stats(self, item, *identifiers):
         """
