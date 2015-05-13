@@ -2,7 +2,10 @@
 
 Changelog
 ---------
-* Remove non standard arguments to memcache calls 
+
+1.0.6 2015-05-13
+================
+* Bug fixes for .test() logic
 
 1.0.5 2015-05-12
 ================
@@ -24,6 +27,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
