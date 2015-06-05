@@ -3,8 +3,8 @@
 .. |coveralls| image:: https://img.shields.io/coveralls/alisaifee/limits/master.svg?style=flat-square
     :target: https://coveralls.io/r/alisaifee/limits?branch=master
 .. |pypi| image:: https://img.shields.io/pypi/v/limits.svg?style=flat-square
-    :target: https://crate.io/packages/limits/
-
+    :target: https://pypi.python.org/pypi/limits
+    
 *************
 limits
 *************
