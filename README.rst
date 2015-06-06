@@ -4,11 +4,13 @@
     :target: https://coveralls.io/r/alisaifee/limits?branch=master
 .. |pypi| image:: https://img.shields.io/pypi/v/limits.svg?style=flat-square
     :target: https://pypi.python.org/pypi/limits
+.. |license| image:: https://img.shields.io/pypi/l/limits.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/limits
     
 *************
 limits
 *************
-|travis-ci| |coveralls| |pypi|
+|travis-ci| |coveralls| |pypi| |license|
 
 *limits* provides utilities to implement rate limiting using
 various strategies and storage backends such as redis & memcached.
