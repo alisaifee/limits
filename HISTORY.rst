@@ -3,6 +3,10 @@
 Changelog
 ---------
 
+1.0.7 2015-06-07
+================
+* No functional change
+
 1.0.6 2015-05-13
 ================
 * Bug fixes for .test() logic
@@ -27,6 +31,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
