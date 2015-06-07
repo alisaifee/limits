@@ -426,5 +426,5 @@ class MemcachedStorage(Storage):
         try:
             self.call_memcached_func(self.storage.stats)
             return True
-        except: # noqa
+        except:  # noqa
             return False
