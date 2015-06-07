@@ -81,7 +81,12 @@ class Storage(object):
         """
         raise NotImplementedError
 
-
+    @abstractmethod
+    def check(self):
+        """
+        check if storage is healthy
+        """
+        raise NotImplementedError
 
 
 class LockableEntry(threading._RLock):
@@ -204,6 +209,13 @@ class MemoryStorage(Storage):
                 return int(item.atime), acquired
         return int(timestamp), acquired
 
+    def check(self):
+        """
+        check if storage is healthy
+        """
+        return True
+
+
 class RedisStorage(Storage):
     """
     rate limit storage with redis as backend
@@ -308,6 +320,15 @@ class RedisStorage(Storage):
         """
         return int((self.storage.ttl(key) or 0) + time.time())
 
+    def check(self):
+        """
+        check if storage is healthy
+        """
+        try:
+            return self.storage.ping()
+        except: # noqa
+            return False
+
 class MemcachedStorage(Storage):
     """
     rate limit storage with memcached as backend
@@ -398,3 +419,12 @@ class MemcachedStorage(Storage):
         """
         return int(float(self.storage.get(key + "/expires") or time.time()))
 
+    def check(self):
+        """
+        check if storage is healthy
+        """
+        try:
+            self.call_memcached_func(self.storage.stats)
+            return True
+        except: # noqa
+            return False

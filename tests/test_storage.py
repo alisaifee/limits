@@ -26,6 +26,11 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(isinstance(storage_from_string("memcached://localhost:11211"), MemcachedStorage))
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
 
+    def test_storage_check(self):
+        self.assertTrue(storage_from_string("memory://").check())
+        self.assertTrue(storage_from_string("redis://localhost:6379").check())
+        self.assertTrue(storage_from_string("memcached://localhost:11211").check())
+
     def test_in_memory(self):
         with hiro.Timeline().freeze() as timeline:
             storage = MemoryStorage()
