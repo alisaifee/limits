@@ -276,7 +276,7 @@ class RedisStorage(Storage):
         :return: True/False
         """
         timestamp = time.time()
-        with self.lock_impl("%s/LOCK" % key):
+        with self.lock_impl("%s/LOCK" % key, blocking_timeout=1):
             entry = self.storage.lindex(key, limit - 1)
             if entry and float(entry) >= timestamp - expiry:
                 return False

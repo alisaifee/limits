@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import hiro
 import redis
-
+import redis.lock
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 from limits.errors import ConfigurationError
 from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
@@ -153,3 +153,11 @@ class StorageTests(unittest.TestCase):
         [k.set() for k in events]
         time.sleep(2)
         self.assertTrue(storage.storage.keys("%s/*" % limit.namespace) == [])
+
+    def test_failed_redis_lock(self):
+        storage = RedisStorage("redis://localhost:6379")
+        limiter = MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(1000)
+        key = limit.key_for("test") + "/LOCK"
+        storage.storage.setnx(key, 1)
+        self.assertRaises(redis.lock.LockError, limiter.hit, limit, "test")
