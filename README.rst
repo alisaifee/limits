@@ -6,11 +6,13 @@
     :target: https://pypi.python.org/pypi/limits
 .. |license| image:: https://img.shields.io/pypi/l/limits.svg?style=flat-square
     :target: https://pypi.python.org/pypi/limits
+.. |landscape| image:: https://landscape.io/github/alisaifee/limits/master/landscape.svg?style=flat-square
+    :target: https://landscape.io/github/alisaifee/limits/master
     
 *************
 limits
 *************
-|travis-ci| |coveralls| |pypi| |license|
+|travis-ci| |coveralls| |landscape| |pypi| |license|
 
 *limits* provides utilities to implement rate limiting using
 various strategies and storage backends such as redis & memcached.
