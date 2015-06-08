@@ -1,0 +1,15 @@
+doc-warnings: yes
+test-warnings: no
+strictness: veryhigh
+max-line-length: 80
+autodetect: yes
+requirements:
+    - requirements/main.txt
+ignore-paths:
+    - tests
+    - limits/backports
+    - doc
+ignore-patterns:
+    - versioneer.py
+    - limits/_versions.py
+
