@@ -7,11 +7,12 @@ from uuid import uuid4
 import hiro
 import redis
 import redis.lock
+from redis.sentinel import Sentinel
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 from limits.errors import ConfigurationError
 from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import (
-    MemoryStorage, RedisStorage, MemcachedStorage,
+    MemoryStorage, RedisStorage, MemcachedStorage, RedisSentinelStorage,
     Storage, storage_from_string
 )
 
@@ -83,6 +84,23 @@ class StorageTests(unittest.TestCase):
         while time.time() - start <= 1:
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
+
+
+    def test_redis_sentinel(self):
+        sentinel = Sentinel([('localhost', 26379)], socket_timeout=0.1)
+        storage = RedisSentinelStorage(sentinel, 'localhost-redis-sentinel')
+        limiter = FixedWindowRateLimiter(storage)
+        per_min = RateLimitItemPerSecond(10)
+        start = time.time()
+        count = 0
+        while time.time() - start < 0.5 and count < 10:
+            self.assertTrue(limiter.hit(per_min))
+            count += 1
+        self.assertFalse(limiter.hit(per_min))
+        while time.time() - start <= 1:
+            time.sleep(0.1)
+        self.assertTrue(limiter.hit(per_min))
+
 
     def test_pluggable_storage_no_moving_window(self):
         class MyStorage(Storage):
@@ -159,10 +177,41 @@ class StorageTests(unittest.TestCase):
         time.sleep(2)
         self.assertTrue(storage.storage.keys("%s/*" % limit.namespace) == [])
 
+    def test_large_dataset_redis_sentinel_moving_window_expiry(self):
+        sentinel = Sentinel([('localhost', 26379)], socket_timeout=0.1)
+        storage = RedisSentinelStorage(sentinel, 'localhost-redis-sentinel')
+        limiter = MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(1000)
+        keys_start = storage.sentinel.slave_for('localhost-redis-sentinel').keys('%s/*' % limit.namespace)
+        # 100 routes
+        fake_routes = [uuid4().hex for _ in range(0,100)]
+        # go as fast as possible in 2 seconds.
+        start = time.time()
+        def smack(e):
+            while not e.is_set():
+                self.assertTrue(limiter.hit(limit, random.choice(fake_routes)))
+        events = [threading.Event() for _ in range(0,100)]
+        threads = [threading.Thread(target=smack, args=(e,)) for e in events]
+        [k.start() for k in threads]
+        while time.time() - start < 2:
+            time.sleep(0.1)
+        [k.set() for k in events]
+        time.sleep(2)
+        self.assertTrue(storage.sentinel.slave_for('localhost-redis-sentinel').keys("%s/*" % limit.namespace) == [])
+
     def test_failed_redis_lock(self):
         storage = RedisStorage("redis://localhost:6379")
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
         key = limit.key_for("test") + "/LOCK"
         storage.storage.setnx(key, 1)
+        self.assertRaises(redis.lock.LockError, limiter.hit, limit, "test")
+
+    def test_failed_redis_sentinel_lock(self):
+        sentinel = Sentinel([('localhost', 26379)], socket_timeout=0.1)
+        storage = RedisSentinelStorage(sentinel, 'localhost-redis-sentinel')
+        limiter = MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(1000)
+        key = limit.key_for("test") + "/LOCK"
+        storage.sentinel.master_for('localhost-redis-sentinel').setnx(key, 1)
         self.assertRaises(redis.lock.LockError, limiter.hit, limit, "test")

@@ -8,10 +8,15 @@ python:
 
 install:
     - pip install -r requirements/ci.txt --use-mirrors
-    
+
 services:
     - redis-server
     - memcached
+
+before_script:
+    - redis-server ./requirements/redis-master.conf
+    - redis-server ./requirements/redis-slave.conf
+    - redis-server ./requirements/redis-sentinel.conf --sentinel
 
 script: nosetests tests --with-cov -v
 after_success:
