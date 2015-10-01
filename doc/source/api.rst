@@ -8,6 +8,7 @@ Storage
 .. autoclass:: limits.storage.Storage
 .. autoclass:: limits.storage.MemoryStorage
 .. autoclass:: limits.storage.RedisStorage
+.. autoclass:: limits.storage.RedisSentinelStorage
 .. autoclass:: limits.storage.MemcachedStorage
 .. autofunction:: limits.storage.storage_from_string
 
