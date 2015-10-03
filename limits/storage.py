@@ -217,13 +217,7 @@ class MemoryStorage(Storage):
         """
         return True
 
-
-class RedisStorage(Storage):
-    """
-    rate limit storage with redis as backend
-    """
-
-    STORAGE_SCHEME = "redis"
+class RedisCommon:
     SCRIPT_MOVING_WINDOW = """
         local items = redis.call('lrange', KEYS[1], 0, tonumber(ARGV[2]))
         local expiry = tonumber(ARGV[1])
@@ -241,6 +235,87 @@ class RedisStorage(Storage):
         end
         return {oldest, a}
         """
+
+    def redis_incr(self, connection, key, expiry, elastic_expiry=False):
+        """
+        increments the counter for a given rate limit key
+
+        :param connection: Redis connection
+        :param str key: the key to increment
+        :param int expiry: amount in seconds for the key to expire in
+        """
+        value = connection.incr(key)
+        if elastic_expiry or value == 1:
+            connection.expire(key, expiry)
+        return value
+
+    def redis_get(self, connection, key):
+        """
+        :param connection: Redis connection
+        :param str key: the key to get the counter value for
+        """
+        return int(connection.get(key) or 0)
+
+    def get_moving_window(self, key, limit, expiry):
+        """
+        returns the starting point and the number of entries in the moving window
+
+        :param str key: rate limit key
+        :param int expiry: expiry of entry
+        """
+        timestamp = time.time()
+        window = self.lua_moving_window(
+            [key], [int(timestamp - expiry), limit]
+        )
+        return window or (timestamp, 0)
+
+    def redis_acquire_entry(self, connection, key, limit, expiry, no_add=False):
+        """
+        :param connection: Redis connection
+        :param str key: rate limit key to acquire an entry in
+        :param int limit: amount of entries allowed
+        :param int expiry: expiry of the entry
+        :param bool no_add: if False an entry is not actually acquired but instead
+         serves as a 'check'
+        :return: True/False
+        """
+        timestamp = time.time()
+        with self.lock_impl("%s/LOCK" % key, blocking_timeout=1):
+            entry = connection.lindex(key, limit - 1)
+            if entry and float(entry) >= timestamp - expiry:
+                return False
+            else:
+                if not no_add:
+                    with connection.pipeline(transaction=False) as pipeline:
+                        pipeline.lpush(key, timestamp)
+                        pipeline.ltrim(key, 0, limit - 1)
+                        pipeline.expire(key, expiry)
+                        pipeline.execute()
+                return True
+
+    def redis_get_expiry(self, connection, key):
+        """
+        :param connection: Redis connection
+        :param str key: the key to get the expiry for
+        """
+        return int((connection.ttl(key) or 0) + time.time())
+
+    def redis_check(self, connection):
+        """
+        :param connection: Redis connection
+        check if storage is healthy
+        """
+        try:
+            return connection.ping()
+        except: # noqa
+            return False
+
+class RedisStorage(Storage, RedisCommon):
+    """
+    rate limit storage with redis as backend
+    """
+
+    STORAGE_SCHEME = "redis"
 
     def __init__(self, uri, **_):
         """
@@ -258,7 +333,7 @@ class RedisStorage(Storage):
         if not self.storage.ping():
             raise ConfigurationError("unable to connect to redis at %s" % uri) # pragma: no cover
         self.lua_moving_window = self.storage.register_script(
-            RedisStorage.SCRIPT_MOVING_WINDOW
+            RedisCommon.SCRIPT_MOVING_WINDOW
         )
         self.lock_impl = self.storage.lock
 
@@ -269,16 +344,13 @@ class RedisStorage(Storage):
         :param str key: the key to increment
         :param int expiry: amount in seconds for the key to expire in
         """
-        value = self.storage.incr(key)
-        if elastic_expiry or value == 1:
-            self.storage.expire(key, expiry)
-        return value
+        return self.redis_incr(self.storage, key, expiry, elastic_expiry)
 
     def get(self, key):
         """
         :param str key: the key to get the counter value for
         """
-        return int(self.storage.get(key) or 0)
+        return self.redis_get(self.storage, key)
 
     def acquire_entry(self, key, limit, expiry, no_add=False):
         """
@@ -289,72 +361,27 @@ class RedisStorage(Storage):
          serves as a 'check'
         :return: True/False
         """
-        timestamp = time.time()
-        with self.lock_impl("%s/LOCK" % key, blocking_timeout=1):
-            entry = self.storage.lindex(key, limit - 1)
-            if entry and float(entry) >= timestamp - expiry:
-                return False
-            else:
-                if not no_add:
-                    with self.storage.pipeline(transaction=False) as pipeline:
-                        pipeline.lpush(key, timestamp)
-                        pipeline.ltrim(key, 0, limit - 1)
-                        pipeline.expire(key, expiry)
-                        pipeline.execute()
-                return True
-
-    def get_moving_window(self, key, limit, expiry):
-        """
-        returns the starting point and the number of entries in the moving window
-
-        :param str key: rate limit key
-        :param int expiry: expiry of entry
-        """
-        timestamp = time.time()
-        window = self.lua_moving_window(
-            [key], [int(timestamp - expiry), limit]
-        )
-        return window or (timestamp, 0)
+        return self.redis_acquire_entry(self.storage, key, limit, expiry, no_add)
 
     def get_expiry(self, key):
         """
         :param str key: the key to get the expiry for
         """
-        return int((self.storage.ttl(key) or 0) + time.time())
+        return self.redis_get_expiry(self.storage, key)
 
     def check(self):
         """
         check if storage is healthy
         """
-        try:
-            return self.storage.ping()
-        except: # noqa
-            return False
+        return self.redis_check(self.storage)
 
 
-class RedisSentinelStorage(Storage):
+class RedisSentinelStorage(Storage, RedisCommon):
     """
     rate limit storage with redis sentinel as backend
     """
 
     STORAGE_SCHEME = "sentinel"
-    SCRIPT_MOVING_WINDOW = """
-        local items = redis.call('lrange', KEYS[1], 0, tonumber(ARGV[2]))
-        local expiry = tonumber(ARGV[1])
-        local a = 0
-        local oldest = nil
-        for idx=1,#items do
-            if tonumber(items[idx]) >= expiry then
-                a = a + 1
-                if oldest == nil then
-                    oldest = tonumber(items[idx])
-                end
-            else
-                break
-            end
-        end
-        return {oldest, a}
-        """
 
     def __init__(self, uri, **options):
         """
@@ -380,9 +407,10 @@ class RedisSentinelStorage(Storage):
         if not master.ping():
             raise ConfigurationError("unable to connect to redis at %s" % self.sentinel) # pragma: no cover
         self.lua_moving_window = master.register_script(
-            RedisSentinelStorage.SCRIPT_MOVING_WINDOW
+            RedisCommon.SCRIPT_MOVING_WINDOW
         )
         self.lock_impl = master.lock
+
 
     def incr(self, key, expiry, elastic_expiry=False):
         """
@@ -392,17 +420,14 @@ class RedisSentinelStorage(Storage):
         :param int expiry: amount in seconds for the key to expire in
         """
         master = self.sentinel.master_for(self.service_name)
-        value = master.incr(key)
-        if elastic_expiry or value == 1:
-            master.expire(key, expiry)
-        return value
+        return self.redis_incr(master, key, expiry, elastic_expiry)
 
     def get(self, key):
         """
         :param str key: the key to get the counter value for
         """
         slave = self.sentinel.slave_for(self.service_name)
-        return int(slave.get(key) or 0)
+        return self.redis_get(slave, key)
 
     def acquire_entry(self, key, limit, expiry, no_add=False):
         """
@@ -414,49 +439,21 @@ class RedisSentinelStorage(Storage):
         :return: True/False
         """
         master = self.sentinel.master_for(self.service_name)
-        timestamp = time.time()
-        with self.lock_impl("%s/LOCK" % key, blocking_timeout=1):
-            entry = master.lindex(key, limit - 1)
-            if entry and float(entry) >= timestamp - expiry:
-                return False
-            else:
-                if not no_add:
-                    with master.pipeline(transaction=False) as pipeline:
-                        pipeline.lpush(key, timestamp)
-                        pipeline.ltrim(key, 0, limit - 1)
-                        pipeline.expire(key, expiry)
-                        pipeline.execute()
-                return True
-
-    def get_moving_window(self, key, limit, expiry):
-        """
-        returns the starting point and the number of entries in the moving window
-
-        :param str key: rate limit key
-        :param int expiry: expiry of entry
-        """
-        timestamp = time.time()
-        window = self.lua_moving_window(
-            [key], [int(timestamp - expiry), limit]
-        )
-        return window or (timestamp, 0)
+        return self.redis_acquire_entry(master, key, limit, expiry, no_add)
 
     def get_expiry(self, key):
         """
         :param str key: the key to get the expiry for
         """
         slave = self.sentinel.slave_for(self.service_name)
-        return int((slave.ttl(key) or 0) + time.time())
+        return self.redis_get_expiry(slave, key)
 
     def check(self):
         """
         check if storage is healthy
         """
-        try:
-            slave = self.sentinel.slave_for(self.service_name)
-            return slave.ping()
-        except: # noqa
-            return False
+        slave = self.sentinel.slave_for(self.service_name)
+        return self.redis_check(slave)
 
 
 class MemcachedStorage(Storage):
