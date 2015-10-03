@@ -25,6 +25,7 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(isinstance(storage_from_string("memory://"), MemoryStorage))
         self.assertTrue(isinstance(storage_from_string("redis://localhost:6379"), RedisStorage))
         self.assertTrue(isinstance(storage_from_string("memcached://localhost:11211"), MemcachedStorage))
+        self.assertTrue(isinstance(storage_from_string("sentinel://localhost:26379", service_name='localhost-redis-sentinel'), RedisSentinelStorage))
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
 
     def test_storage_check(self):
@@ -87,8 +88,7 @@ class StorageTests(unittest.TestCase):
 
 
     def test_redis_sentinel(self):
-        sentinel = Sentinel([('localhost', 26379)], socket_timeout=0.1)
-        storage = RedisSentinelStorage(sentinel, 'localhost-redis-sentinel')
+        storage = RedisSentinelStorage('sentinel://localhost:26379', service_name='localhost-redis-sentinel')
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
         start = time.time()
@@ -155,7 +155,6 @@ class StorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
-
     def test_large_dataset_redis_moving_window_expiry(self):
         storage = RedisStorage("redis://localhost:6379")
         limiter = MovingWindowRateLimiter(storage)
@@ -177,9 +176,10 @@ class StorageTests(unittest.TestCase):
         time.sleep(2)
         self.assertTrue(storage.storage.keys("%s/*" % limit.namespace) == [])
 
+
     def test_large_dataset_redis_sentinel_moving_window_expiry(self):
-        sentinel = Sentinel([('localhost', 26379)], socket_timeout=0.1)
-        storage = RedisSentinelStorage(sentinel, 'localhost-redis-sentinel')
+        storage = RedisSentinelStorage('sentinel://localhost:26379', service_name='localhost-redis-sentinel')
+        storage.sentinel.master_for('localhost-redis-sentinel').flushall()
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
         keys_start = storage.sentinel.slave_for('localhost-redis-sentinel').keys('%s/*' % limit.namespace)
@@ -199,6 +199,7 @@ class StorageTests(unittest.TestCase):
         time.sleep(2)
         self.assertTrue(storage.sentinel.slave_for('localhost-redis-sentinel').keys("%s/*" % limit.namespace) == [])
 
+
     def test_failed_redis_lock(self):
         storage = RedisStorage("redis://localhost:6379")
         limiter = MovingWindowRateLimiter(storage)
@@ -208,8 +209,7 @@ class StorageTests(unittest.TestCase):
         self.assertRaises(redis.lock.LockError, limiter.hit, limit, "test")
 
     def test_failed_redis_sentinel_lock(self):
-        sentinel = Sentinel([('localhost', 26379)], socket_timeout=0.1)
-        storage = RedisSentinelStorage(sentinel, 'localhost-redis-sentinel')
+        storage = RedisSentinelStorage('sentinel://localhost:26379', service_name='localhost-redis-sentinel')
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
         key = limit.key_for("test") + "/LOCK"

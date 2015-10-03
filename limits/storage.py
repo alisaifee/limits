@@ -20,6 +20,8 @@ import six
 from .errors import ConfigurationError
 from .util import get_dependency
 
+from redis.sentinel import Sentinel
+
 SCHEMES = {}
 
 def storage_from_string(storage_string, **options):
@@ -335,7 +337,7 @@ class RedisSentinelStorage(Storage):
     rate limit storage with redis sentinel as backend
     """
 
-    STORAGE_SCHEME = "redis_sentinel"
+    STORAGE_SCHEME = "sentinel"
     SCRIPT_MOVING_WINDOW = """
         local items = redis.call('lrange', KEYS[1], 0, tonumber(ARGV[2]))
         local expiry = tonumber(ARGV[1])
@@ -354,17 +356,22 @@ class RedisSentinelStorage(Storage):
         return {oldest, a}
         """
 
-    def __init__(self, sentinel, service_name, **_):
+    def __init__(self, uri, **options):
         """
-        :param sentinel: redis.sentinel.Sentinel object
-        :param str sentinel: Sentinel service name
         :raise ConfigurationError: when the redis library is not available
          or if the redis master host cannot be pinged.
         """
         if not get_dependency("redis"):
             raise ConfigurationError("redis prerequisite not available") # pragma: no cover
-        self.sentinel = sentinel
-        self.service_name = service_name
+
+        parsed = urllib.parse.urlparse(uri)
+        self.sentinel_configuration = []
+        for loc in parsed.netloc.split(","):
+            host, port = loc.split(":")
+            self.sentinel_configuration.append((host, int(port)))
+
+        self.sentinel = Sentinel(self.sentinel_configuration, socket_timeout=options.get('socket_timeout', 0.1))
+        self.service_name = options.get('service_name')
         self.initialize_storage()
         super(RedisSentinelStorage, self).__init__()
 
