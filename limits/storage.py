@@ -20,8 +20,6 @@ import six
 from .errors import ConfigurationError
 from .util import get_dependency
 
-from redis.sentinel import Sentinel
-
 SCHEMES = {}
 
 def storage_from_string(storage_string, **options):
@@ -381,7 +379,7 @@ class RedisSentinelStorage(Storage, RedisCommon):
     rate limit storage with redis sentinel as backend
     """
 
-    STORAGE_SCHEME = "sentinel"
+    STORAGE_SCHEME = "redis+sentinel"
 
     def __init__(self, uri, **options):
         """
@@ -397,8 +395,11 @@ class RedisSentinelStorage(Storage, RedisCommon):
             host, port = loc.split(":")
             self.sentinel_configuration.append((host, int(port)))
 
-        self.sentinel = Sentinel(self.sentinel_configuration, socket_timeout=options.get('socket_timeout', 0.1))
-        self.service_name = options.get('service_name')
+        self.sentinel = get_dependency("redis.sentinel").Sentinel(
+            self.sentinel_configuration,
+            socket_timeout=options.get("socket_timeout", 0.1)
+        )
+        self.service_name = options.get("service_name")
         self.initialize_storage()
         super(RedisSentinelStorage, self).__init__()
 

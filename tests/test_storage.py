@@ -25,13 +25,14 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(isinstance(storage_from_string("memory://"), MemoryStorage))
         self.assertTrue(isinstance(storage_from_string("redis://localhost:6379"), RedisStorage))
         self.assertTrue(isinstance(storage_from_string("memcached://localhost:11211"), MemcachedStorage))
-        self.assertTrue(isinstance(storage_from_string("sentinel://localhost:26379", service_name='localhost-redis-sentinel'), RedisSentinelStorage))
+        self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel"), RedisSentinelStorage))
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
 
     def test_storage_check(self):
         self.assertTrue(storage_from_string("memory://").check())
         self.assertTrue(storage_from_string("redis://localhost:6379").check())
         self.assertTrue(storage_from_string("memcached://localhost:11211").check())
+        self.assertTrue(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel").check())
 
     def test_in_memory(self):
         with hiro.Timeline().freeze() as timeline:
@@ -88,7 +89,7 @@ class StorageTests(unittest.TestCase):
 
 
     def test_redis_sentinel(self):
-        storage = RedisSentinelStorage('sentinel://localhost:26379', service_name='localhost-redis-sentinel')
+        storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
         start = time.time()
@@ -178,11 +179,11 @@ class StorageTests(unittest.TestCase):
 
 
     def test_large_dataset_redis_sentinel_moving_window_expiry(self):
-        storage = RedisSentinelStorage('sentinel://localhost:26379', service_name='localhost-redis-sentinel')
+        storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
         storage.sentinel.master_for('localhost-redis-sentinel').flushall()
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
-        keys_start = storage.sentinel.slave_for('localhost-redis-sentinel').keys('%s/*' % limit.namespace)
+        keys_start = storage.sentinel.slave_for("localhost-redis-sentinel").keys("%s/*" % limit.namespace)
         # 100 routes
         fake_routes = [uuid4().hex for _ in range(0,100)]
         # go as fast as possible in 2 seconds.
@@ -197,7 +198,7 @@ class StorageTests(unittest.TestCase):
             time.sleep(0.1)
         [k.set() for k in events]
         time.sleep(2)
-        self.assertTrue(storage.sentinel.slave_for('localhost-redis-sentinel').keys("%s/*" % limit.namespace) == [])
+        self.assertTrue(storage.sentinel.slave_for("localhost-redis-sentinel").keys("%s/*" % limit.namespace) == [])
 
 
     def test_failed_redis_lock(self):
@@ -209,9 +210,9 @@ class StorageTests(unittest.TestCase):
         self.assertRaises(redis.lock.LockError, limiter.hit, limit, "test")
 
     def test_failed_redis_sentinel_lock(self):
-        storage = RedisSentinelStorage('sentinel://localhost:26379', service_name='localhost-redis-sentinel')
+        storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
         key = limit.key_for("test") + "/LOCK"
-        storage.sentinel.master_for('localhost-redis-sentinel').setnx(key, 1)
+        storage.sentinel.master_for("localhost-redis-sentinel").setnx(key, 1)
         self.assertRaises(redis.lock.LockError, limiter.hit, limit, "test")
