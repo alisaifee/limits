@@ -397,7 +397,7 @@ class RedisSentinelStorage(Storage, RedisCommon):
 
         self.sentinel = get_dependency("redis.sentinel").Sentinel(
             self.sentinel_configuration,
-            socket_timeout=options.get("socket_timeout", 0.1)
+            socket_timeout=options.get("socket_timeout", 0.2)
         )
         self.service_name = options.get("service_name")
         self.initialize_storage()

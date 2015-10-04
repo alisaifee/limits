@@ -20,6 +20,8 @@ from limits.storage import (
 class StorageTests(unittest.TestCase):
     def setUp(self):
         redis.Redis().flushall()
+        storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
+        storage.sentinel.master_for('localhost-redis-sentinel').flushall()
 
     def test_storage_string(self):
         self.assertTrue(isinstance(storage_from_string("memory://"), MemoryStorage))
@@ -180,7 +182,6 @@ class StorageTests(unittest.TestCase):
 
     def test_large_dataset_redis_sentinel_moving_window_expiry(self):
         storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
-        storage.sentinel.master_for('localhost-redis-sentinel').flushall()
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
         keys_start = storage.sentinel.slave_for("localhost-redis-sentinel").keys("%s/*" % limit.namespace)
