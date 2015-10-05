@@ -392,10 +392,13 @@ class RedisSentinelStorage(RedisInteractor, Storage):
         :raise ConfigurationError: when the redis library is not available
          or if the redis master host cannot be pinged.
         """
+        if "service_name" not in options:
+            raise ConfigurationError("'service_name' is a required argument")
         if not get_dependency("redis"):
             raise ConfigurationError("redis prerequisite not available") # pragma: no cover
 
         parsed = urllib.parse.urlparse(uri)
+        self.service_name = options.get("service_name")
         self.sentinel_configuration = []
         for loc in parsed.netloc.split(","):
             host, port = loc.split(":")
@@ -405,7 +408,6 @@ class RedisSentinelStorage(RedisInteractor, Storage):
             self.sentinel_configuration,
             socket_timeout=options.get("socket_timeout", 0.2)
         )
-        self.service_name = options.get("service_name")
         self.initialize_storage()
         super(RedisSentinelStorage, self).__init__()
 
