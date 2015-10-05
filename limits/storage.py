@@ -215,7 +215,7 @@ class MemoryStorage(Storage):
         """
         return True
 
-class RedisCommon:
+class RedisInteractor(object):
     SCRIPT_MOVING_WINDOW = """
         local items = redis.call('lrange', KEYS[1], 0, tonumber(ARGV[2]))
         local expiry = tonumber(ARGV[1])
@@ -234,7 +234,7 @@ class RedisCommon:
         return {oldest, a}
         """
 
-    def redis_incr(self, connection, key, expiry, elastic_expiry=False):
+    def incr(self, key, expiry, connection, elastic_expiry=False):
         """
         increments the counter for a given rate limit key
 
@@ -247,7 +247,7 @@ class RedisCommon:
             connection.expire(key, expiry)
         return value
 
-    def redis_get(self, connection, key):
+    def get(self,key, connection):
         """
         :param connection: Redis connection
         :param str key: the key to get the counter value for
@@ -267,14 +267,16 @@ class RedisCommon:
         )
         return window or (timestamp, 0)
 
-    def redis_acquire_entry(self, connection, key, limit, expiry, no_add=False):
+    def acquire_entry(
+            self, key, limit, expiry, connection, no_add=False
+    ):
         """
-        :param connection: Redis connection
         :param str key: rate limit key to acquire an entry in
         :param int limit: amount of entries allowed
         :param int expiry: expiry of the entry
         :param bool no_add: if False an entry is not actually acquired but instead
          serves as a 'check'
+        :param connection: Redis connection
         :return: True/False
         """
         timestamp = time.time()
@@ -291,14 +293,14 @@ class RedisCommon:
                         pipeline.execute()
                 return True
 
-    def redis_get_expiry(self, connection, key):
+    def get_expiry(self, key, connection=None):
         """
-        :param connection: Redis connection
         :param str key: the key to get the expiry for
+        :param connection: Redis connection
         """
         return int((connection.ttl(key) or 0) + time.time())
 
-    def redis_check(self, connection):
+    def check(self, connection):
         """
         :param connection: Redis connection
         check if storage is healthy
@@ -308,7 +310,7 @@ class RedisCommon:
         except: # noqa
             return False
 
-class RedisStorage(Storage, RedisCommon):
+class RedisStorage(RedisInteractor, Storage):
     """
     rate limit storage with redis as backend
     """
@@ -331,7 +333,7 @@ class RedisStorage(Storage, RedisCommon):
         if not self.storage.ping():
             raise ConfigurationError("unable to connect to redis at %s" % uri) # pragma: no cover
         self.lua_moving_window = self.storage.register_script(
-            RedisCommon.SCRIPT_MOVING_WINDOW
+            RedisStorage.SCRIPT_MOVING_WINDOW
         )
         self.lock_impl = self.storage.lock
 
@@ -342,13 +344,15 @@ class RedisStorage(Storage, RedisCommon):
         :param str key: the key to increment
         :param int expiry: amount in seconds for the key to expire in
         """
-        return self.redis_incr(self.storage, key, expiry, elastic_expiry)
+        return super(RedisStorage, self).incr(
+            key, expiry, self.storage, elastic_expiry
+        )
 
     def get(self, key):
         """
         :param str key: the key to get the counter value for
         """
-        return self.redis_get(self.storage, key)
+        return super(RedisStorage, self).get(key, self.storage)
 
     def acquire_entry(self, key, limit, expiry, no_add=False):
         """
@@ -359,22 +363,24 @@ class RedisStorage(Storage, RedisCommon):
          serves as a 'check'
         :return: True/False
         """
-        return self.redis_acquire_entry(self.storage, key, limit, expiry, no_add)
+        return super(RedisStorage, self).acquire_entry(
+            key, limit, expiry, self.storage, no_add=no_add
+        )
 
     def get_expiry(self, key):
         """
         :param str key: the key to get the expiry for
         """
-        return self.redis_get_expiry(self.storage, key)
+        return super(RedisStorage, self).get_expiry(key, self.storage)
 
     def check(self):
         """
         check if storage is healthy
         """
-        return self.redis_check(self.storage)
+        return super(RedisStorage, self).check(self.storage)
 
 
-class RedisSentinelStorage(Storage, RedisCommon):
+class RedisSentinelStorage(RedisInteractor, Storage):
     """
     rate limit storage with redis sentinel as backend
     """
@@ -408,7 +414,7 @@ class RedisSentinelStorage(Storage, RedisCommon):
         if not master.ping():
             raise ConfigurationError("unable to connect to redis at %s" % self.sentinel) # pragma: no cover
         self.lua_moving_window = master.register_script(
-            RedisCommon.SCRIPT_MOVING_WINDOW
+            RedisSentinelStorage.SCRIPT_MOVING_WINDOW
         )
         self.lock_impl = master.lock
 
@@ -421,14 +427,16 @@ class RedisSentinelStorage(Storage, RedisCommon):
         :param int expiry: amount in seconds for the key to expire in
         """
         master = self.sentinel.master_for(self.service_name)
-        return self.redis_incr(master, key, expiry, elastic_expiry)
+        return super(RedisSentinelStorage, self).incr(
+            key, expiry, master, elastic_expiry
+        )
 
     def get(self, key):
         """
         :param str key: the key to get the counter value for
         """
         slave = self.sentinel.slave_for(self.service_name)
-        return self.redis_get(slave, key)
+        return super(RedisSentinelStorage, self).get(key, slave)
 
     def acquire_entry(self, key, limit, expiry, no_add=False):
         """
@@ -440,21 +448,23 @@ class RedisSentinelStorage(Storage, RedisCommon):
         :return: True/False
         """
         master = self.sentinel.master_for(self.service_name)
-        return self.redis_acquire_entry(master, key, limit, expiry, no_add)
+        return super(RedisSentinelStorage, self).acquire_entry(
+            key, limit, expiry, master, no_add
+        )
 
     def get_expiry(self, key):
         """
         :param str key: the key to get the expiry for
         """
         slave = self.sentinel.slave_for(self.service_name)
-        return self.redis_get_expiry(slave, key)
+        return super(RedisSentinelStorage, self).get_expiry(key, slave)
 
     def check(self):
         """
         check if storage is healthy
         """
         slave = self.sentinel.slave_for(self.service_name)
-        return self.redis_check(slave)
+        return super(RedisSentinelStorage, self).check(slave)
 
 
 class MemcachedStorage(Storage):
