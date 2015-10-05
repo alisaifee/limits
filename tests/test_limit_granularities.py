@@ -18,3 +18,10 @@ class GranularityTests(unittest.TestCase):
         self.assertTrue("1 per 1 day" in str(limits.RateLimitItemPerDay(1)))
         self.assertTrue("1 per 1 month" in str(limits.RateLimitItemPerMonth(1)))
         self.assertTrue("1 per 1 year" in str(limits.RateLimitItemPerYear(1)))
+
+    def test_comparison(self):
+        self.assertTrue(limits.RateLimitItemPerSecond(1) < limits.RateLimitItemPerMinute(1))
+        self.assertTrue(limits.RateLimitItemPerMinute(1) < limits.RateLimitItemPerHour(1))
+        self.assertTrue(limits.RateLimitItemPerHour(1) < limits.RateLimitItemPerDay(1))
+        self.assertTrue(limits.RateLimitItemPerDay(1) < limits.RateLimitItemPerMonth(1))
+        self.assertTrue(limits.RateLimitItemPerMonth(1) < limits.RateLimitItemPerYear(1))
