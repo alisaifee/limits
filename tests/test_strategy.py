@@ -11,8 +11,8 @@ import pymemcache.client
 
 from limits.limits import RateLimitItemPerSecond, RateLimitItemPerMinute
 from limits.storage import (
-    MemoryStorage, RedisStorage,MemcachedStorage
-)
+    MemoryStorage, RedisStorage,MemcachedStorage,
+    RedisSentinelStorage)
 from limits.strategies import (
     MovingWindowRateLimiter,
     FixedWindowElasticExpiryRateLimiter,
@@ -95,6 +95,21 @@ class WindowTests(unittest.TestCase):
         self.assertFalse(limiter.hit(limit))
         time.sleep(1)
         self.assertFalse(limiter.hit(limit))
+        self.assertEqual(limiter.get_window_stats(limit)[1], 0)
+
+    def test_fixed_window_with_elastic_expiry_redis_sentinel(self):
+        storage = RedisSentinelStorage(
+            "redis+sentinel://localhost:26379",
+            service_name="localhost-redis-sentinel"
+        )
+        limiter = FixedWindowElasticExpiryRateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+        self.assertTrue(all([limiter.hit(limit) for _ in range(0,10)]))
+        time.sleep(1)
+        self.assertFalse(limiter.hit(limit))
+        time.sleep(1)
+        self.assertFalse(limiter.hit(limit))
+        self.assertEqual(limiter.get_window_stats(limit)[1], 0)
 
     def test_moving_window_in_memory(self):
         storage = MemoryStorage()
@@ -132,11 +147,9 @@ class WindowTests(unittest.TestCase):
         self.assertTrue(limiter.hit(limit))
         self.assertEqual(limiter.get_window_stats(limit)[1], 0)
 
-    def xest_moving_window_memcached(self):
+    def test_moving_window_memcached(self):
         storage = MemcachedStorage('memcacheD://localhost:11211')
         self.assertRaises(NotImplementedError, MovingWindowRateLimiter, storage)
-
-
 
     def test_test_fixed_window(self):
         with hiro.Timeline().freeze() as timeline:

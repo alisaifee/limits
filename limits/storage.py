@@ -506,9 +506,8 @@ class MemcachedStorage(Storage):
     def call_memcached_func(self, func, *args, **kwargs):
         if 'noreply' in kwargs:
             if 'noreply' not in inspect.getargspec(func).args:
-                kwargs.pop('noreply')
+                kwargs.pop('noreply')  # noqa
         return func(*args, **kwargs)
-
 
     @property
     def storage(self):
