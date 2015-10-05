@@ -11,9 +11,11 @@ from setuptools import setup, find_packages
 import os
 
 this_dir = os.path.abspath(os.path.dirname(__file__))
-REQUIREMENTS = filter(None, open(
-    os.path.join(this_dir, 'requirements', 'main.txt')).read().splitlines())
-
+REQUIREMENTS = [
+    k for k in open(
+        os.path.join(this_dir, 'requirements', 'main.txt')
+    ).read().splitlines() if k.strip()
+]
 import versioneer
 
 versioneer.versionfile_source = "limits/_version.py"
