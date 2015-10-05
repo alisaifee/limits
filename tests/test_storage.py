@@ -28,6 +28,7 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(isinstance(storage_from_string("redis://localhost:6379"), RedisStorage))
         self.assertTrue(isinstance(storage_from_string("memcached://localhost:11211"), MemcachedStorage))
         self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel"), RedisSentinelStorage))
+        self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379/localhost-redis-sentinel"), RedisSentinelStorage))
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
         self.assertRaises(ConfigurationError, storage_from_string, "redis+sentinel://localhost:26379")
 
