@@ -105,7 +105,7 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(limiter.hit(per_min))
 
     def test_pluggable_storage_invalid_construction(self):
-        with self.assertRaises(ConfigurationError):
+        def cons():
             class _(Storage):
                 def incr(self, key, expiry, elastic_expiry=False):
                     return
@@ -115,6 +115,7 @@ class StorageTests(unittest.TestCase):
 
                 def get_expiry(self, key):
                     return time.time()
+        self.assertRaises(ConfigurationError, cons)
 
     def test_pluggable_storage_no_moving_window(self):
         class MyStorage(Storage):
