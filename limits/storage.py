@@ -396,10 +396,10 @@ class RedisSentinelStorage(RedisInteractor, Storage):
             raise ConfigurationError("redis prerequisite not available") # pragma: no cover
 
         parsed = urllib.parse.urlparse(uri)
-        self.sentinel_configuration = []
+        sentinel_configuration = []
         for loc in parsed.netloc.split(","):
             host, port = loc.split(":")
-            self.sentinel_configuration.append((host, int(port)))
+            sentinel_configuration.append((host, int(port)))
         self.service_name = (
             parsed.path.replace("/", "") if parsed.path
             else options.get("service_name", None)
@@ -407,7 +407,7 @@ class RedisSentinelStorage(RedisInteractor, Storage):
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
         self.sentinel = get_dependency("redis.sentinel").Sentinel(
-            self.sentinel_configuration,
+            sentinel_configuration,
             socket_timeout=options.get("socket_timeout", 0.2)
         )
         self.initialize_storage()
