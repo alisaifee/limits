@@ -8,6 +8,8 @@ and storage backends such as redis & memcached.
     :hidden:
 
     string-notation
+    custom-storage
+    storage-url
     strategies
     api
 
@@ -16,23 +18,23 @@ and storage backends such as redis & memcached.
 Quickstart
 ----------
 
-Build the storage backend::
+Initialize the storage backend::
 
     from limits import storage
     memory_storage = storage.MemoryStorage()
 
-Build a rate limiter with the :ref:`moving-window`::
+Initialize a rate limiter with the :ref:`moving-window` strategy::
 
     from limits import strategies
     moving_window = strategies.MovingWindowRateLimiter(memory_storage)
 
 
-Build a rate limit using the :ref:`ratelimit-string`::
+Initialize a rate limit using the :ref:`ratelimit-string`::
 
     from limits import parse
     one_per_minute = parse("1/minute")
 
-Build a rate limit explicitly using a subclass of :class:`RateLimitItem`::
+Initialize a rate limit explicitly using a subclass of :class:`RateLimitItem`::
 
     from limits import RateLimitItemPerSecond
     one_per_second = RateLimitItemPerSecond(1, 1)
