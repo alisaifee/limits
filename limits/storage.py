@@ -24,11 +24,11 @@ SCHEMES = {}
 
 def storage_from_string(storage_string, **options):
     """
-    factory function to get the storage class based on the url of
-    the storage
+    factory function to get an instance of the storage class based
+    on the url of the storage
 
     :param storage_string: a string of the form method://host:port
-    :return: a subclass of :class:`flask_limiter.storage.Storage`
+    :return: an instance of :class:`flask_limiter.storage.Storage`
     """
     scheme = urllib.parse.urlparse(storage_string).scheme
     if not scheme in SCHEMES:
