@@ -5,4 +5,5 @@ coverage
 nose-cov
 pymemcache
 redis
+redis-py-cluster
 hiro>0.1.6
