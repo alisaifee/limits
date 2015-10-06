@@ -3,11 +3,8 @@
 """
 import threading
 import time
-import unittest
 
 import hiro
-import redis
-import pymemcache.client
 
 from limits.limits import RateLimitItemPerSecond, RateLimitItemPerMinute
 from limits.storage import (
@@ -18,13 +15,10 @@ from limits.strategies import (
     FixedWindowElasticExpiryRateLimiter,
     FixedWindowRateLimiter
 )
-from tests import skip_if_pypy
+from tests import skip_if_pypy, StorageTests
 
 
-class WindowTests(unittest.TestCase):
-    def setUp(self):
-        redis.Redis().flushall()
-        pymemcache.client.Client(('localhost', 11211)).flush_all()
+class WindowTests(StorageTests):
 
     def test_fixed_window(self):
         storage = MemoryStorage()

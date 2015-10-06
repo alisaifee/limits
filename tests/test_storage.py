@@ -1,13 +1,13 @@
 import time
 import random
 import threading
-import unittest
 from uuid import uuid4
 
 import hiro
 import mock
 import redis
 import redis.lock
+import redis.sentinel
 
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 from limits.errors import ConfigurationError
@@ -16,13 +16,10 @@ from limits.storage import (
     MemoryStorage, RedisStorage, MemcachedStorage, RedisSentinelStorage,
     RedisClusterStorage, Storage, storage_from_string
 )
+from tests import StorageTests
 
 
-class StorageTests(unittest.TestCase):
-    def setUp(self):
-        redis.Redis().flushall()
-        storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
-        storage.sentinel.master_for('localhost-redis-sentinel').flushall()
+class StorageTests(StorageTests):
 
     def test_storage_string(self):
         self.assertTrue(isinstance(storage_from_string("memory://"), MemoryStorage))
