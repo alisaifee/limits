@@ -21,3 +21,8 @@ Read more at `readthedocs <http://limits.readthedocs.org>`_
 
 
 
+
+
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/alisaifee/limits
+   :target: https://gitter.im/alisaifee/limits?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
