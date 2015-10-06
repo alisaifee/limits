@@ -8,11 +8,13 @@
     :target: https://pypi.python.org/pypi/limits
 .. |landscape| image:: https://landscape.io/github/alisaifee/limits/master/landscape.svg?style=flat-square
     :target: https://landscape.io/github/alisaifee/limits/master
-
+.. |gitter| image:: https://img.shields.io/badge/gitter-join%20chat-blue.svg?style=flat-square
+   :alt: Join the chat at https://gitter.im/alisaifee/limits
+   :target: https://gitter.im/alisaifee/limits?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content
 *************
 limits
 *************
-|travis-ci| |coveralls| |landscape| |pypi| |license|
+|travis-ci| |coveralls| |landscape| |pypi| |gitter| |license|
 
 *limits* provides utilities to implement rate limiting using
 various strategies and storage backends such as redis & memcached.
@@ -22,7 +24,4 @@ Read more at `readthedocs <http://limits.readthedocs.org>`_
 
 
 
-
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-   :alt: Join the chat at https://gitter.im/alisaifee/limits
-   :target: https://gitter.im/alisaifee/limits?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+=badge
