@@ -1,0 +1,76 @@
+PATH := ./redis-git/src:${PATH}
+
+ifndef REDIS_TRIB_RB
+	REDIS_TRIB_RB=redis-git/src/redis-trib.rb
+endif
+
+
+clean:
+	-rm -f MANIFEST
+	-rm -rf dist/
+	-rm -rf build/
+
+cleancov:
+	-rm -rf htmlcov/
+	-coverage combine
+	-coverage erase
+
+cleanmeta:
+	-rm -rf limits.egg-info/
+
+cleanall: clean cleancov cleanmeta
+	-find . -type f -name "*~" -exec rm -f "{}" \;
+	-find . -type f -name "*.orig" -exec rm -f "{}" \;
+	-find . -type f -name "*.rej" -exec rm -f "{}" \;
+	-find . -type f -name "*.pyc" -exec rm -f "{}" \;
+	-find . -type f -name "*.parse-index" -exec rm -f "{}" \;
+
+sdist: cleanmeta
+	python setup.py sdist
+
+bdist: cleanmeta
+	python setup.py bdist_egg
+
+install:
+	python setup.py install
+
+redis-start: redis-cleanup
+	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-0.conf
+	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-1.conf
+	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-2.conf
+	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-3.conf
+	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-4.conf
+	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-5.conf
+	./redis-git/src/redis-server tests/redis-configurations/sentinel/redis-master.conf
+	./redis-git/src/redis-server tests/redis-configurations/sentinel/redis-slave.conf
+	./redis-git/src/redis-server tests/redis-configurations/sentinel/redis-sentinel.conf --sentinel
+
+	echo "yes" | ruby $(REDIS_TRIB_RB) create --replicas 1 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005
+	sleep 5
+
+redis-cleanup:
+	- rm -vf /tmp/redis_cluster_node*.conf 2>/dev/null
+	- rm dump.rdb appendonly.aof - 2>/dev/null
+
+redis-stop:
+	kill `cat /tmp/redis_cluster_node1.pid` || true
+	kill `cat /tmp/redis_cluster_node2.pid` || true
+	kill `cat /tmp/redis_cluster_node3.pid` || true
+	kill `cat /tmp/redis_cluster_node4.pid` || true
+	kill `cat /tmp/redis_cluster_node5.pid` || true
+	kill `cat /tmp/redis-sentinel.pid` || true
+	kill `cat /tmp/redis-master.pid` || true
+	kill `cat /tmp/redis-slave.pid` || true
+	rm -f /tmp/redis_cluster_node1.conf
+	rm -f /tmp/redis_cluster_node2.conf
+	rm -f /tmp/redis_cluster_node3.conf
+	rm -f /tmp/redis_cluster_node4.conf
+	rm -f /tmp/redis_cluster_node5.conf
+
+redis-install:
+	[ ! -e redis-git ] && git clone --depth 1 https://github.com/antirez/redis.git redis-git || true
+	make -C redis-git -j4
+	gem install redis
+	sleep 3
+
+.PHONY: test
