@@ -8,13 +8,13 @@ import hiro
 import mock
 import redis
 import redis.lock
-from redis.sentinel import Sentinel
+
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 from limits.errors import ConfigurationError
 from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import (
     MemoryStorage, RedisStorage, MemcachedStorage, RedisSentinelStorage,
-    Storage, storage_from_string
+    RedisClusterStorage, Storage, storage_from_string
 )
 
 
@@ -30,6 +30,7 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(isinstance(storage_from_string("memcached://localhost:11211"), MemcachedStorage))
         self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel"), RedisSentinelStorage))
         self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379/localhost-redis-sentinel"), RedisSentinelStorage))
+        self.assertTrue(isinstance(storage_from_string("redis+cluster://localhost:7000/"), RedisClusterStorage))
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
         self.assertRaises(ConfigurationError, storage_from_string, "redis+sentinel://localhost:26379")
         with mock.patch("limits.storage.get_dependency") as get_dependency:
@@ -41,6 +42,7 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(storage_from_string("redis://localhost:6379").check())
         self.assertTrue(storage_from_string("memcached://localhost:11211").check())
         self.assertTrue(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel").check())
+        self.assertTrue(storage_from_string("redis+cluster://localhost:7000").check())
 
     def test_in_memory(self):
         with hiro.Timeline().freeze() as timeline:

@@ -488,6 +488,10 @@ class RedisSentinelStorage(RedisInteractor, Storage):
         return super(RedisSentinelStorage, self).check(slave)
 
 
+class RedisClusterStorage(RedisStorage):
+    STORAGE_SCHEME = "redis+cluster"
+
+
 class MemcachedStorage(Storage):
     """
     rate limit storage with memcached as backend
