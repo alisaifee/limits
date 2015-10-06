@@ -13,9 +13,15 @@ services:
     - memcached
 
 before_script:
-    - redis-server ./tests/redis-configurations/redis-master.conf
-    - redis-server ./tests/redis-configurations/redis-slave.conf
-    - redis-server ./tests/redis-configurations/redis-sentinel.conf --sentinel
+    - redis-server ./tests/redis-configurations/sentinel/redis-master.conf
+    - redis-server ./tests/redis-configurations/sentinel/redis-slave.conf
+    - redis-server ./tests/redis-configurations/sentinel/redis-sentinel.conf --sentinel
+    - redis-server ./tests/redis-configurations/cluster/redis-0.conf
+    - redis-server ./tests/redis-configurations/cluster/redis-1.conf
+    - redis-server ./tests/redis-configurations/cluster/redis-2.conf
+    - redis-server ./tests/redis-configurations/cluster/redis-3.conf
+    - redis-server ./tests/redis-configurations/cluster/redis-4.conf
+    - redis-server ./tests/redis-configurations/cluster/redis-5.conf
 
 script: nosetests tests --with-cov -v
 after_success:
