@@ -1,9 +1,12 @@
 .. currentmodule:: limits
+
+Storage Backends
+----------------
+
 .. _storage-scheme:
 
-Storage url scheme
-------------------
-
+Storage scheme
+==============
 **limits** uses a url style storage scheme notation (similar to the JDBC driver
 connection string notation) for configuring and initializing
 storage backends. This notation additionally provides a simple
@@ -21,6 +24,7 @@ lookup and construct an instance of a storage based on the storage scheme. For e
  redis_storage = limits.storage.storage_from_string(uri, **options)
 
 
+========
 Examples
 ========
 
@@ -47,4 +51,8 @@ Redis with Sentinel
  or :code:`redis+sentinel://localhost:26379,localhost:26380/my-redis-service`.
 
  If the database is password protected the password can be provided in the url, for example
- :code:`redis+sentinel://:foobared@localhost:26379/my-redis-service`.
+
+Redis Cluster
+ Requires the location(s) of the redis cluster startup nodes (One is enough).
+ :code:`redis+cluster://localhost:7000`
+ or :code:`redis+cluster://localhost:7000,localhost:70001`

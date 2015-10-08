@@ -9,7 +9,7 @@ and storage backends such as redis & memcached.
 
     string-notation
     custom-storage
-    storage-url
+    storage
     strategies
     api
     changelog
