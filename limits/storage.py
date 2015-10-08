@@ -2,6 +2,7 @@
 
 """
 from abc import abstractmethod, ABCMeta
+from functools import partial
 import inspect
 
 from six.moves import urllib
@@ -489,7 +490,44 @@ class RedisSentinelStorage(RedisInteractor, Storage):
 
 
 class RedisClusterStorage(RedisStorage):
+    """
+    rate limit storage with redis cluster as backend
+    """
     STORAGE_SCHEME = "redis+cluster"
+
+    def __init__(self, uri, **_):
+        """
+        :param str uri: url of the form 'redis+cluster://host:port,host:port'
+        :raise ConfigurationError: when the rediscluster library is not available
+         or if the redis host cannot be pinged.
+        """
+        if not get_dependency("rediscluster"):
+            raise ConfigurationError(
+                "redis-py-cluster prerequisite not available"
+            )  # pragma: no cover
+        parsed = urllib.parse.urlparse(uri)
+        cluster_hosts = []
+        for loc in parsed.netloc.split(","):
+            host, port = loc.split(":")
+            cluster_hosts.append({"host": host, "port": int(port)})
+        self.storage = get_dependency("rediscluster").RedisCluster(
+            startup_nodes=cluster_hosts
+        )
+        self.initialize_storage(uri)
+
+    def initialize_storage(self, uri):
+        if not self.storage.ping():
+            raise ConfigurationError(
+                "unable to connect to redis cluster at %s" % uri
+            )  # pragma: no cover
+        self.lua_moving_window = lambda *a, **k: self.storage.eval(
+            RedisStorage.SCRIPT_MOVING_WINDOW,
+            *a, **k
+        )
+        self.lock_impl = partial(
+            get_dependency("redis").lock.LuaLock, self.storage
+        )
+
 
 
 class MemcachedStorage(Storage):

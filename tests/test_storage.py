@@ -109,6 +109,20 @@ class StorageTests(StorageTests):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    def test_redis_cluster(self):
+        storage = RedisClusterStorage("redis+cluster://localhost:7000")
+        limiter = FixedWindowRateLimiter(storage)
+        per_min = RateLimitItemPerSecond(10)
+        start = time.time()
+        count = 0
+        while time.time() - start < 0.5 and count < 10:
+            self.assertTrue(limiter.hit(per_min))
+            count += 1
+        self.assertFalse(limiter.hit(per_min))
+        while time.time() - start <= 1:
+            time.sleep(0.1)
+        self.assertTrue(limiter.hit(per_min))
+
     def test_pluggable_storage_invalid_construction(self):
         def cons():
             class _(Storage):
@@ -217,3 +231,25 @@ class StorageTests(StorageTests):
         [k.set() for k in events]
         time.sleep(2)
         self.assertTrue(storage.sentinel.slave_for("localhost-redis-sentinel").keys("%s/*" % limit.namespace) == [])
+
+    def test_large_dataset_redis_cluster_moving_window_expiry(self):
+        storage = RedisClusterStorage("redis+cluster://localhost:7000")
+        limiter = MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(1000)
+        # 100 routes
+        fake_routes = [uuid4().hex for _ in range(0,100)]
+        # go as fast as possible in 2 seconds.
+        start = time.time()
+        def smack(e):
+            while not e.is_set():
+                self.assertTrue(limiter.hit(limit, random.choice(fake_routes)))
+        events = [threading.Event() for _ in range(0,100)]
+        threads = [threading.Thread(target=smack, args=(e,)) for e in events]
+        [k.start() for k in threads]
+        while time.time() - start < 2:
+            time.sleep(0.1)
+        [k.set() for k in events]
+        time.sleep(2)
+        self.assertTrue(storage.storage.keys("%s/*" % limit.namespace) == [])
+
+
