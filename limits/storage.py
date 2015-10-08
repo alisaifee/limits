@@ -10,8 +10,8 @@ from six.moves import urllib
 
 try:
     from collections import Counter
-except ImportError: # pragma: no cover
-    from .backports.counter import Counter # pragma: no cover
+except ImportError:  # pragma: no cover
+    from .backports.counter import Counter  # pragma: no cover
 
 import threading
 import time
@@ -23,10 +23,11 @@ from .util import get_dependency
 
 SCHEMES = {}
 
+
 def storage_from_string(storage_string, **options):
     """
     factory function to get an instance of the storage class based
-    on the url of the storage
+    on the uri of the storage
 
     :param storage_string: a string of the form method://host:port
     :return: an instance of :class:`flask_limiter.storage.Storage`
@@ -36,11 +37,13 @@ def storage_from_string(storage_string, **options):
         raise ConfigurationError("unknown storage scheme : %s" % storage_string)
     return SCHEMES[scheme](storage_string, **options)
 
+
 class StorageRegistry(type):
     def __new__(mcs, name, bases, dct):
         storage_scheme = dct.get('STORAGE_SCHEME', None)
         if not bases == (object,) and not storage_scheme:
-            raise ConfigurationError("%s is not configured correctly, it must specify a STORAGE_SCHEME class attribute"  % name)
+            raise ConfigurationError(
+                "%s is not configured correctly, it must specify a STORAGE_SCHEME class attribute" % name)
         cls = super(StorageRegistry, mcs).__new__(mcs, name, bases, dct)
         SCHEMES[storage_scheme] = cls
         return cls
@@ -92,10 +95,12 @@ class Storage(object):
 
 class LockableEntry(threading._RLock):
     __slots__ = ["atime", "expiry"]
+
     def __init__(self, expiry):
         self.atime = time.time()
         self.expiry = self.atime + expiry
         super(LockableEntry, self).__init__()
+
 
 class MemoryStorage(Storage):
     """
@@ -216,6 +221,7 @@ class MemoryStorage(Storage):
         """
         return True
 
+
 class RedisInteractor(object):
     SCRIPT_MOVING_WINDOW = """
         local items = redis.call('lrange', KEYS[1], 0, tonumber(ARGV[2]))
@@ -265,7 +271,7 @@ class RedisInteractor(object):
             connection.expire(key, expiry)
         return value
 
-    def get(self,key, connection):
+    def get(self, key, connection):
         """
         :param connection: Redis connection
         :param str key: the key to get the counter value for
@@ -317,8 +323,9 @@ class RedisInteractor(object):
         """
         try:
             return connection.ping()
-        except: # noqa
+        except:  # noqa
             return False
+
 
 class RedisStorage(RedisInteractor, Storage):
     """
@@ -329,7 +336,7 @@ class RedisStorage(RedisInteractor, Storage):
 
     def __init__(self, uri, **_):
         """
-        :param str redis_url: url of the form 'redis://host:port'
+        :param str uri: uri of the form 'redis://host:port or redis://host:port/db'
         :raise ConfigurationError: when the redis library is not available
          or if the redis host cannot be pinged.
         """
@@ -401,6 +408,7 @@ class RedisSentinelStorage(RedisInteractor, Storage):
 
     def __init__(self, uri, **options):
         """
+        :param str uri: url of the form 'redis+sentinel://host:port,host:port/service_name'
         :raise ConfigurationError: when the redis library is not available
          or if the redis master host cannot be pinged.
         """
@@ -539,8 +547,8 @@ class MemcachedStorage(Storage):
 
     def __init__(self, uri, **options):
         """
-        :param str host: memcached host
-        :param int port: memcached port
+        :param str uri: memcached location of the form
+         'memcached://host:port,host:port'
         :raise ConfigurationError: when pymemcached is not available
         """
         parsed = urllib.parse.urlparse(uri)
