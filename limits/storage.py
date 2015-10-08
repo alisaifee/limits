@@ -503,7 +503,7 @@ class RedisClusterStorage(RedisStorage):
     """
     STORAGE_SCHEME = "redis+cluster"
 
-    def __init__(self, uri, **_):
+    def __init__(self, uri, **options):
         """
         :param str uri: url of the form 'redis+cluster://host:port,host:port'
         :raise ConfigurationError: when the rediscluster library is not available
@@ -519,7 +519,8 @@ class RedisClusterStorage(RedisStorage):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})
         self.storage = get_dependency("rediscluster").RedisCluster(
-            startup_nodes=cluster_hosts
+            startup_nodes=cluster_hosts,
+            max_connections=options.get("max_connections", 1000)
         )
         self.initialize_storage(uri)
 
