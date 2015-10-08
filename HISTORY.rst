@@ -3,6 +3,12 @@
 Changelog
 ---------
 
+1.0.9 2015-10-08
+================
+* Redis Sentinel storage support
+* Drop support for python 2.6
+* Documentation improvements
+
 1.0.7 2015-06-07
 ================
 * No functional change
@@ -31,6 +37,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
