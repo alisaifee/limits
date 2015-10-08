@@ -5,5 +5,5 @@ coverage
 nose-cov
 pymemcache
 redis
-redis-py-cluster
+-e git+https://git@github.com/alisaifee/redis-py-cluster@script-loading#egg=redis-py-cluster
 hiro>0.1.6
