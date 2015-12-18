@@ -214,20 +214,3 @@ class StorageTests(unittest.TestCase):
         [k.set() for k in events]
         time.sleep(2)
         self.assertTrue(storage.sentinel.slave_for("localhost-redis-sentinel").keys("%s/*" % limit.namespace) == [])
-
-
-    def test_failed_redis_lock(self):
-        storage = RedisStorage("redis://localhost:6379")
-        limiter = MovingWindowRateLimiter(storage)
-        limit = RateLimitItemPerSecond(1000)
-        key = limit.key_for("test") + "/LOCK"
-        storage.storage.setnx(key, 1)
-        self.assertRaises(redis.lock.LockError, limiter.hit, limit, "test")
-
-    def test_failed_redis_sentinel_lock(self):
-        storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
-        limiter = MovingWindowRateLimiter(storage)
-        limit = RateLimitItemPerSecond(1000)
-        key = limit.key_for("test") + "/LOCK"
-        storage.sentinel.master_for("localhost-redis-sentinel").setnx(key, 1)
-        self.assertRaises(redis.lock.LockError, limiter.hit, limit, "test")
