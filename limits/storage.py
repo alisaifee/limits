@@ -234,6 +234,23 @@ class RedisInteractor(object):
         return {oldest, a}
         """
 
+    SCRIPT_ACQUIRE_MOVING_WINDOW = """
+        local entry = redis.call('lindex', KEYS[1], tonumber(ARGV[2]) - 1)
+        local timestamp = tonumber(ARGV[1])
+        local expiry = tonumber(ARGV[3])
+        if entry and tonumber(entry) >= timestamp - expiry then
+            return false
+        end
+        local limit = tonumber(ARGV[2])
+        local no_add = tonumber(ARGV[4])
+        if 0 == no_add then
+            redis.call('lpush', KEYS[1], timestamp)
+            redis.call('ltrim', KEYS[1], 0, limit - 1)
+            redis.call('expire', KEYS[1], expiry)
+        end
+        return true
+        """
+
     def incr(self, key, expiry, connection, elastic_expiry=False):
         """
         increments the counter for a given rate limit key
@@ -280,18 +297,10 @@ class RedisInteractor(object):
         :return: True/False
         """
         timestamp = time.time()
-        with self.lock_impl("%s/LOCK" % key, blocking_timeout=1):
-            entry = connection.lindex(key, limit - 1)
-            if entry and float(entry) >= timestamp - expiry:
-                return False
-            else:
-                if not no_add:
-                    with connection.pipeline(transaction=False) as pipeline:
-                        pipeline.lpush(key, timestamp)
-                        pipeline.ltrim(key, 0, limit - 1)
-                        pipeline.expire(key, expiry)
-                        pipeline.execute()
-                return True
+        acquired = self.lua_acquire_window(
+            [key], [timestamp, limit, expiry, int(no_add)]
+        )
+        return bool(acquired)
 
     def get_expiry(self, key, connection=None):
         """
@@ -335,7 +344,9 @@ class RedisStorage(RedisInteractor, Storage):
         self.lua_moving_window = self.storage.register_script(
             RedisStorage.SCRIPT_MOVING_WINDOW
         )
-        self.lock_impl = self.storage.lock
+        self.lua_acquire_window = self.storage.register_script(
+            RedisSentinelStorage.SCRIPT_ACQUIRE_MOVING_WINDOW
+        )
 
     def incr(self, key, expiry, elastic_expiry=False):
         """
@@ -424,7 +435,9 @@ class RedisSentinelStorage(RedisInteractor, Storage):
         self.lua_moving_window = master.register_script(
             RedisSentinelStorage.SCRIPT_MOVING_WINDOW
         )
-        self.lock_impl = master.lock
+        self.lua_acquire_window = master.register_script(
+            RedisSentinelStorage.SCRIPT_ACQUIRE_MOVING_WINDOW
+        )
 
 
     def incr(self, key, expiry, elastic_expiry=False):
