@@ -35,10 +35,16 @@ Memcached
 
 Redis
  Requires the location of the redis server and optionally the database number.
- :code:`redis://localhost:6379` or :code:`redis://localhost:6379/1` (for database `1`)
+ :code:`redis://localhost:6379` or :code:`redis://localhost:6379/1` (for database `1`).
+
+ If the database is password protected the password can be provided in the url, for example
+ :code:`redis://:foobared@localhost:6379`.
 
 Redis with Sentinel
  Requires the location(s) of the redis sentinal instances and the `service-name`
  that is monitored by the sentinels.
  :code:`redis+sentinel://localhost:26379/my-redis-service`
- or :code:`redis+sentinel://localhost:26379,localhost:26380/my-redis-service`
+ or :code:`redis+sentinel://localhost:26379,localhost:26380/my-redis-service`.
+
+ If the database is password protected the password can be provided in the url, for example
+ :code:`redis+sentinel://:foobared@localhost:26379/my-redis-service`.

@@ -5,6 +5,7 @@ import unittest
 from uuid import uuid4
 
 import hiro
+import mock
 import redis
 import redis.lock
 from redis.sentinel import Sentinel
@@ -31,6 +32,9 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379/localhost-redis-sentinel"), RedisSentinelStorage))
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
         self.assertRaises(ConfigurationError, storage_from_string, "redis+sentinel://localhost:26379")
+        with mock.patch("limits.storage.get_dependency") as get_dependency:
+            self.assertTrue(isinstance(storage_from_string("redis+sentinel://:foobared@localhost:26379/localhost-redis-sentinel"), RedisSentinelStorage))
+            self.assertEqual(get_dependency().Sentinel.call_args[1]['password'], 'foobared')
 
     def test_storage_check(self):
         self.assertTrue(storage_from_string("memory://").check())

@@ -397,7 +397,10 @@ class RedisSentinelStorage(RedisInteractor, Storage):
 
         parsed = urllib.parse.urlparse(uri)
         sentinel_configuration = []
-        for loc in parsed.netloc.split(","):
+        password = None
+        if parsed.password:
+            password = parsed.password
+        for loc in parsed.netloc[parsed.netloc.find("@")+1:].split(","):
             host, port = loc.split(":")
             sentinel_configuration.append((host, int(port)))
         self.service_name = (
@@ -408,7 +411,8 @@ class RedisSentinelStorage(RedisInteractor, Storage):
             raise ConfigurationError("'service_name' not provided")
         self.sentinel = get_dependency("redis.sentinel").Sentinel(
             sentinel_configuration,
-            socket_timeout=options.get("socket_timeout", 0.2)
+            socket_timeout=options.get("socket_timeout", 0.2),
+            password=password
         )
         self.initialize_storage()
         super(RedisSentinelStorage, self).__init__()
