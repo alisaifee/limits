@@ -533,8 +533,9 @@ class RedisClusterStorage(RedisStorage):
             RedisStorage.SCRIPT_MOVING_WINDOW,
             *a, **k
         )
-        self.lock_impl = partial(
-            get_dependency("redis").lock.LuaLock, self.storage
+        self.lua_acquire_window = lambda *a, **k: self.storage.eval(
+            RedisStorage.SCRIPT_ACQUIRE_MOVING_WINDOW,
+            *a, **k
         )
 
 
