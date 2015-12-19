@@ -529,13 +529,11 @@ class RedisClusterStorage(RedisStorage):
             raise ConfigurationError(
                 "unable to connect to redis cluster at %s" % uri
             )  # pragma: no cover
-        self.lua_moving_window = lambda *a, **k: self.storage.eval(
-            RedisStorage.SCRIPT_MOVING_WINDOW,
-            *a, **k
+        self.lua_moving_window = self.storage.register_script(
+            RedisSentinelStorage.SCRIPT_MOVING_WINDOW
         )
-        self.lua_acquire_window = lambda *a, **k: self.storage.eval(
-            RedisStorage.SCRIPT_ACQUIRE_MOVING_WINDOW,
-            *a, **k
+        self.lua_acquire_window = self.storage.register_script(
+            RedisSentinelStorage.SCRIPT_ACQUIRE_MOVING_WINDOW
         )
 
 
