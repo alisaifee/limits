@@ -12,6 +12,7 @@ and storage backends such as redis & memcached.
     storage-url
     strategies
     api
+    changelog
 
 .. currentmodule:: limits
 
@@ -67,5 +68,4 @@ References
 * `Redis rate limiting pattern #2 <http://redis.io/commands/INCR>`_
 * `DomainTools redis rate limiter <https://github.com/DomainTools/rate-limit>`_
 
-.. include:: ../../HISTORY.rst
 .. include:: ../../CONTRIBUTIONS.rst

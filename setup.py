@@ -35,7 +35,7 @@ setup(
     install_requires=REQUIREMENTS,
     classifiers=[k for k in open('CLASSIFIERS').read().split('\n') if k],
     description='Rate limiting utilities',
-    long_description=open('README.rst').read() + open('HISTORY.rst').read(),
+    long_description=open('README.rst').read(),
     packages=find_packages(exclude=["tests*"]),
 )
 

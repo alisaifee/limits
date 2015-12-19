@@ -20,5 +20,10 @@ limits
 *limits* provides utilities to implement rate limiting using
 various strategies and storage backends such as redis & memcached.
 
-Read more at `readthedocs <http://limits.readthedocs.org>`_
+*****
+Links
+*****
+
+* `Documentation <http://limits.readthedocs.org>`_
+* `Changelog <http://limits.readthedocs.org/changelog.html>`_
 
