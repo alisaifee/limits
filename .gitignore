@@ -9,3 +9,5 @@ dist/
 htmlcov
 *egg-info*
 *.rdb
+redis-git
+.python-version

@@ -1,6 +1,12 @@
 from functools import wraps
 import platform
+import unittest
 from nose.plugins.skip import SkipTest
+import pymemcache.client
+import redis
+import redis.sentinel
+import rediscluster
+
 
 def test_import():
     import limits
@@ -17,3 +23,13 @@ def skip_if_pypy(fn):
             raise SkipTest
         return fn(*a, **k)
     return __inner
+
+
+class StorageTests(unittest.TestCase):
+    def setUp(self):
+        pymemcache.client.Client(('localhost', 11211)).flush_all()
+        redis.Redis().flushall()
+        redis.sentinel.Sentinel([("localhost", 26379)]).master_for(
+            "localhost-redis-sentinel"
+        ).flushall()
+        rediscluster.RedisCluster("localhost", 7000).flushall()

@@ -1,28 +1,25 @@
 import time
 import random
 import threading
-import unittest
 from uuid import uuid4
 
 import hiro
 import mock
 import redis
 import redis.lock
-from redis.sentinel import Sentinel
+import redis.sentinel
+
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 from limits.errors import ConfigurationError
 from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import (
     MemoryStorage, RedisStorage, MemcachedStorage, RedisSentinelStorage,
-    Storage, storage_from_string
+    RedisClusterStorage, Storage, storage_from_string
 )
+from tests import StorageTests
 
 
-class StorageTests(unittest.TestCase):
-    def setUp(self):
-        redis.Redis().flushall()
-        storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
-        storage.sentinel.master_for('localhost-redis-sentinel').flushall()
+class StorageTests(StorageTests):
 
     def test_storage_string(self):
         self.assertTrue(isinstance(storage_from_string("memory://"), MemoryStorage))
@@ -30,6 +27,7 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(isinstance(storage_from_string("memcached://localhost:11211"), MemcachedStorage))
         self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel"), RedisSentinelStorage))
         self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379/localhost-redis-sentinel"), RedisSentinelStorage))
+        self.assertTrue(isinstance(storage_from_string("redis+cluster://localhost:7000/"), RedisClusterStorage))
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
         self.assertRaises(ConfigurationError, storage_from_string, "redis+sentinel://localhost:26379")
         with mock.patch("limits.storage.get_dependency") as get_dependency:
@@ -41,6 +39,7 @@ class StorageTests(unittest.TestCase):
         self.assertTrue(storage_from_string("redis://localhost:6379").check())
         self.assertTrue(storage_from_string("memcached://localhost:11211").check())
         self.assertTrue(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel").check())
+        self.assertTrue(storage_from_string("redis+cluster://localhost:7000").check())
 
     def test_in_memory(self):
         with hiro.Timeline().freeze() as timeline:
@@ -98,6 +97,20 @@ class StorageTests(unittest.TestCase):
 
     def test_redis_sentinel(self):
         storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
+        limiter = FixedWindowRateLimiter(storage)
+        per_min = RateLimitItemPerSecond(10)
+        start = time.time()
+        count = 0
+        while time.time() - start < 0.5 and count < 10:
+            self.assertTrue(limiter.hit(per_min))
+            count += 1
+        self.assertFalse(limiter.hit(per_min))
+        while time.time() - start <= 1:
+            time.sleep(0.1)
+        self.assertTrue(limiter.hit(per_min))
+
+    def test_redis_cluster(self):
+        storage = RedisClusterStorage("redis+cluster://localhost:7000")
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
         start = time.time()
@@ -218,3 +231,25 @@ class StorageTests(unittest.TestCase):
         [k.set() for k in events]
         time.sleep(2)
         self.assertTrue(storage.sentinel.slave_for("localhost-redis-sentinel").keys("%s/*" % limit.namespace) == [])
+
+    def test_large_dataset_redis_cluster_moving_window_expiry(self):
+        storage = RedisClusterStorage("redis+cluster://localhost:7000")
+        limiter = MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(1000)
+        # 100 routes
+        fake_routes = [uuid4().hex for _ in range(0,100)]
+        # go as fast as possible in 2 seconds.
+        start = time.time()
+        def smack(e):
+            while not e.is_set():
+                self.assertTrue(limiter.hit(limit, random.choice(fake_routes)))
+        events = [threading.Event() for _ in range(0,100)]
+        threads = [threading.Thread(target=smack, args=(e,)) for e in events]
+        [k.start() for k in threads]
+        while time.time() - start < 2:
+            time.sleep(0.1)
+        [k.set() for k in events]
+        time.sleep(2)
+        self.assertTrue(storage.storage.keys("%s/*" % limit.namespace) == [])
+
+
