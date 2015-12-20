@@ -3,6 +3,12 @@
 Changelog
 ---------
 
+1.1 2015-12-20
+==============
+* Redis Cluster support
+* Authentiation for Redis Sentinel
+* Bug fix for locking failures with redis.
+
 1.0.9 2015-10-08
 ================
 * Redis Sentinel storage support
@@ -37,6 +43,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
