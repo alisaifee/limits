@@ -25,5 +25,5 @@ Links
 *****
 
 * `Documentation <http://limits.readthedocs.org>`_
-* `Changelog <http://limits.readthedocs.org/changelog.html>`_
+* `Changelog <http://limits.readthedocs.org/en/stable/changelog.html>`_
 
