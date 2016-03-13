@@ -229,12 +229,9 @@ class MemoryStorage(Storage):
         return True
 
     def reset(self):
-        self.timer.cancel()
-        self.storage = Counter()
-        self.expirations = {}
-        self.events = {}
-        self.timer = threading.Timer(0.01, self.__expire_events)
-        self.timer.start()
+        self.storage.clear()
+        self.expirations.clear()
+        self.events.clear()
 
 
 class RedisInteractor(object):
