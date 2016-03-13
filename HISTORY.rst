@@ -3,6 +3,11 @@
 Changelog
 ---------
 
+1.1.1 2016-03-14
+================
+* Support reset for MemoryStorage
+* Support for `rediss://` storage scheme to connect to redis over ssl
+
 1.1 2015-12-20
 ==============
 * Redis Cluster support
@@ -43,6 +48,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
