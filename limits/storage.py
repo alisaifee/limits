@@ -92,6 +92,13 @@ class Storage(object):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def reset(self):
+        """
+        reset storage to clear limits
+        """
+        raise NotImplementedError
+
 
 class LockableEntry(threading._RLock):
     __slots__ = ["atime", "expiry"]
@@ -220,6 +227,11 @@ class MemoryStorage(Storage):
         check if storage is healthy
         """
         return True
+
+    def reset(self):
+        self.storage.clear()
+        self.expirations.clear()
+        self.events.clear()
 
 
 class RedisInteractor(object):

@@ -52,6 +52,18 @@ class StorageTests(StorageTests):
             timeline.forward(61)
             self.assertTrue(limiter.hit(per_min))
 
+    def test_in_memory_reset(self):
+        storage = MemoryStorage()
+        limiter = FixedWindowRateLimiter(storage)
+        per_min = RateLimitItemPerMinute(10)
+        for i in range(0,10):
+            self.assertTrue(limiter.hit(per_min))
+        self.assertFalse(limiter.hit(per_min))
+        storage.reset()
+        for i in range(0,10):
+            self.assertTrue(limiter.hit(per_min))
+        self.assertFalse(limiter.hit(per_min))
+
     def test_in_memory_expiry(self):
         with hiro.Timeline().freeze() as timeline:
             storage = MemoryStorage()
