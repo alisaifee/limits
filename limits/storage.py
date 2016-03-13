@@ -398,6 +398,12 @@ class RedisStorage(RedisInteractor, Storage):
         """
         return super(RedisStorage, self).check(self.storage)
 
+class RedisSSLStorage(RedisStorage):
+    """
+    rate limit storage with redis as backend using SSL connection
+    """
+
+    STORAGE_SCHEME = "rediss"
 
 class RedisSentinelStorage(RedisInteractor, Storage):
     """
