@@ -102,6 +102,14 @@ class StorageTests(StorageTests):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    def test_redis_reset(self):
+        storage = RedisStorage("redis://localhost:6379")
+        limiter = FixedWindowRateLimiter(storage)
+        for i in range(0, 10000):
+            rate = RateLimitItemPerMinute(i)
+            limiter.hit(rate)
+        self.assertEqual(storage.reset(), 10000)
+
 
     def test_redis_sentinel(self):
         storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
@@ -117,6 +125,14 @@ class StorageTests(StorageTests):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    def test_redis_sentinel_reset(self):
+        storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
+        limiter = FixedWindowRateLimiter(storage)
+        for i in range(0, 10000):
+            rate = RateLimitItemPerMinute(i)
+            limiter.hit(rate)
+        self.assertEqual(storage.reset(), 10000)
+
     def test_redis_cluster(self):
         storage = RedisClusterStorage("redis+cluster://localhost:7000")
         limiter = FixedWindowRateLimiter(storage)
@@ -130,6 +146,14 @@ class StorageTests(StorageTests):
         while time.time() - start <= 1:
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
+
+    def test_redis_cluster_reset(self):
+        storage = RedisClusterStorage("redis+cluster://localhost:7000")
+        limiter = FixedWindowRateLimiter(storage)
+        for i in range(0, 10000):
+            rate = RateLimitItemPerMinute(i)
+            limiter.hit(rate)
+        self.assertEqual(storage.reset(), 10000)
 
     def test_pluggable_storage_invalid_construction(self):
         def cons():

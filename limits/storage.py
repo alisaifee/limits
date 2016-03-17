@@ -268,6 +268,15 @@ class RedisInteractor(object):
         return true
         """
 
+    SCRIPT_CLEAR_KEYS = """
+        local keys = redis.call('keys', KEYS[1])
+        local res = 0
+        for i=1,#keys,5000 do
+            res = res + redis.call('del', unpack(keys, i, math.min(i+4999, #keys)))
+        end
+        return res
+        """
+
     def incr(self, key, expiry, connection, elastic_expiry=False):
         """
         increments the counter for a given rate limit key
@@ -364,6 +373,9 @@ class RedisStorage(RedisInteractor, Storage):
         self.lua_acquire_window = self.storage.register_script(
             self.SCRIPT_ACQUIRE_MOVING_WINDOW
         )
+        self.lua_clear_keys = self.storage.register_script(
+            self.SCRIPT_CLEAR_KEYS
+        )
 
     def incr(self, key, expiry, elastic_expiry=False):
         """
@@ -406,6 +418,17 @@ class RedisStorage(RedisInteractor, Storage):
         check if storage is healthy
         """
         return super(RedisStorage, self).check(self.storage)
+
+    def reset(self):
+        """WARNING, this operation was designed to be fast, but was not tested
+        on a large production based system. Be careful with its usage as it
+        could be slow on very large data sets.
+
+        This function calls a Lua Script to delete keys prefixed with 'LIMITER'
+        in block of 5000."""
+
+        cleared = self.lua_clear_keys(['LIMITER*'])
+        return cleared
 
 class RedisSSLStorage(RedisStorage):
     """
@@ -515,6 +538,19 @@ class RedisClusterStorage(RedisStorage):
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
 
+    def reset(self):
+        """
+        Redis Clusters are sharded and deleting across shards
+        can't be done atomically. Because of this, this reset loops over all
+        keys that are prefixed with 'LIMITER' and calls delete on them, one at
+        a time.
+
+        WARNING, this operation was not tested with extremely large data sets.
+        On a large production based system, care should be taken with its
+        usage as it could be slow on very large data sets"""
+
+        keys = self.storage.keys('LIMITER*')
+        return sum([self.storage.delete(k.decode('utf-8')) for k in keys])
 
 
 class MemcachedStorage(Storage):
