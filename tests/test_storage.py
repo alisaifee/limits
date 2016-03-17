@@ -5,9 +5,6 @@ from uuid import uuid4
 
 import hiro
 import mock
-import redis
-import redis.lock
-import redis.sentinel
 
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 from limits.errors import ConfigurationError
@@ -90,7 +87,6 @@ class StorageTests(StorageTests):
                 self.assertTrue(limiter.hit(per_sec))
                 time.sleep(1)
                 self.assertEqual([], storage.events[per_min.key_for()])
-
 
     def test_redis(self):
         storage = RedisStorage("redis://localhost:6379")
@@ -205,7 +201,6 @@ class StorageTests(StorageTests):
         storage = RedisStorage("redis://localhost:6379")
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
-        keys_start = storage.storage.keys('%s/*' % limit.namespace)
         # 100 routes
         fake_routes = [uuid4().hex for _ in range(0,100)]
         # go as fast as possible in 2 seconds.
@@ -227,7 +222,6 @@ class StorageTests(StorageTests):
         storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
-        keys_start = storage.sentinel.slave_for("localhost-redis-sentinel").keys("%s/*" % limit.namespace)
         # 100 routes
         fake_routes = [uuid4().hex for _ in range(0,100)]
         # go as fast as possible in 2 seconds.

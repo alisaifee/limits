@@ -2,7 +2,6 @@
 
 """
 from abc import abstractmethod, ABCMeta
-from functools import partial
 import inspect
 
 from six.moves import urllib
@@ -233,7 +232,6 @@ class MemoryStorage(Storage):
         self.expirations.clear()
         self.events.clear()
 
-
 class RedisInteractor(object):
     SCRIPT_MOVING_WINDOW = """
         local items = redis.call('lrange', KEYS[1], 0, tonumber(ARGV[2]))
@@ -337,7 +335,6 @@ class RedisInteractor(object):
             return connection.ping()
         except:  # noqa
             return False
-
 
 class RedisStorage(RedisInteractor, Storage):
     """
