@@ -359,10 +359,10 @@ class RedisStorage(RedisInteractor, Storage):
         if not self.storage.ping():
             raise ConfigurationError("unable to connect to redis at %s" % uri) # pragma: no cover
         self.lua_moving_window = self.storage.register_script(
-            RedisStorage.SCRIPT_MOVING_WINDOW
+            self.SCRIPT_MOVING_WINDOW
         )
         self.lua_acquire_window = self.storage.register_script(
-            RedisSentinelStorage.SCRIPT_ACQUIRE_MOVING_WINDOW
+            self.SCRIPT_ACQUIRE_MOVING_WINDOW
         )
 
     def incr(self, key, expiry, elastic_expiry=False):
@@ -414,7 +414,15 @@ class RedisSSLStorage(RedisStorage):
 
     STORAGE_SCHEME = "rediss"
 
-class RedisSentinelStorage(RedisInteractor, Storage):
+    def __init__(self, uri, **options):
+        """
+        :param str uri: uri of the form 'rediss://host:port or rediss://host:port/db'
+        :raise ConfigurationError: when the redis library is not available
+         or if the redis host cannot be pinged.
+        """
+        super(RedisSSLStorage, self).__init__(uri, **options) #noqa
+
+class RedisSentinelStorage(RedisStorage):
     """
     rate limit storage with redis sentinel as backend
     """
@@ -449,67 +457,34 @@ class RedisSentinelStorage(RedisInteractor, Storage):
             socket_timeout=options.get("socket_timeout", 0.2),
             password=password
         )
-        self.initialize_storage()
-        super(RedisSentinelStorage, self).__init__()
+        self.initialize_storage(uri)
+        super(RedisStorage, self).__init__()
 
-    def initialize_storage(self):
-        master = self.sentinel.master_for(self.service_name)
-        if not master.ping():
-            raise ConfigurationError("unable to connect to redis at %s" % self.sentinel) # pragma: no cover
-        self.lua_moving_window = master.register_script(
-            RedisSentinelStorage.SCRIPT_MOVING_WINDOW
-        )
-        self.lua_acquire_window = master.register_script(
-            RedisSentinelStorage.SCRIPT_ACQUIRE_MOVING_WINDOW
-        )
+    @property
+    def storage(self):
+        return self.sentinel.master_for(self.service_name)
 
-
-    def incr(self, key, expiry, elastic_expiry=False):
-        """
-        increments the counter for a given rate limit key
-
-        :param str key: the key to increment
-        :param int expiry: amount in seconds for the key to expire in
-        """
-        master = self.sentinel.master_for(self.service_name)
-        return super(RedisSentinelStorage, self).incr(
-            key, expiry, master, elastic_expiry
-        )
+    @property
+    def storage_slave(self):
+        return self.sentinel.slave_for(self.service_name)
 
     def get(self, key):
         """
         :param str key: the key to get the counter value for
         """
-        slave = self.sentinel.slave_for(self.service_name)
-        return super(RedisSentinelStorage, self).get(key, slave)
-
-    def acquire_entry(self, key, limit, expiry, no_add=False):
-        """
-        :param str key: rate limit key to acquire an entry in
-        :param int limit: amount of entries allowed
-        :param int expiry: expiry of the entry
-        :param bool no_add: if False an entry is not actually acquired but instead
-         serves as a 'check'
-        :return: True/False
-        """
-        master = self.sentinel.master_for(self.service_name)
-        return super(RedisSentinelStorage, self).acquire_entry(
-            key, limit, expiry, master, no_add
-        )
+        return super(RedisStorage, self).get(key, self.storage_slave)
 
     def get_expiry(self, key):
         """
         :param str key: the key to get the expiry for
         """
-        slave = self.sentinel.slave_for(self.service_name)
-        return super(RedisSentinelStorage, self).get_expiry(key, slave)
+        return super(RedisStorage, self).get_expiry(key, self.storage_slave)
 
     def check(self):
         """
         check if storage is healthy
         """
-        slave = self.sentinel.slave_for(self.service_name)
-        return super(RedisSentinelStorage, self).check(slave)
+        return super(RedisStorage, self).check(self.storage_slave)
 
 
 class RedisClusterStorage(RedisStorage):
@@ -538,18 +513,7 @@ class RedisClusterStorage(RedisStorage):
             max_connections=options.get("max_connections", 1000)
         )
         self.initialize_storage(uri)
-
-    def initialize_storage(self, uri):
-        if not self.storage.ping():
-            raise ConfigurationError(
-                "unable to connect to redis cluster at %s" % uri
-            )  # pragma: no cover
-        self.lua_moving_window = self.storage.register_script(
-            RedisSentinelStorage.SCRIPT_MOVING_WINDOW
-        )
-        self.lua_acquire_window = self.storage.register_script(
-            RedisSentinelStorage.SCRIPT_ACQUIRE_MOVING_WINDOW
-        )
+        super(RedisStorage, self).__init__()
 
 
 
