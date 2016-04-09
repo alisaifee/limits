@@ -2,7 +2,6 @@
 
 """
 from abc import abstractmethod, ABCMeta
-from functools import partial
 import inspect
 
 from six.moves import urllib
@@ -233,7 +232,6 @@ class MemoryStorage(Storage):
         self.expirations.clear()
         self.events.clear()
 
-
 class RedisInteractor(object):
     SCRIPT_MOVING_WINDOW = """
         local items = redis.call('lrange', KEYS[1], 0, tonumber(ARGV[2]))
@@ -268,6 +266,15 @@ class RedisInteractor(object):
             redis.call('expire', KEYS[1], expiry)
         end
         return true
+        """
+
+    SCRIPT_CLEAR_KEYS = """
+        local keys = redis.call('keys', KEYS[1])
+        local res = 0
+        for i=1,#keys,5000 do
+            res = res + redis.call('del', unpack(keys, i, math.min(i+4999, #keys)))
+        end
+        return res
         """
 
     def incr(self, key, expiry, connection, elastic_expiry=False):
@@ -338,7 +345,6 @@ class RedisInteractor(object):
         except:  # noqa
             return False
 
-
 class RedisStorage(RedisInteractor, Storage):
     """
     rate limit storage with redis as backend
@@ -362,10 +368,13 @@ class RedisStorage(RedisInteractor, Storage):
         if not self.storage.ping():
             raise ConfigurationError("unable to connect to redis at %s" % uri) # pragma: no cover
         self.lua_moving_window = self.storage.register_script(
-            RedisStorage.SCRIPT_MOVING_WINDOW
+            self.SCRIPT_MOVING_WINDOW
         )
         self.lua_acquire_window = self.storage.register_script(
-            RedisSentinelStorage.SCRIPT_ACQUIRE_MOVING_WINDOW
+            self.SCRIPT_ACQUIRE_MOVING_WINDOW
+        )
+        self.lua_clear_keys = self.storage.register_script(
+            self.SCRIPT_CLEAR_KEYS
         )
 
     def incr(self, key, expiry, elastic_expiry=False):
@@ -410,6 +419,17 @@ class RedisStorage(RedisInteractor, Storage):
         """
         return super(RedisStorage, self).check(self.storage)
 
+    def reset(self):
+        """WARNING, this operation was designed to be fast, but was not tested
+        on a large production based system. Be careful with its usage as it
+        could be slow on very large data sets.
+
+        This function calls a Lua Script to delete keys prefixed with 'LIMITER'
+        in block of 5000."""
+
+        cleared = self.lua_clear_keys(['LIMITER*'])
+        return cleared
+
 class RedisSSLStorage(RedisStorage):
     """
     rate limit storage with redis as backend using SSL connection
@@ -417,7 +437,15 @@ class RedisSSLStorage(RedisStorage):
 
     STORAGE_SCHEME = "rediss"
 
-class RedisSentinelStorage(RedisInteractor, Storage):
+    def __init__(self, uri, **options):
+        """
+        :param str uri: uri of the form 'rediss://host:port or rediss://host:port/db'
+        :raise ConfigurationError: when the redis library is not available
+         or if the redis host cannot be pinged.
+        """
+        super(RedisSSLStorage, self).__init__(uri, **options) #noqa
+
+class RedisSentinelStorage(RedisStorage):
     """
     rate limit storage with redis sentinel as backend
     """
@@ -452,67 +480,34 @@ class RedisSentinelStorage(RedisInteractor, Storage):
             socket_timeout=options.get("socket_timeout", 0.2),
             password=password
         )
-        self.initialize_storage()
-        super(RedisSentinelStorage, self).__init__()
+        self.initialize_storage(uri)
+        super(RedisStorage, self).__init__()
 
-    def initialize_storage(self):
-        master = self.sentinel.master_for(self.service_name)
-        if not master.ping():
-            raise ConfigurationError("unable to connect to redis at %s" % self.sentinel) # pragma: no cover
-        self.lua_moving_window = master.register_script(
-            RedisSentinelStorage.SCRIPT_MOVING_WINDOW
-        )
-        self.lua_acquire_window = master.register_script(
-            RedisSentinelStorage.SCRIPT_ACQUIRE_MOVING_WINDOW
-        )
+    @property
+    def storage(self):
+        return self.sentinel.master_for(self.service_name)
 
-
-    def incr(self, key, expiry, elastic_expiry=False):
-        """
-        increments the counter for a given rate limit key
-
-        :param str key: the key to increment
-        :param int expiry: amount in seconds for the key to expire in
-        """
-        master = self.sentinel.master_for(self.service_name)
-        return super(RedisSentinelStorage, self).incr(
-            key, expiry, master, elastic_expiry
-        )
+    @property
+    def storage_slave(self):
+        return self.sentinel.slave_for(self.service_name)
 
     def get(self, key):
         """
         :param str key: the key to get the counter value for
         """
-        slave = self.sentinel.slave_for(self.service_name)
-        return super(RedisSentinelStorage, self).get(key, slave)
-
-    def acquire_entry(self, key, limit, expiry, no_add=False):
-        """
-        :param str key: rate limit key to acquire an entry in
-        :param int limit: amount of entries allowed
-        :param int expiry: expiry of the entry
-        :param bool no_add: if False an entry is not actually acquired but instead
-         serves as a 'check'
-        :return: True/False
-        """
-        master = self.sentinel.master_for(self.service_name)
-        return super(RedisSentinelStorage, self).acquire_entry(
-            key, limit, expiry, master, no_add
-        )
+        return super(RedisStorage, self).get(key, self.storage_slave)
 
     def get_expiry(self, key):
         """
         :param str key: the key to get the expiry for
         """
-        slave = self.sentinel.slave_for(self.service_name)
-        return super(RedisSentinelStorage, self).get_expiry(key, slave)
+        return super(RedisStorage, self).get_expiry(key, self.storage_slave)
 
     def check(self):
         """
         check if storage is healthy
         """
-        slave = self.sentinel.slave_for(self.service_name)
-        return super(RedisSentinelStorage, self).check(slave)
+        return super(RedisStorage, self).check(self.storage_slave)
 
 
 class RedisClusterStorage(RedisStorage):
@@ -541,19 +536,21 @@ class RedisClusterStorage(RedisStorage):
             max_connections=options.get("max_connections", 1000)
         )
         self.initialize_storage(uri)
+        super(RedisStorage, self).__init__()
 
-    def initialize_storage(self, uri):
-        if not self.storage.ping():
-            raise ConfigurationError(
-                "unable to connect to redis cluster at %s" % uri
-            )  # pragma: no cover
-        self.lua_moving_window = self.storage.register_script(
-            RedisSentinelStorage.SCRIPT_MOVING_WINDOW
-        )
-        self.lua_acquire_window = self.storage.register_script(
-            RedisSentinelStorage.SCRIPT_ACQUIRE_MOVING_WINDOW
-        )
+    def reset(self):
+        """
+        Redis Clusters are sharded and deleting across shards
+        can't be done atomically. Because of this, this reset loops over all
+        keys that are prefixed with 'LIMITER' and calls delete on them, one at
+        a time.
 
+        WARNING, this operation was not tested with extremely large data sets.
+        On a large production based system, care should be taken with its
+        usage as it could be slow on very large data sets"""
+
+        keys = self.storage.keys('LIMITER*')
+        return sum([self.storage.delete(k.decode('utf-8')) for k in keys])
 
 
 class MemcachedStorage(Storage):

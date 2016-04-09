@@ -5,9 +5,6 @@ from uuid import uuid4
 
 import hiro
 import mock
-import redis
-import redis.lock
-import redis.sentinel
 
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 from limits.errors import ConfigurationError
@@ -91,7 +88,6 @@ class StorageTests(StorageTests):
                 time.sleep(1)
                 self.assertEqual([], storage.events[per_min.key_for()])
 
-
     def test_redis(self):
         storage = RedisStorage("redis://localhost:6379")
         limiter = FixedWindowRateLimiter(storage)
@@ -105,6 +101,14 @@ class StorageTests(StorageTests):
         while time.time() - start <= 1:
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
+
+    def test_redis_reset(self):
+        storage = RedisStorage("redis://localhost:6379")
+        limiter = FixedWindowRateLimiter(storage)
+        for i in range(0, 10000):
+            rate = RateLimitItemPerMinute(i)
+            limiter.hit(rate)
+        self.assertEqual(storage.reset(), 10000)
 
 
     def test_redis_sentinel(self):
@@ -121,6 +125,14 @@ class StorageTests(StorageTests):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    def test_redis_sentinel_reset(self):
+        storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
+        limiter = FixedWindowRateLimiter(storage)
+        for i in range(0, 10000):
+            rate = RateLimitItemPerMinute(i)
+            limiter.hit(rate)
+        self.assertEqual(storage.reset(), 10000)
+
     def test_redis_cluster(self):
         storage = RedisClusterStorage("redis+cluster://localhost:7000")
         limiter = FixedWindowRateLimiter(storage)
@@ -134,6 +146,14 @@ class StorageTests(StorageTests):
         while time.time() - start <= 1:
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
+
+    def test_redis_cluster_reset(self):
+        storage = RedisClusterStorage("redis+cluster://localhost:7000")
+        limiter = FixedWindowRateLimiter(storage)
+        for i in range(0, 10000):
+            rate = RateLimitItemPerMinute(i)
+            limiter.hit(rate)
+        self.assertEqual(storage.reset(), 10000)
 
     def test_pluggable_storage_invalid_construction(self):
         def cons():
@@ -205,7 +225,6 @@ class StorageTests(StorageTests):
         storage = RedisStorage("redis://localhost:6379")
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
-        keys_start = storage.storage.keys('%s/*' % limit.namespace)
         # 100 routes
         fake_routes = [uuid4().hex for _ in range(0,100)]
         # go as fast as possible in 2 seconds.
@@ -227,7 +246,6 @@ class StorageTests(StorageTests):
         storage = RedisSentinelStorage("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel")
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
-        keys_start = storage.sentinel.slave_for("localhost-redis-sentinel").keys("%s/*" % limit.namespace)
         # 100 routes
         fake_routes = [uuid4().hex for _ in range(0,100)]
         # go as fast as possible in 2 seconds.
