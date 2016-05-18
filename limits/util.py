@@ -6,9 +6,12 @@ import sys
 
 from .limits import GRANULARITIES
 
-
+SINGLE_EXPR = re.compile(
+    r"\s*([0-9]+)\s*(/|\s*per\s*)\s*([0-9]+)*\s*(hour|minute|second|day|month|year)s?\s*",
+    re.IGNORECASE
+)
 EXPR = re.compile(
-    r"\s*([0-9]+)\s*(/|\s*per\s*)\s*([0-9]+)*\s*(hour|minute|second|day|month|year)[s]*",
+    r"^{SINGLE}(:?;{SINGLE})*$".format(SINGLE=SINGLE_EXPR.pattern),
     re.IGNORECASE
 )
 
@@ -37,7 +40,8 @@ def parse_many(limit_string):
     if not EXPR.match(limit_string):
         raise ValueError("couldn't parse rate limit string '%s'" % limit_string)
     limits = []
-    for amount, _, multiples, granularity_string in  EXPR.findall(limit_string):
+    for limit in limit_string.split(';'):
+        amount, _, multiples, granularity_string = SINGLE_EXPR.match(limit).groups()
         granularity = granularity_from_string(granularity_string)
         limits.append(granularity(amount, multiples))
     return limits
