@@ -3,6 +3,11 @@
 Changelog
 ---------
 
+1.2.0 2016-09-21
+================
+* Support reset for RedisStorage
+* Improved rate limit string parsing
+
 1.1.1 2016-03-14
 ================
 * Support reset for MemoryStorage
@@ -48,6 +53,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
