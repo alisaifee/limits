@@ -30,7 +30,7 @@ setup(
     license="MIT",
     url="https://limits.readthedocs.org",
     zip_safe=False,
-    version=versioneer.get_version(),
+    version='2.0.0',
     cmdclass=versioneer.get_cmdclass(),
     install_requires=REQUIREMENTS,
     classifiers=[k for k in open('CLASSIFIERS').read().split('\n') if k],
