@@ -277,6 +277,15 @@ class RedisInteractor(object):
         return res
         """
 
+    SCRIPT_INCR_EXPIRE = """
+        local current
+        current = redis.call("incr",KEYS[1])
+        if tonumber(current) == 1 then
+            redis.call("expire",KEYS[1],ARGV[1])
+        end
+        return current
+    """
+
     def incr(self, key, expiry, connection, elastic_expiry=False):
         """
         increments the counter for a given rate limit key
@@ -376,6 +385,9 @@ class RedisStorage(RedisInteractor, Storage):
         self.lua_clear_keys = self.storage.register_script(
             self.SCRIPT_CLEAR_KEYS
         )
+        self.lua_incr_expire = self.storage.register_script(
+            RedisStorage.SCRIPT_INCR_EXPIRE
+        )
 
     def incr(self, key, expiry, elastic_expiry=False):
         """
@@ -384,9 +396,12 @@ class RedisStorage(RedisInteractor, Storage):
         :param str key: the key to increment
         :param int expiry: amount in seconds for the key to expire in
         """
-        return super(RedisStorage, self).incr(
-            key, expiry, self.storage, elastic_expiry
-        )
+        if elastic_expiry:
+            return super(RedisStorage, self).incr(
+                key, expiry, self.storage, elastic_expiry
+            )
+        else:
+            return self.lua_incr_expire([key], [expiry])
 
     def get(self, key):
         """
