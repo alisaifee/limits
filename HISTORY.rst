@@ -3,6 +3,10 @@
 Changelog
 ---------
 
+1.2.1 2017-01-02
+================
+* Fix regression with csv as multiple limits
+
 1.2.0 2016-09-21
 ================
 * Support reset for RedisStorage
@@ -53,6 +57,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
