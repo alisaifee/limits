@@ -46,6 +46,12 @@ class RatelimitParserTests(unittest.TestCase):
         self.assertEqual(parsed[0].get_expiry(), 3 * 60 * 60)
         self.assertEqual(parsed[1].get_expiry(), 1)
 
+    def test_parse_many_csv(self):
+        parsed = parse_many("1 per 3 hour, 1 per second")
+        self.assertEqual(len(parsed), 2)
+        self.assertEqual(parsed[0].get_expiry(), 3 * 60 * 60)
+        self.assertEqual(parsed[1].get_expiry(), 1)
+
     def test_invalid_string(self):
         self.assertRaises(ValueError, parse, "1 per millienium")
         self.assertRaises(ValueError, granularity_from_string, "millenium")
