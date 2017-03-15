@@ -37,6 +37,10 @@ Memcached
  :code:`memcached://localhost:11211` or
  :code:`memcached://localhost:11211,localhost:11212,192.168.1.1:11211` etc...
 
+Memcached on Google App Engine
+  Requires that you are working in the GAE SDK and have those API libraries available.
+  :code: `gaememcached://`
+
 Redis
  Requires the location of the redis server and optionally the database number.
  :code:`redis://localhost:6379` or :code:`redis://localhost:6379/1` (for database `1`).
