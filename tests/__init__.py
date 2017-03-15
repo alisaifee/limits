@@ -1,6 +1,8 @@
 from functools import wraps
 import platform
 import unittest
+
+from google.appengine.ext import testbed
 from nose.plugins.skip import SkipTest
 import pymemcache.client
 import redis
@@ -33,3 +35,6 @@ class StorageTests(unittest.TestCase):
             "localhost-redis-sentinel"
         ).flushall()
         rediscluster.RedisCluster("localhost", 7000).flushall()
+        tb = testbed.Testbed()
+        tb.activate()
+        tb.init_memcache_stub()

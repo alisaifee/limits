@@ -16,6 +16,7 @@ services:
 before_script:
     - make -f Makefile.tests redis-install
     - make -f Makefile.tests redis-start
+    - make -f Makefile.tests memcached-gae-install
 
 script: nosetests tests --with-cov -v
 after_success:
