@@ -583,7 +583,9 @@ class MemcachedStorage(Storage):
         """
         parsed = urllib.parse.urlparse(uri)
         self.cluster = []
-        for loc in parsed.netloc.split(","):
+        for loc in parsed.netloc.strip().split(","):
+            if not loc:
+              continue
             host, port = loc.split(":")
             self.cluster.append((host, int(port)))
         self.library = options.get('library', 'pymemcache.client')
@@ -667,7 +669,7 @@ class MemcachedStorage(Storage):
         except:  # noqa
             return False
 
-class GAEMemcachedStorage(Storage):
+class GAEMemcachedStorage(MemcachedStorage):
     """
     rate limit storage with GAE memcache as backend
     """
@@ -675,44 +677,9 @@ class GAEMemcachedStorage(Storage):
     STORAGE_SCHEME = "gaememcached"
 
     def __init__(self, uri, **options):
-        """
-        :param str uri: memcached location of the form
-         'gae_memcache://hello'
-        :raise ConfigurationError: when pymemcached is not available
-        """
-        self.library = 'google.appengine.api.memcache'
-        self.client_getter = self.get_client
+      options["library"] = "google.appengine.api.memcache"
+      super(GAEMemcachedStorage, self).__init__(uri, **options)
 
-        if not get_dependency(self.library):
-            raise ConfigurationError("GAE memcache prerequisite not available."
-                                     " Make sure you are in the correct environment." % self.library)  # pragma: no cover
-        self.local_storage = threading.local()
-        self.local_storage.storage = None
-
-    def get_client(self, module):
-        """
-        returns a GAE memcache client.
-        :return:
-        """
-        return module.Client()
-
-    def call_memcached_func(self, func, *args, **kwargs):
-        return func(*args, **kwargs)
-
-    @property
-    def storage(self):
-        """
-        lazily creates a memcached client instance using a thread local
-        """
-        if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
-            self.local_storage.storage = self.client_getter(get_dependency(self.library))
-        return self.local_storage.storage
-
-    def get(self, key):
-        """
-        :param str key: the key to get the counter value for
-        """
-        return int(self.storage.get(key) or 0)
 
     def incr(self, key, expiry, elastic_expiry=False):
         """
@@ -740,12 +707,6 @@ class GAEMemcachedStorage(Storage):
                 return self.storage.incr(key, 1)
         self.call_memcached_func(self.storage.set, key + "/expires", expiry + time.time(), expiry)
         return 1
-
-    def get_expiry(self, key):
-        """
-        :param str key: the key to get the expiry for
-        """
-        return int(float(self.storage.get(key + "/expires") or time.time()))
 
     def check(self):
         """
