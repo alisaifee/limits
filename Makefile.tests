@@ -73,4 +73,14 @@ redis-install:
 	gem install redis
 	sleep 3
 
+memcached-gae-install:
+	wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-147.0.0-linux-x86_64.tar.gz
+	tar -xvzf google-cloud-sdk-147.0.0-linux-x86_64.tar.gz
+	yes Y | google-cloud-sdk/bin/gcloud components install app-engine-python
+	ln -s google-cloud-sdk/platform/google_appengine/google google
+
+memcached-gae-clean:
+	rm google-cloud-sdk-147.0.0-linux-x86_64.tar.gz
+	rm -r google-cloud-sdk
+
 .PHONY: test
