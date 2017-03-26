@@ -68,7 +68,7 @@ redis-stop:
 	rm -f /tmp/redis_cluster_node5.conf
 
 redis-install:
-	[ ! -e redis-git ] && git clone --depth 1 https://github.com/antirez/redis.git redis-git || true
+	[ ! -e redis-git ] && git clone --depth 1 --branch 3.2.8 https://github.com/antirez/redis.git redis-git || true
 	make -C redis-git -j4
 	gem install redis
 	sleep 3
