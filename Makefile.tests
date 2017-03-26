@@ -75,7 +75,7 @@ redis-install:
 
 memcached-gae-install:
 	wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-147.0.0-linux-x86_64.tar.gz
-	tar -xvzf google-cloud-sdk-147.0.0-linux-x86_64.tar.gz
+	tar -xzf google-cloud-sdk-147.0.0-linux-x86_64.tar.gz
 	yes Y | google-cloud-sdk/bin/gcloud components install app-engine-python
 	ln -s google-cloud-sdk/platform/google_appengine/google google
 
