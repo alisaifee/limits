@@ -3,7 +3,7 @@ nose==1.3.7
 mock==2.0.0
 coverage==4.4.1
 nose-cov==1.6
-pymemcache
+pymemcache==1.4.3
 redis
 redis-py-cluster>=1.1.0
 PyYAML
