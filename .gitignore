@@ -11,3 +11,6 @@ htmlcov
 *.rdb
 redis-git
 .python-version
+# gae test files
+google-cloud-sdk/
+google
