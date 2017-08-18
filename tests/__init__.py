@@ -3,6 +3,7 @@ import platform
 import unittest
 
 from google.appengine.ext import testbed
+import sys
 from nose.plugins.skip import SkipTest
 import pymemcache.client
 import redis
@@ -18,13 +19,24 @@ def test_module_version():
     assert limits.__version__ is not None
 
 
-def skip_if_pypy(fn):
+def skip_if(cond, fn):
     @wraps(fn)
     def __inner(*a, **k):
-        if platform.python_implementation().lower() == "pypy":
+        if cond() if callable(cond) else cond:
             raise SkipTest
         return fn(*a, **k)
     return __inner
+
+
+def skip_if_pypy(fn):
+    return skip_if(platform.python_implementation().lower() == 'pypy', fn)
+
+
+PY3 = sys.version_info >= (3,)
+
+
+def skip_if_py3(fn):
+    return skip_if(PY3, fn)
 
 
 class StorageTests(unittest.TestCase):
@@ -35,6 +47,7 @@ class StorageTests(unittest.TestCase):
             "localhost-redis-sentinel"
         ).flushall()
         rediscluster.RedisCluster("localhost", 7000).flushall()
-        tb = testbed.Testbed()
-        tb.activate()
-        tb.init_memcache_stub()
+        if not PY3:
+            tb = testbed.Testbed()
+            tb.activate()
+            tb.init_memcache_stub()

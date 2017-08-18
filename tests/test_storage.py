@@ -13,7 +13,7 @@ from limits.storage import (
     MemoryStorage, RedisStorage, MemcachedStorage, RedisSentinelStorage,
     RedisClusterStorage, Storage, GAEMemcachedStorage, storage_from_string
 )
-from tests import StorageTests
+from tests import StorageTests, PY3, skip_if_py3
 
 
 class StorageTests(StorageTests):
@@ -26,7 +26,8 @@ class StorageTests(StorageTests):
         self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel"), RedisSentinelStorage))
         self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379/localhost-redis-sentinel"), RedisSentinelStorage))
         self.assertTrue(isinstance(storage_from_string("redis+cluster://localhost:7000/"), RedisClusterStorage))
-        self.assertTrue(isinstance(storage_from_string("gaememcached://"), GAEMemcachedStorage))
+        if not PY3:
+            self.assertTrue(isinstance(storage_from_string("gaememcached://"), GAEMemcachedStorage))
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
         self.assertRaises(ConfigurationError, storage_from_string, "redis+sentinel://localhost:26379")
         with mock.patch("limits.storage.get_dependency") as get_dependency:
@@ -39,7 +40,8 @@ class StorageTests(StorageTests):
         self.assertTrue(storage_from_string("memcached://localhost:11211").check())
         self.assertTrue(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel").check())
         self.assertTrue(storage_from_string("redis+cluster://localhost:7000").check())
-        self.assertTrue(storage_from_string("gaememcached://").check())
+        if not PY3:
+            self.assertTrue(storage_from_string("gaememcached://").check())
 
     def test_in_memory(self):
         with hiro.Timeline().freeze() as timeline:
@@ -224,6 +226,7 @@ class StorageTests(StorageTests):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    @skip_if_py3
     def test_gae_memcached(self):
         storage = GAEMemcachedStorage("gaememcached://")
         limiter = FixedWindowRateLimiter(storage)
