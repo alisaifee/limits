@@ -18,11 +18,6 @@ REQUIREMENTS = [
 ]
 import versioneer
 
-versioneer.versionfile_source = "limits/_version.py"
-versioneer.versionfile_build = "limits/version.py"
-versioneer.tag_prefix = ""
-versioneer.parentdir_prefix = "limits-"
-
 setup(
     name='limits',
     author=__author__,
