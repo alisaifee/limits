@@ -31,13 +31,6 @@ def skip_if_pypy(fn):
     return skip_if(platform.python_implementation().lower() == 'pypy', fn)
 
 
-PY3 = sys.version_info >= (3,)
-
-
-def skip_if_py3(fn):
-    return skip_if(PY3, fn)
-
-
 class StorageTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 11211)).flush_all()

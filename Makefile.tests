@@ -10,7 +10,7 @@ else
 GAE_INSTALLED = 0
 endif
 
-PY_MAJOR=$(shell python -c "import sys;print(sys.version_info[0])")
+PY_VERSION =$(shell python -c "import sys;print('.'.join(str(k) for k in sys.version_info[0:2]))")
 
 clean:
 	-rm -f MANIFEST
@@ -83,7 +83,7 @@ redis-install:
 	sleep 3
 
 memcached-gae-install:
-ifeq ($(PY_MAJOR),2)
+ifeq ($(PY_VERSION),2.7)
 ifeq ($(GAE_INSTALLED),0)
 	export CLOUDSDK_PYTHON=$$(which python)
 	wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-167.0.0-linux-x86_64.tar.gz -P /var/tmp/;

@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import hiro
 import mock
+import sys
 
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 from limits.errors import ConfigurationError
@@ -13,8 +14,9 @@ from limits.storage import (
     MemoryStorage, RedisStorage, MemcachedStorage, RedisSentinelStorage,
     RedisClusterStorage, Storage, GAEMemcachedStorage, storage_from_string
 )
-from tests import StorageTests, PY3, skip_if_py3
+from tests import StorageTests, skip_if
 
+RUN_GAE = sys.version_info[:2] == (2, 7)
 
 class StorageTests(StorageTests):
 
@@ -26,7 +28,7 @@ class StorageTests(StorageTests):
         self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel"), RedisSentinelStorage))
         self.assertTrue(isinstance(storage_from_string("redis+sentinel://localhost:26379/localhost-redis-sentinel"), RedisSentinelStorage))
         self.assertTrue(isinstance(storage_from_string("redis+cluster://localhost:7000/"), RedisClusterStorage))
-        if not PY3:
+        if RUN_GAE:
             self.assertTrue(isinstance(storage_from_string("gaememcached://"), GAEMemcachedStorage))
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
         self.assertRaises(ConfigurationError, storage_from_string, "redis+sentinel://localhost:26379")
@@ -40,7 +42,7 @@ class StorageTests(StorageTests):
         self.assertTrue(storage_from_string("memcached://localhost:11211").check())
         self.assertTrue(storage_from_string("redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel").check())
         self.assertTrue(storage_from_string("redis+cluster://localhost:7000").check())
-        if not PY3:
+        if RUN_GAE:
             self.assertTrue(storage_from_string("gaememcached://").check())
 
     def test_in_memory(self):
@@ -226,7 +228,7 @@ class StorageTests(StorageTests):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
-    @skip_if_py3
+    @skip_if(not RUN_GAE)
     def test_gae_memcached(self):
         storage = GAEMemcachedStorage("gaememcached://")
         limiter = FixedWindowRateLimiter(storage)
