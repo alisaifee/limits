@@ -5,6 +5,13 @@ python:
     - "3.4"
     - "3.5"
     - "pypy"
+    - "pypy-5.3"
+
+cache:
+  pip: true
+  directories:
+  - google-cloud-sdk
+  - redis-git
 
 install:
     - pip install -r requirements/ci.txt
