@@ -9,6 +9,7 @@ import redis
 import redis.sentinel
 import rediscluster
 
+RUN_GAE = sys.version_info[:2] == (2, 7)
 
 def test_import():
     import limits
@@ -39,7 +40,7 @@ class StorageTests(unittest.TestCase):
             "localhost-redis-sentinel"
         ).flushall()
         rediscluster.RedisCluster("localhost", 7000).flushall()
-        if not PY3:
+        if RUN_GAE:
             from google.appengine.ext import testbed
             tb = testbed.Testbed()
             tb.activate()

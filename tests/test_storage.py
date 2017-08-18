@@ -14,9 +14,8 @@ from limits.storage import (
     MemoryStorage, RedisStorage, MemcachedStorage, RedisSentinelStorage,
     RedisClusterStorage, Storage, GAEMemcachedStorage, storage_from_string
 )
-from tests import StorageTests, skip_if
+from tests import StorageTests, skip_if, RUN_GAE
 
-RUN_GAE = sys.version_info[:2] == (2, 7)
 
 class StorageTests(StorageTests):
 
