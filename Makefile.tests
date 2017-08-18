@@ -53,6 +53,7 @@ redis-cleanup:
 	- rm dump.rdb appendonly.aof - 2>/dev/null
 
 redis-stop:
+	kill `cat /tmp/redis_cluster_node0.pid` || true
 	kill `cat /tmp/redis_cluster_node1.pid` || true
 	kill `cat /tmp/redis_cluster_node2.pid` || true
 	kill `cat /tmp/redis_cluster_node3.pid` || true
@@ -61,6 +62,7 @@ redis-stop:
 	kill `cat /tmp/redis-sentinel.pid` || true
 	kill `cat /tmp/redis-master.pid` || true
 	kill `cat /tmp/redis-slave.pid` || true
+	rm -f /tmp/redis_cluster_node0.conf
 	rm -f /tmp/redis_cluster_node1.conf
 	rm -f /tmp/redis_cluster_node2.conf
 	rm -f /tmp/redis_cluster_node3.conf
@@ -74,13 +76,13 @@ redis-install:
 	sleep 3
 
 memcached-gae-install:
-	wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-147.0.0-linux-x86_64.tar.gz
-	tar -xzf google-cloud-sdk-147.0.0-linux-x86_64.tar.gz
-	yes Y | google-cloud-sdk/bin/gcloud components install app-engine-python
-	ln -s google-cloud-sdk/platform/google_appengine/google google
+	./scripts/gae-setup.sh
 
 memcached-gae-clean:
-	rm google-cloud-sdk-147.0.0-linux-x86_64.tar.gz
+	rm google-cloud-sdk-167.0.0-linux-x86_64.tar.gz
 	rm -r google-cloud-sdk
+
+tests: redis-install redis-start memcached-gae-install
+	nosetests tests --with-cov -v
 
 .PHONY: test
