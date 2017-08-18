@@ -9,7 +9,10 @@ import redis
 import redis.sentinel
 import rediscluster
 
-RUN_GAE = sys.version_info[:2] == (2, 7)
+RUN_GAE = (
+    sys.version_info[:2] == (2, 7)
+    and platform.python_implementation() == 'CPython'
+)
 
 def test_import():
     import limits
