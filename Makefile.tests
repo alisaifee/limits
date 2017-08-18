@@ -4,6 +4,13 @@ ifndef REDIS_TRIB_RB
 	REDIS_TRIB_RB=redis-git/src/redis-trib.rb
 endif
 
+ifneq ("$(wildcard ./google-cloud-sdk/platform/google_appengine/VERSION)","")
+GAE_INSTALLED = 1
+else
+GAE_INSTALLED = 0
+endif
+
+PY_MAJOR=$(shell python -c "import sys;print(sys.version_info[0])")
 
 clean:
 	-rm -f MANIFEST
@@ -70,13 +77,24 @@ redis-stop:
 	rm -f /tmp/redis_cluster_node5.conf
 
 redis-install:
-	[ ! -e redis-git ] && git clone --depth 1 --branch 3.2.8 https://github.com/antirez/redis.git redis-git || true
+	[ ! -e redis-git/.git ] && git clone --depth 1 --branch 3.2.8 https://github.com/antirez/redis.git redis-git || true
 	make -C redis-git -j4
 	gem install redis
 	sleep 3
 
 memcached-gae-install:
-	./scripts/gae-setup.sh
+ifeq ($(PY_MAJOR),2)
+ifeq ($(GAE_INSTALLED),0)
+	export CLOUDSDK_PYTHON=$$(which python)
+	wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-167.0.0-linux-x86_64.tar.gz -P /var/tmp/;
+	rm -rf google-cloud-sdk
+	tar -xzf /var/tmp/google-cloud-sdk-167.0.0-linux-x86_64.tar.gz
+	yes Y | google-cloud-sdk/bin/gcloud components install app-engine-python
+else
+	echo "GAE SDK already setup"
+endif
+	ln -sf google-cloud-sdk/platform/google_appengine/google google
+endif
 
 memcached-gae-clean:
 	rm google-cloud-sdk-167.0.0-linux-x86_64.tar.gz
