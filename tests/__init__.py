@@ -2,7 +2,6 @@ from functools import wraps
 import platform
 import unittest
 
-from google.appengine.ext import testbed
 import sys
 from nose.plugins.skip import SkipTest
 import pymemcache.client
@@ -48,6 +47,7 @@ class StorageTests(unittest.TestCase):
         ).flushall()
         rediscluster.RedisCluster("localhost", 7000).flushall()
         if not PY3:
+            from google.appengine.ext import testbed
             tb = testbed.Testbed()
             tb.activate()
             tb.init_memcache_stub()
