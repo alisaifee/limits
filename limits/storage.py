@@ -6,7 +6,6 @@ import inspect
 
 from six.moves import urllib
 
-
 try:
     from collections import Counter
 except ImportError:  # pragma: no cover
@@ -33,16 +32,20 @@ def storage_from_string(storage_string, **options):
     """
     scheme = urllib.parse.urlparse(storage_string).scheme
     if not scheme in SCHEMES:
-        raise ConfigurationError("unknown storage scheme : %s" % storage_string)
+        raise ConfigurationError(
+            "unknown storage scheme : %s" % storage_string
+        )
     return SCHEMES[scheme](storage_string, **options)
 
 
 class StorageRegistry(type):
     def __new__(mcs, name, bases, dct):
         storage_scheme = dct.get('STORAGE_SCHEME', None)
-        if not bases == (object,) and not storage_scheme:
+        if not bases == (object, ) and not storage_scheme:
             raise ConfigurationError(
-                "%s is not configured correctly, it must specify a STORAGE_SCHEME class attribute" % name)
+                "%s is not configured correctly, it must specify a STORAGE_SCHEME class attribute"
+                % name
+            )
         cls = super(StorageRegistry, mcs).__new__(mcs, name, bases, dct)
         SCHEMES[storage_scheme] = cls
         return cls
@@ -129,7 +132,10 @@ class MemoryStorage(Storage):
         for key in self.events.keys():
             for event in list(self.events[key]):
                 with event:
-                    if event.expiry <= time.time() and event in self.events[key]:
+                    if (
+                        event.expiry <= time.time() and
+                        event in self.events[key]
+                    ):
                         self.events[key].remove(event)
         for key in list(self.expirations.keys()):
             if self.expirations[key] <= time.time():
@@ -203,9 +209,9 @@ class MemoryStorage(Storage):
         :param int expiry: expiry of the entry
         """
         timestamp = time.time()
-        return len(
-            [k for k in self.events[key] if k.atime >= timestamp - expiry]
-        ) if self.events.get(key) else 0
+        return len([
+            k for k in self.events[key] if k.atime >= timestamp - expiry
+        ]) if self.events.get(key) else 0
 
     def get_moving_window(self, key, limit, expiry):
         """
@@ -231,6 +237,7 @@ class MemoryStorage(Storage):
         self.storage.clear()
         self.expirations.clear()
         self.events.clear()
+
 
 class RedisInteractor(object):
     SCRIPT_MOVING_WINDOW = """
@@ -314,14 +321,11 @@ class RedisInteractor(object):
         :param int expiry: expiry of entry
         """
         timestamp = time.time()
-        window = self.lua_moving_window(
-            [key], [int(timestamp - expiry), limit]
-        )
+        window = self.lua_moving_window([key],
+                                        [int(timestamp - expiry), limit])
         return window or (timestamp, 0)
 
-    def acquire_entry(
-            self, key, limit, expiry, connection, no_add=False
-    ):
+    def acquire_entry(self, key, limit, expiry, connection, no_add=False):
         """
         :param str key: rate limit key to acquire an entry in
         :param int limit: amount of entries allowed
@@ -333,7 +337,8 @@ class RedisInteractor(object):
         """
         timestamp = time.time()
         acquired = self.lua_acquire_window(
-            [key], [timestamp, limit, expiry, int(no_add)]
+            [key],
+            [timestamp, limit, expiry, int(no_add)]
         )
         return bool(acquired)
 
@@ -354,6 +359,7 @@ class RedisInteractor(object):
         except:  # noqa
             return False
 
+
 class RedisStorage(RedisInteractor, Storage):
     """
     rate limit storage with redis as backend
@@ -368,14 +374,18 @@ class RedisStorage(RedisInteractor, Storage):
          or if the redis host cannot be pinged.
         """
         if not get_dependency("redis"):
-            raise ConfigurationError("redis prerequisite not available") # pragma: no cover
+            raise ConfigurationError(
+                "redis prerequisite not available"
+            )  # pragma: no cover
         self.storage = get_dependency("redis").from_url(uri)
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
 
     def initialize_storage(self, uri):
         if not self.storage.ping():
-            raise ConfigurationError("unable to connect to redis at %s" % uri) # pragma: no cover
+            raise ConfigurationError(
+                "unable to connect to redis at %s" % uri
+            )  # pragma: no cover
         self.lua_moving_window = self.storage.register_script(
             self.SCRIPT_MOVING_WINDOW
         )
@@ -397,7 +407,7 @@ class RedisStorage(RedisInteractor, Storage):
         :param int expiry: amount in seconds for the key to expire in
         """
         if elastic_expiry:
-            return super(RedisStorage, self).incr(
+            return super(RedisStorage,self).incr(
                 key, expiry, self.storage, elastic_expiry
             )
         else:
@@ -445,6 +455,7 @@ class RedisStorage(RedisInteractor, Storage):
         cleared = self.lua_clear_keys(['LIMITER*'])
         return cleared
 
+
 class RedisSSLStorage(RedisStorage):
     """
     rate limit storage with redis as backend using SSL connection
@@ -458,7 +469,8 @@ class RedisSSLStorage(RedisStorage):
         :raise ConfigurationError: when the redis library is not available
          or if the redis host cannot be pinged.
         """
-        super(RedisSSLStorage, self).__init__(uri, **options) #noqa
+        super(RedisSSLStorage, self).__init__(uri, **options)  #noqa
+
 
 class RedisSentinelStorage(RedisStorage):
     """
@@ -474,19 +486,21 @@ class RedisSentinelStorage(RedisStorage):
          or if the redis master host cannot be pinged.
         """
         if not get_dependency("redis"):
-            raise ConfigurationError("redis prerequisite not available") # pragma: no cover
+            raise ConfigurationError(
+                "redis prerequisite not available"
+            )  # pragma: no cover
 
         parsed = urllib.parse.urlparse(uri)
         sentinel_configuration = []
         password = None
         if parsed.password:
             password = parsed.password
-        for loc in parsed.netloc[parsed.netloc.find("@")+1:].split(","):
+        for loc in parsed.netloc[parsed.netloc.find("@") + 1:].split(","):
             host, port = loc.split(":")
             sentinel_configuration.append((host, int(port)))
         self.service_name = (
-            parsed.path.replace("/", "") if parsed.path
-            else options.get("service_name", None)
+            parsed.path.replace("/", "")
+            if parsed.path else options.get("service_name", None)
         )
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
@@ -585,15 +599,17 @@ class MemcachedStorage(Storage):
         self.cluster = []
         for loc in parsed.netloc.strip().split(","):
             if not loc:
-              continue
+                continue
             host, port = loc.split(":")
             self.cluster.append((host, int(port)))
         self.library = options.get('library', 'pymemcache.client')
         self.client_getter = options.get('client_getter', self.get_client)
 
         if not get_dependency(self.library):
-            raise ConfigurationError("memcached prerequisite not available."
-                                     " please install %s" % self.library)  # pragma: no cover
+            raise ConfigurationError(
+                "memcached prerequisite not available."
+                " please install %s" % self.library
+            )  # pragma: no cover
         self.local_storage = threading.local()
         self.local_storage.storage = None
 
@@ -617,8 +633,13 @@ class MemcachedStorage(Storage):
         """
         lazily creates a memcached client instance using a thread local
         """
-        if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
-            self.local_storage.storage = self.client_getter(get_dependency(self.library), self.cluster)
+        if not (
+            hasattr(self.local_storage, "storage")
+            and self.local_storage.storage
+        ):
+            self.local_storage.storage = self.client_getter(
+                get_dependency(self.library), self.cluster
+            )
         return self.local_storage.storage
 
     def get(self, key):
@@ -636,21 +657,36 @@ class MemcachedStorage(Storage):
         :param bool elastic_expiry: whether to keep extending the rate limit
          window every hit.
         """
-        if not self.call_memcached_func(self.storage.add, key, 1, expiry, noreply=False):
+        if not self.call_memcached_func(
+            self.storage.add, key, 1, expiry, noreply=False
+        ):
             if elastic_expiry:
                 value, cas = self.storage.gets(key)
                 retry = 0
                 while (
-                        not self.call_memcached_func(self.storage.cas, key, int(value or 0)+1, cas, expiry)
-                        and retry < self.MAX_CAS_RETRIES
+                    not self.call_memcached_func(
+                        self.storage.cas, key, int(value or 0) + 1, cas, expiry
+                    ) and retry < self.MAX_CAS_RETRIES
                 ):
                     value, cas = self.storage.gets(key)
                     retry += 1
-                self.call_memcached_func(self.storage.set, key + "/expires", expiry + time.time(), expire=expiry, noreply=False)
+                self.call_memcached_func(
+                    self.storage.set,
+                    key + "/expires",
+                    expiry + time.time(),
+                    expire=expiry,
+                    noreply=False
+                )
                 return int(value or 0) + 1
             else:
                 return self.storage.incr(key, 1)
-        self.call_memcached_func(self.storage.set, key + "/expires", expiry + time.time(), expire=expiry, noreply=False)
+        self.call_memcached_func(
+            self.storage.set,
+            key + "/expires",
+            expiry + time.time(),
+            expire=expiry,
+            noreply=False
+        )
         return 1
 
     def get_expiry(self, key):
@@ -669,6 +705,7 @@ class MemcachedStorage(Storage):
         except:  # noqa
             return False
 
+
 class GAEMemcachedStorage(MemcachedStorage):
     """
     rate limit storage with GAE memcache as backend
@@ -677,9 +714,8 @@ class GAEMemcachedStorage(MemcachedStorage):
     STORAGE_SCHEME = "gaememcached"
 
     def __init__(self, uri, **options):
-      options["library"] = "google.appengine.api.memcache"
-      super(GAEMemcachedStorage, self).__init__(uri, **options)
-
+        options["library"] = "google.appengine.api.memcache"
+        super(GAEMemcachedStorage, self).__init__(uri, **options)
 
     def incr(self, key, expiry, elastic_expiry=False):
         """
@@ -696,16 +732,22 @@ class GAEMemcachedStorage(MemcachedStorage):
                 value = self.storage.gets(key)
                 retry = 0
                 while (
-                        not self.call_memcached_func(self.storage.cas, key, int(value or 0)+1, expiry)
-                        and retry < self.MAX_CAS_RETRIES
+                    not self.call_memcached_func(
+                        self.storage.cas, key, int(value or 0) + 1, expiry
+                    ) and retry < self.MAX_CAS_RETRIES
                 ):
                     value = self.storage.gets(key)
                     retry += 1
-                self.call_memcached_func(self.storage.set, key + "/expires", expiry + time.time(), expiry)
+                self.call_memcached_func(
+                    self.storage.set, key + "/expires", expiry + time.time(),
+                    expiry
+                )
                 return int(value or 0) + 1
             else:
                 return self.storage.incr(key, 1)
-        self.call_memcached_func(self.storage.set, key + "/expires", expiry + time.time(), expiry)
+        self.call_memcached_func(
+            self.storage.set, key + "/expires", expiry + time.time(), expiry
+        )
         return 1
 
     def check(self):

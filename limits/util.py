@@ -12,9 +12,11 @@ SINGLE_EXPR = re.compile(
     re.IGNORECASE
 )
 EXPR = re.compile(
-    r"^{SINGLE}(:?{SEPARATORS}{SINGLE})*$".format(SINGLE=SINGLE_EXPR.pattern, SEPARATORS=SEPARATORS.pattern),
-    re.IGNORECASE
+    r"^{SINGLE}(:?{SEPARATORS}{SINGLE})*$".format(
+        SINGLE=SINGLE_EXPR.pattern, SEPARATORS=SEPARATORS.pattern
+    ), re.IGNORECASE
 )
+
 
 def get_dependency(dep):
     """
@@ -24,7 +26,7 @@ def get_dependency(dep):
     try:
         __import__(dep)
         return sys.modules[dep]
-    except ImportError: # pragma: no cover
+    except ImportError:  # pragma: no cover
         return None
 
 
@@ -39,13 +41,17 @@ def parse_many(limit_string):
 
     """
     if not EXPR.match(limit_string):
-        raise ValueError("couldn't parse rate limit string '%s'" % limit_string)
+        raise ValueError(
+            "couldn't parse rate limit string '%s'" % limit_string
+        )
     limits = []
     for limit in SEPARATORS.split(limit_string):
-        amount, _, multiples, granularity_string = SINGLE_EXPR.match(limit).groups()
+        amount, _, multiples, granularity_string = SINGLE_EXPR.match(limit
+                                                                     ).groups()
         granularity = granularity_from_string(granularity_string)
         limits.append(granularity(amount, multiples))
     return limits
+
 
 def parse(limit_string):
     """
@@ -70,4 +76,3 @@ def granularity_from_string(granularity_string):
         if granularity.check_granularity_string(granularity_string):
             return granularity
     raise ValueError("no granularity matched for %s" % granularity_string)
-

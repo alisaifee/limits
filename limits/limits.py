@@ -4,8 +4,8 @@
 from six import add_metaclass
 try:
     from functools import total_ordering
-except ImportError: # pragma: no cover
-    from .backports.total_ordering import total_ordering # pragma: no cover
+except ImportError:  # pragma: no cover
+    from .backports.total_ordering import total_ordering  # pragma: no cover
 
 TIME_TYPES = dict(
     day=(60 * 60 * 24, "day"),
@@ -21,8 +21,8 @@ GRANULARITIES = {}
 
 class RateLimitItemMeta(type):
     def __new__(cls, name, parents, dct):
-        granularity = super(RateLimitItemMeta, cls).__new__(cls, name, parents,
-                                                   dct)
+        granularity = super(RateLimitItemMeta,
+                            cls).__new__(cls, name, parents, dct)
         if 'granularity' in dct:
             GRANULARITIES[dct['granularity'][1]] = granularity
         return granularity
@@ -42,6 +42,7 @@ class RateLimitItem(object):
     """
     __metaclass__ = RateLimitItemMeta
     __slots__ = ["namespace", "amount", "multiples", "granularity"]
+
     def __init__(self, amount, multiples=1, namespace='LIMITER'):
         self.namespace = namespace
         self.amount = int(amount)
@@ -70,15 +71,15 @@ class RateLimitItem(object):
          each identifier appended with a '/' delimiter.
         """
         remainder = "/".join(
-            identifiers + (
-                str(self.amount), str(self.multiples), self.granularity[1]
-            )
+            identifiers +
+            (str(self.amount), str(self.multiples), self.granularity[1])
         )
         return "%s/%s" % (self.namespace, remainder)
 
     def __eq__(self, other):
-        return (self.amount == other.amount
-                and self.granularity == other.granularity
+        return (
+            self.amount == other.amount
+            and self.granularity == other.granularity
         )
 
     def __repr__(self):
@@ -88,6 +89,7 @@ class RateLimitItem(object):
 
     def __lt__(self, other):
         return self.granularity[0] < other.granularity[0]
+
 
 class RateLimitItemPerYear(RateLimitItem):
     """
@@ -129,4 +131,3 @@ class RateLimitItemPerSecond(RateLimitItem):
     per second rate limited resource.
     """
     granularity = TIME_TYPES["second"]
-
