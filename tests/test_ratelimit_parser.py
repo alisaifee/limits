@@ -53,6 +53,7 @@ class RatelimitParserTests(unittest.TestCase):
         self.assertEqual(parsed[1].get_expiry(), 1)
 
     def test_invalid_string(self):
+        self.assertRaises(ValueError, parse, None)
         self.assertRaises(ValueError, parse, "1 per millienium")
         self.assertRaises(ValueError, granularity_from_string, "millenium")
         self.assertRaises(ValueError, parse_many, "1 per year; 2 per decade")

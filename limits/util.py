@@ -4,6 +4,8 @@
 import re
 import sys
 
+import six
+
 from .limits import GRANULARITIES
 
 
@@ -41,7 +43,7 @@ def parse_many(limit_string):
     :return: a list of :class:`RateLimitItem` instances.
 
     """
-    if not EXPR.match(limit_string):
+    if not (isinstance(limit_string, six.string_types) and EXPR.match(limit_string)):
         raise ValueError(
             "couldn't parse rate limit string '%s'" % limit_string
         )
