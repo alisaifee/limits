@@ -6,6 +6,7 @@ import sys
 
 from .limits import GRANULARITIES
 
+
 SEPARATORS = re.compile(r"[,;|]{1}")
 SINGLE_EXPR = re.compile(
     r"\s*([0-9]+)\s*(/|\s*per\s*)\s*([0-9]+)*\s*(hour|minute|second|day|month|year)s?\s*",

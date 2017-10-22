@@ -2,10 +2,21 @@
 
 """
 from six import add_metaclass
+
 try:
     from functools import total_ordering
 except ImportError:  # pragma: no cover
     from .backports.total_ordering import total_ordering  # pragma: no cover
+
+def safe_string(value):
+    """
+    consistently converts a value to a string
+    :param value:
+    :return: str
+    """
+    if isinstance(value, bytes):
+        return value.decode()
+    return str(value)
 
 TIME_TYPES = dict(
     day=(60 * 60 * 24, "day"),
@@ -71,8 +82,8 @@ class RateLimitItem(object):
          each identifier appended with a '/' delimiter.
         """
         remainder = "/".join(
-            identifiers +
-            (str(self.amount), str(self.multiples), self.granularity[1])
+            [safe_string(k) for k in identifiers] +
+            [safe_string(self.amount), safe_string(self.multiples), self.granularity[1]]
         )
         return "%s/%s" % (self.namespace, remainder)
 
