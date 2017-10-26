@@ -12,6 +12,7 @@ cache:
   - redis-git
 
 install:
+    - pip install -U setuptools
     - pip install -r requirements/ci.txt
 
 services:
