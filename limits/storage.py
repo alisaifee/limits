@@ -371,7 +371,6 @@ class RedisStorage(RedisInteractor, Storage):
         """
         :param str uri: uri of the form 'redis://host:port or redis://host:port/db'
         :raise ConfigurationError: when the redis library is not available
-         or if the redis host cannot be pinged.
         """
         if not get_dependency("redis"):
             raise ConfigurationError(
@@ -382,10 +381,6 @@ class RedisStorage(RedisInteractor, Storage):
         super(RedisStorage, self).__init__()
 
     def initialize_storage(self, uri):
-        if not self.storage.ping():
-            raise ConfigurationError(
-                "unable to connect to redis at %s" % uri
-            )  # pragma: no cover
         self.lua_moving_window = self.storage.register_script(
             self.SCRIPT_MOVING_WINDOW
         )
