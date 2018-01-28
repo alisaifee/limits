@@ -402,9 +402,8 @@ class RedisStorage(RedisInteractor, Storage):
         :param int expiry: amount in seconds for the key to expire in
         """
         if elastic_expiry:
-            return super(RedisStorage,self).incr(
-                key, expiry, self.storage, elastic_expiry
-            )
+            return super(RedisStorage,
+                         self).incr(key, expiry, self.storage, elastic_expiry)
         else:
             return self.lua_incr_expire([key], [expiry])
 
@@ -660,7 +659,8 @@ class MemcachedStorage(Storage):
                 retry = 0
                 while (
                     not self.call_memcached_func(
-                        self.storage.cas, key, int(value or 0) + 1, cas, expiry
+                        self.storage.cas, key,
+                        int(value or 0) + 1, cas, expiry
                     ) and retry < self.MAX_CAS_RETRIES
                 ):
                     value, cas = self.storage.gets(key)
@@ -728,7 +728,8 @@ class GAEMemcachedStorage(MemcachedStorage):
                 retry = 0
                 while (
                     not self.call_memcached_func(
-                        self.storage.cas, key, int(value or 0) + 1, expiry
+                        self.storage.cas, key,
+                        int(value or 0) + 1, expiry
                     ) and retry < self.MAX_CAS_RETRIES
                 ):
                     value = self.storage.gets(key)

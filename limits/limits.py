@@ -8,6 +8,7 @@ try:
 except ImportError:  # pragma: no cover
     from .backports.total_ordering import total_ordering  # pragma: no cover
 
+
 def safe_string(value):
     """
     consistently converts a value to a string
@@ -17,6 +18,7 @@ def safe_string(value):
     if isinstance(value, bytes):
         return value.decode()
     return str(value)
+
 
 TIME_TYPES = dict(
     day=(60 * 60 * 24, "day"),
@@ -81,10 +83,10 @@ class RateLimitItem(object):
         :return: a string key identifying this resource with
          each identifier appended with a '/' delimiter.
         """
-        remainder = "/".join(
-            [safe_string(k) for k in identifiers] +
-            [safe_string(self.amount), safe_string(self.multiples), self.granularity[1]]
-        )
+        remainder = "/".join([safe_string(k) for k in identifiers] + [
+            safe_string(self.amount),
+            safe_string(self.multiples), self.granularity[1]
+        ])
         return "%s/%s" % (self.namespace, remainder)
 
     def __eq__(self, other):

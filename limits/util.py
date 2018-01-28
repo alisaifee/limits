@@ -8,7 +8,6 @@ import six
 
 from .limits import GRANULARITIES
 
-
 SEPARATORS = re.compile(r"[,;|]{1}")
 SINGLE_EXPR = re.compile(
     r"\s*([0-9]+)\s*(/|\s*per\s*)\s*([0-9]+)*\s*(hour|minute|second|day|month|year)s?\s*",
@@ -43,7 +42,10 @@ def parse_many(limit_string):
     :return: a list of :class:`RateLimitItem` instances.
 
     """
-    if not (isinstance(limit_string, six.string_types) and EXPR.match(limit_string)):
+    if not (
+        isinstance(limit_string, six.string_types)
+        and EXPR.match(limit_string)
+    ):
         raise ValueError(
             "couldn't parse rate limit string '%s'" % limit_string
         )
