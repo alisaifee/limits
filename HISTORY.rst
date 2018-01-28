@@ -3,6 +3,10 @@
 Changelog
 ---------
 
+1.3 2018-01-28
+==============
+* Remove pinging redis on initialization
+
 1.2.1 2017-01-02
 ================
 * Fix regression with csv as multiple limits
@@ -57,6 +61,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
