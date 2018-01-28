@@ -367,9 +367,10 @@ class RedisStorage(RedisInteractor, Storage):
 
     STORAGE_SCHEME = "redis"
 
-    def __init__(self, uri, **_):
+    def __init__(self, uri, **options):
         """
         :param str uri: uri of the form 'redis://host:port or redis://host:port/db'
+        :param dict options: options
         :raise ConfigurationError: when the redis library is not available
          or if the redis host cannot be pinged.
         """
@@ -378,11 +379,11 @@ class RedisStorage(RedisInteractor, Storage):
                 "redis prerequisite not available"
             )  # pragma: no cover
         self.storage = get_dependency("redis").from_url(uri)
-        self.initialize_storage(uri)
+        self.initialize_storage(uri, **options)
         super(RedisStorage, self).__init__()
 
-    def initialize_storage(self, uri):
-        if not self.storage.ping():
+    def initialize_storage(self, uri, **options):
+        if options.get('check', True) and not self.check():
             raise ConfigurationError(
                 "unable to connect to redis at %s" % uri
             )  # pragma: no cover
