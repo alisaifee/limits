@@ -58,6 +58,19 @@ Check specific limits without hitting them::
         time.sleep(0.01)
     assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
 
+
+Development
+-----------
+Since `limits` integrates with various backend storages, local development and running tests
+can require some setup. Basic `redis` & `memcached` installations are expected to be available in your environment.
+If you are working with :ref:`redis-cluster`, :ref:`redis-sentinel` or :ref:`gae-memcached` you can use the makefile
+``Makefile.tests`` to help with setting up development dependencies::
+
+    make -f Makefile.tests redis-start memcached-gae-install
+    # hack hack hack
+    # run tests
+    make -f Makefile.tests redis-stop
+
 Projects using *limits*
 -------------------------
 * `Flask-Limiter <http://flask-limiter.readthedocs.org>`_ : Rate limiting extension for Flask applications.
