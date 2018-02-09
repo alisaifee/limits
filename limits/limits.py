@@ -90,6 +90,8 @@ class RateLimitItem(object):
         return "%s/%s" % (self.namespace, remainder)
 
     def __eq__(self, other):
+        if other is None:
+            return False
         return (
             self.amount == other.amount
             and self.granularity == other.granularity
@@ -101,6 +103,8 @@ class RateLimitItem(object):
         )
 
     def __lt__(self, other):
+        if other is None:
+            return False
         return self.granularity[0] < other.granularity[0]
 
 
