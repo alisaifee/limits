@@ -293,10 +293,77 @@ class RedisInteractor(object):
         return current
     """
 
+    SCRIPT_ACQUIRE_TOKEN = """
+        local key = KEYS[1]
+        local intervalPerToken = tonumber(ARGV[2])
+        local currentTime = tonumber(ARGV[1])
+        local maxToken = tonumber(ARGV[3])
+        local initToken = tonumber(ARGV[4])
+        local maxInterval = tonumber(ARGV[5])
+        local tokens
+        local bucket = redis.call("hmget", key, "lastTime", "lastToken")
+        local lastTime = bucket[1]
+        local lastToken = bucket[2]
+        if lastTime == false or lastToken == false then
+            tokens = initToken
+            redis.call('hset', key, 'lastTime', currentTime)
+        else
+            local thisInterval = currentTime - tonumber(lastTime)
+            if thisInterval > maxInterval then
+                tokens = initToken
+                redis.call('hset', key, 'lastTime', currentTime)
+            elseif thisInterval > 0 then
+                local tokensToAdd = math.floor(thisInterval / intervalPerToken)
+                tokens = math.min(lastToken + tokensToAdd, maxToken)
+                redis.call('hset', key, 'lastTime', lastTime + intervalPerToken * tokensToAdd)
+            else
+                tokens = lastToken
+            end
+        end
+        if tokens == 0 then
+            redis.call('hset', key, 'lastToken', tokens)
+            return false
+        else
+            redis.call('hset', key, 'lastToken', tokens - 1)
+            return true
+        end
+    """
+
+    SCRIPT_TOKEN_BUCKET = """
+        local key = KEYS[1]
+        local intervalPerToken = tonumber(ARGV[2])
+        local currentTime = tonumber(ARGV[1])
+        local maxToken = tonumber(ARGV[3])
+        local initToken = tonumber(ARGV[4])
+        local maxInterval = tonumber(ARGV[5])
+        local tokens
+        local bucket = redis.call("hmget", key, "lastTime", "lastToken")
+        local lastTime = bucket[1]
+        local lastToken = bucket[2]
+        local newTime
+        if lastTime == false or lastToken == false then
+            tokens = initToken
+            newTime = currentTime
+        else
+            local thisInterval = currentTime - tonumber(lastTime)
+            if thisInterval > maxInterval then
+                 tokens = initToken
+                 newTime = currentTime 
+            elseif thisInterval > 0 then
+                local tokensToAdd = math.floor(thisInterval / intervalPerToken)
+                tokens = math.min(lastToken + tokensToAdd, maxToken)
+                newTime = lastTime + intervalPerToken * tokensToAdd
+            else
+                tokens = lastToken
+                newTime = lastTime
+            end
+        end
+        return {newTime, tokens}
+    """
+
     def incr(self, key, expiry, connection, elastic_expiry=False):
         """
         increments the counter for a given rate limit key
-
         :param connection: Redis connection
         :param str key: the key to increment
         :param int expiry: amount in seconds for the key to expire in
@@ -316,7 +383,6 @@ class RedisInteractor(object):
     def get_moving_window(self, key, limit, expiry):
         """
         returns the starting point and the number of entries in the moving window
-
         :param str key: rate limit key
         :param int expiry: expiry of entry
         """
@@ -359,6 +425,12 @@ class RedisInteractor(object):
         except:  # noqa
             return False
 
+    def get_token_bucket(self, key, current_time, interval_per_token, max_tokens, init_tokens, max_interval):
+        return self.lua_token_bucket(
+            [key],
+            [current_time, interval_per_token, max_tokens, init_tokens, max_interval]
+        )
+
 
 class RedisStorage(RedisInteractor, Storage):
     """
@@ -370,10 +442,10 @@ class RedisStorage(RedisInteractor, Storage):
     def __init__(self, uri, **_):
         """
         :param str uri: uri of the form 'redis://host:port or redis://host:port/db'
-        :raise ConfigurationError: when the redis library is not available
+        :raise RateLimiterConfigError: when the redis library is not available
         """
         if not get_dependency("redis"):
-            raise ConfigurationError(
+            raise RateLimiterConfigError(
                 "redis prerequisite not available"
             )  # pragma: no cover
         self.storage = get_dependency("redis").from_url(uri)
@@ -393,11 +465,16 @@ class RedisStorage(RedisInteractor, Storage):
         self.lua_incr_expire = self.storage.register_script(
             RedisStorage.SCRIPT_INCR_EXPIRE
         )
+        self.lua_acquire_token = self.storage.register_script(
+            RedisStorage.SCRIPT_ACQUIRE_TOKEN
+        )
+        self.lua_token_bucket = self.storage.register_script(
+            RedisStorage.SCRIPT_TOKEN_BUCKET
+        )
 
     def incr(self, key, expiry, elastic_expiry=False):
         """
         increments the counter for a given rate limit key
-
         :param str key: the key to increment
         :param int expiry: amount in seconds for the key to expire in
         """
@@ -442,12 +519,19 @@ class RedisStorage(RedisInteractor, Storage):
         """WARNING, this operation was designed to be fast, but was not tested
         on a large production based system. Be careful with its usage as it
         could be slow on very large data sets.
-
         This function calls a Lua Script to delete keys prefixed with 'LIMITER'
         in block of 5000."""
 
         cleared = self.lua_clear_keys(['LIMITER*'])
         return cleared
+
+    def acquire_token(self, key, current_time, interval_per_token,
+                      max_tokens, init_tokens, max_interval):
+        print(key, current_time, interval_per_token, max_tokens, init_tokens, max_interval)
+        return self.lua_acquire_token(
+            [key],
+            [current_time, interval_per_token, max_tokens, init_tokens, max_interval]
+        )
 
 
 class RedisSSLStorage(RedisStorage):
