@@ -364,7 +364,7 @@ class RedisInteractor(object):
     def incr(self, key, expiry, connection, elastic_expiry=False):
         """
         increments the counter for a given rate limit key
-        
+
         :param connection: Redis connection
         :param str key: the key to increment
         :param int expiry: amount in seconds for the key to expire in
@@ -384,7 +384,7 @@ class RedisInteractor(object):
     def get_moving_window(self, key, limit, expiry):
         """
         returns the starting point and the number of entries in the moving window
-        
+
         :param str key: rate limit key
         :param int expiry: expiry of entry
         """
@@ -477,7 +477,7 @@ class RedisStorage(RedisInteractor, Storage):
     def incr(self, key, expiry, elastic_expiry=False):
         """
         increments the counter for a given rate limit key
-        
+
         :param str key: the key to increment
         :param int expiry: amount in seconds for the key to expire in
         """
@@ -522,6 +522,7 @@ class RedisStorage(RedisInteractor, Storage):
         """WARNING, this operation was designed to be fast, but was not tested
         on a large production based system. Be careful with its usage as it
         could be slow on very large data sets.
+
         This function calls a Lua Script to delete keys prefixed with 'LIMITER'
         in block of 5000."""
 
