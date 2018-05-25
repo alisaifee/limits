@@ -364,6 +364,7 @@ class RedisInteractor(object):
     def incr(self, key, expiry, connection, elastic_expiry=False):
         """
         increments the counter for a given rate limit key
+        
         :param connection: Redis connection
         :param str key: the key to increment
         :param int expiry: amount in seconds for the key to expire in
@@ -383,6 +384,7 @@ class RedisInteractor(object):
     def get_moving_window(self, key, limit, expiry):
         """
         returns the starting point and the number of entries in the moving window
+        
         :param str key: rate limit key
         :param int expiry: expiry of entry
         """
@@ -475,6 +477,7 @@ class RedisStorage(RedisInteractor, Storage):
     def incr(self, key, expiry, elastic_expiry=False):
         """
         increments the counter for a given rate limit key
+        
         :param str key: the key to increment
         :param int expiry: amount in seconds for the key to expire in
         """
