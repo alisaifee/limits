@@ -442,10 +442,10 @@ class RedisStorage(RedisInteractor, Storage):
     def __init__(self, uri, **_):
         """
         :param str uri: uri of the form 'redis://host:port or redis://host:port/db'
-        :raise RateLimiterConfigError: when the redis library is not available
+        :raise ConfigurationError: when the redis library is not available
         """
         if not get_dependency("redis"):
-            raise RateLimiterConfigError(
+            raise ConfigurationError(
                 "redis prerequisite not available"
             )  # pragma: no cover
         self.storage = get_dependency("redis").from_url(uri)
