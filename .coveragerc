@@ -1,10 +1,12 @@
 [run]
-include = 
+include =
     limits/*
 omit =
     /*/limits/_version*
     /*/limits/backports/*
-
+    /*/google-cloud-sdk/*
+    setup.py
+    versioneer.py
 [report]
 exclude_lines =
     pragma: no cover
