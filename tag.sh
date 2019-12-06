@@ -2,7 +2,7 @@
 echo current version:$(python setup.py --version)
 read -p "new version:" new_version
 last_portion=$(grep -P "^Changelog$" HISTORY.rst -5 | grep -P "^\d+.\d+.\d+")
-changelog_file=/var/tmp/flask-ratelimit.newchangelog
+changelog_file=/var/tmp/limits.newchangelog
 new_changelog_heading="${new_version} `date +"%Y-%m-%d"`"
 new_changelog_heading_sep=$(python -c "print '='*len('$new_changelog_heading')")
 echo $new_changelog_heading > $changelog_file
@@ -16,7 +16,8 @@ then
     git add HISTORY.rst
     git commit -m "updating changelog for  ${new_version}"
     git tag -s ${new_version} -m "tagging version ${new_version}"
-    python setup.py build sdist bdist_wheel upload
+    python setup.py build sdist bdist_wheel
+    twine upload dist/*
 else
     echo changelog has errors. skipping tag.
 fi;
