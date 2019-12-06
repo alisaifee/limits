@@ -2,7 +2,7 @@
 nose
 mock
 coverage
-nose-cov
+nose-cov==1.6
 pymemcache
 redis<3.1.0
 redis-py-cluster>=1.1.0
