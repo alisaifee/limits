@@ -4,7 +4,7 @@ mock
 coverage
 nose-cov
 pymemcache
-redis<3.1.0
+redis==3.3.11
 redis-py-cluster>=1.1.0
 PyYAML
 hiro>0.1.6
