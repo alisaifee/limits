@@ -5,6 +5,7 @@ omit =
     /*/limits/_version*
     /*/limits/backports/*
     /*/google-cloud-sdk/*
+    /*/tests/*
     setup.py
     versioneer.py
 [report]
