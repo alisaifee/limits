@@ -100,7 +100,7 @@ memcached-gae-clean:
 	rm google-cloud-sdk-167.0.0-linux-x86_64.tar.gz
 	rm -r google-cloud-sdk
 
-tests: redis-install redis-start memcached-gae-install
+tests: redis-stop redis-install redis-start memcached-gae-install
 	nosetests tests --with-cov -v
 
 .PHONY: test
