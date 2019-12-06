@@ -56,15 +56,15 @@ redis-cleanup:
 	- rm dump.rdb appendonly.aof - 2>/dev/null
 
 redis-stop:
-	kill `cat /tmp/redis_cluster_node0.pid` || true
-	kill `cat /tmp/redis_cluster_node1.pid` || true
-	kill `cat /tmp/redis_cluster_node2.pid` || true
-	kill `cat /tmp/redis_cluster_node3.pid` || true
-	kill `cat /tmp/redis_cluster_node4.pid` || true
-	kill `cat /tmp/redis_cluster_node5.pid` || true
-	kill `cat /tmp/redis-sentinel.pid` || true
-	kill `cat /tmp/redis-master.pid` || true
-	kill `cat /tmp/redis-slave.pid` || true
+	[ -e /tmp/redis_cluster_node0.pid ] && kill `cat /tmp/redis_cluster_node0.pid` || true
+	[ -e /tmp/redis_cluster_node1.pid ] && kill `cat /tmp/redis_cluster_node1.pid` || true
+	[ -e /tmp/redis_cluster_node2.pid ] && kill `cat /tmp/redis_cluster_node2.pid` || true
+	[ -e /tmp/redis_cluster_node3.pid ] && kill `cat /tmp/redis_cluster_node3.pid` || true
+	[ -e /tmp/redis_cluster_node4.pid ] && kill `cat /tmp/redis_cluster_node4.pid` || true
+	[ -e /tmp/redis_cluster_node5.pid ] && kill `cat /tmp/redis_cluster_node5.pid` || true
+	[ -e /tmp/redis-sentinel.pid ] && kill `cat /tmp/redis-sentinel.pid` || true
+	[ -e /tmp/redis-master.pid ] && kill `cat /tmp/redis-master.pid` || true
+	[ -e /tmp/redis-slave.pid ] && kill `cat /tmp/redis-slave.pid` || true
 	rm -f /tmp/redis_cluster_node0.conf
 	rm -f /tmp/redis_cluster_node1.conf
 	rm -f /tmp/redis_cluster_node2.conf
