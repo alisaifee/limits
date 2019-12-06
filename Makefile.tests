@@ -1,9 +1,5 @@
 PATH := ./redis-git/src:${PATH}
 
-ifndef REDIS_TRIB_RB
-	REDIS_TRIB_RB=redis-git/src/redis-trib.rb
-endif
-
 ifneq ("$(wildcard ./google-cloud-sdk/platform/google_appengine/VERSION)","")
 GAE_INSTALLED = 1
 else
@@ -52,7 +48,7 @@ redis-start: redis-cleanup
 	./redis-git/src/redis-server tests/redis-configurations/sentinel/redis-slave.conf
 	./redis-git/src/redis-server tests/redis-configurations/sentinel/redis-sentinel.conf --sentinel
 
-	echo "yes" | ruby $(REDIS_TRIB_RB) create --replicas 1 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005
+	echo "yes" | ./redis-git/src/redis-cli --cluster create --cluster-replicas 1 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005
 	sleep 5
 
 redis-cleanup:
@@ -77,7 +73,7 @@ redis-stop:
 	rm -f /tmp/redis_cluster_node5.conf
 
 redis-install:
-	[ ! -e redis-git/.git ] && git clone --depth 1 --branch 4.0 https://github.com/antirez/redis.git redis-git || true
+	[ ! -e redis-git/.git ] && git clone --depth 1 --branch 5.0 https://github.com/antirez/redis.git redis-git || true
 	make -C redis-git -j4
 	gem install redis
 	sleep 3
