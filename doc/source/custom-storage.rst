@@ -8,7 +8,7 @@ to get started with some common data stores (redis & memcached) used for rate li
 
 To accommodate customizations to either the default storage backends or
 different storage backends altogether, **limits** uses a registry pattern that
-makes it relatively painless to add a new storage (without having to submit patches
+makes it painless to add your own custom storage (without having to submit patches
 to the package itself).
 
 Creating a custom backend requires:
@@ -17,7 +17,7 @@ Creating a custom backend requires:
     #. Providing implementations for the abstractmethods of :class:`limits.storage.Storage`
     #. If the storage can support the :ref:`moving-window` strategy - additionally implementing
        the `acquire_entry` instance method.
-    #. Providing a naming *scheme* that can be used to lookup the custom storage in the storage registry.
+    #. Providing naming *schemes* that can be used to lookup the custom storage in the storage registry.
        (Refer to :ref:`storage-scheme` for more details)
 
 Example
@@ -32,7 +32,7 @@ variables which result in the classes getting registered with the **limits** sto
     import time
 
     class AwesomeStorage(Storage):
-        STORAGE_SCHEME="awesomedb"
+        STORAGE_SCHEME = ["awesomedb"]
         def __init__(self, uri, **options):
             self.awesomesness = options.get("awesomeness", None)
             self.host = urlparse.urlparse(uri).netloc
@@ -52,7 +52,7 @@ variables which result in the classes getting registered with the **limits** sto
 
 
     class AwesomerStorage(Storage):
-        STORAGE_SCHEME="awesomerdb"
+        STORAGE_SCHEME = ["awesomerdb"]
         def __init__(self, uri, **options):
             self.awesomesness = options.get("awesomeness", None)
             self.host = urlparse.urlparse(uri).netloc

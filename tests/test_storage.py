@@ -25,6 +25,7 @@ from tests import skip_if, RUN_GAE
 class BaseStorageTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 11211)).flush_all()
+        redis.from_url('unix:///var/tmp/limits.redis.sock').flushall()
         redis.Redis().flushall()
         redis.sentinel.Sentinel([
             ("localhost", 26379)
@@ -45,6 +46,18 @@ class BaseStorageTests(unittest.TestCase):
                 storage_from_string("redis://localhost:6379"), RedisStorage
             )
         )
+        self.assertTrue(
+            isinstance(
+                storage_from_string("redis+unix:///var/tmp/limits.redis.sock"), RedisStorage
+            )
+        )
+
+        self.assertTrue(
+            isinstance(
+                storage_from_string("redis+unix://:password/var/tmp/limits.redis.sock"), RedisStorage
+            )
+        )
+
         self.assertTrue(
             isinstance(
                 storage_from_string("memcached://localhost:11211"),
@@ -98,6 +111,7 @@ class BaseStorageTests(unittest.TestCase):
     def test_storage_check(self):
         self.assertTrue(storage_from_string("memory://").check())
         self.assertTrue(storage_from_string("redis://localhost:6379").check())
+        self.assertTrue(storage_from_string("redis+unix:///var/tmp/limits.redis.sock").check())
         self.assertTrue(
             storage_from_string("memcached://localhost:11211").check()
         )
@@ -179,7 +193,7 @@ class BaseStorageTests(unittest.TestCase):
 
     def test_pluggable_storage_no_moving_window(self):
         class MyStorage(Storage):
-            STORAGE_SCHEME = "mystorage"
+            STORAGE_SCHEME = ["mystorage"]
 
             def incr(self, key, expiry, elastic_expiry=False):
                 return
@@ -198,7 +212,7 @@ class BaseStorageTests(unittest.TestCase):
 
     def test_pluggable_storage_moving_window(self):
         class MyStorage(Storage):
-            STORAGE_SCHEME = "mystorage"
+            STORAGE_SCHEME = ["mystorage"]
 
             def incr(self, key, expiry, elastic_expiry=False):
                 return
@@ -223,32 +237,30 @@ class BaseStorageTests(unittest.TestCase):
 class RedisStorageTests(unittest.TestCase):
     def setUp(self):
         redis.Redis().flushall()
+        self.storage = RedisStorage("redis://localhost:6379")
 
     def test_redis(self):
-        storage = RedisStorage("redis://localhost:6379")
-        limiter = FixedWindowRateLimiter(storage)
-        per_min = RateLimitItemPerSecond(10)
+        limiter = FixedWindowRateLimiter(self.storage)
+        per_second = RateLimitItemPerSecond(10)
         start = time.time()
         count = 0
         while time.time() - start < 0.5 and count < 10:
-            self.assertTrue(limiter.hit(per_min))
+            self.assertTrue(limiter.hit(per_second))
             count += 1
-        self.assertFalse(limiter.hit(per_min))
+        self.assertFalse(limiter.hit(per_second))
         while time.time() - start <= 1:
             time.sleep(0.1)
-        self.assertTrue(limiter.hit(per_min))
+        self.assertTrue(limiter.hit(per_second))
 
     def test_redis_reset(self):
-        storage = RedisStorage("redis://localhost:6379")
-        limiter = FixedWindowRateLimiter(storage)
-        for i in range(0, 10000):
+        limiter = FixedWindowRateLimiter(self.storage)
+        for i in range(0, 100):
             rate = RateLimitItemPerMinute(i)
             limiter.hit(rate)
-        self.assertEqual(storage.reset(), 10000)
+        self.assertEqual(self.storage.reset(), 100)
 
     def test_large_dataset_redis_moving_window_expiry(self):
-        storage = RedisStorage("redis://localhost:6379")
-        limiter = MovingWindowRateLimiter(storage)
+        limiter = MovingWindowRateLimiter(self.storage)
         limit = RateLimitItemPerSecond(1000)
         # 100 routes
         fake_routes = [uuid4().hex for _ in range(0, 100)]
@@ -266,7 +278,13 @@ class RedisStorageTests(unittest.TestCase):
             time.sleep(0.1)
         [k.set() for k in events]
         time.sleep(2)
-        self.assertTrue(storage.storage.keys("%s/*" % limit.namespace) == [])
+        self.assertTrue(self.storage.storage.keys("%s/*" % limit.namespace) == [])
+
+
+class RedisUnixSocketStorageTests(RedisStorageTests):
+    def setUp(self):
+        self.storage = storage_from_string("redis+unix:///var/tmp/limits.redis.sock")
+        redis.from_url('unix:///var/tmp/limits.redis.sock').flushall()
 
 
 class RedisSentinelStorageTests(unittest.TestCase):

@@ -41,13 +41,16 @@ def storage_from_string(storage_string, **options):
 class StorageRegistry(type):
     def __new__(mcs, name, bases, dct):
         storage_scheme = dct.get('STORAGE_SCHEME', None)
-        if not bases == (object, ) and not storage_scheme:
+        if not bases == (object,) and not storage_scheme:
             raise ConfigurationError(
                 "%s is not configured correctly, it must specify a STORAGE_SCHEME class attribute"
                 % name
             )
         cls = super(StorageRegistry, mcs).__new__(mcs, name, bases, dct)
-        SCHEMES[storage_scheme] = cls
+        if storage_scheme:
+            schemes = [storage_scheme] if isinstance(storage_scheme, six.string_types) else storage_scheme
+            for scheme in schemes:
+                SCHEMES[scheme] = cls
         return cls
 
 
@@ -118,7 +121,7 @@ class MemoryStorage(Storage):
     and a simple list to implement moving window strategy.
 
     """
-    STORAGE_SCHEME = "memory"
+    STORAGE_SCHEME = ["memory"]
 
     def __init__(self, uri=None, **_):
         self.storage = Counter()
@@ -365,7 +368,7 @@ class RedisStorage(RedisInteractor, Storage):
     rate limit storage with redis as backend
     """
 
-    STORAGE_SCHEME = "redis"
+    STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]
 
     def __init__(self, uri, **_):
         """
@@ -376,6 +379,7 @@ class RedisStorage(RedisInteractor, Storage):
             raise ConfigurationError(
                 "redis prerequisite not available"
             )  # pragma: no cover
+        uri = uri.replace('redis+unix', 'unix')
         self.storage = get_dependency("redis").from_url(uri)
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
@@ -450,28 +454,12 @@ class RedisStorage(RedisInteractor, Storage):
         return cleared
 
 
-class RedisSSLStorage(RedisStorage):
-    """
-    rate limit storage with redis as backend using SSL connection
-    """
-
-    STORAGE_SCHEME = "rediss"
-
-    def __init__(self, uri, **options):
-        """
-        :param str uri: uri of the form 'rediss://host:port or rediss://host:port/db'
-        :raise ConfigurationError: when the redis library is not available
-         or if the redis host cannot be pinged.
-        """
-        super(RedisSSLStorage, self).__init__(uri, **options)  #noqa
-
-
 class RedisSentinelStorage(RedisStorage):
     """
     rate limit storage with redis sentinel as backend
     """
 
-    STORAGE_SCHEME = "redis+sentinel"
+    STORAGE_SCHEME = ["redis+sentinel"]
 
     def __init__(self, uri, **options):
         """
@@ -537,7 +525,7 @@ class RedisClusterStorage(RedisStorage):
     """
     rate limit storage with redis cluster as backend
     """
-    STORAGE_SCHEME = "redis+cluster"
+    STORAGE_SCHEME = ["redis+cluster"]
 
     def __init__(self, uri, **options):
         """
@@ -581,7 +569,7 @@ class MemcachedStorage(Storage):
     rate limit storage with memcached as backend
     """
     MAX_CAS_RETRIES = 10
-    STORAGE_SCHEME = "memcached"
+    STORAGE_SCHEME = ["memcached"]
 
     def __init__(self, uri, **options):
         """
@@ -706,7 +694,7 @@ class GAEMemcachedStorage(MemcachedStorage):
     rate limit storage with GAE memcache as backend
     """
     MAX_CAS_RETRIES = 10
-    STORAGE_SCHEME = "gaememcached"
+    STORAGE_SCHEME = ["gaememcached"]
 
     def __init__(self, uri, **options):
         options["library"] = "google.appengine.api.memcache"

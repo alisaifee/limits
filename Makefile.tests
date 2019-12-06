@@ -38,6 +38,7 @@ install:
 	python setup.py install
 
 redis-start: redis-cleanup
+	./redis-git/src/redis-server tests/redis-configurations/unixdomainsocket.conf
 	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-0.conf
 	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-1.conf
 	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-2.conf
@@ -65,6 +66,7 @@ redis-stop:
 	[ -e /tmp/redis-sentinel.pid ] && kill `cat /tmp/redis-sentinel.pid` || true
 	[ -e /tmp/redis-master.pid ] && kill `cat /tmp/redis-master.pid` || true
 	[ -e /tmp/redis-slave.pid ] && kill `cat /tmp/redis-slave.pid` || true
+	[ -e /tmp/redis_unix-domain-socket.pid] && kill `cat /tmp/redis_unix-domain-socket.pid` || true
 	rm -f /tmp/redis_cluster_node0.conf
 	rm -f /tmp/redis_cluster_node1.conf
 	rm -f /tmp/redis_cluster_node2.conf
