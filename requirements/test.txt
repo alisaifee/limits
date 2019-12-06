@@ -1,6 +1,6 @@
 -r main.txt
 nose
-mock
+mock==3.0.5
 coverage
 nose-cov
 pymemcache
