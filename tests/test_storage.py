@@ -236,8 +236,9 @@ class BaseStorageTests(unittest.TestCase):
 
 class RedisStorageTests(unittest.TestCase):
     def setUp(self):
+        self.storage_url = "redis://localhost:6379"
+        self.storage = RedisStorage(self.storage_url)
         redis.Redis().flushall()
-        self.storage = RedisStorage("redis://localhost:6379")
 
     def test_redis(self):
         limiter = FixedWindowRateLimiter(self.storage)
@@ -251,6 +252,13 @@ class RedisStorageTests(unittest.TestCase):
         while time.time() - start <= 1:
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_second))
+
+    def test_redis_options(self):
+        with mock.patch("limits.storage.get_dependency") as get_dependency:
+            storage_from_string(self.storage_url, connection_timeout=1)
+            self.assertEqual(
+                get_dependency().from_url.call_args[1]['connection_timeout'], 1
+            )
 
     def test_redis_reset(self):
         limiter = FixedWindowRateLimiter(self.storage)
@@ -283,7 +291,8 @@ class RedisStorageTests(unittest.TestCase):
 
 class RedisUnixSocketStorageTests(RedisStorageTests):
     def setUp(self):
-        self.storage = storage_from_string("redis+unix:///var/tmp/limits.redis.sock")
+        self.storage_url = "redis+unix:///var/tmp/limits.redis.sock"
+        self.storage = RedisStorage(self.storage_url)
         redis.from_url('unix:///var/tmp/limits.redis.sock').flushall()
 
 

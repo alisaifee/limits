@@ -365,12 +365,12 @@ class RedisInteractor(object):
 
 class RedisStorage(RedisInteractor, Storage):
     """
-    rate limit storage with redis as backend
+    Rate limit storage with redis as backend.
     """
 
     STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]
 
-    def __init__(self, uri, **_):
+    def __init__(self, uri, **options):
         """
         :param str uri: uri of the form 'redis://host:port or redis://host:port/db'
         :raise ConfigurationError: when the redis library is not available
@@ -380,11 +380,11 @@ class RedisStorage(RedisInteractor, Storage):
                 "redis prerequisite not available"
             )  # pragma: no cover
         uri = uri.replace('redis+unix', 'unix')
-        self.storage = get_dependency("redis").from_url(uri)
+        self.storage = get_dependency("redis").from_url(uri, **options)
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
 
-    def initialize_storage(self, uri):
+    def initialize_storage(self, _uri):
         self.lua_moving_window = self.storage.register_script(
             self.SCRIPT_MOVING_WINDOW
         )
