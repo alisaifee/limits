@@ -104,6 +104,13 @@ class Storage(object):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def clear(self, key):
+        """
+        resets the rate limit key
+        :param str key: the key to clear rate limits for
+        """
+        raise NotImplementedError
 
 class LockableEntry(threading._RLock):
     __slots__ = ["atime", "expiry"]
@@ -174,6 +181,13 @@ class MemoryStorage(Storage):
             self.storage.pop(key, None)
             self.expirations.pop(key, None)
         return self.storage.get(key, 0)
+
+    def clear(self, key):
+        """
+        :param str key: the key to clear rate limits for
+        """
+        self.storage.pop(key, None)
+        self.expirations.pop(key, None)
 
     def acquire_entry(self, key, limit, expiry, no_add=False):
         """
@@ -316,6 +330,13 @@ class RedisInteractor(object):
         """
         return int(connection.get(key) or 0)
 
+    def clear(self, key, connection):
+        """
+        :param str key: the key to clear rate limits for
+        :param connection: Redis connection
+        """
+        connection.delete(key)
+
     def get_moving_window(self, key, limit, expiry):
         """
         returns the starting point and the number of entries in the moving window
@@ -416,6 +437,12 @@ class RedisStorage(RedisInteractor, Storage):
         :param str key: the key to get the counter value for
         """
         return super(RedisStorage, self).get(key, self.storage)
+
+    def clear(self, key):
+        """
+        :param str key: the key to clear rate limits for
+        """
+        return super(RedisStorage, self).clear(key, self.storage)
 
     def acquire_entry(self, key, limit, expiry, no_add=False):
         """
@@ -629,6 +656,12 @@ class MemcachedStorage(Storage):
         :param str key: the key to get the counter value for
         """
         return int(self.storage.get(key) or 0)
+
+    def clear(self, key):
+        """
+        :param str key: the key to clear rate limits for
+        """
+        self.storage.delete(key)
 
     def incr(self, key, expiry, elastic_expiry=False):
         """

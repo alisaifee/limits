@@ -138,6 +138,15 @@ class BaseStorageTests(unittest.TestCase):
             timeline.forward(61)
             self.assertTrue(limiter.hit(per_min))
 
+    def test_in_memory_clear(self):
+        storage = MemoryStorage()
+        limiter = FixedWindowRateLimiter(storage)
+        per_min = RateLimitItemPerMinute(1)
+        limiter.hit(per_min)
+        self.assertFalse(limiter.hit(per_min))
+        limiter.clear(per_min)
+        self.assertTrue(limiter.hit(per_min))
+
     def test_in_memory_reset(self):
         storage = MemoryStorage()
         limiter = FixedWindowRateLimiter(storage)
@@ -267,6 +276,14 @@ class RedisStorageTests(unittest.TestCase):
             limiter.hit(rate)
         self.assertEqual(self.storage.reset(), 100)
 
+    def test_redis_clear(self):
+        limiter = FixedWindowRateLimiter(self.storage)
+        per_min = RateLimitItemPerMinute(1)
+        limiter.hit(per_min)
+        self.assertFalse(limiter.hit(per_min))
+        limiter.clear(per_min)
+        self.assertTrue(limiter.hit(per_min))
+
     def test_large_dataset_redis_moving_window_expiry(self):
         limiter = MovingWindowRateLimiter(self.storage)
         limit = RateLimitItemPerSecond(1000)
@@ -385,6 +402,15 @@ class RedisClusterStorageTests(unittest.TestCase):
             limiter.hit(rate)
         self.assertEqual(storage.reset(), 10000)
 
+    def test_redis_cluster_clear(self):
+        storage = RedisClusterStorage("redis+cluster://localhost:7000")
+        limiter = MovingWindowRateLimiter(storage)
+        per_min = RateLimitItemPerMinute(1)
+        limiter.hit(per_min)
+        self.assertFalse(limiter.hit(per_min))
+        limiter.clear(per_min)
+        self.assertTrue(limiter.hit(per_min))
+
     def test_large_dataset_redis_cluster_moving_window_expiry(self):
         storage = RedisClusterStorage("redis+cluster://localhost:7000")
         limiter = MovingWindowRateLimiter(storage)
@@ -411,10 +437,10 @@ class RedisClusterStorageTests(unittest.TestCase):
 class MemcachedStorageTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 11211)).flush_all()
+        self.storage = MemcachedStorage("memcached://localhost:11211")
 
     def test_memcached(self):
-        storage = MemcachedStorage("memcached://localhost:11211")
-        limiter = FixedWindowRateLimiter(storage)
+        limiter = FixedWindowRateLimiter(self.storage)
         per_min = RateLimitItemPerSecond(10)
         start = time.time()
         count = 0
@@ -424,6 +450,14 @@ class MemcachedStorageTests(unittest.TestCase):
         self.assertFalse(limiter.hit(per_min))
         while time.time() - start <= 1:
             time.sleep(0.1)
+        self.assertTrue(limiter.hit(per_min))
+
+    def test_memcached_clear(self):
+        limiter = FixedWindowRateLimiter(self.storage)
+        per_min = RateLimitItemPerMinute(1)
+        limiter.hit(per_min)
+        self.assertFalse(limiter.hit(per_min))
+        limiter.clear(per_min)
         self.assertTrue(limiter.hit(per_min))
 
 

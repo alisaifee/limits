@@ -58,6 +58,13 @@ Check specific limits without hitting them::
         time.sleep(0.01)
     assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
 
+Clear a limit::
+
+    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
+    assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
+    moving_window.clear(one_per_minute", "test_namespace", "foo")
+    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
+
 
 Development
 -----------
