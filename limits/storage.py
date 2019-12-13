@@ -112,6 +112,7 @@ class Storage(object):
         """
         raise NotImplementedError
 
+
 class LockableEntry(threading._RLock):
     __slots__ = ["atime", "expiry"]
 
@@ -387,6 +388,8 @@ class RedisInteractor(object):
 class RedisStorage(RedisInteractor, Storage):
     """
     Rate limit storage with redis as backend.
+
+    Depends on the `redis-py` library.
     """
 
     STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]
@@ -470,12 +473,16 @@ class RedisStorage(RedisInteractor, Storage):
         return super(RedisStorage, self).check(self.storage)
 
     def reset(self):
-        """WARNING, this operation was designed to be fast, but was not tested
-        on a large production based system. Be careful with its usage as it
-        could be slow on very large data sets.
-
+        """
         This function calls a Lua Script to delete keys prefixed with 'LIMITER'
-        in block of 5000."""
+        in block of 5000.
+
+        .. warning::
+           This operation was designed to be fast, but was not tested
+           on a large production based system. Be careful with its usage as it
+           could be slow on very large data sets.
+
+        """
 
         cleared = self.lua_clear_keys(['LIMITER*'])
         return cleared
@@ -483,7 +490,9 @@ class RedisStorage(RedisInteractor, Storage):
 
 class RedisSentinelStorage(RedisStorage):
     """
-    rate limit storage with redis sentinel as backend
+    Rate limit storage with redis sentinel as backend
+
+    Depends on `redis-py` library
     """
 
     STORAGE_SCHEME = ["redis+sentinel"]
@@ -535,6 +544,7 @@ class RedisSentinelStorage(RedisStorage):
         """
         return super(RedisStorage, self).get(key, self.storage_slave)
 
+
     def get_expiry(self, key):
         """
         :param str key: the key to get the expiry for
@@ -550,7 +560,9 @@ class RedisSentinelStorage(RedisStorage):
 
 class RedisClusterStorage(RedisStorage):
     """
-    rate limit storage with redis cluster as backend
+    Rate limit storage with redis cluster as backend
+
+    Depends on `redis-py-cluster` library
     """
     STORAGE_SCHEME = ["redis+cluster"]
 
@@ -583,9 +595,10 @@ class RedisClusterStorage(RedisStorage):
         keys that are prefixed with 'LIMITER' and calls delete on them, one at
         a time.
 
-        WARNING, this operation was not tested with extremely large data sets.
-        On a large production based system, care should be taken with its
-        usage as it could be slow on very large data sets"""
+        .. warning::
+         This operation was not tested with extremely large data sets.
+         On a large production based system, care should be taken with its
+         usage as it could be slow on very large data sets"""
 
         keys = self.storage.keys('LIMITER*')
         return sum([self.storage.delete(k.decode('utf-8')) for k in keys])
@@ -593,7 +606,9 @@ class RedisClusterStorage(RedisStorage):
 
 class MemcachedStorage(Storage):
     """
-    rate limit storage with memcached as backend
+    Rate limit storage with memcached as backend.
+
+    Depends on the `pymemcache` library.
     """
     MAX_CAS_RETRIES = 10
     STORAGE_SCHEME = ["memcached"]
@@ -602,7 +617,7 @@ class MemcachedStorage(Storage):
         """
         :param str uri: memcached location of the form
          'memcached://host:port,host:port'
-        :raise ConfigurationError: when pymemcached is not available
+        :raise ConfigurationError: when pymemcache is not available
         """
         parsed = urllib.parse.urlparse(uri)
         self.cluster = []

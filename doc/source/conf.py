@@ -50,7 +50,8 @@ texinfo_documents = [
 intersphinx_mapping = {'python': ('http://docs.python.org/', None)
 }
 
-autodoc_default_flags = [
-    "members"
-    , "show-inheritance"
-]
+autodoc_default_options = {
+    "members": True,
+    "show-inheritance": True,
+    "inherited-members": True
+}
