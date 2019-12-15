@@ -189,6 +189,7 @@ class MemoryStorage(Storage):
         """
         self.storage.pop(key, None)
         self.expirations.pop(key, None)
+        self.events.pop(key, None)
 
     def acquire_entry(self, key, limit, expiry, no_add=False):
         """

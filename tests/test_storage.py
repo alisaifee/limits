@@ -138,9 +138,18 @@ class BaseStorageTests(unittest.TestCase):
             timeline.forward(61)
             self.assertTrue(limiter.hit(per_min))
 
-    def test_in_memory_clear(self):
+    def test_in_memory_fixed_window_clear(self):
         storage = MemoryStorage()
         limiter = FixedWindowRateLimiter(storage)
+        per_min = RateLimitItemPerMinute(1)
+        limiter.hit(per_min)
+        self.assertFalse(limiter.hit(per_min))
+        limiter.clear(per_min)
+        self.assertTrue(limiter.hit(per_min))
+
+    def test_in_memory_moving_window_clear(self):
+        storage = MemoryStorage()
+        limiter = MovingWindowRateLimiter(storage)
         per_min = RateLimitItemPerMinute(1)
         limiter.hit(per_min)
         self.assertFalse(limiter.hit(per_min))
@@ -276,8 +285,16 @@ class RedisStorageTests(unittest.TestCase):
             limiter.hit(rate)
         self.assertEqual(self.storage.reset(), 100)
 
-    def test_redis_clear(self):
+    def test_redis_fixed_window_clear(self):
         limiter = FixedWindowRateLimiter(self.storage)
+        per_min = RateLimitItemPerMinute(1)
+        limiter.hit(per_min)
+        self.assertFalse(limiter.hit(per_min))
+        limiter.clear(per_min)
+        self.assertTrue(limiter.hit(per_min))
+
+    def test_redis_moving_window_clear(self):
+        limiter = MovingWindowRateLimiter(self.storage)
         per_min = RateLimitItemPerMinute(1)
         limiter.hit(per_min)
         self.assertFalse(limiter.hit(per_min))
