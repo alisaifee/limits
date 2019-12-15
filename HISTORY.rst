@@ -3,6 +3,12 @@
 Changelog
 ---------
 
+1.4 2019-12-14
+==============
+* Expose API for clearing individual limits
+* Support for redis over unix domain socket
+* Support extra arguments to redis storage
+
 1.3 2018-01-28
 ==============
 * Remove pinging redis on initialization
@@ -61,6 +67,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
