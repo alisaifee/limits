@@ -7,16 +7,16 @@ __author__ = "Ali-Akber Saifee"
 __email__ = "ali@indydevs.org"
 __copyright__ = "Copyright 2015, Ali-Akber Saifee"
 
-from setuptools import setup, find_packages
 import os
+from setuptools import setup, find_packages
+import versioneer
 
-this_dir = os.path.abspath(os.path.dirname(__file__))
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 REQUIREMENTS = [
     k for k in open(
-        os.path.join(this_dir, 'requirements', 'main.txt')
+        os.path.join(THIS_DIR, 'requirements', 'main.txt')
     ).read().splitlines() if k.strip()
 ]
-import versioneer
 
 setup(
     name='limits',
@@ -31,6 +31,5 @@ setup(
     classifiers=[k for k in open('CLASSIFIERS').read().split('\n') if k],
     description='Rate limiting utilities',
     long_description=open('README.rst').read(),
-    packages=find_packages(exclude=["tests*"]),
+    packages=find_packages(exclude=['google.*','google', 'tests*']),
 )
-

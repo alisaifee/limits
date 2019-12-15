@@ -1,0 +1,4 @@
+-r ci.txt
+keyring
+twine
+wheel
