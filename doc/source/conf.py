@@ -15,6 +15,14 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 
+autodoc_default_flags = [
+    "members"
+    , "show-inheritance"
+    , "inherited-members"
+]
+
+autoclass_content = 'both'
+
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
@@ -50,7 +58,3 @@ texinfo_documents = [
 intersphinx_mapping = {'python': ('http://docs.python.org/', None)
 }
 
-autodoc_default_flags = [
-    "members"
-    , "show-inheritance"
-]
