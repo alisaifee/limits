@@ -24,7 +24,7 @@ from tests import skip_if_pypy
 
 class WindowTests(unittest.TestCase):
     def setUp(self):
-        pymemcache.client.Client(('localhost', 11211)).flush_all()
+        pymemcache.client.Client(('localhost', 22122)).flush_all()
         redis.Redis().flushall()
         redis.sentinel.Sentinel([
             ("localhost", 26379)
@@ -67,7 +67,7 @@ class WindowTests(unittest.TestCase):
             self.assertEqual(limiter.get_window_stats(limit)[0], start + 2)
 
     def test_fixed_window_with_elastic_expiry_memcache(self):
-        storage = MemcachedStorage('memcached://localhost:11211')
+        storage = MemcachedStorage('memcached://localhost:22122')
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         self.assertTrue(all([limiter.hit(limit) for _ in range(0, 10)]))
@@ -77,7 +77,7 @@ class WindowTests(unittest.TestCase):
         self.assertFalse(limiter.hit(limit))
 
     def test_fixed_window_with_elastic_expiry_memcache_concurrency(self):
-        storage = MemcachedStorage('memcached://localhost:11211')
+        storage = MemcachedStorage('memcached://localhost:22122')
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         start = int(time.time())
         limit = RateLimitItemPerSecond(100, 2)
@@ -158,7 +158,7 @@ class WindowTests(unittest.TestCase):
         self.assertEqual(limiter.get_window_stats(limit)[1], 0)
 
     def test_moving_window_memcached(self):
-        storage = MemcachedStorage('memcacheD://localhost:11211')
+        storage = MemcachedStorage('memcached://localhost:22122')
         self.assertRaises(
             NotImplementedError, MovingWindowRateLimiter, storage
         )

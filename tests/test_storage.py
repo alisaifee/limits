@@ -24,7 +24,7 @@ from tests import skip_if, RUN_GAE
 
 class BaseStorageTests(unittest.TestCase):
     def setUp(self):
-        pymemcache.client.Client(('localhost', 11211)).flush_all()
+        pymemcache.client.Client(('localhost', 22122)).flush_all()
         redis.from_url('unix:///var/tmp/limits.redis.sock').flushall()
         redis.Redis().flushall()
         redis.sentinel.Sentinel([
@@ -60,10 +60,25 @@ class BaseStorageTests(unittest.TestCase):
 
         self.assertTrue(
             isinstance(
-                storage_from_string("memcached://localhost:11211"),
+                storage_from_string("memcached://localhost:22122"),
                 MemcachedStorage
             )
         )
+
+        self.assertTrue(
+            isinstance(
+                storage_from_string("memcached://localhost:22122,localhost:22123"),
+                MemcachedStorage
+            )
+        )
+
+        self.assertTrue(
+            isinstance(
+                storage_from_string("memcached:///tmp/limits.memcached.sock"),
+                MemcachedStorage
+            )
+        )
+
         self.assertTrue(
             isinstance(
                 storage_from_string(
@@ -113,7 +128,13 @@ class BaseStorageTests(unittest.TestCase):
         self.assertTrue(storage_from_string("redis://localhost:6379").check())
         self.assertTrue(storage_from_string("redis+unix:///var/tmp/limits.redis.sock").check())
         self.assertTrue(
-            storage_from_string("memcached://localhost:11211").check()
+            storage_from_string("memcached://localhost:22122").check()
+        )
+        self.assertTrue(
+            storage_from_string("memcached://localhost:22122,localhost:22123").check()
+        )
+        self.assertTrue(
+            storage_from_string("memcached:///tmp/limits.memcached.sock").check()
         )
         self.assertTrue(
             storage_from_string(
@@ -461,11 +482,19 @@ class RedisClusterStorageTests(unittest.TestCase):
 
 class MemcachedStorageTests(unittest.TestCase):
     def setUp(self):
-        pymemcache.client.Client(('localhost', 11211)).flush_all()
-        self.storage = MemcachedStorage("memcached://localhost:11211")
+        pymemcache.client.Client(('localhost', 22122)).flush_all()
+        self.storage_url = 'memcached://localhost:22122'
+
+    def test_options(self):
+        with mock.patch("limits.storage.get_dependency") as get_dependency:
+            storage_from_string(self.storage_url, connect_timeout=1).check()
+            self.assertEqual(
+                get_dependency().Client.call_args[1]['connect_timeout'], 1
+            )
 
     def test_memcached(self):
-        limiter = FixedWindowRateLimiter(self.storage)
+        storage = MemcachedStorage("memcached://localhost:22122")
+        limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
         start = time.time()
         count = 0
@@ -478,7 +507,8 @@ class MemcachedStorageTests(unittest.TestCase):
         self.assertTrue(limiter.hit(per_min))
 
     def test_memcached_clear(self):
-        limiter = FixedWindowRateLimiter(self.storage)
+        storage = MemcachedStorage("memcached://localhost:22122")
+        limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerMinute(1)
         limiter.hit(per_min)
         self.assertFalse(limiter.hit(per_min))
