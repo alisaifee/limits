@@ -636,7 +636,7 @@ class MemcachedStorage(Storage):
     def __init__(self, uri, **options):
         """
         :param str uri: memcached location of the form
-         `memcached://host:port,host:port`.
+         `memcached://host:port,host:port`, `memcached:///var/tmp/path/to/sock`
         :param \*\*options: all remaining keyword arguments are passed
          directly to the constructor of :class:`pymemcache.client.base.Client`
         :raise ConfigurationError: when `pymemcache` is not available or memcached
@@ -649,6 +649,11 @@ class MemcachedStorage(Storage):
                 continue
             host, port = loc.split(":")
             self.cluster.append((host, int(port)))
+        else:
+            # filesystem path to UDS
+            if parsed.path and not parsed.netloc and not parsed.port:
+                self.cluster = [parsed.path]
+
         self.library = options.get('library', 'pymemcache.client')
         self.client_getter = options.get('client_getter', self.get_client)
         self.options = options
