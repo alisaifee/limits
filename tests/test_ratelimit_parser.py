@@ -5,16 +5,16 @@ from limits import limits
 
 class RatelimitParserTests(unittest.TestCase):
     def test_singles(self):
-        for rl_string in ["1 per hour", "1/HOUR", "1/Hour"]:
-            self.assertEqual(parse(rl_string), limits.RateLimitItemPerHour(1))
-        for rl_string in ["1 per minute", "1/MINUTE", "1/Minute"]:
-            self.assertEqual(
-                parse(rl_string), limits.RateLimitItemPerMinute(1)
-            )
         for rl_string in ["1 per second", "1/SECOND", "1 / Second"]:
             self.assertEqual(
                 parse(rl_string), limits.RateLimitItemPerSecond(1)
             )
+        for rl_string in ["1 per minute", "1/MINUTE", "1/Minute"]:
+            self.assertEqual(
+                parse(rl_string), limits.RateLimitItemPerMinute(1)
+            )
+        for rl_string in ["1 per hour", "1/HOUR", "1/Hour"]:
+            self.assertEqual(parse(rl_string), limits.RateLimitItemPerHour(1))
         for rl_string in ["1 per day", "1/DAY", "1 / Day"]:
             self.assertEqual(parse(rl_string), limits.RateLimitItemPerDay(1))
         for rl_string in ["1 per month", "1/MONTH", "1 / Month"]:
