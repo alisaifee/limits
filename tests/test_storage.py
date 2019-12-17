@@ -148,73 +148,6 @@ class BaseStorageTests(unittest.TestCase):
         if RUN_GAE:
             self.assertTrue(storage_from_string("gaememcached://").check())
 
-    def test_in_memory(self):
-        with hiro.Timeline().freeze() as timeline:
-            storage = MemoryStorage()
-            limiter = FixedWindowRateLimiter(storage)
-            per_min = RateLimitItemPerMinute(10)
-            for i in range(0, 10):
-                self.assertTrue(limiter.hit(per_min))
-            self.assertFalse(limiter.hit(per_min))
-            timeline.forward(61)
-            self.assertTrue(limiter.hit(per_min))
-
-    def test_in_memory_fixed_window_clear(self):
-        storage = MemoryStorage()
-        limiter = FixedWindowRateLimiter(storage)
-        per_min = RateLimitItemPerMinute(1)
-        limiter.hit(per_min)
-        self.assertFalse(limiter.hit(per_min))
-        limiter.clear(per_min)
-        self.assertTrue(limiter.hit(per_min))
-
-    def test_in_memory_moving_window_clear(self):
-        storage = MemoryStorage()
-        limiter = MovingWindowRateLimiter(storage)
-        per_min = RateLimitItemPerMinute(1)
-        limiter.hit(per_min)
-        self.assertFalse(limiter.hit(per_min))
-        limiter.clear(per_min)
-        self.assertTrue(limiter.hit(per_min))
-
-    def test_in_memory_reset(self):
-        storage = MemoryStorage()
-        limiter = FixedWindowRateLimiter(storage)
-        per_min = RateLimitItemPerMinute(10)
-        for i in range(0, 10):
-            self.assertTrue(limiter.hit(per_min))
-        self.assertFalse(limiter.hit(per_min))
-        storage.reset()
-        for i in range(0, 10):
-            self.assertTrue(limiter.hit(per_min))
-        self.assertFalse(limiter.hit(per_min))
-
-    def test_in_memory_expiry(self):
-        with hiro.Timeline().freeze() as timeline:
-            storage = MemoryStorage()
-            limiter = FixedWindowRateLimiter(storage)
-            per_min = RateLimitItemPerMinute(10)
-            for i in range(0, 10):
-                self.assertTrue(limiter.hit(per_min))
-            timeline.forward(60)
-            # touch another key and yield
-            limiter.hit(RateLimitItemPerSecond(1))
-            time.sleep(0.1)
-            self.assertTrue(per_min.key_for() not in storage.storage)
-
-    def test_in_memory_expiry_moving_window(self):
-        with hiro.Timeline().freeze() as timeline:
-            storage = MemoryStorage()
-            limiter = MovingWindowRateLimiter(storage)
-            per_min = RateLimitItemPerMinute(10)
-            per_sec = RateLimitItemPerSecond(1)
-            for i in range(0, 2):
-                for i in range(0, 10):
-                    self.assertTrue(limiter.hit(per_min))
-                timeline.forward(60)
-                self.assertTrue(limiter.hit(per_sec))
-                time.sleep(1)
-                self.assertEqual([], storage.events[per_min.key_for()])
 
     def test_pluggable_storage_invalid_construction(self):
         def cons():
@@ -271,6 +204,74 @@ class BaseStorageTests(unittest.TestCase):
         storage = storage_from_string("mystorage://")
         self.assertTrue(isinstance(storage, MyStorage))
         MovingWindowRateLimiter(storage)
+
+class MemoryStorageTests(unittest.TestCase):
+    def setUp(self):
+        self.storage = MemoryStorage()
+
+    def test_in_memory(self):
+        with hiro.Timeline().freeze() as timeline:
+            limiter = FixedWindowRateLimiter(self.storage)
+            per_min = RateLimitItemPerMinute(10)
+            for i in range(0, 10):
+                self.assertTrue(limiter.hit(per_min))
+            self.assertFalse(limiter.hit(per_min))
+            timeline.forward(61)
+            self.assertTrue(limiter.hit(per_min))
+
+    def test_in_memory_fixed_window_clear(self):
+        storage = MemoryStorage()
+        limiter = FixedWindowRateLimiter(self.storage)
+        per_min = RateLimitItemPerMinute(1)
+        limiter.hit(per_min)
+        self.assertFalse(limiter.hit(per_min))
+        limiter.clear(per_min)
+        self.assertTrue(limiter.hit(per_min))
+
+    def test_in_memory_moving_window_clear(self):
+        limiter = MovingWindowRateLimiter(self.storage)
+        per_min = RateLimitItemPerMinute(1)
+        limiter.hit(per_min)
+        self.assertFalse(limiter.hit(per_min))
+        limiter.clear(per_min)
+        self.assertTrue(limiter.hit(per_min))
+
+    def test_in_memory_reset(self):
+        limiter = FixedWindowRateLimiter(self.storage)
+        per_min = RateLimitItemPerMinute(10)
+        for i in range(0, 10):
+            self.assertTrue(limiter.hit(per_min))
+        self.assertFalse(limiter.hit(per_min))
+        self.storage.reset()
+        for i in range(0, 10):
+            self.assertTrue(limiter.hit(per_min))
+        self.assertFalse(limiter.hit(per_min))
+
+    def test_in_memory_expiry(self):
+        with hiro.Timeline().freeze() as timeline:
+            limiter = FixedWindowRateLimiter(self.storage)
+            per_min = RateLimitItemPerMinute(10)
+            for i in range(0, 10):
+                self.assertTrue(limiter.hit(per_min))
+            timeline.forward(60)
+            # touch another key and yield
+            limiter.hit(RateLimitItemPerSecond(1))
+            time.sleep(0.1)
+            self.assertTrue(per_min.key_for() not in self.storage.storage)
+
+    def test_in_memory_expiry_moving_window(self):
+        with hiro.Timeline().freeze() as timeline:
+            limiter = MovingWindowRateLimiter(self.storage)
+            per_min = RateLimitItemPerMinute(10)
+            per_sec = RateLimitItemPerSecond(1)
+            for _ in range(0, 2):
+                for _ in range(0, 10):
+                    self.assertTrue(limiter.hit(per_min))
+                timeline.forward(60)
+                self.assertTrue(limiter.hit(per_sec))
+                timeline.forward(1)
+                time.sleep(0.1)
+                self.assertEqual([], self.storage.events[per_min.key_for()])
 
 
 class RedisStorageTests(unittest.TestCase):
