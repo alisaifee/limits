@@ -332,14 +332,22 @@ class RedisUnixSocketStorageTests(RedisStorageTests):
 
 class RedisSentinelStorageTests(unittest.TestCase):
     def setUp(self):
+        self.storage_url = 'redis+sentinel://localhost:26379'
+        self.service_name = 'localhost-redis-sentinel'
         redis.sentinel.Sentinel([
             ("localhost", 26379)
-        ]).master_for("localhost-redis-sentinel").flushall()
+        ]).master_for(self.service_name).flushall()
 
+    def test_redis_sentinel_options(self):
+        with mock.patch("limits.storage.get_dependency") as get_dependency:
+            storage_from_string(self.storage_url+'/'+self.service_name, connection_timeout=1)
+            self.assertEqual(
+                get_dependency().Sentinel.call_args[1]['connection_timeout'], 1
+            )
     def test_redis_sentinel(self):
         storage = RedisSentinelStorage(
-            "redis+sentinel://localhost:26379",
-            service_name="localhost-redis-sentinel"
+            self.storage_url,
+            service_name=self.service_name
         )
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
