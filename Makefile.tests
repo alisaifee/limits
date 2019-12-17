@@ -80,6 +80,17 @@ redis-install:
 	gem install redis
 	sleep 3
 
+memcached-start:
+	memcached -d -p 22122 -P /tmp/limits.memcached.1.pid
+	memcached -d -p 22123 -P /tmp/limits.memcached.2.pid
+	memcached -d -s /tmp/limits.memcached.sock -P /tmp/limits.memcached.uds.pid
+
+memcached-stop:
+	[ -e /tmp/limits.memcached.1.pid ] && kill `cat /tmp/limits.memcached.1.pid` || true
+	[ -e /tmp/limits.memcached.2.pid ] && kill `cat /tmp/limits.memcached.2.pid` || true
+	[ -e /tmp/limits.memcached.uds.pid ] && kill `cat /tmp/limits.memcached.uds.pid` || true
+	rm -rf /tmp/limits.memcached.*.pid
+
 memcached-gae-install:
 ifeq ($(PY_VERSION),2.7)
 ifeq ($(GAE_INSTALLED),0)
@@ -98,7 +109,7 @@ memcached-gae-clean:
 	rm google-cloud-sdk-167.0.0-linux-x86_64.tar.gz
 	rm -r google-cloud-sdk
 
-tests: redis-stop redis-install redis-start memcached-gae-install
+tests: redis-stop memcached-stop redis-install redis-start memcached-gae-install memcached-start
 	nosetests tests --with-cov -v
 
 .PHONY: test
