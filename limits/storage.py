@@ -198,7 +198,7 @@ class MemoryStorage(Storage):
         :param int expiry: expiry of the entry
         :param bool no_add: if False an entry is not actually acquired but instead
          serves as a 'check'
-        :return: True/False
+        :rtype: bool
         """
         self.events.setdefault(key, [])
         self.__schedule_expiry()
@@ -238,6 +238,7 @@ class MemoryStorage(Storage):
 
         :param str key: rate limit key
         :param int expiry: expiry of entry
+        :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
         acquired = self.get_num_acquired(key, expiry)
@@ -345,6 +346,7 @@ class RedisInteractor(object):
 
         :param str key: rate limit key
         :param int expiry: expiry of entry
+        :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
         window = self.lua_moving_window([key],
@@ -397,7 +399,13 @@ class RedisStorage(RedisInteractor, Storage):
 
     def __init__(self, uri, **options):
         """
-        :param str uri: uri of the form 'redis://host:port or redis://host:port/db'
+        :param str uri: uri of the form `redis://[:password]@host:port`,
+         `redis://[:password]@host:port/db`,
+         `rediss://[:password]@host:port`, `redis+unix:///path/to/sock` etc.
+         This uri is passed directly to :func:`redis.from_url` except for the
+         case of `redis+unix` where it is replaced with `unix`.
+        :param \*\*options: all remaining keyword arguments are passed
+         directly to the constructor of :class:`redis.Redis`
         :raise ConfigurationError: when the redis library is not available
         """
         if not get_dependency("redis"):
@@ -498,9 +506,12 @@ class RedisSentinelStorage(RedisStorage):
 
     STORAGE_SCHEME = ["redis+sentinel"]
 
-    def __init__(self, uri, **options):
+    def __init__(self, uri, service_name=None, **options):
         """
-        :param str uri: url of the form 'redis+sentinel://host:port,host:port/service_name'
+        :param str uri: url of the form `redis+sentinel://host:port,host:port/service_name`
+        :param str service_name, optional: sentinel service name (if not provided in `uri`)
+        :param \*\*options: all remaining keyword arguments are passed
+         directly to the constructor of :class:`redis.sentinel.Sentinel`
         :raise ConfigurationError: when the redis library is not available
          or if the redis master host cannot be pinged.
         """
@@ -519,14 +530,17 @@ class RedisSentinelStorage(RedisStorage):
             sentinel_configuration.append((host, int(port)))
         self.service_name = (
             parsed.path.replace("/", "")
-            if parsed.path else options.get("service_name", None)
+            if parsed.path else service_name
         )
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
+
+        options.setdefault('socket_timeout', 0.2)
+
         self.sentinel = get_dependency("redis.sentinel").Sentinel(
             sentinel_configuration,
-            socket_timeout=options.get("socket_timeout", 0.2),
-            password=password
+            password=password,
+            **options
         )
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
@@ -569,7 +583,9 @@ class RedisClusterStorage(RedisStorage):
 
     def __init__(self, uri, **options):
         """
-        :param str uri: url of the form 'redis+cluster://host:port,host:port'
+        :param str uri: url of the form `redis+cluster://[:password]@host:port,host:port`
+        :param \*\*options: all remaining keyword arguments are passed
+         directly to the constructor of :class:`rediscluster.RedisCluster`
         :raise ConfigurationError: when the rediscluster library is not available
          or if the redis host cannot be pinged.
         """
@@ -582,9 +598,12 @@ class RedisClusterStorage(RedisStorage):
         for loc in parsed.netloc.split(","):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})
+
+        options.setdefault('max_connections', 1000)
+
         self.storage = get_dependency("rediscluster").RedisCluster(
             startup_nodes=cluster_hosts,
-            max_connections=options.get("max_connections", 1000)
+            **options
         )
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
@@ -617,8 +636,11 @@ class MemcachedStorage(Storage):
     def __init__(self, uri, **options):
         """
         :param str uri: memcached location of the form
-         'memcached://host:port,host:port'
-        :raise ConfigurationError: when pymemcache is not available
+         `memcached://host:port,host:port`.
+        :param \*\*options: all remaining keyword arguments are passed
+         directly to the constructor of :class:`pymemcache.client.base.Client`
+        :raise ConfigurationError: when `pymemcache` is not available or memcached
+         location cannot be parsed.
         """
         parsed = urllib.parse.urlparse(uri)
         self.cluster = []
@@ -629,6 +651,7 @@ class MemcachedStorage(Storage):
             self.cluster.append((host, int(port)))
         self.library = options.get('library', 'pymemcache.client')
         self.client_getter = options.get('client_getter', self.get_client)
+        self.options = options
 
         if not get_dependency(self.library):
             raise ConfigurationError(
@@ -638,14 +661,14 @@ class MemcachedStorage(Storage):
         self.local_storage = threading.local()
         self.local_storage.storage = None
 
-    def get_client(self, module, hosts):
+    def get_client(self, module, hosts, **kwargs):
         """
         returns a memcached client.
         :param module: the memcached module
         :param hosts: list of memcached hosts
         :return:
         """
-        return module.Client(*hosts)
+        return module.Client(*hosts, **kwargs)
 
     def call_memcached_func(self, func, *args, **kwargs):
         if 'noreply' in kwargs:
@@ -663,7 +686,7 @@ class MemcachedStorage(Storage):
             and self.local_storage.storage
         ):
             self.local_storage.storage = self.client_getter(
-                get_dependency(self.library), self.cluster
+                get_dependency(self.library), self.cluster, **self.options
             )
         return self.local_storage.storage
 

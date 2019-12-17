@@ -55,6 +55,10 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-intersphinx_mapping = {'python': ('http://docs.python.org/', None)
+intersphinx_mapping = {
+    'python': ('http://docs.python.org/', None),
+    'rediscluster': ('https://redis-py-cluster.readthedocs.io/en/latest/', None),
+    'redis': ('https://redis-py.readthedocs.io/en/latest/', None),
+    'pymemcache': ('https://pymemcache.readthedocs.io/en/latest/', None)
 }
 
