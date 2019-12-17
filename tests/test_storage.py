@@ -219,8 +219,7 @@ class MemoryStorageTests(unittest.TestCase):
             timeline.forward(61)
             self.assertTrue(limiter.hit(per_min))
 
-    def test_in_memory_fixed_window_clear(self):
-        storage = MemoryStorage()
+    def test_fixed_window_clear(self):
         limiter = FixedWindowRateLimiter(self.storage)
         per_min = RateLimitItemPerMinute(1)
         limiter.hit(per_min)
@@ -228,7 +227,7 @@ class MemoryStorageTests(unittest.TestCase):
         limiter.clear(per_min)
         self.assertTrue(limiter.hit(per_min))
 
-    def test_in_memory_moving_window_clear(self):
+    def test_moving_window_clear(self):
         limiter = MovingWindowRateLimiter(self.storage)
         per_min = RateLimitItemPerMinute(1)
         limiter.hit(per_min)
@@ -236,7 +235,7 @@ class MemoryStorageTests(unittest.TestCase):
         limiter.clear(per_min)
         self.assertTrue(limiter.hit(per_min))
 
-    def test_in_memory_reset(self):
+    def test_reset(self):
         limiter = FixedWindowRateLimiter(self.storage)
         per_min = RateLimitItemPerMinute(10)
         for i in range(0, 10):
@@ -247,7 +246,7 @@ class MemoryStorageTests(unittest.TestCase):
             self.assertTrue(limiter.hit(per_min))
         self.assertFalse(limiter.hit(per_min))
 
-    def test_in_memory_expiry(self):
+    def test_expiry(self):
         with hiro.Timeline().freeze() as timeline:
             limiter = FixedWindowRateLimiter(self.storage)
             per_min = RateLimitItemPerMinute(10)
@@ -259,7 +258,7 @@ class MemoryStorageTests(unittest.TestCase):
             time.sleep(0.1)
             self.assertTrue(per_min.key_for() not in self.storage.storage)
 
-    def test_in_memory_expiry_moving_window(self):
+    def test_expiry_moving_window(self):
         with hiro.Timeline().freeze() as timeline:
             limiter = MovingWindowRateLimiter(self.storage)
             per_min = RateLimitItemPerMinute(10)
@@ -280,7 +279,7 @@ class RedisStorageTests(unittest.TestCase):
         self.storage = RedisStorage(self.storage_url)
         redis.Redis().flushall()
 
-    def test_redis(self):
+    def test_fixed_window(self):
         limiter = FixedWindowRateLimiter(self.storage)
         per_second = RateLimitItemPerSecond(10)
         start = time.time()
@@ -293,21 +292,21 @@ class RedisStorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_second))
 
-    def test_redis_options(self):
+    def test_init_options(self):
         with mock.patch("limits.storage.get_dependency") as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
             self.assertEqual(
                 get_dependency().from_url.call_args[1]['connection_timeout'], 1
             )
 
-    def test_redis_reset(self):
+    def test_reset(self):
         limiter = FixedWindowRateLimiter(self.storage)
         for i in range(0, 100):
             rate = RateLimitItemPerMinute(i)
             limiter.hit(rate)
         self.assertEqual(self.storage.reset(), 100)
 
-    def test_redis_fixed_window_clear(self):
+    def test_fixed_window_clear(self):
         limiter = FixedWindowRateLimiter(self.storage)
         per_min = RateLimitItemPerMinute(1)
         limiter.hit(per_min)
@@ -315,7 +314,7 @@ class RedisStorageTests(unittest.TestCase):
         limiter.clear(per_min)
         self.assertTrue(limiter.hit(per_min))
 
-    def test_redis_moving_window_clear(self):
+    def test_moving_window_clear(self):
         limiter = MovingWindowRateLimiter(self.storage)
         per_min = RateLimitItemPerMinute(1)
         limiter.hit(per_min)
@@ -323,7 +322,7 @@ class RedisStorageTests(unittest.TestCase):
         limiter.clear(per_min)
         self.assertTrue(limiter.hit(per_min))
 
-    def test_large_dataset_redis_moving_window_expiry(self):
+    def test_large_dataset_moving_window_expiry(self):
         limiter = MovingWindowRateLimiter(self.storage)
         limit = RateLimitItemPerSecond(1000)
         # 100 routes
@@ -360,13 +359,14 @@ class RedisSentinelStorageTests(unittest.TestCase):
             ("localhost", 26379)
         ]).master_for(self.service_name).flushall()
 
-    def test_redis_sentinel_options(self):
+    def test_init_options(self):
         with mock.patch("limits.storage.get_dependency") as get_dependency:
             storage_from_string(self.storage_url+'/'+self.service_name, connection_timeout=1)
             self.assertEqual(
                 get_dependency().Sentinel.call_args[1]['connection_timeout'], 1
             )
-    def test_redis_sentinel(self):
+
+    def test_fixed_window(self):
         storage = RedisSentinelStorage(
             self.storage_url,
             service_name=self.service_name
@@ -383,7 +383,7 @@ class RedisSentinelStorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
-    def test_redis_sentinel_reset(self):
+    def test_reset(self):
         storage = RedisSentinelStorage(
             "redis+sentinel://localhost:26379",
             service_name="localhost-redis-sentinel"
@@ -394,7 +394,7 @@ class RedisSentinelStorageTests(unittest.TestCase):
             limiter.hit(rate)
         self.assertEqual(storage.reset(), 10000)
 
-    def test_large_dataset_redis_sentinel_moving_window_expiry(self):
+    def test_large_dataset_moving_window_expiry(self):
         storage = RedisSentinelStorage(
             "redis+sentinel://localhost:26379",
             service_name="localhost-redis-sentinel"
@@ -427,7 +427,7 @@ class RedisClusterStorageTests(unittest.TestCase):
     def setUp(self):
         rediscluster.RedisCluster("localhost", 7000).flushall()
 
-    def test_redis_cluster(self):
+    def test_fixed_window(self):
         storage = RedisClusterStorage("redis+cluster://localhost:7000")
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
@@ -441,7 +441,7 @@ class RedisClusterStorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
-    def test_redis_cluster_reset(self):
+    def test_reset(self):
         storage = RedisClusterStorage("redis+cluster://localhost:7000")
         limiter = FixedWindowRateLimiter(storage)
         for i in range(0, 10000):
@@ -449,7 +449,7 @@ class RedisClusterStorageTests(unittest.TestCase):
             limiter.hit(rate)
         self.assertEqual(storage.reset(), 10000)
 
-    def test_redis_cluster_clear(self):
+    def test_clear(self):
         storage = RedisClusterStorage("redis+cluster://localhost:7000")
         limiter = MovingWindowRateLimiter(storage)
         per_min = RateLimitItemPerMinute(1)
@@ -458,7 +458,7 @@ class RedisClusterStorageTests(unittest.TestCase):
         limiter.clear(per_min)
         self.assertTrue(limiter.hit(per_min))
 
-    def test_large_dataset_redis_cluster_moving_window_expiry(self):
+    def test_large_dataset_moving_window_expiry(self):
         storage = RedisClusterStorage("redis+cluster://localhost:7000")
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(1000)
@@ -493,7 +493,7 @@ class MemcachedStorageTests(unittest.TestCase):
                 get_dependency().Client.call_args[1]['connect_timeout'], 1
             )
 
-    def test_memcached(self):
+    def test_fixed_window(self):
         storage = MemcachedStorage("memcached://localhost:22122")
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
@@ -507,7 +507,7 @@ class MemcachedStorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
-    def test_memcached_clear(self):
+    def test_clear(self):
         storage = MemcachedStorage("memcached://localhost:22122")
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerMinute(1)
@@ -526,7 +526,7 @@ class GAEMemcachedStorageTests(unittest.TestCase):
             tb.init_memcache_stub()
 
     @skip_if(not RUN_GAE)
-    def test_gae_memcached(self):
+    def test_fixed_window(self):
         storage = GAEMemcachedStorage("gaememcached://")
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
