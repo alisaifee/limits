@@ -654,8 +654,8 @@ class MemcachedStorage(Storage):
             if parsed.path and not parsed.netloc and not parsed.port:
                 self.cluster = [parsed.path]
 
-        self.library = options.get('library', 'pymemcache.client')
-        self.client_getter = options.get('client_getter', self.get_client)
+        self.library = options.pop('library', 'pymemcache.client')
+        self.client_getter = options.pop('client_getter', self.get_client)
         self.options = options
 
         if not get_dependency(self.library):
