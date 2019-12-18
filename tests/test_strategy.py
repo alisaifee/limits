@@ -80,20 +80,20 @@ class WindowTests(unittest.TestCase):
         storage = MemcachedStorage('memcached://localhost:22122')
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         start = int(time.time())
-        limit = RateLimitItemPerSecond(100, 2)
+        limit = RateLimitItemPerSecond(10, 2)
 
         def _c():
-            for i in range(0, 50):
+            for i in range(0, 5):
                 limiter.hit(limit)
 
         t1, t2 = threading.Thread(target=_c), threading.Thread(target=_c)
         t1.start(), t2.start()
-        [t1.join(), t2.join()]
+        t1.join(), t2.join()
         self.assertEqual(limiter.get_window_stats(limit)[1], 0)
         self.assertTrue(
             start + 2 <= limiter.get_window_stats(limit)[0] <= start + 3
         )
-        self.assertEqual(storage.get(limit.key_for()), 100)
+        self.assertEqual(storage.get(limit.key_for()), 10)
 
     def test_fixed_window_with_elastic_expiry_redis(self):
         storage = RedisStorage('redis://localhost:6379')

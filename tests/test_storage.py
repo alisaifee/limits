@@ -273,12 +273,7 @@ class MemoryStorageTests(unittest.TestCase):
                 self.assertEqual([], self.storage.events[per_min.key_for()])
 
 
-class RedisStorageTests(unittest.TestCase):
-    def setUp(self):
-        self.storage_url = "redis://localhost:6379"
-        self.storage = RedisStorage(self.storage_url)
-        redis.Redis().flushall()
-
+class SharedRedisTests(object):
     def test_fixed_window(self):
         limiter = FixedWindowRateLimiter(self.storage)
         per_second = RateLimitItemPerSecond(10)
@@ -290,21 +285,14 @@ class RedisStorageTests(unittest.TestCase):
         self.assertFalse(limiter.hit(per_second))
         while time.time() - start <= 1:
             time.sleep(0.1)
-        self.assertTrue(limiter.hit(per_second))
-
-    def test_init_options(self):
-        with mock.patch("limits.storage.get_dependency") as get_dependency:
-            storage_from_string(self.storage_url, connection_timeout=1)
-            self.assertEqual(
-                get_dependency().from_url.call_args[1]['connection_timeout'], 1
-            )
+        [self.assertTrue(limiter.hit(per_second)) for _ in range(10)]
 
     def test_reset(self):
         limiter = FixedWindowRateLimiter(self.storage)
-        for i in range(0, 100):
+        for i in range(0, 10):
             rate = RateLimitItemPerMinute(i)
             limiter.hit(rate)
-        self.assertEqual(self.storage.reset(), 100)
+        self.assertEqual(self.storage.reset(), 10)
 
     def test_fixed_window_clear(self):
         limiter = FixedWindowRateLimiter(self.storage)
@@ -322,163 +310,80 @@ class RedisStorageTests(unittest.TestCase):
         limiter.clear(per_min)
         self.assertTrue(limiter.hit(per_min))
 
-    def test_large_dataset_moving_window_expiry(self):
+    def test_moving_window_expiry(self):
         limiter = MovingWindowRateLimiter(self.storage)
-        limit = RateLimitItemPerSecond(1000)
-        # 100 routes
-        fake_routes = [uuid4().hex for _ in range(0, 100)]
-        # go as fast as possible in 2 seconds.
-        start = time.time()
-
-        def smack(e):
-            while not e.is_set():
-                self.assertTrue(limiter.hit(limit, random.choice(fake_routes)))
-
-        events = [threading.Event() for _ in range(0, 100)]
-        threads = [threading.Thread(target=smack, args=(e, )) for e in events]
-        [k.start() for k in threads]
-        while time.time() - start < 2:
-            time.sleep(0.1)
-        [k.set() for k in events]
-        time.sleep(2)
+        limit = RateLimitItemPerSecond(2)
+        self.assertTrue(limiter.hit(limit))
+        time.sleep(0.9)
+        self.assertTrue(limiter.hit(limit))
+        self.assertFalse(limiter.hit(limit))
+        time.sleep(0.1)
+        self.assertTrue(limiter.hit(limit))
+        last = time.time()
+        while time.time() - last <= 1:
+            time.sleep(0.05)
         self.assertTrue(self.storage.storage.keys("%s/*" % limit.namespace) == [])
 
+class RedisStorageTests(SharedRedisTests, unittest.TestCase):
+    def setUp(self):
+        self.storage_url = "redis://localhost:6379"
+        self.storage = RedisStorage(self.storage_url)
+        redis.from_url(self.storage_url).flushall()
 
-class RedisUnixSocketStorageTests(RedisStorageTests):
+    def test_init_options(self):
+        with mock.patch("limits.storage.get_dependency") as get_dependency:
+            storage_from_string(self.storage_url, connection_timeout=1)
+            self.assertEqual(
+                get_dependency().from_url.call_args[1]['connection_timeout'], 1
+            )
+
+
+class RedisUnixSocketStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
         self.storage_url = "redis+unix:///var/tmp/limits.redis.sock"
         self.storage = RedisStorage(self.storage_url)
         redis.from_url('unix:///var/tmp/limits.redis.sock').flushall()
 
+    def test_init_options(self):
+        with mock.patch("limits.storage.get_dependency") as get_dependency:
+            storage_from_string(self.storage_url, connection_timeout=1)
+            self.assertEqual(
+                get_dependency().from_url.call_args[1]['connection_timeout'], 1
+            )
 
-class RedisSentinelStorageTests(unittest.TestCase):
+
+class RedisSentinelStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
         self.storage_url = 'redis+sentinel://localhost:26379'
         self.service_name = 'localhost-redis-sentinel'
+        self.storage = RedisSentinelStorage(
+            self.storage_url,
+            service_name=self.service_name
+        )
         redis.sentinel.Sentinel([
             ("localhost", 26379)
         ]).master_for(self.service_name).flushall()
 
     def test_init_options(self):
         with mock.patch("limits.storage.get_dependency") as get_dependency:
-            storage_from_string(self.storage_url+'/'+self.service_name, connection_timeout=1)
+            storage_from_string(self.storage_url + '/' + self.service_name, connection_timeout=1)
             self.assertEqual(
                 get_dependency().Sentinel.call_args[1]['connection_timeout'], 1
             )
 
-    def test_fixed_window(self):
-        storage = RedisSentinelStorage(
-            self.storage_url,
-            service_name=self.service_name
-        )
-        limiter = FixedWindowRateLimiter(storage)
-        per_min = RateLimitItemPerSecond(10)
-        start = time.time()
-        count = 0
-        while time.time() - start < 0.5 and count < 10:
-            self.assertTrue(limiter.hit(per_min))
-            count += 1
-        self.assertFalse(limiter.hit(per_min))
-        while time.time() - start <= 1:
-            time.sleep(0.1)
-        self.assertTrue(limiter.hit(per_min))
 
-    def test_reset(self):
-        storage = RedisSentinelStorage(
-            "redis+sentinel://localhost:26379",
-            service_name="localhost-redis-sentinel"
-        )
-        limiter = FixedWindowRateLimiter(storage)
-        for i in range(0, 10000):
-            rate = RateLimitItemPerMinute(i)
-            limiter.hit(rate)
-        self.assertEqual(storage.reset(), 10000)
-
-    def test_large_dataset_moving_window_expiry(self):
-        storage = RedisSentinelStorage(
-            "redis+sentinel://localhost:26379",
-            service_name="localhost-redis-sentinel"
-        )
-        limiter = MovingWindowRateLimiter(storage)
-        limit = RateLimitItemPerSecond(1000)
-        # 100 routes
-        fake_routes = [uuid4().hex for _ in range(0, 100)]
-        # go as fast as possible in 2 seconds.
-        start = time.time()
-
-        def smack(e):
-            while not e.is_set():
-                self.assertTrue(limiter.hit(limit, random.choice(fake_routes)))
-
-        events = [threading.Event() for _ in range(0, 100)]
-        threads = [threading.Thread(target=smack, args=(e, )) for e in events]
-        [k.start() for k in threads]
-        while time.time() - start < 2:
-            time.sleep(0.1)
-        [k.set() for k in events]
-        time.sleep(2)
-        self.assertTrue(
-            storage.sentinel.slave_for("localhost-redis-sentinel")
-            .keys("%s/*" % limit.namespace) == []
-        )
-
-
-class RedisClusterStorageTests(unittest.TestCase):
+class RedisClusterStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
         rediscluster.RedisCluster("localhost", 7000).flushall()
+        self.storage_url = "redis+cluster://localhost:7000"
+        self.storage = RedisClusterStorage("redis+cluster://localhost:7000")
 
-    def test_fixed_window(self):
-        storage = RedisClusterStorage("redis+cluster://localhost:7000")
-        limiter = FixedWindowRateLimiter(storage)
-        per_min = RateLimitItemPerSecond(10)
-        start = time.time()
-        count = 0
-        while time.time() - start < 0.5 and count < 10:
-            self.assertTrue(limiter.hit(per_min))
-            count += 1
-        self.assertFalse(limiter.hit(per_min))
-        while time.time() - start <= 1:
-            time.sleep(0.1)
-        self.assertTrue(limiter.hit(per_min))
-
-    def test_reset(self):
-        storage = RedisClusterStorage("redis+cluster://localhost:7000")
-        limiter = FixedWindowRateLimiter(storage)
-        for i in range(0, 10000):
-            rate = RateLimitItemPerMinute(i)
-            limiter.hit(rate)
-        self.assertEqual(storage.reset(), 10000)
-
-    def test_clear(self):
-        storage = RedisClusterStorage("redis+cluster://localhost:7000")
-        limiter = MovingWindowRateLimiter(storage)
-        per_min = RateLimitItemPerMinute(1)
-        limiter.hit(per_min)
-        self.assertFalse(limiter.hit(per_min))
-        limiter.clear(per_min)
-        self.assertTrue(limiter.hit(per_min))
-
-    def test_large_dataset_moving_window_expiry(self):
-        storage = RedisClusterStorage("redis+cluster://localhost:7000")
-        limiter = MovingWindowRateLimiter(storage)
-        limit = RateLimitItemPerSecond(1000)
-        # 100 routes
-        fake_routes = [uuid4().hex for _ in range(0, 100)]
-        # go as fast as possible in 2 seconds.
-        start = time.time()
-
-        def smack(e):
-            while not e.is_set():
-                self.assertTrue(limiter.hit(limit, random.choice(fake_routes)))
-
-        events = [threading.Event() for _ in range(0, 100)]
-        threads = [threading.Thread(target=smack, args=(e, )) for e in events]
-        [k.start() for k in threads]
-        while time.time() - start < 2:
-            time.sleep(0.1)
-        [k.set() for k in events]
-        time.sleep(2)
-        self.assertTrue(storage.storage.keys("%s/*" % limit.namespace) == [])
+    def test_init_options(self):
+        with mock.patch("limits.storage.get_dependency") as get_dependency:
+            storage_from_string(self.storage_url, connection_timeout=1)
+            self.assertEqual(
+                get_dependency().RedisCluster.call_args[1]['connection_timeout'], 1
+            )
 
 
 class MemcachedStorageTests(unittest.TestCase):
