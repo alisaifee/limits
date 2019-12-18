@@ -110,6 +110,6 @@ memcached-gae-clean:
 	rm -r google-cloud-sdk
 
 tests: redis-stop memcached-stop redis-install redis-start memcached-gae-install memcached-start
-	nosetests tests --with-cov -v
+	nosetests tests --with-cov -v --with-timer --timer-top-n 10
 
 .PHONY: test
