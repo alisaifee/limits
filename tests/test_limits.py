@@ -1,6 +1,6 @@
 import unittest
+
 from limits import limits
-import six
 
 
 class LimitsTests(unittest.TestCase):

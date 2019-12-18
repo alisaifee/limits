@@ -1,16 +1,14 @@
-import random
 import threading
 import time
 import unittest
 from uuid import uuid4
 
+import hiro
+import mock
 import pymemcache.client
 import redis
 import redis.sentinel
 import rediscluster
-
-import hiro
-import mock
 
 from limits.errors import ConfigurationError
 from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond

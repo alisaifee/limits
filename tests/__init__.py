@@ -1,8 +1,7 @@
-from functools import wraps
 import platform
-import unittest
-
 import sys
+from functools import wraps
+
 from nose.plugins.skip import SkipTest
 
 RUN_GAE = (
