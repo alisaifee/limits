@@ -644,18 +644,19 @@ class MemcachedStorage(Storage):
          location cannot be parsed.
         """
         parsed = urllib.parse.urlparse(uri)
-        self.cluster = []
+        self.hosts = []
         for loc in parsed.netloc.strip().split(","):
             if not loc:
                 continue
             host, port = loc.split(":")
-            self.cluster.append((host, int(port)))
+            self.hosts.append((host, int(port)))
         else:
             # filesystem path to UDS
             if parsed.path and not parsed.netloc and not parsed.port:
-                self.cluster = [parsed.path]
+                self.hosts = [parsed.path]
 
         self.library = options.pop('library', 'pymemcache.client')
+        self.cluster_library = options.pop('library', 'pymemcache.client.hash')
         self.client_getter = options.pop('client_getter', self.get_client)
         self.options = options
 
@@ -674,11 +675,15 @@ class MemcachedStorage(Storage):
         :param hosts: list of memcached hosts
         :return:
         """
-        return module.Client(*hosts, **kwargs)
+        return (
+            module.HashClient(hosts, **kwargs)
+            if len(hosts) > 1 else module.Client(*hosts, **kwargs)
+        )
 
     def call_memcached_func(self, func, *args, **kwargs):
         if 'noreply' in kwargs:
-            if 'noreply' not in inspect.getargspec(func).args:
+            argspec = inspect.getargspec(func)
+            if not ('noreply' in argspec.args or argspec.keywords):
                 kwargs.pop('noreply')  # noqa
         return func(*args, **kwargs)
 
@@ -688,13 +693,16 @@ class MemcachedStorage(Storage):
         lazily creates a memcached client instance using a thread local
         """
         if not (
-            hasattr(self.local_storage, "storage")
-            and self.local_storage.storage
+                hasattr(self.local_storage, "storage")
+                and self.local_storage.storage
         ):
             self.local_storage.storage = self.client_getter(
-                get_dependency(self.library), self.cluster, **self.options
+                get_dependency(self.cluster_library if len(self.hosts) > 1 else self.library),
+                self.hosts, **self.options
             )
+
         return self.local_storage.storage
+
 
     def get(self, key):
         """
@@ -761,7 +769,7 @@ class MemcachedStorage(Storage):
         check if storage is healthy
         """
         try:
-            self.call_memcached_func(self.storage.stats)
+            self.call_memcached_func(self.storage.get, 'limiter-check')
             return True
         except:  # noqa
             return False
