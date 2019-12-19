@@ -22,7 +22,8 @@ from tests import skip_if_pypy
 class WindowTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 22122)).flush_all()
-        redis.Redis().flushall()
+        redis.from_url("redis://localhost:7379").flushall()
+        redis.from_url("redis://:sekret@localhost:7389").flushall()
         redis.sentinel.Sentinel([
             ("localhost", 26379)
         ]).master_for("localhost-redis-sentinel").flushall()
@@ -93,7 +94,7 @@ class WindowTests(unittest.TestCase):
         self.assertEqual(storage.get(limit.key_for()), 10)
 
     def test_fixed_window_with_elastic_expiry_redis(self):
-        storage = RedisStorage('redis://localhost:6379')
+        storage = RedisStorage('redis://localhost:7379')
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         self.assertTrue(all([limiter.hit(limit) for _ in range(0, 10)]))
@@ -141,7 +142,7 @@ class WindowTests(unittest.TestCase):
 
     @skip_if_pypy
     def test_moving_window_redis(self):
-        storage = RedisStorage("redis://localhost:6379")
+        storage = RedisStorage("redis://localhost:7379")
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         for i in range(0, 10):

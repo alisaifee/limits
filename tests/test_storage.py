@@ -26,7 +26,8 @@ class BaseStorageTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 22122)).flush_all()
         redis.from_url('unix:///var/tmp/limits.redis.sock').flushall()
-        redis.Redis().flushall()
+        redis.from_url("redis://localhost:7379").flushall()
+        redis.from_url("redis://:sekret@localhost:7389").flushall()
         redis.sentinel.Sentinel([
             ("localhost", 26379)
         ]).master_for("localhost-redis-sentinel").flushall()
@@ -43,7 +44,7 @@ class BaseStorageTests(unittest.TestCase):
         )
         self.assertTrue(
             isinstance(
-                storage_from_string("redis://localhost:6379"), RedisStorage
+                storage_from_string("redis://localhost:7379"), RedisStorage
             )
         )
         self.assertTrue(
@@ -125,7 +126,8 @@ class BaseStorageTests(unittest.TestCase):
 
     def test_storage_check(self):
         self.assertTrue(storage_from_string("memory://").check())
-        self.assertTrue(storage_from_string("redis://localhost:6379").check())
+        self.assertTrue(storage_from_string("redis://localhost:7379").check())
+        self.assertTrue(storage_from_string("redis://:sekret@localhost:7389").check())
         self.assertTrue(storage_from_string("redis+unix:///var/tmp/limits.redis.sock").check())
         self.assertTrue(
             storage_from_string("memcached://localhost:22122").check()
@@ -326,7 +328,7 @@ class SharedRedisTests(object):
 
 class RedisStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
-        self.storage_url = "redis://localhost:6379"
+        self.storage_url = "redis://localhost:7379"
         self.storage = RedisStorage(self.storage_url)
         redis.from_url(self.storage_url).flushall()
 

@@ -38,6 +38,8 @@ install:
 	python setup.py install
 
 redis-start: redis-cleanup
+	./redis-git/src/redis-server tests/redis-configurations/basic.conf
+	./redis-git/src/redis-server tests/redis-configurations/passwd.conf
 	./redis-git/src/redis-server tests/redis-configurations/unixdomainsocket.conf
 	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-0.conf
 	./redis-git/src/redis-server tests/redis-configurations/cluster/redis-1.conf
@@ -67,6 +69,8 @@ redis-stop:
 	[ -e /tmp/redis-master.pid ] && kill -9 `cat /tmp/redis-master.pid` || true
 	[ -e /tmp/redis-slave.pid ] && kill -9 `cat /tmp/redis-slave.pid` || true
 	[ -e /tmp/redis_unix-domain-socket.pid ] && kill -9 `cat /tmp/redis_unix-domain-socket.pid` || true
+	[ -e /tmp/redis_basic.pid ] && kill -9 `cat /tmp/redis_basic.pid` || true
+	[ -e /tmp/redis_basic_passwd.pid ] && kill -9 `cat /tmp/redis_basic_passwd.pid` || true
 	rm -f /tmp/redis_cluster_node0.conf
 	rm -f /tmp/redis_cluster_node1.conf
 	rm -f /tmp/redis_cluster_node2.conf
