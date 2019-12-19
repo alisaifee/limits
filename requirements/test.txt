@@ -1,7 +1,8 @@
 -r main.txt
 nose
+parameterized
 mock
-coverage
+coverage<5
 nose-cov
 pymemcache
 redis<3.1.0

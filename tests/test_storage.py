@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import hiro
 import mock
+
 import pymemcache.client
 import redis
 import redis.sentinel
@@ -273,7 +274,6 @@ class MemoryStorageTests(unittest.TestCase):
                 timeline.forward(1)
                 time.sleep(0.1)
                 self.assertEqual([], self.storage.events[per_min.key_for()])
-
 
 class SharedRedisTests(object):
     def test_fixed_window(self):
