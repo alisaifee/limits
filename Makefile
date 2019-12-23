@@ -53,11 +53,11 @@ osx-hacks: redis-uds-stop memcached-uds-stop redis-uds-start memcached-uds-start
 setup-test-backends: $(OS_HACKS) memcached-gae-install docker-up
 
 tests: setup-test-backends
-	nosetests tests --with-cov -v --with-timer --timer-top-n 10
+	pytest -m unit --durations=10
 
 integration-tests: setup-test-backends
-	INTEGRATION_TESTS=1 nosetests tests/integration --with-cov -v --with-timer --timer-top-n 10
+	pytest -m integration
 
 all-tests: setup-test-backends
-	INTEGRATION_TESTS=1 nosetests tests --with-cov -v --with-timer --timer-top-n 10
+	pytest -m unit,integration --durations=10
 .PHONY: test

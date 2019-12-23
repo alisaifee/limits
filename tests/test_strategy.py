@@ -3,6 +3,7 @@ import time
 import unittest
 
 import pymemcache.client
+import pytest
 import redis
 import redis.sentinel
 import rediscluster
@@ -19,6 +20,7 @@ from limits.strategies import (
 from tests import skip_if_pypy
 
 
+@pytest.mark.unit
 class WindowTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 22122)).flush_all()
