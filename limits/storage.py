@@ -373,7 +373,8 @@ class RedisInteractor(object):
         :param str key: the key to get the expiry for
         :param connection: Redis connection
         """
-        return int((connection.ttl(key) or 0) + time.time())
+        ttl = connection.ttl(key)
+        return int(max(connection.ttl(key), 0) + time.time())
 
     def check(self, connection):
         """
