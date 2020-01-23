@@ -2,6 +2,7 @@ language: python
 python:
     - "2.7"
     - "3.7"
+    - "3.8"
     - "pypy"
     - "pypy3"
 
@@ -19,9 +20,6 @@ services:
     - redis-server
     - memcached
 
-before_script:
-    - make -f Makefile.tests tests
-
-script: nosetests tests --with-cov -v
+script: make -f Makefile.tests tests
 after_success:
     - coveralls
