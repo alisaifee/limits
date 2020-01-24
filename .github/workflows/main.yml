@@ -12,6 +12,12 @@ jobs:
     strategy:
       matrix:
         python-version: [2.7, pypy2, 3.5, 3.7, 3.8, pypy3]
+        include:
+          - python: 2.7
+            marker: 'integration'
+          - python: 3.7
+            coverage: true
+            marker: 'unit,integration'
     steps:
     - uses: actions/checkout@v2
     - name: Cache dependencies
@@ -34,10 +40,9 @@ jobs:
         make setup-test-backends
     - name: Tests
       run: |
-        nosetests tests --with-cov -v --with-timer --timer-top-n 10
-    - name: Coverage
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        py.test -m ${{ matrix.marker || 'unit' }}
+    - name: Post Coverage
       run: |
         coveralls
+      if: ${{ matrix.coverage }}
 
