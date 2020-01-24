@@ -3,6 +3,15 @@
 Changelog
 ---------
 
+1.5 2020-01-23
+==============
+* Bug fix for handling TTL response from Redis when key doesn’t exist
+* Support Memcache over unix domain socket
+* Support Memcache cluster
+* Pass through constructor keyword arguments to underlying storage
+  constructor(s)
+* CI & test improvements
+
 1.4.1 2019-12-15
 ================
 * Bug fix for implementation of clear in MemoryStorage
@@ -72,6 +81,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
