@@ -542,16 +542,10 @@ class RedisSentinelStorage(RedisStorage):
             password=password,
             **options
         )
+        self.storage = self.sentinel.master_for(self.service_name)
+        self.storage_slave = self.sentinel.slave_for(self.service_name)
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
-
-    @property
-    def storage(self):
-        return self.sentinel.master_for(self.service_name)
-
-    @property
-    def storage_slave(self):
-        return self.sentinel.slave_for(self.service_name)
 
     def get(self, key):
         """
