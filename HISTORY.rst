@@ -3,6 +3,13 @@
 Changelog
 ---------
 
+1.5.1 2020-02-25
+================
+* Bug fix
+
+  * Remove duplicate call to ttl in RedisStorage
+  * Initialize master/slave connections for RedisSentinel once
+
 1.5 2020-01-23
 ==============
 * Bug fix for handling TTL response from Redis when key doesn’t exist
@@ -81,6 +88,7 @@ Changelog
 1.0.0 2015-01-08
 ================
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
