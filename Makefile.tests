@@ -1,7 +1,15 @@
+SHELL = bash
 ifneq ("$(wildcard ./google-cloud-sdk/platform/google_appengine/VERSION)","")
 GAE_INSTALLED = 1
 else
 GAE_INSTALLED = 0
+endif
+
+ifeq ("$(shell uname -s)", "Darwin")
+HOST_IP = $(shell ipconfig getifaddr en0)
+OS_HACKS = osx-hacks
+else
+HOST_IP = $(shell hostname -I | awk '{print $$1}')
 endif
 
 PY_VERSION =$(shell python -c "import sys;print('.'.join(str(k) for k in sys.version_info[0:2]))")
@@ -35,56 +43,17 @@ bdist: cleanmeta
 install:
 	python setup.py install
 
-redis-start: redis-cleanup
-	redis-server tests/redis-configurations/basic.conf
-	redis-server tests/redis-configurations/passwd.conf
-	redis-server tests/redis-configurations/unixdomainsocket.conf
-	redis-server tests/redis-configurations/cluster/redis-0.conf
-	redis-server tests/redis-configurations/cluster/redis-1.conf
-	redis-server tests/redis-configurations/cluster/redis-2.conf
-	redis-server tests/redis-configurations/cluster/redis-3.conf
-	redis-server tests/redis-configurations/cluster/redis-4.conf
-	redis-server tests/redis-configurations/cluster/redis-5.conf
-	redis-server tests/redis-configurations/sentinel/redis-master.conf
-	redis-server tests/redis-configurations/sentinel/redis-slave.conf
-	redis-server tests/redis-configurations/sentinel/redis-sentinel.conf --sentinel
+redis-uds-start:
+	redis-server --port 0 --unixsocket /tmp/limits.redis.sock --daemonize yes --pidfile /tmp/redis_unix-domain-socket.pid
 
-	echo "yes" | redis-cli --cluster create --cluster-replicas 1 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005
-	sleep 5
-
-redis-cleanup:
-	- rm -vf /tmp/redis_cluster_node*.conf 2>/dev/null
-	- rm -rf dump.rdb appendonly.aof - 2>/dev/null
-
-redis-stop:
-	[ -e /tmp/redis_cluster_node0.pid ] && kill -9 `cat /tmp/redis_cluster_node0.pid` || true
-	[ -e /tmp/redis_cluster_node1.pid ] && kill -9 `cat /tmp/redis_cluster_node1.pid` || true
-	[ -e /tmp/redis_cluster_node2.pid ] && kill -9 `cat /tmp/redis_cluster_node2.pid` || true
-	[ -e /tmp/redis_cluster_node3.pid ] && kill -9 `cat /tmp/redis_cluster_node3.pid` || true
-	[ -e /tmp/redis_cluster_node4.pid ] && kill -9 `cat /tmp/redis_cluster_node4.pid` || true
-	[ -e /tmp/redis_cluster_node5.pid ] && kill -9 `cat /tmp/redis_cluster_node5.pid` || true
-	[ -e /tmp/redis-sentinel.pid ] && kill -9 `cat /tmp/redis-sentinel.pid` || true
-	[ -e /tmp/redis-master.pid ] && kill -9 `cat /tmp/redis-master.pid` || true
-	[ -e /tmp/redis-slave.pid ] && kill -9 `cat /tmp/redis-slave.pid` || true
+redis-uds-stop:
 	[ -e /tmp/redis_unix-domain-socket.pid ] && kill -9 `cat /tmp/redis_unix-domain-socket.pid` || true
-	[ -e /tmp/redis_basic.pid ] && kill -9 `cat /tmp/redis_basic.pid` || true
-	[ -e /tmp/redis_basic_passwd.pid ] && kill -9 `cat /tmp/redis_basic_passwd.pid` || true
-	rm -f /tmp/redis_cluster_node0.conf
-	rm -f /tmp/redis_cluster_node1.conf
-	rm -f /tmp/redis_cluster_node2.conf
-	rm -f /tmp/redis_cluster_node3.conf
-	rm -f /tmp/redis_cluster_node4.conf
-	rm -f /tmp/redis_cluster_node5.conf
 
 
-memcached-start:
-	memcached -d -p 22122 -P /tmp/limits.memcached.1.pid
-	memcached -d -p 22123 -P /tmp/limits.memcached.2.pid
+memcached-uds-start:
 	memcached -d -s /tmp/limits.memcached.sock -P /tmp/limits.memcached.uds.pid
 
-memcached-stop:
-	[ -e /tmp/limits.memcached.1.pid ] && kill `cat /tmp/limits.memcached.1.pid` || true
-	[ -e /tmp/limits.memcached.2.pid ] && kill `cat /tmp/limits.memcached.2.pid` || true
+memcached-uds-stop:
 	[ -e /tmp/limits.memcached.uds.pid ] && kill `cat /tmp/limits.memcached.uds.pid` || true
 	rm -rf /tmp/limits.memcached.*.pid
 
@@ -106,7 +75,16 @@ memcached-gae-clean:
 	rm google-cloud-sdk-167.0.0-linux-x86_64.tar.gz
 	rm -r google-cloud-sdk
 
-tests: redis-stop memcached-stop redis-start memcached-gae-install memcached-start
-	nosetests tests --with-cov -v --with-timer --timer-top-n 10
+docker-down:
+	docker-compose down --remove-orphans
 
+docker-up: docker-down
+	HOST_IP=$(HOST_IP) docker-compose up -d
+	docker exec -i redis-cluster-5 bash -c "echo yes | redis-cli --cluster create --cluster-replicas 1 $(HOST_IP):{7000..7005}"
+
+osx-hacks: redis-uds-stop memcached-uds-stop redis-uds-start memcached-uds-start
+
+setup-backends: $(OS_HACKS) memcached-gae-install docker-up
+tests: setup-backends
+	nosetests tests --with-cov -v --with-timer --timer-top-n 10
 .PHONY: test

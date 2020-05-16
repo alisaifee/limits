@@ -1,0 +1,102 @@
+version: '3.2'
+
+services:
+  # memcached
+  memcached1:
+    image: memcached
+    command: -p 22122
+    ports:
+      - 22122:22122
+  memcached-2:
+    image: memcached
+    command: -p 22123
+    ports:
+      - 22123:22123
+  memcached-uds:
+    image: memcached
+    command: -s /sockets/limits.memcached.sock -a 777
+    volumes:
+      - type: bind
+        source: /tmp/
+        target: /sockets/
+  # redis sentinel
+  redis-sentinel-master:
+    image: redis
+    command: redis-server --port 6380
+    ports:
+      - '6380:6380'
+  redis-sentinel-slave:
+    image: redis
+    depends_on: [redis-sentinel-master]
+    command: redis-server --port 6381 --slaveof ${HOST_IP} 6380 --slave-announce-ip ${HOST_IP}
+    ports:
+      - '6381:6381'
+  redis-sentinel:
+    image: 'bitnami/redis-sentinel:latest'
+    depends_on: [redis-sentinel-slave]
+    environment:
+      - REDIS_MASTER_SET=localhost-redis-sentinel
+      - REDIS_MASTER_HOST=${HOST_IP}
+      - REDIS_MASTER_PORT_NUMBER=6380
+    ports:
+      - '26379:26379'
+  # cluster
+  redis-cluster-0:
+    image: redis
+    container_name: redis-cluster-0
+    command: redis-server --port 7000 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '7000:7000'
+      - '17000:17000'
+  redis-cluster-1:
+    image: redis
+    container_name: redis-cluster-1
+    command: redis-server --port 7001 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '7001:7001'
+      - '17001:17001'
+  redis-cluster-2:
+    image: redis
+    container_name: redis-cluster-2
+    command: redis-server --port 7002 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '7002:7002'
+      - '17002:17002'
+  redis-cluster-3:
+    image: redis
+    container_name: redis-cluster-3
+    command: redis-server --port 7003 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '7003:7003'
+      - '17003:17003'
+  redis-cluster-4:
+    image: redis
+    container_name: redis-cluster-4
+    command: redis-server --port 7004 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '7004:7004'
+      - '17004:17004'
+  redis-cluster-5:
+    image: redis
+    container_name: redis-cluster-5
+    command: redis-server --port 7005 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '7005:7005'
+      - '17005:17005'
+  redis-basic:
+    image: redis
+    command: redis-server --port 7379
+    ports:
+      - '7379:7379'
+  redis-auth:
+    image: redis
+    command: redis-server --port 7389 --requirepass sekret
+    ports:
+      - '7389:7389'
+  redis-uds:
+    image: redis
+    command: --port 0 --unixsocket /sockets/limits.redis.sock --unixsocketperm 777
+    volumes:
+      - type: bind
+        source: /tmp/
+        target: /sockets/
