@@ -25,7 +25,7 @@ from tests import skip_if, RUN_GAE
 class BaseStorageTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 22122)).flush_all()
-        redis.from_url('unix:///var/tmp/limits.redis.sock').flushall()
+        redis.from_url('unix:///tmp/limits.redis.sock').flushall()
         redis.from_url("redis://localhost:7379").flushall()
         redis.from_url("redis://:sekret@localhost:7389").flushall()
         redis.sentinel.Sentinel([
@@ -49,13 +49,13 @@ class BaseStorageTests(unittest.TestCase):
         )
         self.assertTrue(
             isinstance(
-                storage_from_string("redis+unix:///var/tmp/limits.redis.sock"), RedisStorage
+                storage_from_string("redis+unix:///tmp/limits.redis.sock"), RedisStorage
             )
         )
 
         self.assertTrue(
             isinstance(
-                storage_from_string("redis+unix://:password/var/tmp/limits.redis.sock"), RedisStorage
+                storage_from_string("redis+unix://:password/tmp/limits.redis.sock"), RedisStorage
             )
         )
 
@@ -128,7 +128,7 @@ class BaseStorageTests(unittest.TestCase):
         self.assertTrue(storage_from_string("memory://").check())
         self.assertTrue(storage_from_string("redis://localhost:7379").check())
         self.assertTrue(storage_from_string("redis://:sekret@localhost:7389").check())
-        self.assertTrue(storage_from_string("redis+unix:///var/tmp/limits.redis.sock").check())
+        self.assertTrue(storage_from_string("redis+unix:///tmp/limits.redis.sock").check())
         self.assertTrue(
             storage_from_string("memcached://localhost:22122").check()
         )
@@ -342,9 +342,9 @@ class RedisStorageTests(SharedRedisTests, unittest.TestCase):
 
 class RedisUnixSocketStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
-        self.storage_url = "redis+unix:///var/tmp/limits.redis.sock"
+        self.storage_url = "redis+unix:///tmp/limits.redis.sock"
         self.storage = RedisStorage(self.storage_url)
-        redis.from_url('unix:///var/tmp/limits.redis.sock').flushall()
+        redis.from_url('unix:///tmp/limits.redis.sock').flushall()
 
     def test_init_options(self):
         with mock.patch("limits.storage.get_dependency") as get_dependency:
