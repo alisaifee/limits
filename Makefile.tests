@@ -1,5 +1,5 @@
 SHELL = bash
-ifneq ("$(wildcard ./google-cloud-sdk/platform/google_appengine/VERSION)","")
+ifneq ("$(wildcard ./google_appengine/VERSION)","")
 GAE_INSTALLED = 1
 else
 GAE_INSTALLED = 0
@@ -60,15 +60,13 @@ memcached-uds-stop:
 memcached-gae-install:
 ifeq ($(PY_VERSION),2.7)
 ifeq ($(GAE_INSTALLED),0)
-	export CLOUDSDK_PYTHON=$$(which python)
-	wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-167.0.0-linux-x86_64.tar.gz -P /var/tmp/;
-	rm -rf google-cloud-sdk
-	tar -xzf /var/tmp/google-cloud-sdk-167.0.0-linux-x86_64.tar.gz
-	yes Y | google-cloud-sdk/bin/gcloud components install app-engine-python
+	wget https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.91.zip -P /var/tmp/
+	rm -rf google_appengine
+	unzip -qu /var/tmp/google_appengine_1.9.91.zip -d .
 else
 	echo "GAE SDK already setup"
 endif
-	ln -sf google-cloud-sdk/platform/google_appengine/google google
+	ln -sf google_appengine/google google
 endif
 
 memcached-gae-clean:

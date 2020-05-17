@@ -4,7 +4,7 @@ include =
 omit =
     /*/limits/_version*
     /*/limits/backports/*
-    /*/google-cloud-sdk/*
+    /*/google_appengine/*
     /*/tests/*
     setup.py
     versioneer.py
