@@ -13,9 +13,9 @@ jobs:
       matrix:
         python-version: [2.7, pypy2, 3.5, 3.7, 3.8, pypy3]
         include:
-          - python: 2.7
+          - python-version: 2.7
             marker: 'integration'
-          - python: 3.7
+          - python-version: 3.7
             coverage: true
             marker: 'unit,integration'
     steps:
