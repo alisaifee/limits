@@ -31,5 +31,5 @@ setup(
     classifiers=[k for k in open('CLASSIFIERS').read().split('\n') if k],
     description='Rate limiting utilities',
     long_description=open('README.rst').read(),
-    packages=find_packages(exclude=['google.*','google', 'tests*']),
+    packages=find_packages(exclude=['google.*', 'google', 'tests*']),
 )
