@@ -489,3 +489,15 @@ class GAEMemcachedStorageTests(unittest.TestCase):
         while time.time() - start <= 1:
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
+
+    def test_fixed_window_with_elastic_expiry_cluster(self):
+        storage = GAEMemcachedStorage("gaememcached://")
+        limiter = FixedWindowElasticExpiryRateLimiter(storage)
+        per_sec = RateLimitItemPerSecond(2, 2)
+
+        self.assertTrue(limiter.hit(per_sec))
+        self.assertTrue(limiter.hit(per_sec))
+        time.sleep(1)
+        self.assertFalse(limiter.test(per_sec))
+        time.sleep(1)
+        self.assertTrue(limiter.test(per_sec))
