@@ -6,10 +6,7 @@ import inspect
 
 from six.moves import urllib
 
-try:
-    from collections import Counter
-except ImportError:  # pragma: no cover
-    from .backports.counter import Counter  # pragma: no cover
+from collections import Counter
 
 import threading
 import time
