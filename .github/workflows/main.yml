@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         python-version: [2.7, pypy2, 3.5, 3.7, 3.8, pypy3]
+        marker: [unit]
         include:
           - python-version: 2.7
             marker: 'integration'
