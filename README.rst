@@ -1,5 +1,5 @@
-.. |travis-ci| image:: https://img.shields.io/travis/alisaifee/limits/master.svg?style=flat-square
-    :target: https://travis-ci.org/#!/alisaifee/limits?branch=master
+.. |ci| image:: https://github.com/alisaifee/limits/workflows/CI/badge.svg?branch=master
+    :target: https://github.com/alisaifee/limits/actions?query=branch%3Amaster+workflow%3ACI
 .. |coveralls| image:: https://img.shields.io/coveralls/alisaifee/limits/master.svg?style=flat-square
     :target: https://coveralls.io/r/alisaifee/limits?branch=master
 .. |pypi| image:: https://img.shields.io/pypi/v/limits.svg?style=flat-square
@@ -13,7 +13,7 @@
 *************
 limits
 *************
-|travis-ci| |coveralls| |pypi| |gitter| |license|
+|ci| |coveralls| |pypi| |gitter| |license|
 
 *limits* provides utilities to implement rate limiting using
 various strategies and storage backends such as redis & memcached.

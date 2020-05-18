@@ -69,14 +69,16 @@ Clear a limit::
 Development
 -----------
 Since `limits` integrates with various backend storages, local development and running tests
-can require some setup. Basic `redis` & `memcached` installations are expected to be available in your environment.
-If you are working with :ref:`redis-cluster`, :ref:`redis-sentinel` or :ref:`gae-memcached` you can use the makefile
-``Makefile.tests`` to help with setting up development dependencies::
+can require some setup.
 
-    make -f Makefile.tests redis-start memcached-gae-install
+You can use the provided Makefile to set up all the backends. This will require a working
+docker installation. Additionally on OSX you will require the ``memcached`` and
+``redis-server`` executables to be on the path::
+
+    make setup-test-backends
     # hack hack hack
     # run tests
-    make -f Makefile.tests redis-stop
+    nosetests tests
 
 Projects using *limits*
 -------------------------
