@@ -2,7 +2,7 @@ version: '3.2'
 
 services:
   # memcached
-  memcached1:
+  memcached-1:
     image: memcached
     command: -p 22122
     ports:
@@ -43,42 +43,36 @@ services:
   # cluster
   redis-cluster-0:
     image: redis
-    container_name: redis-cluster-0
     command: redis-server --port 7000 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7000:7000'
       - '17000:17000'
   redis-cluster-1:
     image: redis
-    container_name: redis-cluster-1
     command: redis-server --port 7001 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7001:7001'
       - '17001:17001'
   redis-cluster-2:
     image: redis
-    container_name: redis-cluster-2
     command: redis-server --port 7002 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7002:7002'
       - '17002:17002'
   redis-cluster-3:
     image: redis
-    container_name: redis-cluster-3
     command: redis-server --port 7003 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7003:7003'
       - '17003:17003'
   redis-cluster-4:
     image: redis
-    container_name: redis-cluster-4
     command: redis-server --port 7004 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7004:7004'
       - '17004:17004'
   redis-cluster-5:
     image: redis
-    container_name: redis-cluster-5
     command: redis-server --port 7005 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7005:7005'

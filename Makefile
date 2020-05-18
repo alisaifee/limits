@@ -70,20 +70,17 @@ endif
 	ln -sf google_appengine/google google
 endif
 
-memcached-gae-clean:
-	rm google-cloud-sdk-167.0.0-linux-x86_64.tar.gz
-	rm -r google-cloud-sdk
-
 docker-down:
 	docker-compose down --remove-orphans
 
 docker-up: docker-down
 	HOST_OS=$(HOST_OS) HOST_IP=$(HOST_IP) docker-compose up -d
-	docker exec -i redis-cluster-5 bash -c "echo yes | redis-cli --cluster create --cluster-replicas 1 $(HOST_IP):{7000..7005}"
+	docker exec -i limits_redis-cluster-5_1 bash -c "echo yes | redis-cli --cluster create --cluster-replicas 1 $(HOST_IP):{7000..7005}"
 
 osx-hacks: redis-uds-stop memcached-uds-stop redis-uds-start memcached-uds-start
 
-setup-backends: $(OS_HACKS) memcached-gae-install docker-up
-tests: setup-backends
+setup-test-backends: $(OS_HACKS) memcached-gae-install docker-up
+
+tests: setup-test-backends
 	nosetests tests --with-cov -v --with-timer --timer-top-n 10
 .PHONY: test
