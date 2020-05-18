@@ -14,7 +14,7 @@ services:
       - 22123:22123
   memcached-uds:
     image: memcached
-    command: -s /sockets/limits.memcached.sock -a 777
+    command: sh -c "test ${HOST_OS} == \"Darwin\" && exit || memcached -s /sockets/limits.memcached.sock -a 777"
     volumes:
       - type: bind
         source: /tmp/
@@ -95,7 +95,7 @@ services:
       - '7389:7389'
   redis-uds:
     image: redis
-    command: --port 0 --unixsocket /sockets/limits.redis.sock --unixsocketperm 777
+    command: sh -c "test ${HOST_OS} = \"Darwin\" && exit || redis-server --port 0 --unixsocket /sockets/limits.redis.sock --unixsocketperm 777"
     volumes:
       - type: bind
         source: /tmp/

@@ -5,7 +5,8 @@ else
 GAE_INSTALLED = 0
 endif
 
-ifeq ("$(shell uname -s)", "Darwin")
+HOST_OS = $(shell uname -s)
+ifeq ("$(HOST_OS)", "Darwin")
 HOST_IP = $(shell ipconfig getifaddr en0)
 OS_HACKS = osx-hacks
 else
@@ -77,7 +78,7 @@ docker-down:
 	docker-compose down --remove-orphans
 
 docker-up: docker-down
-	HOST_IP=$(HOST_IP) docker-compose up -d
+	HOST_OS=$(HOST_OS) HOST_IP=$(HOST_IP) docker-compose up -d
 	docker exec -i redis-cluster-5 bash -c "echo yes | redis-cli --cluster create --cluster-replicas 1 $(HOST_IP):{7000..7005}"
 
 osx-hacks: redis-uds-stop memcached-uds-stop redis-uds-start memcached-uds-start
