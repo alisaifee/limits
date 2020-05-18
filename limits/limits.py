@@ -3,10 +3,7 @@
 """
 from six import add_metaclass
 
-try:
-    from functools import total_ordering
-except ImportError:  # pragma: no cover
-    from .backports.total_ordering import total_ordering  # pragma: no cover
+from functools import total_ordering
 
 
 def safe_string(value):
