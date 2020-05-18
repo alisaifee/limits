@@ -35,3 +35,9 @@ jobs:
     - name: Tests
       run: |
         nosetests tests --with-cov -v --with-timer --timer-top-n 10
+    - name: Coverage
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+      run: |
+        coveralls
+
