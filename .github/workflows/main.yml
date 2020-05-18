@@ -31,7 +31,7 @@ jobs:
         pip install -r requirements/ci.txt
     - name: Start services
       run: |
-        make -f Makefile.tests setup-backends
+        make setup-backends
     - name: Tests
       run: |
-        nosetests tests
+        nosetests tests --with-cov -v --with-timer --timer-top-n 10
