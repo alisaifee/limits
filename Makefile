@@ -15,35 +15,6 @@ endif
 
 PY_VERSION =$(shell python -c "import sys;print('.'.join(str(k) for k in sys.version_info[0:2]))")
 
-clean:
-	-rm -f MANIFEST
-	-rm -rf dist/
-	-rm -rf build/
-
-cleancov:
-	-rm -rf htmlcov/
-	-coverage combine
-	-coverage erase
-
-cleanmeta:
-	-rm -rf limits.egg-info/
-
-cleanall: clean cleancov cleanmeta
-	-find . -type f -name "*~" -exec rm -f "{}" \;
-	-find . -type f -name "*.orig" -exec rm -f "{}" \;
-	-find . -type f -name "*.rej" -exec rm -f "{}" \;
-	-find . -type f -name "*.pyc" -exec rm -f "{}" \;
-	-find . -type f -name "*.parse-index" -exec rm -f "{}" \;
-
-sdist: cleanmeta
-	python setup.py sdist
-
-bdist: cleanmeta
-	python setup.py bdist_egg
-
-install:
-	python setup.py install
-
 redis-uds-start:
 	redis-server --port 0 --unixsocket /tmp/limits.redis.sock --daemonize yes --pidfile /tmp/redis_unix-domain-socket.pid
 
