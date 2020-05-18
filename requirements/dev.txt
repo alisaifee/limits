@@ -1,4 +1,5 @@
 -r ci.txt
+flake8
 keyring
 twine
 wheel
