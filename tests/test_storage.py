@@ -1,11 +1,11 @@
-import threading
+import time
 import time
 import unittest
-from uuid import uuid4
 
 import hiro
 import mock
 import pymemcache.client
+import pytest
 import redis
 import redis.sentinel
 import rediscluster
@@ -19,9 +19,9 @@ from limits.storage import (
 from limits.strategies import (
     FixedWindowRateLimiter, FixedWindowElasticExpiryRateLimiter, MovingWindowRateLimiter
 )
-from tests import skip_if, RUN_GAE
+from tests import RUN_GAE
 
-
+@pytest.mark.unit
 class BaseStorageTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 22122)).flush_all()
@@ -207,6 +207,7 @@ class BaseStorageTests(unittest.TestCase):
         self.assertTrue(isinstance(storage, MyStorage))
         MovingWindowRateLimiter(storage)
 
+@pytest.mark.unit
 class MemoryStorageTests(unittest.TestCase):
     def setUp(self):
         self.storage = MemoryStorage()
@@ -274,7 +275,7 @@ class MemoryStorageTests(unittest.TestCase):
                 time.sleep(0.1)
                 self.assertEqual([], self.storage.events[per_min.key_for()])
 
-
+@pytest.mark.unit
 class SharedRedisTests(object):
     def test_fixed_window(self):
         limiter = FixedWindowRateLimiter(self.storage)
@@ -326,6 +327,7 @@ class SharedRedisTests(object):
             time.sleep(0.05)
         self.assertTrue(self.storage.storage.keys("%s/*" % limit.namespace) == [])
 
+@pytest.mark.unit
 class RedisStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
         self.storage_url = "redis://localhost:7379"
@@ -340,6 +342,7 @@ class RedisStorageTests(SharedRedisTests, unittest.TestCase):
             )
 
 
+@pytest.mark.unit
 class RedisUnixSocketStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
         self.storage_url = "redis+unix:///tmp/limits.redis.sock"
@@ -374,6 +377,7 @@ class RedisSentinelStorageTests(SharedRedisTests, unittest.TestCase):
             )
 
 
+@pytest.mark.unit
 class RedisClusterStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
         rediscluster.RedisCluster("localhost", 7000).flushall()
@@ -388,6 +392,7 @@ class RedisClusterStorageTests(SharedRedisTests, unittest.TestCase):
             )
 
 
+@pytest.mark.unit
 class MemcachedStorageTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 22122)).flush_all()
@@ -434,7 +439,9 @@ class MemcachedStorageTests(unittest.TestCase):
         per_sec = RateLimitItemPerSecond(2, 2)
 
         self.assertTrue(limiter.hit(per_sec))
+        time.sleep(1)
         self.assertTrue(limiter.hit(per_sec))
+        self.assertFalse(limiter.test(per_sec))
         time.sleep(1)
         self.assertFalse(limiter.test(per_sec))
         time.sleep(1)
@@ -446,7 +453,9 @@ class MemcachedStorageTests(unittest.TestCase):
         per_sec = RateLimitItemPerSecond(2, 2)
 
         self.assertTrue(limiter.hit(per_sec))
+        time.sleep(1)
         self.assertTrue(limiter.hit(per_sec))
+        self.assertFalse(limiter.test(per_sec))
         time.sleep(1)
         self.assertFalse(limiter.test(per_sec))
         time.sleep(1)
@@ -462,15 +471,15 @@ class MemcachedStorageTests(unittest.TestCase):
         self.assertTrue(limiter.hit(per_min))
 
 
+@pytest.mark.unit
+@unittest.skipUnless(RUN_GAE, reason='Only for GAE')
 class GAEMemcachedStorageTests(unittest.TestCase):
     def setUp(self):
-        if RUN_GAE:
-            from google.appengine.ext import testbed
-            tb = testbed.Testbed()
-            tb.activate()
-            tb.init_memcache_stub()
+        from google.appengine.ext import testbed
+        tb = testbed.Testbed()
+        tb.activate()
+        tb.init_memcache_stub()
 
-    @skip_if(not RUN_GAE)
     def test_fixed_window(self):
         storage = GAEMemcachedStorage("gaememcached://")
         limiter = FixedWindowRateLimiter(storage)
@@ -484,3 +493,17 @@ class GAEMemcachedStorageTests(unittest.TestCase):
         while time.time() - start <= 1:
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
+
+    def test_fixed_window_with_elastic_expiry_cluster(self):
+        storage = GAEMemcachedStorage("gaememcached://")
+        limiter = FixedWindowElasticExpiryRateLimiter(storage)
+        per_sec = RateLimitItemPerSecond(2, 2)
+
+        self.assertTrue(limiter.hit(per_sec))
+        time.sleep(1)
+        self.assertTrue(limiter.hit(per_sec))
+        self.assertFalse(limiter.test(per_sec))
+        time.sleep(1)
+        self.assertFalse(limiter.test(per_sec))
+        time.sleep(1)
+        self.assertTrue(limiter.test(per_sec))
