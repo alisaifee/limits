@@ -439,7 +439,9 @@ class MemcachedStorageTests(unittest.TestCase):
         per_sec = RateLimitItemPerSecond(2, 2)
 
         self.assertTrue(limiter.hit(per_sec))
+        time.sleep(1)
         self.assertTrue(limiter.hit(per_sec))
+        self.assertFalse(limiter.test(per_sec))
         time.sleep(1)
         self.assertFalse(limiter.test(per_sec))
         time.sleep(1)
@@ -451,7 +453,9 @@ class MemcachedStorageTests(unittest.TestCase):
         per_sec = RateLimitItemPerSecond(2, 2)
 
         self.assertTrue(limiter.hit(per_sec))
+        time.sleep(1)
         self.assertTrue(limiter.hit(per_sec))
+        self.assertFalse(limiter.test(per_sec))
         time.sleep(1)
         self.assertFalse(limiter.test(per_sec))
         time.sleep(1)
@@ -496,7 +500,9 @@ class GAEMemcachedStorageTests(unittest.TestCase):
         per_sec = RateLimitItemPerSecond(2, 2)
 
         self.assertTrue(limiter.hit(per_sec))
+        time.sleep(1)
         self.assertTrue(limiter.hit(per_sec))
+        self.assertFalse(limiter.test(per_sec))
         time.sleep(1)
         self.assertFalse(limiter.test(per_sec))
         time.sleep(1)
