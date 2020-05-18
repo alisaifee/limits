@@ -19,7 +19,8 @@ from limits.storage import (
 from limits.strategies import (
     FixedWindowRateLimiter, FixedWindowElasticExpiryRateLimiter, MovingWindowRateLimiter
 )
-from tests import RUN_GAE
+from tests import RUN_GAE, fixed_start
+
 
 @pytest.mark.unit
 class BaseStorageTests(unittest.TestCase):
@@ -405,6 +406,7 @@ class MemcachedStorageTests(unittest.TestCase):
                 get_dependency().Client.call_args[1]['connect_timeout'], 1
             )
 
+    @fixed_start
     def test_fixed_window(self):
         storage = MemcachedStorage("memcached://localhost:22122")
         limiter = FixedWindowRateLimiter(storage)
@@ -419,6 +421,7 @@ class MemcachedStorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    @fixed_start
     def test_fixed_window_cluster(self):
         storage = MemcachedStorage("memcached://localhost:22122,localhost:22123")
         limiter = FixedWindowRateLimiter(storage)
@@ -433,6 +436,7 @@ class MemcachedStorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    @fixed_start
     def test_fixed_window_with_elastic_expiry(self):
         storage = MemcachedStorage("memcached://localhost:22122")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -447,6 +451,7 @@ class MemcachedStorageTests(unittest.TestCase):
         time.sleep(1)
         self.assertTrue(limiter.test(per_sec))
 
+    @fixed_start
     def test_fixed_window_with_elastic_expiry_cluster(self):
         storage = MemcachedStorage("memcached://localhost:22122,localhost:22123")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -480,6 +485,7 @@ class GAEMemcachedStorageTests(unittest.TestCase):
         tb.activate()
         tb.init_memcache_stub()
 
+    @fixed_start
     def test_fixed_window(self):
         storage = GAEMemcachedStorage("gaememcached://")
         limiter = FixedWindowRateLimiter(storage)
@@ -494,6 +500,7 @@ class GAEMemcachedStorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    @fixed_start
     def test_fixed_window_with_elastic_expiry_cluster(self):
         storage = GAEMemcachedStorage("gaememcached://")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
