@@ -1,8 +1,12 @@
 import unittest
+
+import pytest
+
 from limits.util import parse, parse_many, granularity_from_string
 from limits import limits
 
 
+@pytest.mark.unit
 class RatelimitParserTests(unittest.TestCase):
     def test_singles(self):
         for rl_string in ["1 per second", "1/SECOND", "1 / Second"]:
