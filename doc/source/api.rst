@@ -16,11 +16,29 @@ Abstract storage class
 =======================
 Backend Implementations
 =======================
+
+In-Memory
+^^^^^^^^^
 .. autoclass:: limits.storage.MemoryStorage
+
+Redis
+^^^^^
 .. autoclass:: limits.storage.RedisStorage
+
+Redis Cluster
+^^^^^^^^^^^^^
 .. autoclass:: limits.storage.RedisClusterStorage
+
+Redis Sentinel
+^^^^^^^^^^^^^^
 .. autoclass:: limits.storage.RedisSentinelStorage
+
+Memcached
+^^^^^^^^^
 .. autoclass:: limits.storage.MemcachedStorage
+
+Google App Engine Memcached
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. autoclass:: limits.storage.GAEMemcachedStorage
 
 ===============
