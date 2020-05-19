@@ -1,0 +1,6 @@
+PreCommit:
+  PythonFlake8:
+    enabled: true
+    on_warn: fail
+  TrailingWhitespace:
+    enabled: true
