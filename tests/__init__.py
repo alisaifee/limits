@@ -6,8 +6,8 @@ import time
 import unittest
 
 RUN_GAE = (
-        sys.version_info[:2] == (2, 7)
-        and platform.python_implementation() == 'CPython'
+    sys.version_info[:2] == (2, 7)
+    and platform.python_implementation() == 'CPython'
 )
 
 

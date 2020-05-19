@@ -52,6 +52,7 @@ class RateLimiter(object):
     def clear(self, item, *identifiers):
         return self.storage().clear(item.key_for(*identifiers))
 
+
 class MovingWindowRateLimiter(RateLimiter):
     """
     Reference: :ref:`moving-window`

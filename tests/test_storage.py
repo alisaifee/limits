@@ -151,7 +151,6 @@ class BaseStorageTests(unittest.TestCase):
         if RUN_GAE:
             self.assertTrue(storage_from_string("gaememcached://").check())
 
-
     def test_pluggable_storage_invalid_construction(self):
         def cons():
             class _(Storage):
@@ -207,6 +206,7 @@ class BaseStorageTests(unittest.TestCase):
         storage = storage_from_string("mystorage://")
         self.assertTrue(isinstance(storage, MyStorage))
         MovingWindowRateLimiter(storage)
+
 
 @pytest.mark.unit
 class MemoryStorageTests(unittest.TestCase):
@@ -276,6 +276,7 @@ class MemoryStorageTests(unittest.TestCase):
                 time.sleep(0.1)
                 self.assertEqual([], self.storage.events[per_min.key_for()])
 
+
 @pytest.mark.unit
 class SharedRedisTests(object):
     def test_fixed_window(self):
@@ -327,6 +328,7 @@ class SharedRedisTests(object):
         while time.time() - last <= 1:
             time.sleep(0.05)
         self.assertTrue(self.storage.storage.keys("%s/*" % limit.namespace) == [])
+
 
 @pytest.mark.unit
 class RedisStorageTests(SharedRedisTests, unittest.TestCase):

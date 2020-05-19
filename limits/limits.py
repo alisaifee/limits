@@ -38,7 +38,7 @@ class RateLimitItemMeta(type):
         return granularity
 
 
-#pylint: disable=no-member
+# pylint: disable=no-member
 @add_metaclass(RateLimitItemMeta)
 @total_ordering
 class RateLimitItem(object):

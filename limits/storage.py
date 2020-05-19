@@ -141,8 +141,8 @@ class MemoryStorage(Storage):
             for event in list(self.events[key]):
                 with event:
                     if (
-                        event.expiry <= time.time() and
-                        event in self.events[key]
+                        event.expiry <= time.time()
+                        and event in self.events[key]
                     ):
                         self.events[key].remove(event)
         for key in list(self.expirations.keys()):
@@ -550,7 +550,6 @@ class RedisSentinelStorage(RedisStorage):
         """
         return super(RedisStorage, self).get(key, self.storage_slave)
 
-
     def get_expiry(self, key):
         """
         :param str key: the key to get the expiry for
@@ -692,7 +691,6 @@ class MemcachedStorage(Storage):
             )
 
         return self.local_storage.storage
-
 
     def get(self, key):
         """
