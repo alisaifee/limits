@@ -6,10 +6,7 @@ import inspect
 
 from six.moves import urllib
 
-try:
-    from collections import Counter
-except ImportError:  # pragma: no cover
-    from .backports.counter import Counter  # pragma: no cover
+from collections import Counter
 
 import threading
 import time
@@ -31,7 +28,7 @@ def storage_from_string(storage_string, **options):
     :return: an instance of :class:`flask_limiter.storage.Storage`
     """
     scheme = urllib.parse.urlparse(storage_string).scheme
-    if not scheme in SCHEMES:
+    if scheme not in SCHEMES:
         raise ConfigurationError(
             "unknown storage scheme : %s" % storage_string
         )
@@ -43,12 +40,16 @@ class StorageRegistry(type):
         storage_scheme = dct.get('STORAGE_SCHEME', None)
         if not bases == (object,) and not storage_scheme:
             raise ConfigurationError(
-                "%s is not configured correctly, it must specify a STORAGE_SCHEME class attribute"
+                "%s is not configured correctly, "
+                "it must specify a STORAGE_SCHEME class attribute"
                 % name
             )
         cls = super(StorageRegistry, mcs).__new__(mcs, name, bases, dct)
         if storage_scheme:
-            schemes = [storage_scheme] if isinstance(storage_scheme, six.string_types) else storage_scheme
+            if isinstance(storage_scheme, six.string_types):
+                schemes = [storage_scheme]
+            else:
+                schemes = storage_scheme
             for scheme in schemes:
                 SCHEMES[scheme] = cls
         return cls
@@ -144,8 +145,8 @@ class MemoryStorage(Storage):
             for event in list(self.events[key]):
                 with event:
                     if (
-                        event.expiry <= time.time() and
-                        event in self.events[key]
+                        event.expiry <= time.time()
+                        and event in self.events[key]
                     ):
                         self.events[key].remove(event)
         for key in list(self.expirations.keys()):
@@ -196,8 +197,8 @@ class MemoryStorage(Storage):
         :param str key: rate limit key to acquire an entry in
         :param int limit: amount of entries allowed
         :param int expiry: expiry of the entry
-        :param bool no_add: if False an entry is not actually acquired but instead
-         serves as a 'check'
+        :param bool no_add: if False an entry is not actually acquired
+         but instead serves as a 'check'
         :rtype: bool
         """
         self.events.setdefault(key, [])
@@ -234,7 +235,8 @@ class MemoryStorage(Storage):
 
     def get_moving_window(self, key, limit, expiry):
         """
-        returns the starting point and the number of entries in the moving window
+        returns the starting point and the number of entries in the moving
+        window
 
         :param str key: rate limit key
         :param int expiry: expiry of entry
@@ -299,7 +301,9 @@ class RedisInteractor(object):
         local keys = redis.call('keys', KEYS[1])
         local res = 0
         for i=1,#keys,5000 do
-            res = res + redis.call('del', unpack(keys, i, math.min(i+4999, #keys)))
+            res = res + redis.call(
+                'del', unpack(keys, i, math.min(i+4999, #keys))
+            )
         end
         return res
         """
@@ -342,7 +346,8 @@ class RedisInteractor(object):
 
     def get_moving_window(self, key, limit, expiry):
         """
-        returns the starting point and the number of entries in the moving window
+        returns the starting point and the number of entries in the moving
+        window
 
         :param str key: rate limit key
         :param int expiry: expiry of entry
@@ -358,8 +363,8 @@ class RedisInteractor(object):
         :param str key: rate limit key to acquire an entry in
         :param int limit: amount of entries allowed
         :param int expiry: expiry of the entry
-        :param bool no_add: if False an entry is not actually acquired but instead
-         serves as a 'check'
+        :param bool no_add: if False an entry is not actually acquired but
+         instead serves as a 'check'
         :param connection: Redis connection
         :return: True/False
         """
@@ -404,7 +409,7 @@ class RedisStorage(RedisInteractor, Storage):
          `rediss://[:password]@host:port`, `redis+unix:///path/to/sock` etc.
          This uri is passed directly to :func:`redis.from_url` except for the
          case of `redis+unix` where it is replaced with `unix`.
-        :param \*\*options: all remaining keyword arguments are passed
+        :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.Redis`
         :raise ConfigurationError: when the redis library is not available
         """
@@ -461,8 +466,8 @@ class RedisStorage(RedisInteractor, Storage):
         :param str key: rate limit key to acquire an entry in
         :param int limit: amount of entries allowed
         :param int expiry: expiry of the entry
-        :param bool no_add: if False an entry is not actually acquired but instead
-         serves as a 'check'
+        :param bool no_add: if False an entry is not actually acquired but
+         instead serves as a 'check'
         :return: True/False
         """
         return super(RedisStorage, self).acquire_entry(
@@ -508,9 +513,11 @@ class RedisSentinelStorage(RedisStorage):
 
     def __init__(self, uri, service_name=None, **options):
         """
-        :param str uri: url of the form `redis+sentinel://host:port,host:port/service_name`
-        :param str service_name, optional: sentinel service name (if not provided in `uri`)
-        :param \*\*options: all remaining keyword arguments are passed
+        :param str uri: url of the form
+         `redis+sentinel://host:port,host:port/service_name`
+        :param str service_name, optional: sentinel service name
+         (if not provided in `uri`)
+        :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.sentinel.Sentinel`
         :raise ConfigurationError: when the redis library is not available
          or if the redis master host cannot be pinged.
@@ -553,7 +560,6 @@ class RedisSentinelStorage(RedisStorage):
         """
         return super(RedisStorage, self).get(key, self.storage_slave)
 
-
     def get_expiry(self, key):
         """
         :param str key: the key to get the expiry for
@@ -577,11 +583,12 @@ class RedisClusterStorage(RedisStorage):
 
     def __init__(self, uri, **options):
         """
-        :param str uri: url of the form `redis+cluster://[:password]@host:port,host:port`
-        :param \*\*options: all remaining keyword arguments are passed
+        :param str uri: url of the form
+         `redis+cluster://[:password]@host:port,host:port`
+        :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`rediscluster.RedisCluster`
-        :raise ConfigurationError: when the rediscluster library is not available
-         or if the redis host cannot be pinged.
+        :raise ConfigurationError: when the rediscluster library is not
+         available or if the redis host cannot be pinged.
         """
         if not get_dependency("rediscluster"):
             raise ConfigurationError(
@@ -631,10 +638,9 @@ class MemcachedStorage(Storage):
         """
         :param str uri: memcached location of the form
          `memcached://host:port,host:port`, `memcached:///var/tmp/path/to/sock`
-        :param \*\*options: all remaining keyword arguments are passed
+        :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`pymemcache.client.base.Client`
-        :raise ConfigurationError: when `pymemcache` is not available or memcached
-         location cannot be parsed.
+        :raise ConfigurationError: when `pymemcache` is not available
         """
         parsed = urllib.parse.urlparse(uri)
         self.hosts = []
@@ -690,12 +696,14 @@ class MemcachedStorage(Storage):
                 and self.local_storage.storage
         ):
             self.local_storage.storage = self.client_getter(
-                get_dependency(self.cluster_library if len(self.hosts) > 1 else self.library),
+                get_dependency(
+                    self.cluster_library if len(self.hosts) > 1
+                    else self.library
+                ),
                 self.hosts, **self.options
             )
 
         return self.local_storage.storage
-
 
     def get(self, key):
         """

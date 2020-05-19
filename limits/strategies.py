@@ -5,7 +5,6 @@ rate limiting strategies
 from abc import ABCMeta, abstractmethod
 import weakref
 import six
-import time
 
 
 @six.add_metaclass(ABCMeta)
@@ -53,6 +52,7 @@ class RateLimiter(object):
     def clear(self, item, *identifiers):
         return self.storage().clear(item.key_for(*identifiers))
 
+
 class MovingWindowRateLimiter(RateLimiter):
     """
     Reference: :ref:`moving-window`
@@ -64,7 +64,8 @@ class MovingWindowRateLimiter(RateLimiter):
             or hasattr(storage, "get_moving_window")
         ):
             raise NotImplementedError(
-                "MovingWindowRateLimiting is not implemented for storage of type %s"
+                "MovingWindowRateLimiting is not implemented for storage "
+                "of type %s"
                 % storage.__class__
             )
         super(MovingWindowRateLimiter, self).__init__(storage)

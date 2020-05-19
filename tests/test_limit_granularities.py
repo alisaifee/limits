@@ -4,6 +4,7 @@ import pytest
 
 from limits import limits
 
+
 @pytest.mark.unit
 class GranularityTests(unittest.TestCase):
     def test_seconds_value(self):
@@ -48,8 +49,7 @@ class GranularityTests(unittest.TestCase):
 
     def test_comparison(self):
         self.assertTrue(
-            limits.RateLimitItemPerSecond(1) <
-            limits.RateLimitItemPerMinute(1)
+            limits.RateLimitItemPerSecond(1) < limits.RateLimitItemPerMinute(1)
         )
         self.assertTrue(
             limits.RateLimitItemPerMinute(1) < limits.RateLimitItemPerHour(1)

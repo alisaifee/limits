@@ -164,7 +164,7 @@ class WindowTests(unittest.TestCase):
         )
 
     def test_test_fixed_window(self):
-        with hiro.Timeline().freeze() as timeline:
+        with hiro.Timeline().freeze():
             store = MemoryStorage()
             limiter = FixedWindowRateLimiter(store)
             limit = RateLimitItemPerSecond(2, 1)
@@ -175,7 +175,7 @@ class WindowTests(unittest.TestCase):
             self.assertFalse(limiter.hit(limit), store)
 
     def test_test_moving_window(self):
-        with hiro.Timeline().freeze() as timeline:
+        with hiro.Timeline().freeze():
             store = MemoryStorage()
             limit = RateLimitItemPerSecond(2, 1)
             limiter = MovingWindowRateLimiter(store)

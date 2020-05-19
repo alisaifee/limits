@@ -1,5 +1,4 @@
 import time
-import time
 import unittest
 
 import hiro
@@ -17,9 +16,11 @@ from limits.storage import (
     RedisClusterStorage, Storage, GAEMemcachedStorage, storage_from_string
 )
 from limits.strategies import (
-    FixedWindowRateLimiter, FixedWindowElasticExpiryRateLimiter, MovingWindowRateLimiter
+    FixedWindowRateLimiter, FixedWindowElasticExpiryRateLimiter,
+    MovingWindowRateLimiter
 )
-from tests import RUN_GAE
+from tests import RUN_GAE, fixed_start
+
 
 @pytest.mark.unit
 class BaseStorageTests(unittest.TestCase):
@@ -49,13 +50,15 @@ class BaseStorageTests(unittest.TestCase):
         )
         self.assertTrue(
             isinstance(
-                storage_from_string("redis+unix:///tmp/limits.redis.sock"), RedisStorage
+                storage_from_string("redis+unix:///tmp/limits.redis.sock"),
+                RedisStorage
             )
         )
 
         self.assertTrue(
             isinstance(
-                storage_from_string("redis+unix://:password/tmp/limits.redis.sock"), RedisStorage
+                storage_from_string("redis+unix://:password/tmp/limits.redis.sock"),  # noqa: E501
+                RedisStorage
             )
         )
 
@@ -68,7 +71,7 @@ class BaseStorageTests(unittest.TestCase):
 
         self.assertTrue(
             isinstance(
-                storage_from_string("memcached://localhost:22122,localhost:22123"),
+                storage_from_string("memcached://localhost:22122,localhost:22123"),  # noqa: E501
                 MemcachedStorage
             )
         )
@@ -104,7 +107,8 @@ class BaseStorageTests(unittest.TestCase):
         if RUN_GAE:
             self.assertTrue(
                 isinstance(
-                    storage_from_string("gaememcached://"), GAEMemcachedStorage
+                    storage_from_string("gaememcached://"),
+                    GAEMemcachedStorage
                 )
             )
         self.assertRaises(ConfigurationError, storage_from_string, "blah://")
@@ -115,9 +119,8 @@ class BaseStorageTests(unittest.TestCase):
         with mock.patch("limits.storage.get_dependency") as get_dependency:
             self.assertTrue(
                 isinstance(
-                    storage_from_string(
-                        "redis+sentinel://:foobared@localhost:26379/localhost-redis-sentinel"
-                    ), RedisSentinelStorage
+                    storage_from_string("redis+sentinel://:foobared@localhost:26379/localhost-redis-sentinel"),  # noqa: E501
+                    RedisSentinelStorage
                 )
             )
             self.assertEqual(
@@ -125,18 +128,32 @@ class BaseStorageTests(unittest.TestCase):
             )
 
     def test_storage_check(self):
-        self.assertTrue(storage_from_string("memory://").check())
-        self.assertTrue(storage_from_string("redis://localhost:7379").check())
-        self.assertTrue(storage_from_string("redis://:sekret@localhost:7389").check())
-        self.assertTrue(storage_from_string("redis+unix:///tmp/limits.redis.sock").check())
+        self.assertTrue(
+            storage_from_string("memory://").check()
+        )
+        self.assertTrue(
+            storage_from_string("redis://localhost:7379").check()
+        )
+        self.assertTrue(
+            storage_from_string("redis://:sekret@localhost:7389").check()
+        )
+        self.assertTrue(
+            storage_from_string(
+                "redis+unix:///tmp/limits.redis.sock"
+            ).check()
+        )
         self.assertTrue(
             storage_from_string("memcached://localhost:22122").check()
         )
         self.assertTrue(
-            storage_from_string("memcached://localhost:22122,localhost:22123").check()
+            storage_from_string(
+                "memcached://localhost:22122,localhost:22123"
+            ).check()
         )
         self.assertTrue(
-            storage_from_string("memcached:///tmp/limits.memcached.sock").check()
+            storage_from_string(
+                "memcached:///tmp/limits.memcached.sock"
+            ).check()
         )
         self.assertTrue(
             storage_from_string(
@@ -149,7 +166,6 @@ class BaseStorageTests(unittest.TestCase):
         )
         if RUN_GAE:
             self.assertTrue(storage_from_string("gaememcached://").check())
-
 
     def test_pluggable_storage_invalid_construction(self):
         def cons():
@@ -206,6 +222,7 @@ class BaseStorageTests(unittest.TestCase):
         storage = storage_from_string("mystorage://")
         self.assertTrue(isinstance(storage, MyStorage))
         MovingWindowRateLimiter(storage)
+
 
 @pytest.mark.unit
 class MemoryStorageTests(unittest.TestCase):
@@ -275,6 +292,7 @@ class MemoryStorageTests(unittest.TestCase):
                 time.sleep(0.1)
                 self.assertEqual([], self.storage.events[per_min.key_for()])
 
+
 @pytest.mark.unit
 class SharedRedisTests(object):
     def test_fixed_window(self):
@@ -325,7 +343,10 @@ class SharedRedisTests(object):
         last = time.time()
         while time.time() - last <= 1:
             time.sleep(0.05)
-        self.assertTrue(self.storage.storage.keys("%s/*" % limit.namespace) == [])
+        self.assertTrue(
+            self.storage.storage.keys("%s/*" % limit.namespace) == []
+        )
+
 
 @pytest.mark.unit
 class RedisStorageTests(SharedRedisTests, unittest.TestCase):
@@ -371,7 +392,10 @@ class RedisSentinelStorageTests(SharedRedisTests, unittest.TestCase):
 
     def test_init_options(self):
         with mock.patch("limits.storage.get_dependency") as get_dependency:
-            storage_from_string(self.storage_url + '/' + self.service_name, connection_timeout=1)
+            storage_from_string(
+                self.storage_url + '/' + self.service_name,
+                connection_timeout=1
+            )
             self.assertEqual(
                 get_dependency().Sentinel.call_args[1]['connection_timeout'], 1
             )
@@ -387,8 +411,10 @@ class RedisClusterStorageTests(SharedRedisTests, unittest.TestCase):
     def test_init_options(self):
         with mock.patch("limits.storage.get_dependency") as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
+            call_args = get_dependency().RedisCluster.call_args
             self.assertEqual(
-                get_dependency().RedisCluster.call_args[1]['connection_timeout'], 1
+                call_args[1]['connection_timeout'],
+                1
             )
 
 
@@ -405,6 +431,7 @@ class MemcachedStorageTests(unittest.TestCase):
                 get_dependency().Client.call_args[1]['connect_timeout'], 1
             )
 
+    @fixed_start
     def test_fixed_window(self):
         storage = MemcachedStorage("memcached://localhost:22122")
         limiter = FixedWindowRateLimiter(storage)
@@ -419,8 +446,11 @@ class MemcachedStorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    @fixed_start
     def test_fixed_window_cluster(self):
-        storage = MemcachedStorage("memcached://localhost:22122,localhost:22123")
+        storage = MemcachedStorage(
+            "memcached://localhost:22122,localhost:22123"
+        )
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
         start = time.time()
@@ -433,6 +463,7 @@ class MemcachedStorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    @fixed_start
     def test_fixed_window_with_elastic_expiry(self):
         storage = MemcachedStorage("memcached://localhost:22122")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -447,8 +478,11 @@ class MemcachedStorageTests(unittest.TestCase):
         time.sleep(1)
         self.assertTrue(limiter.test(per_sec))
 
+    @fixed_start
     def test_fixed_window_with_elastic_expiry_cluster(self):
-        storage = MemcachedStorage("memcached://localhost:22122,localhost:22123")
+        storage = MemcachedStorage(
+            "memcached://localhost:22122,localhost:22123"
+        )
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         per_sec = RateLimitItemPerSecond(2, 2)
 
@@ -480,6 +514,7 @@ class GAEMemcachedStorageTests(unittest.TestCase):
         tb.activate()
         tb.init_memcache_stub()
 
+    @fixed_start
     def test_fixed_window(self):
         storage = GAEMemcachedStorage("gaememcached://")
         limiter = FixedWindowRateLimiter(storage)
@@ -494,6 +529,7 @@ class GAEMemcachedStorageTests(unittest.TestCase):
             time.sleep(0.1)
         self.assertTrue(limiter.hit(per_min))
 
+    @fixed_start
     def test_fixed_window_with_elastic_expiry_cluster(self):
         storage = GAEMemcachedStorage("gaememcached://")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)

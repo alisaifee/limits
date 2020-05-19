@@ -3,10 +3,7 @@
 """
 from six import add_metaclass
 
-try:
-    from functools import total_ordering
-except ImportError:  # pragma: no cover
-    from .backports.total_ordering import total_ordering  # pragma: no cover
+from functools import total_ordering
 
 
 def safe_string(value):
@@ -41,7 +38,7 @@ class RateLimitItemMeta(type):
         return granularity
 
 
-#pylint: disable=no-member
+# pylint: disable=no-member
 @add_metaclass(RateLimitItemMeta)
 @total_ordering
 class RateLimitItem(object):
@@ -50,7 +47,8 @@ class RateLimitItem(object):
     namespace, amount and granularity multiples of the rate limiting window.
 
     :param int amount: the rate limit amount
-    :param int multiples: multiple of the 'per' granularity (e.g. 'n' per 'm' seconds)
+    :param int multiples: multiple of the 'per' granularity
+     (e.g. 'n' per 'm' seconds)
     :param string namespace: category for the specific rate limit
     """
     __metaclass__ = RateLimitItemMeta

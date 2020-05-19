@@ -58,4 +58,3 @@ class ConcurrencyTests(unittest.TestCase):
 
         self.assertTrue(time.time() - start < 1)
         self.assertEqual(len(hits), 100)
-
