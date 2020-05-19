@@ -116,7 +116,9 @@ class BaseStorageTests(unittest.TestCase):
             ConfigurationError, storage_from_string,
             "redis+sentinel://localhost:26379"
         )
-        with mock.patch("limits.storage.get_dependency") as get_dependency:
+        with mock.patch(
+                "limits.storage.redis_sentinel.get_dependency"
+        ) as get_dependency:
             self.assertTrue(
                 isinstance(
                     storage_from_string("redis+sentinel://:foobared@localhost:26379/localhost-redis-sentinel"),  # noqa: E501
@@ -356,7 +358,9 @@ class RedisStorageTests(SharedRedisTests, unittest.TestCase):
         redis.from_url(self.storage_url).flushall()
 
     def test_init_options(self):
-        with mock.patch("limits.storage.get_dependency") as get_dependency:
+        with mock.patch(
+            "limits.storage.redis.get_dependency"
+        ) as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
             self.assertEqual(
                 get_dependency().from_url.call_args[1]['connection_timeout'], 1
@@ -371,7 +375,9 @@ class RedisUnixSocketStorageTests(SharedRedisTests, unittest.TestCase):
         redis.from_url('unix:///tmp/limits.redis.sock').flushall()
 
     def test_init_options(self):
-        with mock.patch("limits.storage.get_dependency") as get_dependency:
+        with mock.patch(
+            "limits.storage.redis.get_dependency"
+        ) as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
             self.assertEqual(
                 get_dependency().from_url.call_args[1]['connection_timeout'], 1
@@ -391,7 +397,9 @@ class RedisSentinelStorageTests(SharedRedisTests, unittest.TestCase):
         ]).master_for(self.service_name).flushall()
 
     def test_init_options(self):
-        with mock.patch("limits.storage.get_dependency") as get_dependency:
+        with mock.patch(
+            "limits.storage.redis_sentinel.get_dependency"
+        ) as get_dependency:
             storage_from_string(
                 self.storage_url + '/' + self.service_name,
                 connection_timeout=1
@@ -409,7 +417,9 @@ class RedisClusterStorageTests(SharedRedisTests, unittest.TestCase):
         self.storage = RedisClusterStorage("redis+cluster://localhost:7000")
 
     def test_init_options(self):
-        with mock.patch("limits.storage.get_dependency") as get_dependency:
+        with mock.patch(
+            "limits.storage.redis_cluster.get_dependency"
+        ) as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
             call_args = get_dependency().RedisCluster.call_args
             self.assertEqual(
@@ -425,7 +435,9 @@ class MemcachedStorageTests(unittest.TestCase):
         self.storage_url = 'memcached://localhost:22122'
 
     def test_options(self):
-        with mock.patch("limits.storage.get_dependency") as get_dependency:
+        with mock.patch(
+            "limits.storage.memcached.get_dependency"
+        ) as get_dependency:
             storage_from_string(self.storage_url, connect_timeout=1).check()
             self.assertEqual(
                 get_dependency().Client.call_args[1]['connect_timeout'], 1
