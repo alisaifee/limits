@@ -5,7 +5,6 @@ rate limiting strategies
 from abc import ABCMeta, abstractmethod
 import weakref
 import six
-import time
 
 
 @six.add_metaclass(ABCMeta)
