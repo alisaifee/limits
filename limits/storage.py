@@ -401,7 +401,7 @@ class RedisStorage(RedisInteractor, Storage):
          `rediss://[:password]@host:port`, `redis+unix:///path/to/sock` etc.
          This uri is passed directly to :func:`redis.from_url` except for the
          case of `redis+unix` where it is replaced with `unix`.
-        :param \*\*options: all remaining keyword arguments are passed
+        :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.Redis`
         :raise ConfigurationError: when the redis library is not available
         """
@@ -507,7 +507,7 @@ class RedisSentinelStorage(RedisStorage):
         """
         :param str uri: url of the form `redis+sentinel://host:port,host:port/service_name`
         :param str service_name, optional: sentinel service name (if not provided in `uri`)
-        :param \*\*options: all remaining keyword arguments are passed
+        :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.sentinel.Sentinel`
         :raise ConfigurationError: when the redis library is not available
          or if the redis master host cannot be pinged.
@@ -575,7 +575,7 @@ class RedisClusterStorage(RedisStorage):
     def __init__(self, uri, **options):
         """
         :param str uri: url of the form `redis+cluster://[:password]@host:port,host:port`
-        :param \*\*options: all remaining keyword arguments are passed
+        :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`rediscluster.RedisCluster`
         :raise ConfigurationError: when the rediscluster library is not available
          or if the redis host cannot be pinged.
@@ -628,7 +628,7 @@ class MemcachedStorage(Storage):
         """
         :param str uri: memcached location of the form
          `memcached://host:port,host:port`, `memcached:///var/tmp/path/to/sock`
-        :param \*\*options: all remaining keyword arguments are passed
+        :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`pymemcache.client.base.Client`
         :raise ConfigurationError: when `pymemcache` is not available or memcached
          location cannot be parsed.
