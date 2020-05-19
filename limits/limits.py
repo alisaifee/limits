@@ -47,7 +47,8 @@ class RateLimitItem(object):
     namespace, amount and granularity multiples of the rate limiting window.
 
     :param int amount: the rate limit amount
-    :param int multiples: multiple of the 'per' granularity (e.g. 'n' per 'm' seconds)
+    :param int multiples: multiple of the 'per' granularity
+     (e.g. 'n' per 'm' seconds)
     :param string namespace: category for the specific rate limit
     """
     __metaclass__ = RateLimitItemMeta

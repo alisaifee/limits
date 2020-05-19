@@ -10,13 +10,17 @@ from .limits import GRANULARITIES
 
 SEPARATORS = re.compile(r"[,;|]{1}")
 SINGLE_EXPR = re.compile(
-    r"\s*([0-9]+)\s*(/|\s*per\s*)\s*([0-9]+)*\s*(hour|minute|second|day|month|year)s?\s*",
-    re.IGNORECASE
+    r"""
+    \s*([0-9]+)
+    \s*(/|\s*per\s*)
+    \s*([0-9]+)
+    *\s*(hour|minute|second|day|month|year)s?\s*""",
+    re.IGNORECASE | re.VERBOSE
 )
 EXPR = re.compile(
     r"^{SINGLE}(:?{SEPARATORS}{SINGLE})*$".format(
         SINGLE=SINGLE_EXPR.pattern, SEPARATORS=SEPARATORS.pattern
-    ), re.IGNORECASE
+    ), re.IGNORECASE | re.VERBOSE
 )
 
 
@@ -51,8 +55,9 @@ def parse_many(limit_string):
         )
     limits = []
     for limit in SEPARATORS.split(limit_string):
-        amount, _, multiples, granularity_string = SINGLE_EXPR.match(limit
-                                                                     ).groups()
+        amount, _, multiples, granularity_string = SINGLE_EXPR.match(
+            limit
+        ).groups()
         granularity = granularity_from_string(granularity_string)
         limits.append(granularity(amount, multiples))
     return limits
@@ -60,7 +65,8 @@ def parse_many(limit_string):
 
 def parse(limit_string):
     """
-    parses a single rate limit in string notation (e.g. '1/second' or '1 per second'
+    parses a single rate limit in string notation
+    (e.g. '1/second' or '1 per second'
 
     :param string limit_string: rate limit string using :ref:`ratelimit-string`
     :raise ValueError: if the string notation is invalid.

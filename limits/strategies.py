@@ -64,7 +64,8 @@ class MovingWindowRateLimiter(RateLimiter):
             or hasattr(storage, "get_moving_window")
         ):
             raise NotImplementedError(
-                "MovingWindowRateLimiting is not implemented for storage of type %s"
+                "MovingWindowRateLimiting is not implemented for storage "
+                "of type %s"
                 % storage.__class__
             )
         super(MovingWindowRateLimiter, self).__init__(storage)
