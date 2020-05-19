@@ -14,12 +14,10 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
     html_theme = 'sphinx_rtd_theme'
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
-
-autodoc_default_flags = [
-    "members"
-    , "show-inheritance"
-    , "inherited-members"
-]
+autodoc_default_options = {
+    "members": True,
+    "show-inheritance": True
+}
 
 autoclass_content = 'both'
 
