@@ -28,7 +28,7 @@ def storage_from_string(storage_string, **options):
     :return: an instance of :class:`flask_limiter.storage.Storage`
     """
     scheme = urllib.parse.urlparse(storage_string).scheme
-    if not scheme in SCHEMES:
+    if scheme not in SCHEMES:
         raise ConfigurationError(
             "unknown storage scheme : %s" % storage_string
         )
