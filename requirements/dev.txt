@@ -1,5 +1,7 @@
 -r test.txt
+-r doc.txt
 flake8
 keyring
+sphinx-autobuild
 twine
 wheel
