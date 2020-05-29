@@ -1,5 +1,3 @@
-import unittest
-
 import mock
 import rediscluster
 
@@ -7,8 +5,8 @@ from limits.storage import RedisClusterStorage, storage_from_string
 from tests.storage.test_redis import SharedRedisTests
 
 
-class RedisClusterStorageTests(SharedRedisTests, unittest.TestCase):
-    def setUp(self):
+class TestRedisClusterStorage(SharedRedisTests):
+    def setup_method(self):
         rediscluster.RedisCluster("localhost", 7000).flushall()
         self.storage_url = "redis+cluster://localhost:7000"
         self.storage = RedisClusterStorage("redis+cluster://localhost:7000")
@@ -19,7 +17,4 @@ class RedisClusterStorageTests(SharedRedisTests, unittest.TestCase):
         ) as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
             call_args = get_dependency().RedisCluster.call_args
-            self.assertEqual(
-                call_args[1]['connection_timeout'],
-                1
-            )
+            assert call_args[1]['connection_timeout'] == 1
