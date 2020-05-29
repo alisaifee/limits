@@ -1,3 +1,5 @@
+import pytest
+
 from limits import limits
 
 
@@ -12,13 +14,19 @@ def test_seconds_value():
     )
 
 
-def test_representation():
-    assert "1 per 1 second" in str(limits.RateLimitItemPerSecond(1))
-    assert "1 per 1 minute" in str(limits.RateLimitItemPerMinute(1))
-    assert "1 per 1 hour" in str(limits.RateLimitItemPerHour(1))
-    assert "1 per 1 day" in str(limits.RateLimitItemPerDay(1))
-    assert "1 per 1 month" in str(limits.RateLimitItemPerMonth(1))
-    assert "1 per 1 year" in str(limits.RateLimitItemPerYear(1))
+@pytest.mark.parametrize(
+    'string_representation, limit_instance',
+    [
+        ("1 per 1 second", limits.RateLimitItemPerSecond(1)),
+        ("1 per 1 minute", limits.RateLimitItemPerMinute(1)),
+        ("1 per 1 hour", limits.RateLimitItemPerHour(1)),
+        ("1 per 1 day", limits.RateLimitItemPerDay(1)),
+        ("1 per 1 month", limits.RateLimitItemPerMonth(1)),
+        ("1 per 1 year", limits.RateLimitItemPerYear(1)),
+    ]
+)
+def test_representation(string_representation, limit_instance):
+    assert string_representation in str(limit_instance)
 
 
 def test_comparison():
