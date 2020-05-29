@@ -2,7 +2,6 @@ import time
 import unittest
 
 import mock
-import pytest
 import pymemcache.client
 
 from limits import RateLimitItemPerSecond, RateLimitItemPerMinute
@@ -14,7 +13,6 @@ from limits.strategies import (
 from tests import fixed_start
 
 
-@pytest.mark.unit
 class MemcachedStorageTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 22122)).flush_all()

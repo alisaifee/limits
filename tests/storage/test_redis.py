@@ -2,7 +2,6 @@ import time
 import unittest
 
 import mock
-import pytest
 import redis
 
 from limits import RateLimitItemPerSecond, RateLimitItemPerMinute
@@ -12,7 +11,6 @@ from limits.strategies import (
 )
 
 
-@pytest.mark.unit
 class SharedRedisTests(object):
     def test_fixed_window(self):
         limiter = FixedWindowRateLimiter(self.storage)
@@ -67,7 +65,6 @@ class SharedRedisTests(object):
         )
 
 
-@pytest.mark.unit
 class RedisStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
         self.storage_url = "redis://localhost:7379"
@@ -84,7 +81,6 @@ class RedisStorageTests(SharedRedisTests, unittest.TestCase):
             )
 
 
-@pytest.mark.unit
 class RedisUnixSocketStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
         self.storage_url = "redis+unix:///tmp/limits.redis.sock"

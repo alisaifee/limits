@@ -2,14 +2,12 @@ import time
 import unittest
 
 import hiro
-import pytest
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import MemoryStorage
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 
 
-@pytest.mark.unit
 class MemoryStorageTests(unittest.TestCase):
     def setUp(self):
         self.storage = MemoryStorage()

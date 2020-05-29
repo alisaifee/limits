@@ -1,8 +1,6 @@
 import time
 import unittest
 
-import pytest
-
 from limits import RateLimitItemPerSecond
 from limits.storage import GAEMemcachedStorage
 from limits.strategies import (
@@ -12,7 +10,6 @@ from limits.strategies import (
 from tests import RUN_GAE, fixed_start
 
 
-@pytest.mark.unit
 @unittest.skipUnless(RUN_GAE, reason='Only for GAE')
 class GAEMemcachedStorageTests(unittest.TestCase):
     def setUp(self):

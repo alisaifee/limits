@@ -2,7 +2,6 @@ import time
 
 import mock
 import pymemcache.client
-import pytest
 import redis
 import redis.sentinel
 import rediscluster
@@ -19,7 +18,6 @@ from limits.strategies import (
 from tests import RUN_GAE
 
 
-@pytest.mark.unit
 class BaseStorageTests(unittest.TestCase):
     def setUp(self):
         pymemcache.client.Client(('localhost', 22122)).flush_all()
@@ -221,5 +219,3 @@ class BaseStorageTests(unittest.TestCase):
         storage = storage_from_string("mystorage://")
         self.assertTrue(isinstance(storage, MyStorage))
         MovingWindowRateLimiter(storage)
-
-
