@@ -1,7 +1,7 @@
 .. |ci| image:: https://github.com/alisaifee/limits/workflows/CI/badge.svg?branch=master
     :target: https://github.com/alisaifee/limits/actions?query=branch%3Amaster+workflow%3ACI
-.. |coveralls| image:: https://img.shields.io/coveralls/alisaifee/limits/master.svg?style=flat-square
-    :target: https://coveralls.io/r/alisaifee/limits?branch=master
+.. |codecov| image:: https://codecov.io/gh/alisaifee/limits/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/alisaifee/limits
 .. |pypi| image:: https://img.shields.io/pypi/v/limits.svg?style=flat-square
     :target: https://pypi.python.org/pypi/limits
 .. |license| image:: https://img.shields.io/pypi/l/limits.svg?style=flat-square
