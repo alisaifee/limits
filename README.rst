@@ -13,7 +13,7 @@
 *************
 limits
 *************
-|ci| |coveralls| |pypi| |gitter| |license|
+|ci| |codecov| |pypi| |gitter| |license|
 
 *limits* provides utilities to implement rate limiting using
 various strategies and storage backends such as redis & memcached.
