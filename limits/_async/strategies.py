@@ -96,12 +96,11 @@ class AsyncMovingWindowRateLimiter(AsyncRateLimiter):
          limit
         :return: True/False
         """
-        return (
-            await self.storage().get_moving_window(
-                item.key_for(*identifiers), item.amount, item.get_expiry(),
-            )[1]
-            < item.amount
+        res = await self.storage().get_moving_window(
+            item.key_for(*identifiers), item.amount, item.get_expiry(),
         )
+        amount = res[1]
+        return amount < item.amount
 
     async def get_window_stats(
         self, item: RateLimitItem, *identifiers
@@ -135,9 +134,12 @@ class AsyncFixedWindowRateLimiter(AsyncRateLimiter):
          limit
         :return: True/False
         """
-        return await self.storage().incr(
-            item.key_for(*identifiers), item.get_expiry()
-        ) <= item.amount
+        return (
+            await self.storage().incr(
+                item.key_for(*identifiers), item.get_expiry()
+            )
+            <= item.amount
+        )
 
     async def test(self, item, *identifiers):
         """
@@ -184,9 +186,10 @@ class AsyncFixedWindowElasticExpiryRateLimiter(AsyncFixedWindowRateLimiter):
          limit
         :return: True/False
         """
-        return await self.storage().incr(
+        amount = await self.storage().incr(
             item.key_for(*identifiers), item.get_expiry(), True
-        ) <= item.amount
+        )
+        return amount <= item.amount
 
 
 STRATEGIES = {

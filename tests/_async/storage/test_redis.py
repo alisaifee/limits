@@ -12,7 +12,7 @@ from limits._async.strategies import (
 )
 
 
-@pytest.mark.unit
+@pytest.mark.asynchronous
 class AsyncSharedRedisTests:
     @pytest.mark.asyncio
     async def test_fixed_window(self):
