@@ -17,7 +17,9 @@ jobs:
           - python-version: 2.7
             marker: 'integration'
           - python-version: 3.7
-            marker: 'unit,integration'
+            marker: 'unit,integration,asynchronous'
+          - python-version: 3.8
+            marker: 'unit,asynchronous'
     steps:
     - uses: actions/checkout@v2
     - name: Cache dependencies
