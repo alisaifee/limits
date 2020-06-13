@@ -71,9 +71,9 @@ class AsyncRedisInteractor:
         :param str key: the key to increment
         :param int expiry: amount in seconds for the key to expire in
         """
-        value = connection.incr(key)
+        value = await connection.incr(key)
         if elastic_expiry or value == 1:
-            connection.expire(key, expiry)
+            await connection.expire(key, expiry)
         return value
 
     async def get(self, key: str, connection) -> int:
@@ -81,7 +81,7 @@ class AsyncRedisInteractor:
         :param connection: Redis connection
         :param str key: the key to get the counter value for
         """
-        return int(connection.get(key) or 0)
+        return int(await connection.get(key) or 0)
 
     async def clear(self, key: str, connection) -> None:
         """
@@ -128,7 +128,7 @@ class AsyncRedisInteractor:
         :param str key: the key to get the expiry for
         :param connection: Redis connection
         """
-        return int(max(connection.ttl(key), 0) + time.time())
+        return int(max(await connection.ttl(key), 0) + time.time())
 
     async def check(self, connection) -> bool:
         """

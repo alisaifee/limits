@@ -10,7 +10,7 @@ from limits._async.storage import AsyncMemoryStorage
 from limits._async.strategies import AsyncFixedWindowRateLimiter, AsyncMovingWindowRateLimiter
 
 
-@pytest.mark.unit
+@pytest.mark.asynchronous
 class TestAsyncMemoryStorage:
     def setup_method(self, method):
         self.storage = AsyncMemoryStorage()
