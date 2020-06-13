@@ -1,4 +1,5 @@
 -r main.txt
+aredis
 mock
 pytest
 pytest-asyncio
