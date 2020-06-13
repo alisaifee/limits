@@ -1,6 +1,7 @@
 -r main.txt
 mock
 pytest
+pytest-asyncio
 pytest-cov
 coverage<7
 pymemcache

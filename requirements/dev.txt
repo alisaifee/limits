@@ -4,6 +4,7 @@ black
 flake8
 keyring
 mypy
+pytest-asyncio
 sphinx-autobuild
 twine
 wheel
