@@ -15,7 +15,7 @@ jobs:
         marker: [unit]
         include:
           - python-version: 3.9
-            marker: 'unit or integration'
+            marker: 'unit or integration or asynchronous'
     steps:
     - uses: actions/checkout@v2
     - name: Cache dependencies
