@@ -2,6 +2,7 @@
 -r docs.txt
 flake8
 keyring
+pytest-asyncio
 sphinx-autobuild
 twine
 wheel
