@@ -1,8 +1,8 @@
 -r main.txt
-aredis
+aredis;python_version>="3.5"
 mock
 pytest
-pytest-asyncio
+pytest-asyncio;python_version>="3.5"
 pytest-cov
 coverage<7
 pymemcache
