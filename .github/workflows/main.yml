@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9, "3.10"]
-        marker: [unit]
+        marker: [unit or asynchronous]
         include:
           - python-version: 3.9
             marker: 'unit or integration or asynchronous'
