@@ -2,7 +2,7 @@
 mock
 pytest
 pytest-cov
-coverage<5
+coverage<6
 pymemcache
 redis<3.1.0
 redis-py-cluster>=1.1.0
