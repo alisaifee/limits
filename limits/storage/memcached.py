@@ -133,7 +133,7 @@ class MemcachedStorage(Storage):
                 )
                 return int(value or 0) + 1
             else:
-                return self.storage.incr(key, 1)
+                return self.storage.incr(key, 1) or 1
         self.call_memcached_func(
             self.storage.set,
             key + "/expires",
