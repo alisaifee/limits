@@ -40,6 +40,6 @@ jobs:
         make setup-test-backends
     - name: Tests
       run: |
-        py.test -m ${{ matrix.marker || 'unit' }} --cov-report=xml
+        py.test -m "${{ matrix.marker || 'unit' }}" --cov-report=xml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
