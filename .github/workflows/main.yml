@@ -11,11 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [2.7, pypy2, 3.7, 3.8, 3.9, "3.10", pypy3]
+        python-version: [3.7, 3.8, 3.9, "3.10", pypy3]
         marker: [unit]
         include:
-          - python-version: 2.7
-            marker: 'integration'
           - python-version: 3.9
             marker: 'unit or integration'
     steps:
