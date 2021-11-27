@@ -98,8 +98,7 @@ class RedisInteractor(object):
         :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
-        window = self.lua_moving_window([key],
-                                        [int(timestamp - expiry), limit])
+        window = self.lua_moving_window([key], [int(timestamp - expiry), limit])
         return window or (timestamp, 0)
 
     def acquire_entry(self, key, limit, expiry, connection, no_add=False):
@@ -114,8 +113,7 @@ class RedisInteractor(object):
         """
         timestamp = time.time()
         acquired = self.lua_acquire_window(
-            [key],
-            [timestamp, limit, expiry, int(no_add)]
+            [key], [timestamp, limit, expiry, int(no_add)]
         )
         return bool(acquired)
 
@@ -161,21 +159,17 @@ class RedisStorage(RedisInteractor, Storage):
             raise ConfigurationError(
                 "redis prerequisite not available"
             )  # pragma: no cover
-        uri = uri.replace('redis+unix', 'unix')
+        uri = uri.replace("redis+unix", "unix")
         self.storage = get_dependency("redis").from_url(uri, **options)
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
 
     def initialize_storage(self, _uri):
-        self.lua_moving_window = self.storage.register_script(
-            self.SCRIPT_MOVING_WINDOW
-        )
+        self.lua_moving_window = self.storage.register_script(self.SCRIPT_MOVING_WINDOW)
         self.lua_acquire_window = self.storage.register_script(
             self.SCRIPT_ACQUIRE_MOVING_WINDOW
         )
-        self.lua_clear_keys = self.storage.register_script(
-            self.SCRIPT_CLEAR_KEYS
-        )
+        self.lua_clear_keys = self.storage.register_script(self.SCRIPT_CLEAR_KEYS)
         self.lua_incr_expire = self.storage.register_script(
             RedisStorage.SCRIPT_INCR_EXPIRE
         )
@@ -188,8 +182,9 @@ class RedisStorage(RedisInteractor, Storage):
         :param int expiry: amount in seconds for the key to expire in
         """
         if elastic_expiry:
-            return super(RedisStorage,
-                         self).incr(key, expiry, self.storage, elastic_expiry)
+            return super(RedisStorage, self).incr(
+                key, expiry, self.storage, elastic_expiry
+            )
         else:
             return self.lua_incr_expire([key], [expiry])
 
@@ -242,5 +237,5 @@ class RedisStorage(RedisInteractor, Storage):
 
         """
 
-        cleared = self.lua_clear_keys(['LIMITER*'])
+        cleared = self.lua_clear_keys(["LIMITER*"])
         return cleared

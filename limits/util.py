@@ -15,12 +15,13 @@ SINGLE_EXPR = re.compile(
     \s*(/|\s*per\s*)
     \s*([0-9]+)
     *\s*(hour|minute|second|day|month|year)s?\s*""",
-    re.IGNORECASE | re.VERBOSE
+    re.IGNORECASE | re.VERBOSE,
 )
 EXPR = re.compile(
     r"^{SINGLE}(:?{SEPARATORS}{SINGLE})*$".format(
         SINGLE=SINGLE_EXPR.pattern, SEPARATORS=SEPARATORS.pattern
-    ), re.IGNORECASE | re.VERBOSE
+    ),
+    re.IGNORECASE | re.VERBOSE,
 )
 
 
@@ -46,18 +47,11 @@ def parse_many(limit_string):
     :return: a list of :class:`RateLimitItem` instances.
 
     """
-    if not (
-        isinstance(limit_string, six.string_types)
-        and EXPR.match(limit_string)
-    ):
-        raise ValueError(
-            "couldn't parse rate limit string '%s'" % limit_string
-        )
+    if not (isinstance(limit_string, six.string_types) and EXPR.match(limit_string)):
+        raise ValueError("couldn't parse rate limit string '%s'" % limit_string)
     limits = []
     for limit in SEPARATORS.split(limit_string):
-        amount, _, multiples, granularity_string = SINGLE_EXPR.match(
-            limit
-        ).groups()
+        amount, _, multiples, granularity_string = SINGLE_EXPR.match(limit).groups()
         granularity = granularity_from_string(granularity_string)
         limits.append(granularity(amount, multiples))
     return limits

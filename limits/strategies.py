@@ -60,13 +60,11 @@ class MovingWindowRateLimiter(RateLimiter):
 
     def __init__(self, storage):
         if not (
-            hasattr(storage, "acquire_entry")
-            or hasattr(storage, "get_moving_window")
+            hasattr(storage, "acquire_entry") or hasattr(storage, "get_moving_window")
         ):
             raise NotImplementedError(
                 "MovingWindowRateLimiting is not implemented for storage "
-                "of type %s"
-                % storage.__class__
+                "of type %s" % storage.__class__
             )
         super(MovingWindowRateLimiter, self).__init__(storage)
 
@@ -93,11 +91,14 @@ class MovingWindowRateLimiter(RateLimiter):
          limit
         :return: True/False
         """
-        return self.storage().get_moving_window(
-            item.key_for(*identifiers),
-            item.amount,
-            item.get_expiry(),
-        )[1] < item.amount
+        return (
+            self.storage().get_moving_window(
+                item.key_for(*identifiers),
+                item.amount,
+                item.get_expiry(),
+            )[1]
+            < item.amount
+        )
 
     def get_window_stats(self, item, *identifiers):
         """
@@ -155,9 +156,7 @@ class FixedWindowRateLimiter(RateLimiter):
          limit
         :return: tuple (reset time (int), remaining (int))
         """
-        remaining = max(
-            0, item.amount - self.storage().get(item.key_for(*identifiers))
-        )
+        remaining = max(0, item.amount - self.storage().get(item.key_for(*identifiers)))
         reset = self.storage().get_expiry(item.key_for(*identifiers))
         return (reset, remaining)
 
@@ -177,14 +176,13 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
         :return: True/False
         """
         return (
-            self.storage().incr(
-                item.key_for(*identifiers), item.get_expiry(), True
-            ) <= item.amount
+            self.storage().incr(item.key_for(*identifiers), item.get_expiry(), True)
+            <= item.amount
         )
 
 
 STRATEGIES = {
     "fixed-window": FixedWindowRateLimiter,
     "fixed-window-elastic-expiry": FixedWindowElasticExpiryRateLimiter,
-    "moving-window": MovingWindowRateLimiter
+    "moving-window": MovingWindowRateLimiter,
 }

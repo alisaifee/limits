@@ -7,9 +7,7 @@ import redis
 
 from limits import RateLimitItemPerSecond, RateLimitItemPerMinute
 from limits.storage import RedisStorage, storage_from_string
-from limits.strategies import (
-    FixedWindowRateLimiter, MovingWindowRateLimiter
-)
+from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 
 
 @pytest.mark.unit
@@ -62,9 +60,7 @@ class SharedRedisTests(object):
         last = time.time()
         while time.time() - last <= 1:
             time.sleep(0.05)
-        self.assertTrue(
-            self.storage.storage.keys("%s/*" % limit.namespace) == []
-        )
+        self.assertTrue(self.storage.storage.keys("%s/*" % limit.namespace) == [])
 
 
 @pytest.mark.unit
@@ -75,12 +71,10 @@ class RedisStorageTests(SharedRedisTests, unittest.TestCase):
         redis.from_url(self.storage_url).flushall()
 
     def test_init_options(self):
-        with mock.patch(
-            "limits.storage.redis.get_dependency"
-        ) as get_dependency:
+        with mock.patch("limits.storage.redis.get_dependency") as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
             self.assertEqual(
-                get_dependency().from_url.call_args[1]['connection_timeout'], 1
+                get_dependency().from_url.call_args[1]["connection_timeout"], 1
             )
 
 
@@ -89,13 +83,11 @@ class RedisUnixSocketStorageTests(SharedRedisTests, unittest.TestCase):
     def setUp(self):
         self.storage_url = "redis+unix:///tmp/limits.redis.sock"
         self.storage = RedisStorage(self.storage_url)
-        redis.from_url('unix:///tmp/limits.redis.sock').flushall()
+        redis.from_url("unix:///tmp/limits.redis.sock").flushall()
 
     def test_init_options(self):
-        with mock.patch(
-            "limits.storage.redis.get_dependency"
-        ) as get_dependency:
+        with mock.patch("limits.storage.redis.get_dependency") as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
             self.assertEqual(
-                get_dependency().from_url.call_args[1]['connection_timeout'], 1
+                get_dependency().from_url.call_args[1]["connection_timeout"], 1
             )

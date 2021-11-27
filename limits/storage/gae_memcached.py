@@ -7,6 +7,7 @@ class GAEMemcachedStorage(MemcachedStorage):
     """
     rate limit storage with GAE memcache as backend
     """
+
     MAX_CAS_RETRIES = 10
     STORAGE_SCHEME = ["gaememcached"]
 
@@ -30,15 +31,14 @@ class GAEMemcachedStorage(MemcachedStorage):
                 retry = 0
                 while (
                     not self.call_memcached_func(
-                        self.storage.cas, key,
-                        int(value or 0) + 1, expiry
-                    ) and retry < self.MAX_CAS_RETRIES
+                        self.storage.cas, key, int(value or 0) + 1, expiry
+                    )
+                    and retry < self.MAX_CAS_RETRIES
                 ):
                     value = self.storage.gets(key)
                     retry += 1
                 self.call_memcached_func(
-                    self.storage.set, key + "/expires", expiry + time.time(),
-                    expiry
+                    self.storage.set, key + "/expires", expiry + time.time(), expiry
                 )
                 return int(value or 0) + 1
             else:

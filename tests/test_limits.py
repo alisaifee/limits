@@ -16,9 +16,7 @@ class LimitsTests(unittest.TestCase):
 
     def test_key_with_none_default_namespace(self):
         item = self.FakeLimit(1, 1)
-        self.assertEqual(
-            item.key_for("a", None, None), "LIMITER/a/None/None/1/1/fake"
-        )
+        self.assertEqual(item.key_for("a", None, None), "LIMITER/a/None/None/1/1/fake")
 
     def test_key_with_int_default_namespace(self):
         item = self.FakeLimit(1, 1)

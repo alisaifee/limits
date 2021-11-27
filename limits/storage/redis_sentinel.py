@@ -35,22 +35,19 @@ class RedisSentinelStorage(RedisStorage):
         password = None
         if parsed.password:
             password = parsed.password
-        for loc in parsed.netloc[parsed.netloc.find("@") + 1:].split(","):
+        for loc in parsed.netloc[parsed.netloc.find("@") + 1 :].split(","):
             host, port = loc.split(":")
             sentinel_configuration.append((host, int(port)))
         self.service_name = (
-            parsed.path.replace("/", "")
-            if parsed.path else service_name
+            parsed.path.replace("/", "") if parsed.path else service_name
         )
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
 
-        options.setdefault('socket_timeout', 0.2)
+        options.setdefault("socket_timeout", 0.2)
 
         self.sentinel = get_dependency("redis.sentinel").Sentinel(
-            sentinel_configuration,
-            password=password,
-            **options
+            sentinel_configuration, password=password, **options
         )
         self.storage = self.sentinel.master_for(self.service_name)
         self.storage_slave = self.sentinel.slave_for(self.service_name)

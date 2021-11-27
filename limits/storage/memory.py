@@ -21,6 +21,7 @@ class MemoryStorage(Storage):
     and a simple list to implement moving window strategy.
 
     """
+
     STORAGE_SCHEME = ["memory"]
 
     def __init__(self, uri=None, **_):
@@ -35,10 +36,7 @@ class MemoryStorage(Storage):
         for key in self.events.keys():
             for event in list(self.events[key]):
                 with event:
-                    if (
-                        event.expiry <= time.time()
-                        and event in self.events[key]
-                    ):
+                    if event.expiry <= time.time() and event in self.events[key]:
                         self.events[key].remove(event)
         for key in list(self.expirations.keys()):
             if self.expirations[key] <= time.time():
@@ -120,9 +118,11 @@ class MemoryStorage(Storage):
         :param int expiry: expiry of the entry
         """
         timestamp = time.time()
-        return len([
-            k for k in self.events[key] if k.atime >= timestamp - expiry
-        ]) if self.events.get(key) else 0
+        return (
+            len([k for k in self.events[key] if k.atime >= timestamp - expiry])
+            if self.events.get(key)
+            else 0
+        )
 
     def get_moving_window(self, key, limit, expiry):
         """

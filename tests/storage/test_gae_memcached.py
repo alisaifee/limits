@@ -7,16 +7,17 @@ from limits import RateLimitItemPerSecond
 from limits.storage import GAEMemcachedStorage
 from limits.strategies import (
     FixedWindowRateLimiter,
-    FixedWindowElasticExpiryRateLimiter
+    FixedWindowElasticExpiryRateLimiter,
 )
 from tests import RUN_GAE, fixed_start
 
 
 @pytest.mark.unit
-@unittest.skipUnless(RUN_GAE, reason='Only for GAE')
+@unittest.skipUnless(RUN_GAE, reason="Only for GAE")
 class GAEMemcachedStorageTests(unittest.TestCase):
     def setUp(self):
         from google.appengine.ext import testbed
+
         tb = testbed.Testbed()
         tb.activate()
         tb.init_memcache_stub()

@@ -22,9 +22,7 @@ def storage_from_string(storage_string, **options):
     """
     scheme = urllib.parse.urlparse(storage_string).scheme
     if scheme not in SCHEMES:
-        raise ConfigurationError(
-            "unknown storage scheme : %s" % storage_string
-        )
+        raise ConfigurationError("unknown storage scheme : %s" % storage_string)
     return SCHEMES[scheme](storage_string, **options)
 
 
@@ -36,5 +34,5 @@ __all__ = [
     "RedisClusterStorage",
     "RedisSentinelStorage",
     "MemcachedStorage",
-    "GAEMemcachedStorage"
+    "GAEMemcachedStorage",
 ]

@@ -23,7 +23,7 @@ TIME_TYPES = dict(
     year=(60 * 60 * 24 * 30 * 12, "year"),
     hour=(60 * 60, "hour"),
     minute=(60, "minute"),
-    second=(1, "second")
+    second=(1, "second"),
 )
 
 GRANULARITIES = {}
@@ -31,10 +31,9 @@ GRANULARITIES = {}
 
 class RateLimitItemMeta(type):
     def __new__(cls, name, parents, dct):
-        granularity = super(RateLimitItemMeta,
-                            cls).__new__(cls, name, parents, dct)
-        if 'granularity' in dct:
-            GRANULARITIES[dct['granularity'][1]] = granularity
+        granularity = super(RateLimitItemMeta, cls).__new__(cls, name, parents, dct)
+        if "granularity" in dct:
+            GRANULARITIES[dct["granularity"][1]] = granularity
         return granularity
 
 
@@ -51,10 +50,11 @@ class RateLimitItem(object):
      (e.g. 'n' per 'm' seconds)
     :param string namespace: category for the specific rate limit
     """
+
     __metaclass__ = RateLimitItemMeta
     __slots__ = ["namespace", "amount", "multiples", "granularity"]
 
-    def __init__(self, amount, multiples=1, namespace='LIMITER'):
+    def __init__(self, amount, multiples=1, namespace="LIMITER"):
         self.namespace = namespace
         self.amount = int(amount)
         self.multiples = int(multiples or 1)
@@ -81,22 +81,21 @@ class RateLimitItem(object):
         :return: a string key identifying this resource with
          each identifier appended with a '/' delimiter.
         """
-        remainder = "/".join([safe_string(k) for k in identifiers] + [
-            safe_string(self.amount),
-            safe_string(self.multiples), self.granularity[1]
-        ])
+        remainder = "/".join(
+            [safe_string(k) for k in identifiers]
+            + [
+                safe_string(self.amount),
+                safe_string(self.multiples),
+                self.granularity[1],
+            ]
+        )
         return "%s/%s" % (self.namespace, remainder)
 
     def __eq__(self, other):
-        return (
-            self.amount == other.amount
-            and self.granularity == other.granularity
-        )
+        return self.amount == other.amount and self.granularity == other.granularity
 
     def __repr__(self):
-        return "%d per %d %s" % (
-            self.amount, self.multiples, self.granularity[1]
-        )
+        return "%d per %d %s" % (self.amount, self.multiples, self.granularity[1])
 
     def __lt__(self, other):
         return self.granularity[0] < other.granularity[0]
@@ -106,6 +105,7 @@ class RateLimitItemPerYear(RateLimitItem):
     """
     per year rate limited resource.
     """
+
     granularity = TIME_TYPES["year"]
 
 
@@ -113,6 +113,7 @@ class RateLimitItemPerMonth(RateLimitItem):
     """
     per month rate limited resource.
     """
+
     granularity = TIME_TYPES["month"]
 
 
@@ -120,6 +121,7 @@ class RateLimitItemPerDay(RateLimitItem):
     """
     per day rate limited resource.
     """
+
     granularity = TIME_TYPES["day"]
 
 
@@ -127,6 +129,7 @@ class RateLimitItemPerHour(RateLimitItem):
     """
     per hour rate limited resource.
     """
+
     granularity = TIME_TYPES["hour"]
 
 
@@ -134,6 +137,7 @@ class RateLimitItemPerMinute(RateLimitItem):
     """
     per minute rate limited resource.
     """
+
     granularity = TIME_TYPES["minute"]
 
 
@@ -141,4 +145,5 @@ class RateLimitItemPerSecond(RateLimitItem):
     """
     per second rate limited resource.
     """
+
     granularity = TIME_TYPES["second"]

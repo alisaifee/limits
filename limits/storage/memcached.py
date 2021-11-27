@@ -15,6 +15,7 @@ class MemcachedStorage(Storage):
 
     Depends on the `pymemcache` library.
     """
+
     MAX_CAS_RETRIES = 10
     STORAGE_SCHEME = ["memcached"]
 
@@ -38,9 +39,9 @@ class MemcachedStorage(Storage):
             if parsed.path and not parsed.netloc and not parsed.port:
                 self.hosts = [parsed.path]
 
-        self.library = options.pop('library', 'pymemcache.client')
-        self.cluster_library = options.pop('library', 'pymemcache.client.hash')
-        self.client_getter = options.pop('client_getter', self.get_client)
+        self.library = options.pop("library", "pymemcache.client")
+        self.cluster_library = options.pop("library", "pymemcache.client.hash")
+        self.client_getter = options.pop("client_getter", self.get_client)
         self.options = options
 
         if not get_dependency(self.library):
@@ -60,14 +61,15 @@ class MemcachedStorage(Storage):
         """
         return (
             module.HashClient(hosts, **kwargs)
-            if len(hosts) > 1 else module.Client(*hosts, **kwargs)
+            if len(hosts) > 1
+            else module.Client(*hosts, **kwargs)
         )
 
     def call_memcached_func(self, func, *args, **kwargs):
-        if 'noreply' in kwargs:
+        if "noreply" in kwargs:
             argspec = inspect.getargspec(func)
-            if not ('noreply' in argspec.args or argspec.keywords):
-                kwargs.pop('noreply')  # noqa
+            if not ("noreply" in argspec.args or argspec.keywords):
+                kwargs.pop("noreply")  # noqa
         return func(*args, **kwargs)
 
     @property
@@ -75,16 +77,13 @@ class MemcachedStorage(Storage):
         """
         lazily creates a memcached client instance using a thread local
         """
-        if not (
-                hasattr(self.local_storage, "storage")
-                and self.local_storage.storage
-        ):
+        if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
             self.local_storage.storage = self.client_getter(
                 get_dependency(
-                    self.cluster_library if len(self.hosts) > 1
-                    else self.library
+                    self.cluster_library if len(self.hosts) > 1 else self.library
                 ),
-                self.hosts, **self.options
+                self.hosts,
+                **self.options
             )
 
         return self.local_storage.storage
@@ -118,9 +117,9 @@ class MemcachedStorage(Storage):
                 retry = 0
                 while (
                     not self.call_memcached_func(
-                        self.storage.cas, key,
-                        int(value or 0) + 1, cas, expiry
-                    ) and retry < self.MAX_CAS_RETRIES
+                        self.storage.cas, key, int(value or 0) + 1, cas, expiry
+                    )
+                    and retry < self.MAX_CAS_RETRIES
                 ):
                     value, cas = self.storage.gets(key)
                     retry += 1
@@ -129,7 +128,7 @@ class MemcachedStorage(Storage):
                     key + "/expires",
                     expiry + time.time(),
                     expire=expiry,
-                    noreply=False
+                    noreply=False,
                 )
                 return int(value or 0) + 1
             else:
@@ -139,7 +138,7 @@ class MemcachedStorage(Storage):
             key + "/expires",
             expiry + time.time(),
             expire=expiry,
-            noreply=False
+            noreply=False,
         )
         return 1
 
@@ -154,7 +153,7 @@ class MemcachedStorage(Storage):
         check if storage is healthy
         """
         try:
-            self.call_memcached_func(self.storage.get, 'limiter-check')
+            self.call_memcached_func(self.storage.get, "limiter-check")
             return True
         except:  # noqa
             return False

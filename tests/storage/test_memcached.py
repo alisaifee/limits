@@ -9,7 +9,7 @@ from limits import RateLimitItemPerSecond, RateLimitItemPerMinute
 from limits.storage import storage_from_string, MemcachedStorage
 from limits.strategies import (
     FixedWindowRateLimiter,
-    FixedWindowElasticExpiryRateLimiter
+    FixedWindowElasticExpiryRateLimiter,
 )
 from tests import fixed_start
 
@@ -17,17 +17,13 @@ from tests import fixed_start
 @pytest.mark.unit
 class MemcachedStorageTests(unittest.TestCase):
     def setUp(self):
-        pymemcache.client.Client(('localhost', 22122)).flush_all()
-        self.storage_url = 'memcached://localhost:22122'
+        pymemcache.client.Client(("localhost", 22122)).flush_all()
+        self.storage_url = "memcached://localhost:22122"
 
     def test_options(self):
-        with mock.patch(
-            "limits.storage.memcached.get_dependency"
-        ) as get_dependency:
+        with mock.patch("limits.storage.memcached.get_dependency") as get_dependency:
             storage_from_string(self.storage_url, connect_timeout=1).check()
-            self.assertEqual(
-                get_dependency().Client.call_args[1]['connect_timeout'], 1
-            )
+            self.assertEqual(get_dependency().Client.call_args[1]["connect_timeout"], 1)
 
     @fixed_start
     def test_fixed_window(self):
@@ -46,9 +42,7 @@ class MemcachedStorageTests(unittest.TestCase):
 
     @fixed_start
     def test_fixed_window_cluster(self):
-        storage = MemcachedStorage(
-            "memcached://localhost:22122,localhost:22123"
-        )
+        storage = MemcachedStorage("memcached://localhost:22122,localhost:22123")
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
         start = time.time()
@@ -78,9 +72,7 @@ class MemcachedStorageTests(unittest.TestCase):
 
     @fixed_start
     def test_fixed_window_with_elastic_expiry_cluster(self):
-        storage = MemcachedStorage(
-            "memcached://localhost:22122,localhost:22123"
-        )
+        storage = MemcachedStorage("memcached://localhost:22122,localhost:22123")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         per_sec = RateLimitItemPerSecond(2, 2)
 

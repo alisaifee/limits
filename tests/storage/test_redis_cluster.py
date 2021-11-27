@@ -21,7 +21,4 @@ class RedisClusterStorageTests(SharedRedisTests, unittest.TestCase):
         ) as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
             call_args = get_dependency().RedisCluster.call_args
-            self.assertEqual(
-                call_args[1]['connection_timeout'],
-                1
-            )
+            self.assertEqual(call_args[1]["connection_timeout"], 1)
