@@ -1,5 +1,5 @@
+from abc import abstractmethod
 import threading
-from abc import ABC, abstractmethod
 
 from limits.storage.registry import StorageRegistry
 
