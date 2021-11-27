@@ -1,4 +1,4 @@
-from six.moves import urllib
+import urllib
 
 from limits.errors import ConfigurationError
 from .memory import MemoryStorage
