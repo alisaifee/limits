@@ -78,7 +78,7 @@ docker installation. Additionally on OSX you will require the ``memcached`` and
     make setup-test-backends
     # hack hack hack
     # run tests
-    nosetests tests
+    pytest
 
 Projects using *limits*
 -------------------------
