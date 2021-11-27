@@ -13,7 +13,6 @@ class StorageRegistry(ABCMeta):
                 "%s is not configured correctly, "
                 "it must specify a STORAGE_SCHEME class attribute" % name
             )
-        print(bases)
         cls = super(StorageRegistry, mcs).__new__(mcs, name, bases, dct)
 
         if storage_scheme:
