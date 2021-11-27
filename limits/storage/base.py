@@ -1,14 +1,10 @@
 import threading
-from abc import ABCMeta, abstractmethod
-
-import six
+from abc import ABC, abstractmethod
 
 from limits.storage.registry import StorageRegistry
 
 
-@six.add_metaclass(StorageRegistry)
-@six.add_metaclass(ABCMeta)
-class Storage(object):
+class Storage(metaclass=StorageRegistry):
     """
     Base class to extend when implementing a storage backend.
     """

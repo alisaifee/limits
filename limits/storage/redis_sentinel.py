@@ -1,4 +1,4 @@
-from six.moves import urllib
+import urllib
 
 from ..errors import ConfigurationError
 from ..util import get_dependency

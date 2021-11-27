@@ -180,6 +180,15 @@ class BaseStorageTests(unittest.TestCase):
             def get_expiry(self, key):
                 return time.time()
 
+            def reset(self):
+                return
+
+            def check(self):
+                return
+
+            def clear(self):
+                return
+
         storage = storage_from_string("mystorage://")
         self.assertTrue(isinstance(storage, MyStorage))
         self.assertRaises(NotImplementedError, MovingWindowRateLimiter, storage)
@@ -196,6 +205,15 @@ class BaseStorageTests(unittest.TestCase):
 
             def get_expiry(self, key):
                 return time.time()
+
+            def reset(self):
+                return
+
+            def check(self):
+                return
+
+            def clear(self):
+                return
 
             def acquire_entry(self, *a, **k):
                 return True

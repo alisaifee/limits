@@ -4,11 +4,9 @@ rate limiting strategies
 
 from abc import ABCMeta, abstractmethod
 import weakref
-import six
 
 
-@six.add_metaclass(ABCMeta)
-class RateLimiter(object):
+class RateLimiter(metaclass=ABCMeta):
     def __init__(self, storage):
         self.storage = weakref.ref(storage)
 

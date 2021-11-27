@@ -1,8 +1,6 @@
 """
 
 """
-from six import add_metaclass
-
 from functools import total_ordering
 
 
@@ -12,8 +10,10 @@ def safe_string(value):
     :param value:
     :return: str
     """
+
     if isinstance(value, bytes):
         return value.decode()
+
     return str(value)
 
 
@@ -32,15 +32,16 @@ GRANULARITIES = {}
 class RateLimitItemMeta(type):
     def __new__(cls, name, parents, dct):
         granularity = super(RateLimitItemMeta, cls).__new__(cls, name, parents, dct)
+
         if "granularity" in dct:
             GRANULARITIES[dct["granularity"][1]] = granularity
+
         return granularity
 
 
 # pylint: disable=no-member
-@add_metaclass(RateLimitItemMeta)
 @total_ordering
-class RateLimitItem(object):
+class RateLimitItem(metaclass=RateLimitItemMeta):
     """
     defines a Rate limited resource which contains the characteristic
     namespace, amount and granularity multiples of the rate limiting window.
@@ -67,12 +68,14 @@ class RateLimitItem(object):
 
         :return: True/False
         """
+
         return granularity_string.lower() in cls.granularity[1:]
 
     def get_expiry(self):
         """
         :return: the size of the window in seconds.
         """
+
         return self.granularity[0] * self.multiples
 
     def key_for(self, *identifiers):
@@ -89,6 +92,7 @@ class RateLimitItem(object):
                 self.granularity[1],
             ]
         )
+
         return "%s/%s" % (self.namespace, remainder)
 
     def __eq__(self, other):

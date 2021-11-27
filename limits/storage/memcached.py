@@ -1,8 +1,7 @@
 import inspect
 import threading
 import time
-
-from six.moves import urllib
+import urllib
 
 from ..errors import ConfigurationError
 from ..util import get_dependency
@@ -157,3 +156,6 @@ class MemcachedStorage(Storage):
             return True
         except:  # noqa
             return False
+
+    def reset(self):
+        raise NotImplementedError
