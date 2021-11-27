@@ -34,5 +34,4 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10
     - name: Lint with black
       run: |
-        pip install black
         black .
