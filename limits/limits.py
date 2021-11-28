@@ -3,7 +3,7 @@
 """
 from __future__ import annotations
 from functools import total_ordering
-from typing import cast, Dict, Tuple, Type, Union
+from typing import cast, Dict, Optional, Tuple, Type, Union
 
 
 def safe_string(value: Union[bytes, str, int]) -> str:
@@ -56,7 +56,7 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
 
     __slots__ = ["namespace", "amount", "multiples", "granularity"]
 
-    def __init__(self, amount: int, multiples: int = 1, namespace: str = "LIMITER"):
+    def __init__(self, amount: int, multiples: Optional[int] = 1, namespace: str = "LIMITER"):
         self.namespace = namespace
         self.amount = int(amount)
         self.multiples = int(multiples or 1)
