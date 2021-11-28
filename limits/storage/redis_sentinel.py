@@ -38,7 +38,7 @@ class RedisSentinelStorage(RedisStorage):
         if parsed.password:
             password = parsed.password
 
-        for loc in parsed.netloc[parsed.netloc.find("@") + 1 :].split(","):
+        for loc in parsed.netloc[parsed.netloc.find("@") + 1:].split(","):
             host, port = loc.split(":")
             sentinel_configuration.append((host, int(port)))
         self.service_name = (
