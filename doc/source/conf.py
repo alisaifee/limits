@@ -34,7 +34,7 @@ copyright = u"2015, Ali-Akber Saifee"
 
 version = release = limits.__version__
 exclude_patterns = []
-pygments_style = "sphinx"
+pygments_style = "gruvbox-light"
 htmlhelp_basename = "limitsdoc"
 
 latex_documents = [
