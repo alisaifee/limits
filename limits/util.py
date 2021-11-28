@@ -61,7 +61,7 @@ def parse_many(limit_string) -> List[RateLimitItem]:
         if match:
             amount, _, multiples, granularity_string = match.groups()
             granularity = granularity_from_string(granularity_string)
-            limits.append(granularity(amount, multiples))
+            limits.append(granularity(int(amount), multiples))
 
     return limits
 

@@ -63,14 +63,14 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
 
     __slots__ = ["namespace", "amount", "multiples", "granularity"]
 
-    def __init__(self, amount, multiples=1, namespace="LIMITER"):
+    def __init__(self, amount: int, multiples=1, namespace="LIMITER"):
         self.namespace = namespace
         self.amount = int(amount)
         self.multiples = int(multiples or 1)
         self.granularity: Tuple[int, str]
 
     @classmethod
-    def check_granularity_string(cls, granularity_string):
+    def check_granularity_string(cls, granularity_string: str) -> bool:
         """
         checks if this instance matches a granularity string
         of type 'n per hour' etc.
@@ -80,14 +80,14 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
 
         return granularity_string.lower() in cls.granularity[1:]
 
-    def get_expiry(self):
+    def get_expiry(self) -> int:
         """
         :return: the size of the window in seconds.
         """
 
         return self.granularity[0] * self.multiples
 
-    def key_for(self, *identifiers):
+    def key_for(self, *identifiers) -> str:
         """
         :param identifiers: a list of strings to append to the key
         :return: a string key identifying this resource with

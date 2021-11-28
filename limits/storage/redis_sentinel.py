@@ -63,18 +63,18 @@ class RedisSentinelStorage(RedisStorage):
         :param str key: the key to get the counter value for
         """
 
-        return super(RedisStorage, self).c_get(key, self.storage_slave)
+        return super(RedisStorage, self)._get(key, self.storage_slave)
 
     def get_expiry(self, key: str) -> int:
         """
         :param str key: the key to get the expiry for
         """
 
-        return super(RedisStorage, self).c_get_expiry(key, self.storage_slave)
+        return super(RedisStorage, self)._get_expiry(key, self.storage_slave)
 
     def check(self) -> bool:
         """
         check if storage is healthy
         """
 
-        return super(RedisStorage, self).c_check(self.storage_slave)
+        return super(RedisStorage, self)._check(self.storage_slave)

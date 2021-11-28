@@ -27,12 +27,12 @@ class RateLimiter(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def test(self, item, *identifiers) -> bool:
+    def test(self, item: RateLimitItem, *identifiers) -> bool:
         """
         checks  the rate limit and returns True if it is not
         currently exceeded.
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
         :return: True/False
@@ -40,18 +40,18 @@ class RateLimiter(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_window_stats(self, item, *identifiers):
+    def get_window_stats(self, item: RateLimitItem, *identifiers) -> Tuple[int, int]:
         """
         returns the number of requests remaining and reset of this limit.
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
         :return: tuple (reset time (int), remaining (int))
         """
         raise NotImplementedError
 
-    def clear(self, item, *identifiers) -> None:
+    def clear(self, item: RateLimitItem, *identifiers) -> None:
         return self.storage().clear(item.key_for(*identifiers))
 
 
@@ -70,7 +70,7 @@ class MovingWindowRateLimiter(RateLimiter):
             )
         super(MovingWindowRateLimiter, self).__init__(storage)
 
-    def hit(self, item, *identifiers) -> bool:
+    def hit(self, item: RateLimitItem, *identifiers) -> bool:
         """
         creates a hit on the rate limit and returns True if successful.
 
@@ -84,7 +84,7 @@ class MovingWindowRateLimiter(RateLimiter):
             item.key_for(*identifiers), item.amount, item.get_expiry()
         )
 
-    def test(self, item, *identifiers) -> bool:
+    def test(self, item: RateLimitItem, *identifiers) -> bool:
         """
         checks  the rate limit and returns True if it is not
         currently exceeded.
@@ -104,7 +104,7 @@ class MovingWindowRateLimiter(RateLimiter):
             < item.amount
         )
 
-    def get_window_stats(self, item, *identifiers) -> Tuple[int, int]:
+    def get_window_stats(self, item: RateLimitItem, *identifiers) -> Tuple[int, int]:
         """
         returns the number of requests remaining within this limit.
 
