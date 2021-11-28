@@ -1,6 +1,5 @@
 from abc import abstractmethod
 import threading
-from typing_extensions import Protocol
 
 from limits.storage.registry import StorageRegistry
 
