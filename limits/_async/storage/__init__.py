@@ -7,6 +7,7 @@ from .base import AsyncStorage
 from .memory import AsyncMemoryStorage
 from .redis import AsyncRedisStorage
 
+
 def async_storage_from_string(storage_string: str, **options) -> AsyncStorage:
     """
     factory function to get an instance of the async storage class based
@@ -17,9 +18,7 @@ def async_storage_from_string(storage_string: str, **options) -> AsyncStorage:
     """
     scheme = urllib.parse.urlparse(storage_string).scheme
     if scheme not in SCHEMES:
-        raise ConfigurationError(
-            "unknown storage scheme : %s" % storage_string
-        )
+        raise ConfigurationError("unknown storage scheme : %s" % storage_string)
     return SCHEMES[scheme](storage_string, **options)
 
 

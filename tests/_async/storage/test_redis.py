@@ -71,28 +71,25 @@ class AsyncSharedRedisTests:
         assert await self.storage.storage.keys("%s/*" % limit.namespace) == []
 
 
-@pytest.mark.unit
+@pytest.mark.asynchronous
 class TestAsyncRedisStorage(AsyncSharedRedisTests):
     def setup_method(self):
-        self.storage_url = "aredis://localhost:7379"
+        self.real_storage_url = "redis://localhost:7379"
+        self.storage_url = f"a{self.real_storage_url}"
         self.storage = AsyncRedisStorage(self.storage_url)
-        redis.from_url(self.storage_url).flushall()
+        redis.from_url(self.real_storage_url).flushall()
 
     @pytest.mark.asyncio
     async def test_init_options(self):
-        with mock.patch(
-            "limits._async.storage.redis.get_dependency"
-        ) as get_dependency:
+        with mock.patch("limits._async.storage.redis.get_dependency") as get_dependency:
             async_storage_from_string(self.storage_url, connection_timeout=1)
             assert (
-                get_dependency().StrictRedis.from_url.call_args[1][
-                    "connection_timeout"
-                ]
+                get_dependency().StrictRedis.from_url.call_args[1]["connection_timeout"]
                 == 1
             )
 
 
-@pytest.mark.unit
+@pytest.mark.asynchronous
 class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
     def setup_method(self):
         self.storage_url = "aredis+unix:///tmp/limits.redis.sock"
@@ -101,13 +98,9 @@ class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
 
     @pytest.mark.asyncio
     async def test_init_options(self):
-        with mock.patch(
-            "limits._async.storage.redis.get_dependency"
-        ) as get_dependency:
+        with mock.patch("limits._async.storage.redis.get_dependency") as get_dependency:
             async_storage_from_string(self.storage_url, connection_timeout=1)
             assert (
-                get_dependency().StrictRedis.from_url.call_args[1][
-                    "connection_timeout"
-                ]
+                get_dependency().StrictRedis.from_url.call_args[1]["connection_timeout"]
                 == 1
             )

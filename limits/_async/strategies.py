@@ -27,7 +27,7 @@ class AsyncRateLimiter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def test(self, item: RateLimitItem, *identifiers) -> None:
+    async def test(self, item: RateLimitItem, *identifiers) -> bool:
         """
         checks  the rate limit and returns True if it is not
         currently exceeded.
@@ -64,8 +64,7 @@ class AsyncMovingWindowRateLimiter(AsyncRateLimiter):
 
     def __init__(self, storage: AsyncStorage) -> None:
         if not (
-            hasattr(storage, "acquire_entry")
-            or hasattr(storage, "get_moving_window")
+            hasattr(storage, "acquire_entry") or hasattr(storage, "get_moving_window")
         ):
             raise NotImplementedError(
                 "MovingWindowRateLimiting is not implemented for storage "
@@ -82,7 +81,7 @@ class AsyncMovingWindowRateLimiter(AsyncRateLimiter):
          limit
         :return: True/False
         """
-        return await self.storage().acquire_entry(
+        return await self.storage().acquire_entry(  # type: ignore
             item.key_for(*identifiers), item.amount, item.get_expiry()
         )
 
@@ -96,8 +95,10 @@ class AsyncMovingWindowRateLimiter(AsyncRateLimiter):
          limit
         :return: True/False
         """
-        res = await self.storage().get_moving_window(
-            item.key_for(*identifiers), item.amount, item.get_expiry(),
+        res = await self.storage().get_moving_window(  # type: ignore
+            item.key_for(*identifiers),
+            item.amount,
+            item.get_expiry(),
         )
         amount = res[1]
         return amount < item.amount
@@ -113,7 +114,7 @@ class AsyncMovingWindowRateLimiter(AsyncRateLimiter):
          limit
         :return: tuple (reset time (int), remaining (int))
         """
-        window_start, window_items = await self.storage().get_moving_window(
+        window_start, window_items = await self.storage().get_moving_window(  # type: ignore
             item.key_for(*identifiers), item.amount, item.get_expiry()
         )
         reset = window_start + item.get_expiry()
@@ -135,13 +136,11 @@ class AsyncFixedWindowRateLimiter(AsyncRateLimiter):
         :return: True/False
         """
         return (
-            await self.storage().incr(
-                item.key_for(*identifiers), item.get_expiry()
-            )
+            await self.storage().incr(item.key_for(*identifiers), item.get_expiry())
             <= item.amount
         )
 
-    async def test(self, item, *identifiers):
+    async def test(self, item, *identifiers) -> bool:
         """
         checks  the rate limit and returns True if it is not
         currently exceeded.
@@ -151,9 +150,7 @@ class AsyncFixedWindowRateLimiter(AsyncRateLimiter):
          limit
         :return: True/False
         """
-        return (
-            await self.storage().get(item.key_for(*identifiers)) < item.amount
-        )
+        return await self.storage().get(item.key_for(*identifiers)) < item.amount
 
     async def get_window_stats(self, item, *identifiers) -> Tuple[int, int]:
         """

@@ -3,7 +3,7 @@ import time
 from typing import Dict, Tuple, List, Optional
 from collections import Counter
 
-from limits.storage.base import Storage
+from .base import AsyncStorage
 
 
 class LockableEntry(threading._RLock):
@@ -15,7 +15,7 @@ class LockableEntry(threading._RLock):
         super(LockableEntry, self).__init__()
 
 
-class AsyncMemoryStorage(Storage):
+class AsyncMemoryStorage(AsyncStorage):
     """
     rate limit storage using :class:`collections.Counter`
     as an in memory storage for fixed and elastic window strategies,
@@ -37,14 +37,13 @@ class AsyncMemoryStorage(Storage):
         # this remains a sync function so we can pass it to
         # threading.Timer
         # TODO: can we replace threading.Timer with asyncio.sleep?
+
         for key in self.events.keys():
             for event in list(self.events[key]):
                 with event:
-                    if (
-                        event.expiry <= time.time()
-                        and event in self.events[key]
-                    ):
+                    if event.expiry <= time.time() and event in self.events[key]:
                         self.events[key].remove(event)
+
         for key in list(self.expirations.keys()):
             if self.expirations[key] <= time.time():
                 self.storage.pop(key, None)
@@ -55,36 +54,38 @@ class AsyncMemoryStorage(Storage):
             self.timer = threading.Timer(0.01, self.__expire_events)
             self.timer.start()
 
-    async def incr(
-        self, key: str, expiry: int, elastic_expiry: bool = False
-    ) -> int:
+    async def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
         """
         increments the counter for a given rate limit key
 
-        :param str key: the key to increment
-        :param int expiry: amount in seconds for the key to expire in
-        :param bool elastic_expiry: whether to keep extending the rate limit
+        :param key: the key to increment
+        :param expiry: amount in seconds for the key to expire in
+        :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
         """
         await self.get(key)
         await self.__schedule_expiry()
         self.storage[key] += 1
+
         if elastic_expiry or self.storage[key] == 1:
             self.expirations[key] = time.time() + expiry
+
         return self.storage.get(key, 0)
 
     async def get(self, key: str) -> int:
         """
-        :param str key: the key to get the counter value for
+        :param key: the key to get the counter value for
         """
+
         if self.expirations.get(key, 0) <= time.time():
             self.storage.pop(key, None)
             self.expirations.pop(key, None)
+
         return self.storage.get(key, 0)
 
     async def clear(self, key: str) -> None:
         """
-        :param str key: the key to clear rate limits for
+        :param key: the key to clear rate limits for
         """
         self.storage.pop(key, None)
         self.expirations.pop(key, None)
@@ -94,10 +95,10 @@ class AsyncMemoryStorage(Storage):
         self, key: str, limit: int, expiry: int, no_add: bool = False
     ) -> bool:
         """
-        :param str key: rate limit key to acquire an entry in
-        :param int limit: amount of entries allowed
-        :param int expiry: expiry of the entry
-        :param bool no_add: if False an entry is not actually acquired
+        :param key: rate limit key to acquire an entry in
+        :param limit: amount of entries allowed
+        :param expiry: expiry of the entry
+        :param no_add: if False an entry is not actually acquired
          but instead serves as a 'check'
         :rtype: bool
         """
@@ -108,27 +109,31 @@ class AsyncMemoryStorage(Storage):
             entry: Optional[LockableEntry] = self.events[key][limit - 1]
         except IndexError:
             entry = None
+
         if entry and entry.atime >= timestamp - expiry:
             return False
         else:
             if not no_add:
                 self.events[key].insert(0, LockableEntry(expiry))
+
             return True
 
     async def get_expiry(self, key: str) -> int:
         """
-        :param str key: the key to get the expiry for
+        :param key: the key to get the expiry for
         """
+
         return int(self.expirations.get(key, -1))
 
     async def get_num_acquired(self, key: str, expiry: int) -> int:
         """
         returns the number of entries already acquired
 
-        :param str key: rate limit key to acquire an entry in
-        :param int expiry: expiry of the entry
+        :param key: rate limit key to acquire an entry in
+        :param expiry: expiry of the entry
         """
         timestamp = time.time()
+
         return (
             len([k for k in self.events[key] if k.atime >= timestamp - expiry])
             if self.events.get(key)
@@ -143,24 +148,29 @@ class AsyncMemoryStorage(Storage):
         returns the starting point and the number of entries in the moving
         window
 
-        :param str key: rate limit key
-        :param int expiry: expiry of entry
+        :param key: rate limit key
+        :param expiry: expiry of entry
         :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
         acquired = await self.get_num_acquired(key, expiry)
+
         for item in self.events.get(key, []):
             if item.atime >= timestamp - expiry:
                 return int(item.atime), acquired
+
         return int(timestamp), acquired
 
     async def check(self) -> bool:
         """
         check if storage is healthy
         """
+
         return True
 
-    async def reset(self) -> None:
+    async def reset(self) -> Optional[int]:
+        num_items = len(self.storage)
         self.storage.clear()
         self.expirations.clear()
         self.events.clear()
+        return num_items
