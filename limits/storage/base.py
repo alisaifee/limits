@@ -61,33 +61,3 @@ class Storage(metaclass=StorageRegistry):
         """
         raise NotImplementedError
 
-
-class SupportsFixedWindow(Protocol):
-    def incr(self, key, expiry, elastic_expiry=False):
-        ...
-
-    def get(self, key):
-        ...
-
-    def get_expiry(self, key):
-        ...
-
-    def check(self):
-        ...
-
-    def reset(self):
-        ...
-
-    def clear(self, key):
-        ...
-
-
-class SupportsMovingWindow(Protocol):
-    def acquire_entry(self, key, limit, expiry, no_add=False):
-        ...
-
-    def get_num_acquired(self, key, expiry):
-        ...
-
-    def get_moving_window(self, key, limit, expiry):
-        ...
