@@ -3,6 +3,12 @@
 Changelog
 =========
 
+v2.0.2
+------
+Release Date: 2021-11-28
+
+Ensure package is marked PEP-561 compliant
+
 v2.0.1
 ------
 Release Date: 2021-11-28
@@ -140,6 +146,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
