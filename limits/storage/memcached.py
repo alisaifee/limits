@@ -18,9 +18,9 @@ class MemcachedStorage(Storage):
     MAX_CAS_RETRIES = 10
     STORAGE_SCHEME = ["memcached"]
 
-    def __init__(self, uri, **options):
+    def __init__(self, uri: str, **options):
         """
-        :param str uri: memcached location of the form
+        :param uri: memcached location of the form
          `memcached://host:port,host:port`, `memcached:///var/tmp/path/to/sock`
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`pymemcache.client.base.Client`
@@ -89,13 +89,13 @@ class MemcachedStorage(Storage):
 
     def get(self, key: str) -> int:
         """
-        :param str key: the key to get the counter value for
+        :param key: the key to get the counter value for
         """
         return int(self.storage.get(key) or 0)
 
     def clear(self, key: str) -> None:
         """
-        :param str key: the key to clear rate limits for
+        :param key: the key to clear rate limits for
         """
         self.storage.delete(key)
 
@@ -103,9 +103,9 @@ class MemcachedStorage(Storage):
         """
         increments the counter for a given rate limit key
 
-        :param str key: the key to increment
-        :param int expiry: amount in seconds for the key to expire in
-        :param bool elastic_expiry: whether to keep extending the rate limit
+        :param key: the key to increment
+        :param expiry: amount in seconds for the key to expire in
+        :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
         """
         if not self.call_memcached_func(
@@ -143,7 +143,7 @@ class MemcachedStorage(Storage):
 
     def get_expiry(self, key: str) -> int:
         """
-        :param str key: the key to get the expiry for
+        :param key: the key to get the expiry for
         """
         return int(float(self.storage.get(key + "/expires") or time.time()))
 

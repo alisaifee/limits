@@ -3,6 +3,7 @@ import time
 from collections import Counter
 from typing import Dict
 from typing import List
+from typing import Tuple
 
 from .base import Storage
 
@@ -55,9 +56,9 @@ class MemoryStorage(Storage):
         """
         increments the counter for a given rate limit key
 
-        :param str key: the key to increment
-        :param int expiry: amount in seconds for the key to expire in
-        :param bool elastic_expiry: whether to keep extending the rate limit
+        :param key: the key to increment
+        :param expiry: amount in seconds for the key to expire in
+        :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
         """
         self.get(key)
@@ -71,7 +72,7 @@ class MemoryStorage(Storage):
 
     def get(self, key: str) -> int:
         """
-        :param str key: the key to get the counter value for
+        :param key: the key to get the counter value for
         """
 
         if self.expirations.get(key, 0) <= time.time():
@@ -82,7 +83,7 @@ class MemoryStorage(Storage):
 
     def clear(self, key: str) -> None:
         """
-        :param str key: the key to clear rate limits for
+        :param key: the key to clear rate limits for
         """
         self.storage.pop(key, None)
         self.expirations.pop(key, None)
@@ -90,12 +91,11 @@ class MemoryStorage(Storage):
 
     def acquire_entry(self, key: str, limit: int, expiry: int, no_add=False) -> bool:
         """
-        :param str key: rate limit key to acquire an entry in
-        :param int limit: amount of entries allowed
-        :param int expiry: expiry of the entry
-        :param bool no_add: if False an entry is not actually acquired
+        :param key: rate limit key to acquire an entry in
+        :param limit: amount of entries allowed
+        :param expiry: expiry of the entry
+        :param no_add: if False an entry is not actually acquired
          but instead serves as a 'check'
-        :rtype: bool
         """
         self.events.setdefault(key, [])
         self.__schedule_expiry()
@@ -115,7 +115,7 @@ class MemoryStorage(Storage):
 
     def get_expiry(self, key: str) -> int:
         """
-        :param str key: the key to get the expiry for
+        :param key: the key to get the expiry for
         """
 
         return int(self.expirations.get(key, -1))
@@ -124,8 +124,8 @@ class MemoryStorage(Storage):
         """
         returns the number of entries already acquired
 
-        :param str key: rate limit key to acquire an entry in
-        :param int expiry: expiry of the entry
+        :param key: rate limit key to acquire an entry in
+        :param expiry: expiry of the entry
         """
         timestamp = time.time()
 
@@ -135,13 +135,13 @@ class MemoryStorage(Storage):
             else 0
         )
 
-    def get_moving_window(self, key, limit, expiry):
+    def get_moving_window(self, key, limit, expiry) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving
         window
 
-        :param str key: rate limit key
-        :param int expiry: expiry of entry
+        :param key: rate limit key
+        :param expiry: expiry of entry
         :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
@@ -153,7 +153,7 @@ class MemoryStorage(Storage):
 
         return int(timestamp), acquired
 
-    def check(self):
+    def check(self) -> bool:
         """
         check if storage is healthy
         """

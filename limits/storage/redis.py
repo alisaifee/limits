@@ -79,8 +79,8 @@ class RedisInteractor(object):
         returns the starting point and the number of entries in the moving
         window
 
-        :param str key: rate limit key
-        :param int expiry: expiry of entry
+        :param key: rate limit key
+        :param expiry: expiry of entry
         :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
@@ -92,8 +92,8 @@ class RedisInteractor(object):
         increments the counter for a given rate limit key
 
         :param connection: Redis connection
-        :param str key: the key to increment
-        :param int expiry: amount in seconds for the key to expire in
+        :param key: the key to increment
+        :param expiry: amount in seconds for the key to expire in
         """
         value = connection.incr(key)
         if elastic_expiry or value == 1:
@@ -103,13 +103,13 @@ class RedisInteractor(object):
     def _get(self, key: str, connection):
         """
         :param connection: Redis connection
-        :param str key: the key to get the counter value for
+        :param key: the key to get the counter value for
         """
         return int(connection.get(key) or 0)
 
     def _clear(self, key: str, connection):
         """
-        :param str key: the key to clear rate limits for
+        :param key: the key to clear rate limits for
         :param connection: Redis connection
         """
         connection.delete(key)
@@ -118,10 +118,10 @@ class RedisInteractor(object):
         self, key: str, limit: int, expiry: int, connection, no_add=False
     ) -> bool:
         """
-        :param str key: rate limit key to acquire an entry in
-        :param int limit: amount of entries allowed
-        :param int expiry: expiry of the entry
-        :param bool no_add: if False an entry is not actually acquired but
+        :param key: rate limit key to acquire an entry in
+        :param limit: amount of entries allowed
+        :param expiry: expiry of the entry
+        :param no_add: if False an entry is not actually acquired but
          instead serves as a 'check'
         :param connection: Redis connection
         :return: True/False
@@ -134,7 +134,7 @@ class RedisInteractor(object):
 
     def _get_expiry(self, key: str, connection=None) -> int:
         """
-        :param str key: the key to get the expiry for
+        :param key: the key to get the expiry for
         :param connection: Redis connection
         """
         return int(max(connection.ttl(key), 0) + time.time())
@@ -161,7 +161,7 @@ class RedisStorage(RedisInteractor, Storage):
 
     def __init__(self, uri: str, **options):
         """
-        :param str uri: uri of the form `redis://[:password]@host:port`,
+        :param uri: uri of the form `redis://[:password]@host:port`,
          `redis://[:password]@host:port/db`,
          `rediss://[:password]@host:port`, `redis+unix:///path/to/sock` etc.
          This uri is passed directly to :func:`redis.from_url` except for the
@@ -195,8 +195,8 @@ class RedisStorage(RedisInteractor, Storage):
         """
         increments the counter for a given rate limit key
 
-        :param str key: the key to increment
-        :param int expiry: amount in seconds for the key to expire in
+        :param key: the key to increment
+        :param expiry: amount in seconds for the key to expire in
         """
         if elastic_expiry:
             return super(RedisStorage, self)._incr(
@@ -207,24 +207,23 @@ class RedisStorage(RedisInteractor, Storage):
 
     def get(self, key: str):
         """
-        :param str key: the key to get the counter value for
+        :param key: the key to get the counter value for
         """
         return super(RedisStorage, self)._get(key, self.storage)
 
     def clear(self, key: str):
         """
-        :param str key: the key to clear rate limits for
+        :param key: the key to clear rate limits for
         """
         return super(RedisStorage, self)._clear(key, self.storage)
 
     def acquire_entry(self, key: str, limit: int, expiry: int, no_add=False):
         """
-        :param str key: rate limit key to acquire an entry in
-        :param int limit: amount of entries allowed
-        :param int expiry: expiry of the entry
-        :param bool no_add: if False an entry is not actually acquired but
+        :param key: rate limit key to acquire an entry in
+        :param limit: amount of entries allowed
+        :param expiry: expiry of the entry
+        :param no_add: if False an entry is not actually acquired but
          instead serves as a 'check'
-        :return: True/False
         """
         return super(RedisStorage, self)._acquire_entry(
             key, limit, expiry, self.storage, no_add=no_add
@@ -232,7 +231,7 @@ class RedisStorage(RedisInteractor, Storage):
 
     def get_expiry(self, key: str) -> int:
         """
-        :param str key: the key to get the expiry for
+        :param key: the key to get the expiry for
         """
         return super(RedisStorage, self)._get_expiry(key, self.storage)
 

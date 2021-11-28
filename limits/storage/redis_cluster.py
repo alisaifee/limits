@@ -16,7 +16,7 @@ class RedisClusterStorage(RedisStorage):
 
     def __init__(self, uri: str, **options):
         """
-        :param str uri: url of the form
+        :param uri: url of the form
          `redis+cluster://[:password]@host:port,host:port`
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`rediscluster.RedisCluster`

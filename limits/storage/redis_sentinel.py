@@ -16,9 +16,9 @@ class RedisSentinelStorage(RedisStorage):
 
     def __init__(self, uri: str, service_name: str = None, **options):
         """
-        :param str uri: url of the form
+        :param uri: url of the form
          `redis+sentinel://host:port,host:port/service_name`
-        :param str service_name, optional: sentinel service name
+        :param service_name, optional: sentinel service name
          (if not provided in `uri`)
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.sentinel.Sentinel`
@@ -60,14 +60,14 @@ class RedisSentinelStorage(RedisStorage):
 
     def get(self, key: str) -> int:
         """
-        :param str key: the key to get the counter value for
+        :param key: the key to get the counter value for
         """
 
         return super(RedisStorage, self)._get(key, self.storage_slave)
 
     def get_expiry(self, key: str) -> int:
         """
-        :param str key: the key to get the expiry for
+        :param key: the key to get the expiry for
         """
 
         return super(RedisStorage, self)._get_expiry(key, self.storage_slave)
