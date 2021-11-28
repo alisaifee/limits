@@ -1,7 +1,7 @@
 import inspect
 import threading
 import time
-import urllib
+import urllib.parse
 
 from ..errors import ConfigurationError
 from ..util import get_dependency
@@ -87,19 +87,19 @@ class MemcachedStorage(Storage):
 
         return self.local_storage.storage
 
-    def get(self, key):
+    def get(self, key: str) -> int:
         """
         :param str key: the key to get the counter value for
         """
         return int(self.storage.get(key) or 0)
 
-    def clear(self, key):
+    def clear(self, key: str) -> None:
         """
         :param str key: the key to clear rate limits for
         """
         self.storage.delete(key)
 
-    def incr(self, key, expiry, elastic_expiry=False):
+    def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -141,13 +141,13 @@ class MemcachedStorage(Storage):
         )
         return 1
 
-    def get_expiry(self, key):
+    def get_expiry(self, key: str) -> int:
         """
         :param str key: the key to get the expiry for
         """
         return int(float(self.storage.get(key + "/expires") or time.time()))
 
-    def check(self):
+    def check(self) -> bool:
         """
         check if storage is healthy
         """

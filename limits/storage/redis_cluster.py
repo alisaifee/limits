@@ -14,7 +14,7 @@ class RedisClusterStorage(RedisStorage):
 
     STORAGE_SCHEME = ["redis+cluster"]
 
-    def __init__(self, uri, **options):
+    def __init__(self, uri: str, **options):
         """
         :param str uri: url of the form
          `redis+cluster://[:password]@host:port,host:port`

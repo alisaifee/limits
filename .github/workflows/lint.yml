@@ -35,3 +35,6 @@ jobs:
     - name: Lint with black
       run: |
         black .
+    - name: Check types
+      run: |
+        mypy limits

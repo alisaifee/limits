@@ -1,4 +1,4 @@
-import urllib
+import urllib.parse
 
 from ..errors import ConfigurationError
 from ..util import get_dependency
@@ -14,7 +14,7 @@ class RedisSentinelStorage(RedisStorage):
 
     STORAGE_SCHEME = ["redis+sentinel"]
 
-    def __init__(self, uri, service_name=None, **options):
+    def __init__(self, uri: str, service_name: str = None, **options):
         """
         :param str uri: url of the form
          `redis+sentinel://host:port,host:port/service_name`
@@ -25,6 +25,7 @@ class RedisSentinelStorage(RedisStorage):
         :raise ConfigurationError: when the redis library is not available
          or if the redis master host cannot be pinged.
         """
+
         if not get_dependency("redis"):
             raise ConfigurationError(
                 "redis prerequisite not available"
@@ -33,14 +34,17 @@ class RedisSentinelStorage(RedisStorage):
         parsed = urllib.parse.urlparse(uri)
         sentinel_configuration = []
         password = None
+
         if parsed.password:
             password = parsed.password
-        for loc in parsed.netloc[parsed.netloc.find("@") + 1:].split(","):
+
+        for loc in parsed.netloc[parsed.netloc.find("@") + 1 :].split(","):
             host, port = loc.split(":")
             sentinel_configuration.append((host, int(port)))
         self.service_name = (
             parsed.path.replace("/", "") if parsed.path else service_name
         )
+
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
 
@@ -54,20 +58,23 @@ class RedisSentinelStorage(RedisStorage):
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
 
-    def get(self, key):
+    def get(self, key: str) -> int:
         """
         :param str key: the key to get the counter value for
         """
-        return super(RedisStorage, self).get(key, self.storage_slave)
 
-    def get_expiry(self, key):
+        return super(RedisStorage, self).c_get(key, self.storage_slave)
+
+    def get_expiry(self, key: str) -> int:
         """
         :param str key: the key to get the expiry for
         """
-        return super(RedisStorage, self).get_expiry(key, self.storage_slave)
 
-    def check(self):
+        return super(RedisStorage, self).c_get_expiry(key, self.storage_slave)
+
+    def check(self) -> bool:
         """
         check if storage is healthy
         """
-        return super(RedisStorage, self).check(self.storage_slave)
+
+        return super(RedisStorage, self).c_check(self.storage_slave)

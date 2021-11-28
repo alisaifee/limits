@@ -1,7 +1,11 @@
 from limits.errors import ConfigurationError
 from abc import ABCMeta
 
-SCHEMES = {}
+from typing import cast
+from typing import Dict
+from typing import Type
+
+SCHEMES: Dict[str, Type] = {}
 
 
 class StorageRegistry(ABCMeta):
@@ -13,7 +17,7 @@ class StorageRegistry(ABCMeta):
                 "%s is not configured correctly, "
                 "it must specify a STORAGE_SCHEME class attribute" % name
             )
-        cls = super(StorageRegistry, mcs).__new__(mcs, name, bases, dct)
+        cls = cast(Type, super(StorageRegistry, mcs).__new__(mcs, name, bases, dct))
 
         if storage_scheme:
             if isinstance(storage_scheme, str):

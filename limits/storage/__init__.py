@@ -12,7 +12,7 @@ from .memcached import MemcachedStorage
 from .gae_memcached import GAEMemcachedStorage
 
 
-def storage_from_string(storage_string, **options):
+def storage_from_string(storage_string: str, **options):
     """
     factory function to get an instance of the storage class based
     on the uri of the storage

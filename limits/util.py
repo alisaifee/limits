@@ -3,7 +3,11 @@
 """
 import re
 import sys
+from typing import Any
+from typing import List
+from typing import Type
 
+from .limits import RateLimitItem
 from .limits import GRANULARITIES
 
 SEPARATORS = re.compile(r"[,;|]{1}")
@@ -23,19 +27,20 @@ EXPR = re.compile(
 )
 
 
-def get_dependency(dep):
+def get_dependency(dep) -> Any:
     """
     safe function to import a module programmatically
     :return: module or None (if not importable)
     """
     try:
         __import__(dep)
+
         return sys.modules[dep]
     except ImportError:  # pragma: no cover
         return None
 
 
-def parse_many(limit_string):
+def parse_many(limit_string) -> List[RateLimitItem]:
     """
     parses rate limits in string notation containing multiple rate limits
     (e.g. '1/second; 5/minute')
@@ -45,17 +50,23 @@ def parse_many(limit_string):
     :return: a list of :class:`RateLimitItem` instances.
 
     """
+
     if not (isinstance(limit_string, str) and EXPR.match(limit_string)):
         raise ValueError("couldn't parse rate limit string '%s'" % limit_string)
     limits = []
+
     for limit in SEPARATORS.split(limit_string):
-        amount, _, multiples, granularity_string = SINGLE_EXPR.match(limit).groups()
-        granularity = granularity_from_string(granularity_string)
-        limits.append(granularity(amount, multiples))
+        match = SINGLE_EXPR.match(limit)
+
+        if match:
+            amount, _, multiples, granularity_string = match.groups()
+            granularity = granularity_from_string(granularity_string)
+            limits.append(granularity(amount, multiples))
+
     return limits
 
 
-def parse(limit_string):
+def parse(limit_string) -> RateLimitItem:
     """
     parses a single rate limit in string notation
     (e.g. '1/second' or '1 per second'
@@ -65,16 +76,18 @@ def parse(limit_string):
     :return: an instance of :class:`RateLimitItem`
 
     """
+
     return list(parse_many(limit_string))[0]
 
 
-def granularity_from_string(granularity_string):
+def granularity_from_string(granularity_string) -> Type[RateLimitItem]:
     """
 
     :param granularity_string:
     :return: a subclass of :class:`RateLimitItem`
     :raise ValueError:
     """
+
     for granularity in GRANULARITIES.values():
         if granularity.check_granularity_string(granularity_string):
             return granularity

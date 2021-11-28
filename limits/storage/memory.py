@@ -1,6 +1,8 @@
 import threading
 import time
 from collections import Counter
+from typing import Dict
+from typing import List
 
 from .base import Storage
 
@@ -24,10 +26,10 @@ class MemoryStorage(Storage):
 
     STORAGE_SCHEME = ["memory"]
 
-    def __init__(self, uri=None, **_):
-        self.storage = Counter()
-        self.expirations = {}
-        self.events = {}
+    def __init__(self, uri: str = None, **_):
+        self.storage: Counter[str] = Counter()
+        self.expirations: Dict[str, float] = {}
+        self.events: Dict[str, List[LockableEntry]] = {}
         self.timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
         super(MemoryStorage, self).__init__(uri)
@@ -38,6 +40,7 @@ class MemoryStorage(Storage):
                 with event:
                     if event.expiry <= time.time() and event in self.events[key]:
                         self.events[key].remove(event)
+
         for key in list(self.expirations.keys()):
             if self.expirations[key] <= time.time():
                 self.storage.pop(key, None)
@@ -48,7 +51,7 @@ class MemoryStorage(Storage):
             self.timer = threading.Timer(0.01, self.__expire_events)
             self.timer.start()
 
-    def incr(self, key, expiry, elastic_expiry=False):
+    def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -60,20 +63,24 @@ class MemoryStorage(Storage):
         self.get(key)
         self.__schedule_expiry()
         self.storage[key] += 1
+
         if elastic_expiry or self.storage[key] == 1:
             self.expirations[key] = time.time() + expiry
+
         return self.storage.get(key, 0)
 
-    def get(self, key):
+    def get(self, key: str) -> int:
         """
         :param str key: the key to get the counter value for
         """
+
         if self.expirations.get(key, 0) <= time.time():
             self.storage.pop(key, None)
             self.expirations.pop(key, None)
+
         return self.storage.get(key, 0)
 
-    def clear(self, key):
+    def clear(self, key: str) -> None:
         """
         :param str key: the key to clear rate limits for
         """
@@ -81,7 +88,7 @@ class MemoryStorage(Storage):
         self.expirations.pop(key, None)
         self.events.pop(key, None)
 
-    def acquire_entry(self, key, limit, expiry, no_add=False):
+    def acquire_entry(self, key: str, limit: int, expiry: int, no_add=False) -> bool:
         """
         :param str key: rate limit key to acquire an entry in
         :param int limit: amount of entries allowed
@@ -97,17 +104,20 @@ class MemoryStorage(Storage):
             entry = self.events[key][limit - 1]
         except IndexError:
             entry = None
+
         if entry and entry.atime >= timestamp - expiry:
             return False
         else:
             if not no_add:
                 self.events[key].insert(0, LockableEntry(expiry))
+
             return True
 
-    def get_expiry(self, key):
+    def get_expiry(self, key: str) -> int:
         """
         :param str key: the key to get the expiry for
         """
+
         return int(self.expirations.get(key, -1))
 
     def get_num_acquired(self, key, expiry):
@@ -118,6 +128,7 @@ class MemoryStorage(Storage):
         :param int expiry: expiry of the entry
         """
         timestamp = time.time()
+
         return (
             len([k for k in self.events[key] if k.atime >= timestamp - expiry])
             if self.events.get(key)
@@ -135,15 +146,18 @@ class MemoryStorage(Storage):
         """
         timestamp = time.time()
         acquired = self.get_num_acquired(key, expiry)
+
         for item in self.events.get(key, []):
             if item.atime >= timestamp - expiry:
                 return int(item.atime), acquired
+
         return int(timestamp), acquired
 
     def check(self):
         """
         check if storage is healthy
         """
+
         return True
 
     def reset(self):

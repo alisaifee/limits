@@ -1,7 +1,14 @@
 """
 
 """
+from __future__ import annotations
 from functools import total_ordering
+from typing import (
+    cast,
+    Dict,
+    Tuple,
+    Type,
+)
 
 
 def safe_string(value):
@@ -26,7 +33,7 @@ TIME_TYPES = dict(
     second=(1, "second"),
 )
 
-GRANULARITIES = {}
+GRANULARITIES: Dict[str, Type[RateLimitItem]] = {}
 
 
 class RateLimitItemMeta(type):
@@ -34,7 +41,9 @@ class RateLimitItemMeta(type):
         granularity = super(RateLimitItemMeta, cls).__new__(cls, name, parents, dct)
 
         if "granularity" in dct:
-            GRANULARITIES[dct["granularity"][1]] = granularity
+            GRANULARITIES[dct["granularity"][1]] = cast(
+                Type[RateLimitItem], granularity
+            )
 
         return granularity
 
@@ -52,13 +61,13 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
     :param string namespace: category for the specific rate limit
     """
 
-    __metaclass__ = RateLimitItemMeta
     __slots__ = ["namespace", "amount", "multiples", "granularity"]
 
     def __init__(self, amount, multiples=1, namespace="LIMITER"):
         self.namespace = namespace
         self.amount = int(amount)
         self.multiples = int(multiples or 1)
+        self.granularity: Tuple[int, str]
 
     @classmethod
     def check_granularity_string(cls, granularity_string):
