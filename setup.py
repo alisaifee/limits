@@ -14,9 +14,11 @@ import versioneer
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 REQUIREMENTS = [
     k
+
     for k in open(os.path.join(THIS_DIR, "requirements", "main.txt"))
     .read()
     .splitlines()
+
     if k.strip()
 ]
 
@@ -35,4 +37,7 @@ setup(
     long_description=open("README.rst").read(),
     packages=find_packages(exclude=["google.*", "google", "tests*"]),
     python_requires=">3.7",
+    package_data={
+        "limits": ["py.typed"],
+    },
 )

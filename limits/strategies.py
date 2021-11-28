@@ -4,7 +4,10 @@ rate limiting strategies
 
 from abc import ABCMeta, abstractmethod
 import weakref
+from typing import Dict
 from typing import Tuple
+from typing import Type
+from typing import Union
 
 from .limits import RateLimitItem
 from .storage import Storage
@@ -183,7 +186,13 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
         )
 
 
-STRATEGIES = {
+KnownStrategy = Union[
+    Type[FixedWindowRateLimiter],
+    Type[FixedWindowElasticExpiryRateLimiter],
+    Type[MovingWindowRateLimiter],
+]
+
+STRATEGIES: Dict[str, KnownStrategy] = {
     "fixed-window": FixedWindowRateLimiter,
     "fixed-window-elastic-expiry": FixedWindowElasticExpiryRateLimiter,
     "moving-window": MovingWindowRateLimiter,
