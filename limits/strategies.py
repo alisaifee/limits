@@ -22,7 +22,6 @@ class RateLimiter(metaclass=ABCMeta):
         :param item: a :class:`RateLimitItem` instance
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
         raise NotImplementedError
 
@@ -35,7 +34,6 @@ class RateLimiter(metaclass=ABCMeta):
         :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
         raise NotImplementedError
 
@@ -47,7 +45,7 @@ class RateLimiter(metaclass=ABCMeta):
         :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: tuple (reset time (int), remaining (int))
+        :return: (reset time, remaining)
         """
         raise NotImplementedError
 
@@ -74,10 +72,9 @@ class MovingWindowRateLimiter(RateLimiter):
         """
         creates a hit on the rate limit and returns True if successful.
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
 
         return self.storage().acquire_entry(  # type: ignore
@@ -89,10 +86,9 @@ class MovingWindowRateLimiter(RateLimiter):
         checks  the rate limit and returns True if it is not
         currently exceeded.
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
 
         return (
@@ -108,10 +104,10 @@ class MovingWindowRateLimiter(RateLimiter):
         """
         returns the number of requests remaining within this limit.
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: tuple (reset time (int), remaining (int))
+        :return: tuple (reset time, remaining)
         """
         window_start, window_items = self.storage().get_moving_window(  # type: ignore
             item.key_for(*identifiers), item.amount, item.get_expiry()
@@ -130,10 +126,9 @@ class FixedWindowRateLimiter(RateLimiter):
         """
         creates a hit on the rate limit and returns True if successful.
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
 
         return (
@@ -146,10 +141,9 @@ class FixedWindowRateLimiter(RateLimiter):
         checks  the rate limit and returns True if it is not
         currently exceeded.
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
 
         return self.storage().get(item.key_for(*identifiers)) < item.amount
@@ -158,10 +152,10 @@ class FixedWindowRateLimiter(RateLimiter):
         """
         returns the number of requests remaining and reset of this limit.
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: tuple (reset time (int), remaining (int))
+        :return: (reset time, remaining)
         """
         remaining = max(0, item.amount - self.storage().get(item.key_for(*identifiers)))
         reset = self.storage().get_expiry(item.key_for(*identifiers))
@@ -178,10 +172,9 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
         """
         creates a hit on the rate limit and returns True if successful.
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
 
         return (

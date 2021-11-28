@@ -3,19 +3,12 @@
 """
 from __future__ import annotations
 from functools import total_ordering
-from typing import (
-    cast,
-    Dict,
-    Tuple,
-    Type,
-)
+from typing import cast, Dict, Tuple, Type, Union
 
 
-def safe_string(value):
+def safe_string(value: Union[bytes, str]) -> str:
     """
-    consistently converts a value to a string
-    :param value:
-    :return: str
+    converts a byte/str to a str
     """
 
     if isinstance(value, bytes):
@@ -55,15 +48,15 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
     defines a Rate limited resource which contains the characteristic
     namespace, amount and granularity multiples of the rate limiting window.
 
-    :param int amount: the rate limit amount
-    :param int multiples: multiple of the 'per' granularity
+    :param amount: the rate limit amount
+    :param multiples: multiple of the 'per' granularity
      (e.g. 'n' per 'm' seconds)
-    :param string namespace: category for the specific rate limit
+    :param namespace: category for the specific rate limit
     """
 
     __slots__ = ["namespace", "amount", "multiples", "granularity"]
 
-    def __init__(self, amount: int, multiples=1, namespace="LIMITER"):
+    def __init__(self, amount: int, multiples: int = 1, namespace: str = "LIMITER"):
         self.namespace = namespace
         self.amount = int(amount)
         self.multiples = int(multiples or 1)
@@ -74,8 +67,6 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
         """
         checks if this instance matches a granularity string
         of type 'n per hour' etc.
-
-        :return: True/False
         """
 
         return granularity_string.lower() in cls.granularity[1:]

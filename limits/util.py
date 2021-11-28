@@ -30,7 +30,6 @@ EXPR = re.compile(
 def get_dependency(dep) -> Any:
     """
     safe function to import a module programmatically
-    :return: module or None (if not importable)
     """
     try:
         __import__(dep)
@@ -40,14 +39,13 @@ def get_dependency(dep) -> Any:
         return None
 
 
-def parse_many(limit_string) -> List[RateLimitItem]:
+def parse_many(limit_string: str) -> List[RateLimitItem]:
     """
     parses rate limits in string notation containing multiple rate limits
     (e.g. '1/second; 5/minute')
 
-    :param string limit_string: rate limit string using :ref:`ratelimit-string`
+    :param limit_string: rate limit string using :ref:`ratelimit-string`
     :raise ValueError: if the string notation is invalid.
-    :return: a list of :class:`RateLimitItem` instances.
 
     """
 
@@ -66,14 +64,13 @@ def parse_many(limit_string) -> List[RateLimitItem]:
     return limits
 
 
-def parse(limit_string) -> RateLimitItem:
+def parse(limit_string: str) -> RateLimitItem:
     """
     parses a single rate limit in string notation
     (e.g. '1/second' or '1 per second'
 
-    :param string limit_string: rate limit string using :ref:`ratelimit-string`
+    :param limit_string: rate limit string using :ref:`ratelimit-string`
     :raise ValueError: if the string notation is invalid.
-    :return: an instance of :class:`RateLimitItem`
 
     """
 
@@ -84,7 +81,6 @@ def granularity_from_string(granularity_string) -> Type[RateLimitItem]:
     """
 
     :param granularity_string:
-    :return: a subclass of :class:`RateLimitItem`
     :raise ValueError:
     """
 
