@@ -7,7 +7,10 @@ import pytest
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits._async.storage import AsyncMemoryStorage
-from limits._async.strategies import AsyncFixedWindowRateLimiter, AsyncMovingWindowRateLimiter
+from limits._async.strategies import (
+    AsyncFixedWindowRateLimiter,
+    AsyncMovingWindowRateLimiter,
+)
 
 
 @pytest.mark.asynchronous

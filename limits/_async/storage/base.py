@@ -5,7 +5,7 @@ from typing import Dict, Optional
 from limits.storage.registry import StorageRegistry
 
 
-class AsyncStorage(object, metaclass=StorageRegistry):
+class AsyncStorage(metaclass=StorageRegistry):
     """
     Base class to extend when implementing an async storage backend.
     """
@@ -14,9 +14,7 @@ class AsyncStorage(object, metaclass=StorageRegistry):
         self.lock = threading.RLock()
 
     @abstractmethod
-    async def incr(
-        self, key: str, expiry: int, elastic_expiry: bool = False
-    ) -> int:
+    async def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -49,7 +47,7 @@ class AsyncStorage(object, metaclass=StorageRegistry):
         raise NotImplementedError
 
     @abstractmethod
-    async def reset(self) -> None:
+    async def reset(self) -> Optional[int]:
         """
         reset storage to clear limits
         """

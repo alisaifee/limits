@@ -2,8 +2,8 @@ import threading
 import time
 import unittest
 
-import pymemcache.client
 import pytest
+import pymemcache
 import redis
 import redis.sentinel
 import rediscluster

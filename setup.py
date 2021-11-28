@@ -14,11 +14,9 @@ import versioneer
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 REQUIREMENTS = [
     k
-
     for k in open(os.path.join(THIS_DIR, "requirements", "main.txt"))
     .read()
     .splitlines()
-
     if k.strip()
 ]
 
