@@ -6,9 +6,9 @@ from functools import total_ordering
 from typing import cast, Dict, Tuple, Type, Union
 
 
-def safe_string(value: Union[bytes, str]) -> str:
+def safe_string(value: Union[bytes, str, int]) -> str:
     """
-    converts a byte/str to a str
+    converts a byte/str or int to a str
     """
 
     if isinstance(value, bytes):

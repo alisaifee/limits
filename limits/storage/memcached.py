@@ -36,7 +36,7 @@ class MemcachedStorage(Storage):
         else:
             # filesystem path to UDS
             if parsed.path and not parsed.netloc and not parsed.port:
-                self.hosts = [parsed.path]
+                self.hosts = [parsed.path]  # type: ignore
 
         self.library = options.pop("library", "pymemcache.client")
         self.cluster_library = options.pop("library", "pymemcache.client.hash")
