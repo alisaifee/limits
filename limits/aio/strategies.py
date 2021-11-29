@@ -7,11 +7,11 @@ from typing import Tuple
 import weakref
 
 from limits import RateLimitItem
-from limits._async.storage import AsyncStorage
+from limits.aio.storage import Storage
 
 
-class AsyncRateLimiter(ABC):
-    def __init__(self, storage: AsyncStorage):
+class RateLimiter(ABC):
+    def __init__(self, storage: Storage):
         self.storage = weakref.ref(storage)
 
     @abstractmethod
@@ -57,12 +57,12 @@ class AsyncRateLimiter(ABC):
         return await self.storage().clear(item.key_for(*identifiers))
 
 
-class AsyncMovingWindowRateLimiter(AsyncRateLimiter):
+class MovingWindowRateLimiter(RateLimiter):
     """
     Reference: :ref:`moving-window`
     """
 
-    def __init__(self, storage: AsyncStorage) -> None:
+    def __init__(self, storage: Storage) -> None:
         if not (
             hasattr(storage, "acquire_entry") or hasattr(storage, "get_moving_window")
         ):
@@ -70,7 +70,7 @@ class AsyncMovingWindowRateLimiter(AsyncRateLimiter):
                 "MovingWindowRateLimiting is not implemented for storage "
                 "of type %s" % storage.__class__
             )
-        super(AsyncMovingWindowRateLimiter, self).__init__(storage)
+        super(MovingWindowRateLimiter, self).__init__(storage)
 
     async def hit(self, item: RateLimitItem, *identifiers) -> bool:
         """
@@ -121,7 +121,7 @@ class AsyncMovingWindowRateLimiter(AsyncRateLimiter):
         return (reset, item.amount - window_items)
 
 
-class AsyncFixedWindowRateLimiter(AsyncRateLimiter):
+class FixedWindowRateLimiter(RateLimiter):
     """
     Reference: :ref:`fixed-window`
     """
@@ -169,7 +169,7 @@ class AsyncFixedWindowRateLimiter(AsyncRateLimiter):
         return (reset, remaining)
 
 
-class AsyncFixedWindowElasticExpiryRateLimiter(AsyncFixedWindowRateLimiter):
+class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
     """
     Reference: :ref:`fixed-window-elastic`
     """
@@ -190,7 +190,7 @@ class AsyncFixedWindowElasticExpiryRateLimiter(AsyncFixedWindowRateLimiter):
 
 
 STRATEGIES = {
-    "fixed-window": AsyncFixedWindowRateLimiter,
-    "fixed-window-elastic-expiry": AsyncFixedWindowElasticExpiryRateLimiter,
-    "moving-window": AsyncMovingWindowRateLimiter,
+    "fixed-window": FixedWindowRateLimiter,
+    "fixed-window-elastic-expiry": FixedWindowElasticExpiryRateLimiter,
+    "moving-window": MovingWindowRateLimiter,
 }

@@ -5,10 +5,10 @@ from typing import Optional
 
 from limits.util import get_dependency
 from limits.errors import ConfigurationError
-from .base import AsyncStorage
+from .base import Storage
 
 
-class AsyncRedisInteractor:
+class RedisInteractor:
     SCRIPT_MOVING_WINDOW = """
         local items = redis.call('lrange', KEYS[1], 0, tonumber(ARGV[2]))
         local expiry = tonumber(ARGV[1])
@@ -156,7 +156,7 @@ class AsyncRedisInteractor:
             return False
 
 
-class AsyncRedisStorage(AsyncRedisInteractor, AsyncStorage):
+class RedisStorage(RedisInteractor, Storage):
     """
     Rate limit storage with redis as backend.
 
@@ -170,7 +170,7 @@ class AsyncRedisStorage(AsyncRedisInteractor, AsyncStorage):
         :param uri: uri of the form `aredis://[:password]@host:port`,
          `aredis://[:password]@host:port/db`,
          `arediss://[:password]@host:port`, `aredis+unix:///path/to/sock` etc.
-         This uri is passed directly to :func:`redis.StrictRedis.from_url` with
+         This uri is passed directly to :func:`aredis.StrictRedis.from_url` with
          the initial `a` removed, except for the case of `redis+unix` where it
          is replaced with `unix`.
         :param options: all remaining keyword arguments are passed
@@ -185,7 +185,7 @@ class AsyncRedisStorage(AsyncRedisInteractor, AsyncStorage):
         uri = uri.replace("redis+unix", "unix")
         self.storage = get_dependency("aredis").StrictRedis.from_url(uri, **options)
         self.initialize_storage(uri)
-        super(AsyncRedisStorage, self).__init__()
+        super(RedisStorage, self).__init__()
 
     def initialize_storage(self, _uri: str) -> None:
         # all these methods are coroutines, so must be called with await
@@ -195,7 +195,7 @@ class AsyncRedisStorage(AsyncRedisInteractor, AsyncStorage):
         )
         self.lua_clear_keys = self.storage.register_script(self.SCRIPT_CLEAR_KEYS)
         self.lua_incr_expire = self.storage.register_script(
-            AsyncRedisStorage.SCRIPT_INCR_EXPIRE
+            RedisStorage.SCRIPT_INCR_EXPIRE
         )
 
     async def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
@@ -206,7 +206,7 @@ class AsyncRedisStorage(AsyncRedisInteractor, AsyncStorage):
         :param expiry: amount in seconds for the key to expire in
         """
         if elastic_expiry:
-            return await super(AsyncRedisStorage, self)._incr(
+            return await super(RedisStorage, self)._incr(
                 key, expiry, self.storage, elastic_expiry
             )
         else:
@@ -216,13 +216,13 @@ class AsyncRedisStorage(AsyncRedisInteractor, AsyncStorage):
         """
         :param key: the key to get the counter value for
         """
-        return await super(AsyncRedisStorage, self)._get(key, self.storage)
+        return await super(RedisStorage, self)._get(key, self.storage)
 
     async def clear(self, key: str) -> None:
         """
         :param key: the key to clear rate limits for
         """
-        return await super(AsyncRedisStorage, self)._clear(key, self.storage)
+        return await super(RedisStorage, self)._clear(key, self.storage)
 
     async def acquire_entry(self, key, limit, expiry, no_add=False) -> bool:
         """
@@ -232,7 +232,7 @@ class AsyncRedisStorage(AsyncRedisInteractor, AsyncStorage):
         :param no_add: if False an entry is not actually acquired but
          instead serves as a 'check'
         """
-        return await super(AsyncRedisStorage, self)._acquire_entry(
+        return await super(RedisStorage, self)._acquire_entry(
             key, limit, expiry, self.storage, no_add=no_add
         )
 
@@ -240,13 +240,13 @@ class AsyncRedisStorage(AsyncRedisInteractor, AsyncStorage):
         """
         :param key: the key to get the expiry for
         """
-        return await super(AsyncRedisStorage, self)._get_expiry(key, self.storage)
+        return await super(RedisStorage, self)._get_expiry(key, self.storage)
 
     async def check(self) -> bool:
         """
         check if storage is healthy
         """
-        return await super(AsyncRedisStorage, self)._check(self.storage)
+        return await super(RedisStorage, self)._check(self.storage)
 
     async def reset(self) -> Optional[int]:
         """
