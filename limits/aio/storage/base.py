@@ -5,7 +5,7 @@ from typing import Dict, Optional
 from limits.storage.registry import StorageRegistry
 
 
-class AsyncStorage(metaclass=StorageRegistry):
+class Storage(metaclass=StorageRegistry):
     """
     Base class to extend when implementing an async storage backend.
     """

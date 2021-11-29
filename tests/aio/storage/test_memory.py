@@ -1,28 +1,27 @@
 import time
-import unittest
-import asyncio
 
 import hiro
 import pytest
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
-from limits._async.storage import AsyncMemoryStorage
-from limits._async.strategies import (
-    AsyncFixedWindowRateLimiter,
-    AsyncMovingWindowRateLimiter,
+from limits.aio.storage import MemoryStorage
+from limits.aio.strategies import (
+    FixedWindowRateLimiter,
+    MovingWindowRateLimiter,
 )
 
 
 @pytest.mark.asynchronous
 class TestAsyncMemoryStorage:
     def setup_method(self, method):
-        self.storage = AsyncMemoryStorage()
+        self.storage = MemoryStorage()
 
     @pytest.mark.asyncio
     async def test_in_memory(self):
         with hiro.Timeline().freeze() as timeline:
-            limiter = AsyncFixedWindowRateLimiter(self.storage)
+            limiter = FixedWindowRateLimiter(self.storage)
             per_min = RateLimitItemPerMinute(10)
+
             for i in range(0, 10):
                 assert await limiter.hit(per_min)
             assert not await limiter.hit(per_min)
@@ -31,7 +30,7 @@ class TestAsyncMemoryStorage:
 
     @pytest.mark.asyncio
     async def test_fixed_window_clear(self):
-        limiter = AsyncFixedWindowRateLimiter(self.storage)
+        limiter = FixedWindowRateLimiter(self.storage)
         per_min = RateLimitItemPerMinute(1)
         await limiter.hit(per_min)
         assert not await limiter.hit(per_min)
@@ -40,7 +39,7 @@ class TestAsyncMemoryStorage:
 
     @pytest.mark.asyncio
     async def test_moving_window_clear(self):
-        limiter = AsyncMovingWindowRateLimiter(self.storage)
+        limiter = MovingWindowRateLimiter(self.storage)
         per_min = RateLimitItemPerMinute(1)
         await limiter.hit(per_min)
         assert not await limiter.hit(per_min)
@@ -49,12 +48,14 @@ class TestAsyncMemoryStorage:
 
     @pytest.mark.asyncio
     async def test_reset(self):
-        limiter = AsyncFixedWindowRateLimiter(self.storage)
+        limiter = FixedWindowRateLimiter(self.storage)
         per_min = RateLimitItemPerMinute(10)
+
         for i in range(0, 10):
             assert await limiter.hit(per_min)
         assert not await limiter.hit(per_min)
         await self.storage.reset()
+
         for i in range(0, 10):
             assert await limiter.hit(per_min)
         assert not await limiter.hit(per_min)
@@ -62,8 +63,9 @@ class TestAsyncMemoryStorage:
     @pytest.mark.asyncio
     async def test_expiry(self):
         with hiro.Timeline().freeze() as timeline:
-            limiter = AsyncFixedWindowRateLimiter(self.storage)
+            limiter = FixedWindowRateLimiter(self.storage)
             per_min = RateLimitItemPerMinute(10)
+
             for i in range(0, 10):
                 assert await limiter.hit(per_min)
             timeline.forward(60)
@@ -75,9 +77,10 @@ class TestAsyncMemoryStorage:
     @pytest.mark.asyncio
     async def test_expiry_moving_window(self):
         with hiro.Timeline().freeze() as timeline:
-            limiter = AsyncMovingWindowRateLimiter(self.storage)
+            limiter = MovingWindowRateLimiter(self.storage)
             per_min = RateLimitItemPerMinute(10)
             per_sec = RateLimitItemPerSecond(1)
+
             for _ in range(0, 2):
                 for _ in range(0, 10):
                     assert await limiter.hit(per_min)

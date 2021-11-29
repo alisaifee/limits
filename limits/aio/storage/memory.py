@@ -3,7 +3,7 @@ import time
 from typing import Dict, Tuple, List, Optional
 from collections import Counter
 
-from .base import AsyncStorage
+from .base import Storage
 
 
 class LockableEntry(threading._RLock):
@@ -15,7 +15,7 @@ class LockableEntry(threading._RLock):
         super(LockableEntry, self).__init__()
 
 
-class AsyncMemoryStorage(AsyncStorage):
+class MemoryStorage(Storage):
     """
     rate limit storage using :class:`collections.Counter`
     as an in memory storage for fixed and elastic window strategies,
@@ -31,7 +31,7 @@ class AsyncMemoryStorage(AsyncStorage):
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
-        super(AsyncMemoryStorage, self).__init__(uri)  # type: ignore
+        super(MemoryStorage, self).__init__(uri)  # type: ignore
 
     def __expire_events(self) -> None:
         # this remains a sync function so we can pass it to
