@@ -59,5 +59,5 @@ integration-tests: setup-test-backends
 	pytest -m integration
 
 all-tests: setup-test-backends
-	pytest -m unit,integration --durations=10
+	pytest -m "unit or integration" --durations=10
 .PHONY: test

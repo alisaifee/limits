@@ -14,3 +14,4 @@ redis-git
 # gae test files
 google_appengine
 google
+.*.swp

@@ -11,13 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [2.7, pypy2, 3.5, 3.7, 3.8, pypy3]
+        python-version: [3.7, 3.8, 3.9, "3.10"]
         marker: [unit]
         include:
-          - python-version: 2.7
-            marker: 'integration'
-          - python-version: 3.7
-            marker: 'unit,integration'
+          - python-version: 3.9
+            marker: 'unit or integration'
     steps:
     - uses: actions/checkout@v2
     - name: Cache dependencies
@@ -40,6 +38,6 @@ jobs:
         make setup-test-backends
     - name: Tests
       run: |
-        py.test -m ${{ matrix.marker || 'unit' }} --cov-report=xml
+        py.test -m "${{ matrix.marker || 'unit' }}" --cov-report=xml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1

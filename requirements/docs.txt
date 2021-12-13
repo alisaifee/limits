@@ -2,4 +2,4 @@
 sphinx>3; python_version>"3"
 sphinx; python_version<"3"
 sphinx_rtd_theme
-
+sphinx-autodoc-typehints

@@ -6,14 +6,11 @@
     :target: https://pypi.python.org/pypi/limits
 .. |license| image:: https://img.shields.io/pypi/l/limits.svg?style=flat-square
     :target: https://pypi.python.org/pypi/limits
-.. |gitter| image:: https://img.shields.io/badge/gitter-join%20chat-blue.svg?style=flat-square
-   :alt: Join the chat at https://gitter.im/alisaifee/limits
-   :target: https://gitter.im/alisaifee/limits?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content
 
 *************
 limits
 *************
-|ci| |codecov| |pypi| |gitter| |license|
+|ci| |codecov| |pypi| |license|
 
 *limits* provides utilities to implement rate limiting using
 various strategies and storage backends such as redis & memcached.

@@ -1,4 +1,4 @@
-from six.moves import urllib
+import urllib
 
 from limits.errors import ConfigurationError
 from .memory import MemoryStorage
@@ -12,7 +12,7 @@ from .memcached import MemcachedStorage
 from .gae_memcached import GAEMemcachedStorage
 
 
-def storage_from_string(storage_string, **options):
+def storage_from_string(storage_string: str, **options):
     """
     factory function to get an instance of the storage class based
     on the uri of the storage
@@ -22,9 +22,7 @@ def storage_from_string(storage_string, **options):
     """
     scheme = urllib.parse.urlparse(storage_string).scheme
     if scheme not in SCHEMES:
-        raise ConfigurationError(
-            "unknown storage scheme : %s" % storage_string
-        )
+        raise ConfigurationError("unknown storage scheme : %s" % storage_string)
     return SCHEMES[scheme](storage_string, **options)
 
 
@@ -36,5 +34,5 @@ __all__ = [
     "RedisClusterStorage",
     "RedisSentinelStorage",
     "MemcachedStorage",
-    "GAEMemcachedStorage"
+    "GAEMemcachedStorage",
 ]

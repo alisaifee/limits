@@ -1,8 +1,7 @@
 import inspect
 import threading
 import time
-
-from six.moves import urllib
+import urllib.parse
 
 from ..errors import ConfigurationError
 from ..util import get_dependency
@@ -15,12 +14,13 @@ class MemcachedStorage(Storage):
 
     Depends on the `pymemcache` library.
     """
+
     MAX_CAS_RETRIES = 10
     STORAGE_SCHEME = ["memcached"]
 
-    def __init__(self, uri, **options):
+    def __init__(self, uri: str, **options):
         """
-        :param str uri: memcached location of the form
+        :param uri: memcached location of the form
          `memcached://host:port,host:port`, `memcached:///var/tmp/path/to/sock`
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`pymemcache.client.base.Client`
@@ -36,11 +36,11 @@ class MemcachedStorage(Storage):
         else:
             # filesystem path to UDS
             if parsed.path and not parsed.netloc and not parsed.port:
-                self.hosts = [parsed.path]
+                self.hosts = [parsed.path]  # type: ignore
 
-        self.library = options.pop('library', 'pymemcache.client')
-        self.cluster_library = options.pop('cluster_library', 'pymemcache.client.hash')
-        self.client_getter = options.pop('client_getter', self.get_client)
+        self.library = options.pop("library", "pymemcache.client")
+        self.cluster_library = options.pop("cluster_library", "pymemcache.client.hash")
+        self.client_getter = options.pop("client_getter", self.get_client)
         self.options = options
 
         if not get_dependency(self.library):
@@ -60,14 +60,15 @@ class MemcachedStorage(Storage):
         """
         return (
             module.HashClient(hosts, **kwargs)
-            if len(hosts) > 1 else module.Client(*hosts, **kwargs)
+            if len(hosts) > 1
+            else module.Client(*hosts, **kwargs)
         )
 
     def call_memcached_func(self, func, *args, **kwargs):
-        if 'noreply' in kwargs:
-            argspec = inspect.getargspec(func)
-            if not ('noreply' in argspec.args or argspec.keywords):
-                kwargs.pop('noreply')  # noqa
+        if "noreply" in kwargs:
+            argspec = inspect.getfullargspec(func)
+            if not ("noreply" in argspec.args or argspec.varkw):
+                kwargs.pop("noreply")  # noqa
         return func(*args, **kwargs)
 
     @property
@@ -75,39 +76,36 @@ class MemcachedStorage(Storage):
         """
         lazily creates a memcached client instance using a thread local
         """
-        if not (
-                hasattr(self.local_storage, "storage")
-                and self.local_storage.storage
-        ):
+        if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
             self.local_storage.storage = self.client_getter(
                 get_dependency(
-                    self.cluster_library if len(self.hosts) > 1
-                    else self.library
+                    self.cluster_library if len(self.hosts) > 1 else self.library
                 ),
-                self.hosts, **self.options
+                self.hosts,
+                **self.options
             )
 
         return self.local_storage.storage
 
-    def get(self, key):
+    def get(self, key: str) -> int:
         """
-        :param str key: the key to get the counter value for
+        :param key: the key to get the counter value for
         """
         return int(self.storage.get(key) or 0)
 
-    def clear(self, key):
+    def clear(self, key: str) -> None:
         """
-        :param str key: the key to clear rate limits for
+        :param key: the key to clear rate limits for
         """
         self.storage.delete(key)
 
-    def incr(self, key, expiry, elastic_expiry=False):
+    def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
         """
         increments the counter for a given rate limit key
 
-        :param str key: the key to increment
-        :param int expiry: amount in seconds for the key to expire in
-        :param bool elastic_expiry: whether to keep extending the rate limit
+        :param key: the key to increment
+        :param expiry: amount in seconds for the key to expire in
+        :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
         """
         if not self.call_memcached_func(
@@ -118,9 +116,9 @@ class MemcachedStorage(Storage):
                 retry = 0
                 while (
                     not self.call_memcached_func(
-                        self.storage.cas, key,
-                        int(value or 0) + 1, cas, expiry
-                    ) and retry < self.MAX_CAS_RETRIES
+                        self.storage.cas, key, int(value or 0) + 1, cas, expiry
+                    )
+                    and retry < self.MAX_CAS_RETRIES
                 ):
                     value, cas = self.storage.gets(key)
                     retry += 1
@@ -129,32 +127,35 @@ class MemcachedStorage(Storage):
                     key + "/expires",
                     expiry + time.time(),
                     expire=expiry,
-                    noreply=False
+                    noreply=False,
                 )
                 return int(value or 0) + 1
             else:
-                return self.storage.incr(key, 1)
+                return self.storage.incr(key, 1) or 1
         self.call_memcached_func(
             self.storage.set,
             key + "/expires",
             expiry + time.time(),
             expire=expiry,
-            noreply=False
+            noreply=False,
         )
         return 1
 
-    def get_expiry(self, key):
+    def get_expiry(self, key: str) -> int:
         """
-        :param str key: the key to get the expiry for
+        :param key: the key to get the expiry for
         """
         return int(float(self.storage.get(key + "/expires") or time.time()))
 
-    def check(self):
+    def check(self) -> bool:
         """
         check if storage is healthy
         """
         try:
-            self.call_memcached_func(self.storage.get, 'limiter-check')
+            self.call_memcached_func(self.storage.get, "limiter-check")
             return True
         except:  # noqa
             return False
+
+    def reset(self):
+        raise NotImplementedError

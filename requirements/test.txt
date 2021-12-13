@@ -2,9 +2,9 @@
 mock
 pytest
 pytest-cov
-coverage<5
+coverage<7
 pymemcache
-redis<3.1.0
+redis<4.1.0
 redis-py-cluster>=1.1.0
 PyYAML
 hiro>0.1.6

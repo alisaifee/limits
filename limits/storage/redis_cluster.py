@@ -1,4 +1,4 @@
-from six.moves import urllib
+import urllib
 
 from ..errors import ConfigurationError
 from ..util import get_dependency
@@ -11,11 +11,12 @@ class RedisClusterStorage(RedisStorage):
 
     Depends on `redis-py-cluster` library
     """
+
     STORAGE_SCHEME = ["redis+cluster"]
 
-    def __init__(self, uri, **options):
+    def __init__(self, uri: str, **options):
         """
-        :param str uri: url of the form
+        :param uri: url of the form
          `redis+cluster://[:password]@host:port,host:port`
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`rediscluster.RedisCluster`
@@ -32,11 +33,10 @@ class RedisClusterStorage(RedisStorage):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})
 
-        options.setdefault('max_connections', 1000)
+        options.setdefault("max_connections", 1000)
 
         self.storage = get_dependency("rediscluster").RedisCluster(
-            startup_nodes=cluster_hosts,
-            **options
+            startup_nodes=cluster_hosts, **options
         )
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
@@ -53,5 +53,5 @@ class RedisClusterStorage(RedisStorage):
          On a large production based system, care should be taken with its
          usage as it could be slow on very large data sets"""
 
-        keys = self.storage.keys('LIMITER*')
-        return sum([self.storage.delete(k.decode('utf-8')) for k in keys])
+        keys = self.storage.keys("LIMITER*")
+        return sum([self.storage.delete(k.decode("utf-8")) for k in keys])

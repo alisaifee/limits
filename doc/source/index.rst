@@ -78,13 +78,14 @@ docker installation. Additionally on OSX you will require the ``memcached`` and
     make setup-test-backends
     # hack hack hack
     # run tests
-    nosetests tests
+    pytest
 
 Projects using *limits*
 -------------------------
 * `Flask-Limiter <http://flask-limiter.readthedocs.org>`_ : Rate limiting extension for Flask applications.
 * `djlimiter <http://djlimiter.readthedocs.org>`_: Rate limiting middleware for Django applications.
 * `sanic-limiter <https://github.com/bohea/sanic-limiter>`_: Rate limiting middleware for Sanic applications.
+* `Falcon-Limiter <https://falcon-limiter.readthedocs.org>`_ : Rate limiting extension for Falcon applications.
 
 References
 ----------

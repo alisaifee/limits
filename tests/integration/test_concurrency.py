@@ -12,7 +12,6 @@ from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 
 @pytest.mark.integration
 class ConcurrencyTests(unittest.TestCase):
-
     def test_memory_storage_fixed_window(self):
         storage = MemoryStorage()
         limiter = FixedWindowRateLimiter(storage)
