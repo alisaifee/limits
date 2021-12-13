@@ -39,7 +39,7 @@ class MemcachedStorage(Storage):
                 self.hosts = [parsed.path]  # type: ignore
 
         self.library = options.pop("library", "pymemcache.client")
-        self.cluster_library = options.pop("library", "pymemcache.client.hash")
+        self.cluster_library = options.pop("cluster_library", "pymemcache.client.hash")
         self.client_getter = options.pop("client_getter", self.get_client)
         self.options = options
 
