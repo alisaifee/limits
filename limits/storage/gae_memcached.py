@@ -3,7 +3,7 @@ import time
 from .memcached import MemcachedStorage
 
 
-class GAEMemcachedStorage(MemcachedStorage):
+class GAEMemcachedStorage(MemcachedStorage):  # noqa
     """
     rate limit storage with GAE memcache as backend
     """
