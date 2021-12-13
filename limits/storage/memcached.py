@@ -66,8 +66,8 @@ class MemcachedStorage(Storage):
 
     def call_memcached_func(self, func, *args, **kwargs):
         if "noreply" in kwargs:
-            argspec = inspect.getargspec(func)
-            if not ("noreply" in argspec.args or argspec.keywords):
+            argspec = inspect.getfullargspec(func)
+            if not ("noreply" in argspec.args or argspec.varkw):
                 kwargs.pop("noreply")  # noqa
         return func(*args, **kwargs)
 
