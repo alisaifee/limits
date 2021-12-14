@@ -1,4 +1,4 @@
-import time
+import asyncio
 
 import hiro
 import pytest
@@ -71,7 +71,7 @@ class TestAsyncMemoryStorage:
             timeline.forward(60)
             # touch another key and yield
             await limiter.hit(RateLimitItemPerSecond(1))
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
             assert per_min.key_for() not in self.storage.storage
 
     @pytest.mark.asyncio
@@ -87,5 +87,5 @@ class TestAsyncMemoryStorage:
                 timeline.forward(60)
                 assert await limiter.hit(per_sec)
                 timeline.forward(1)
-                time.sleep(0.1)
+                await asyncio.sleep(0.1)
                 assert [] == self.storage.events[per_min.key_for()]
