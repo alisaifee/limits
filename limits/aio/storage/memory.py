@@ -1,4 +1,4 @@
-import threading
+import asyncio
 import time
 from typing import Dict, Tuple, List, Optional
 from collections import Counter
@@ -6,7 +6,7 @@ from collections import Counter
 from .base import Storage
 
 
-class LockableEntry(threading._RLock):
+class LockableEntry(asyncio.Lock):
     __slots__ = ["atime", "expiry"]
 
     def __init__(self, expiry: int) -> None:
@@ -29,18 +29,13 @@ class MemoryStorage(Storage):
         self.storage: Counter = Counter()
         self.expirations: Dict = {}
         self.events: Dict[str, List[LockableEntry]] = {}
-        self.timer = threading.Timer(0.01, self.__expire_events)
-        self.timer.start()
+        self.timer: Optional[asyncio.Task] = None
         super(MemoryStorage, self).__init__(uri)  # type: ignore
 
-    def __expire_events(self) -> None:
-        # this remains a sync function so we can pass it to
-        # threading.Timer
-        # TODO: can we replace threading.Timer with asyncio.sleep?
-
+    async def __expire_events(self) -> None:
         for key in self.events.keys():
             for event in list(self.events[key]):
-                with event:
+                async with event:
                     if event.expiry <= time.time() and event in self.events[key]:
                         self.events[key].remove(event)
 
@@ -50,9 +45,8 @@ class MemoryStorage(Storage):
                 self.expirations.pop(key, None)
 
     async def __schedule_expiry(self) -> None:
-        if not self.timer.is_alive():
-            self.timer = threading.Timer(0.01, self.__expire_events)
-            self.timer.start()
+        if not self.timer or self.timer.done():
+            self.timer = asyncio.create_task(self.__expire_events())
 
     async def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
         """
