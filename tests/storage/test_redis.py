@@ -91,3 +91,23 @@ class RedisUnixSocketStorageTests(SharedRedisTests, unittest.TestCase):
             self.assertEqual(
                 get_dependency().from_url.call_args[1]["connection_timeout"], 1
             )
+
+
+@pytest.mark.unit
+class RedisSSLStorageTests(SharedRedisTests, unittest.TestCase):
+    def setUp(self):
+        self.storage_url = (
+            "rediss://localhost:8379/0?ssl_cert_reqs=required"
+            "&ssl_keyfile=./tests/tls/client.key"
+            "&ssl_certfile=./tests/tls/client.crt"
+            "&ssl_ca_certs=./tests/tls/ca.crt"
+        )
+        self.storage = RedisStorage(self.storage_url)
+        redis.from_url(self.storage_url).flushall()
+
+    def test_init_options(self):
+        with mock.patch("limits.storage.redis.get_dependency") as get_dependency:
+            storage_from_string(self.storage_url, connection_timeout=1)
+            self.assertEqual(
+                get_dependency().from_url.call_args[1]["connection_timeout"], 1
+            )

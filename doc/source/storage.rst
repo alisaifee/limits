@@ -82,10 +82,10 @@ Redis
 Redis over SSL
 ==============
 
- Redis does not support SSL natively, but it is recommended to use stunnel to provide SSL suport.
  The official Redis client :code:`redis-py` supports redis connections over SSL with the scheme
- :code:`rediss`. :code:`rediss://localhost:6379/0` just like the normal redis connection, just
- with the new scheme.
+ You can add ssl related parameters in the url itself, for example:
+ :code:`rediss://localhost:6379/0?ssl_ca_certs=./tls/ca.crt&ssl_keyfile=./tls/client.key`.
+
 
  Depends on: `redis-py <https://redis-py.readthedocs.io/en/latest/>`_
 

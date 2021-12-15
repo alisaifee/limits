@@ -87,6 +87,13 @@ services:
     command: redis-server --port 7389 --requirepass sekret
     ports:
       - '7389:7389'
+  redis-ssl:
+    image: redis
+    command: redis-server --port 0 --tls-port 8379 --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    ports:
+      - '8379:8379'
+    volumes:
+      - ./tests/tls:/tls
   redis-uds:
     image: redis
     command: sh -c "test ${HOST_OS} = \"Darwin\" && exit || redis-server --port 0 --unixsocket /sockets/limits.redis.sock --unixsocketperm 777"
