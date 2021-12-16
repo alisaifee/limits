@@ -1,14 +1,14 @@
 -r main.txt
-aredis
-emcache;python_version<"3.10"
+-r storage/redis.txt
+-r storage/rediscluster.txt
+-r storage/mongodb.txt
+-r storage/memcached.txt
+-r storage/async-memcached.txt
+-r storage/async-redis.txt
 mock
 pytest
 pytest-asyncio
 pytest-cov
 coverage
-pymemcache
-redis<4.1.0
-pymongo
-redis-py-cluster>=1.1.0
 PyYAML
 hiro>0.1.6
