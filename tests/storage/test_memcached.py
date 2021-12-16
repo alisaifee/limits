@@ -23,7 +23,9 @@ class MemcachedStorageTests(unittest.TestCase):
     def test_options(self):
         with mock.patch("limits.storage.memcached.get_dependency") as get_dependency:
             storage_from_string(self.storage_url, connect_timeout=1).check()
-            self.assertEqual(get_dependency().Client.call_args[1]["connect_timeout"], 1)
+            self.assertEqual(
+                get_dependency().PooledClient.call_args[1]["connect_timeout"], 1
+            )
 
     @fixed_start
     def test_fixed_window(self):

@@ -23,7 +23,9 @@ class MemcachedStorage(Storage):
         :param uri: memcached location of the form
          `memcached://host:port,host:port`, `memcached:///var/tmp/path/to/sock`
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`pymemcache.client.base.Client`
+         directly to the constructor of :class:`pymemcache.client.base.PooledClient`
+         or :class:`pymemcache.client.hash.HashClient` (if there are more than
+         one hosts specified)
         :raise ConfigurationError: when `pymemcache` is not available
         """
         parsed = urllib.parse.urlparse(uri)
@@ -61,7 +63,7 @@ class MemcachedStorage(Storage):
         return (
             module.HashClient(hosts, **kwargs)
             if len(hosts) > 1
-            else module.Client(*hosts, **kwargs)
+            else module.PooledClient(*hosts, **kwargs)
         )
 
     def call_memcached_func(self, func, *args, **kwargs):
