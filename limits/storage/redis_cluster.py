@@ -9,7 +9,7 @@ class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend
 
-    Depends on `redis-py-cluster` library
+    Depends on `redis-cluster-py` package
     """
 
     STORAGE_SCHEME = ["redis+cluster"]

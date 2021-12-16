@@ -21,12 +21,22 @@ autoclass_content = "both"
 
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "sphinxcontrib.programoutput",
     "sphinx_autodoc_typehints",
+    "sphinx_panels",
+    "sphinx_rtd_theme",
 ]
+autosectionlabel_maxdepth = 3
+autosectionlabel_prefix_document = True
 
+extlinks = {
+    "pypi": ("https://pypi.org/project/%s", "%s")
+}
 source_suffix = ".rst"
 master_doc = "index"
 project = u"limits"
@@ -58,8 +68,10 @@ texinfo_documents = [
 
 intersphinx_mapping = {
     "python": ("http://docs.python.org/", None),
-    "rediscluster": ("https://redis-py-cluster.readthedocs.io/en/latest/", None),
-    "redis": ("https://redis-py.readthedocs.io/en/latest/", None),
+    "aredis": ("https://aredis.readthedocs.io/en/latest/", None),
+    "emcache": ("https://emcache.readthedocs.io/en/latest/", None),
+    "redis-py-cluster": ("https://redis-py-cluster.readthedocs.io/en/latest/", None),
+    "redis-py": ("https://redis-py.readthedocs.io/en/latest/", None),
     "pymemcache": ("https://pymemcache.readthedocs.io/en/latest/", None),
     "pymongo": ("https://pymongo.readthedocs.io/en/stable/", None),
 }

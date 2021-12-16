@@ -4,6 +4,7 @@ from typing import Dict, Tuple, List, Optional
 from collections import Counter
 
 from .base import Storage
+from .base import MovingWindowSupport
 
 
 class LockableEntry(asyncio.Lock):
@@ -15,11 +16,14 @@ class LockableEntry(asyncio.Lock):
         super(LockableEntry, self).__init__()
 
 
-class MemoryStorage(Storage):
+class MemoryStorage(Storage, MovingWindowSupport):
     """
     rate limit storage using :class:`collections.Counter`
     as an in memory storage for fixed and elastic window strategies,
     and a simple list to implement moving window strategy.
+
+    .. danger:: Experimental
+    .. versionadded:: 2.1
 
     """
 

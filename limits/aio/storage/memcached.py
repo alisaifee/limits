@@ -10,7 +10,10 @@ class MemcachedStorage(Storage):
     """
     Rate limit storage with memcached as backend.
 
-    Depends on the `emcache` library.
+    Depends on the :mod:`emcache` package.
+
+    .. danger:: Experimental
+    .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+memcached"]

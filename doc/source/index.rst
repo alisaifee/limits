@@ -1,73 +1,39 @@
-limits Documentation
---------------------
+.. role:: bash(code)
+   :language: bash
+   :class: highlight
 
-**limits** provides utilities to implement rate limiting using various strategies
-and storage backends such as redis & memcached.
+######
+limits
+######
+
+A high level python API to perform rate limiting using :ref:`strategies:fixed window`
+or :ref:`strategies:moving window` strategies and some commonly used storage backends
+(Redis, Memcached & MongoDB at the moment).
+
+Take a look at :ref:`installation:installation` and :ref:`quickstart:quickstart` to start using the library.
+
+To learn more about the different strategies refer to the :ref:`strategies:rate limiting strategies`
+section.
+
 
 .. toctree::
-    :hidden:
+    :maxdepth: 1
 
-    string-notation
-    custom-storage
-    storage
+    installation
+    quickstart
     strategies
+    storage
+    async
     api
+    custom-storage
     changelog
 
 .. currentmodule:: limits
 
-Quickstart
-----------
-
-Initialize the storage backend::
-
-    from limits import storage
-    memory_storage = storage.MemoryStorage()
-
-Initialize a rate limiter with the :ref:`moving-window` strategy::
-
-    from limits import strategies
-    moving_window = strategies.MovingWindowRateLimiter(memory_storage)
-
-
-Initialize a rate limit using the :ref:`ratelimit-string`::
-
-    from limits import parse
-    one_per_minute = parse("1/minute")
-
-Initialize a rate limit explicitly using a subclass of :class:`RateLimitItem`::
-
-    from limits import RateLimitItemPerSecond
-    one_per_second = RateLimitItemPerSecond(1, 1)
-
-Test the limits::
-
-    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
-    assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
-    assert True == moving_window.hit(one_per_minute, "test_namespace", "bar")
-
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
-    assert False == moving_window.hit(one_per_second, "test_namespace", "foo")
-    time.sleep(1)
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
-
-Check specific limits without hitting them::
-
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
-    while not moving_window.test(one_per_second, "test_namespace", "foo"):
-        time.sleep(0.01)
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
-
-Clear a limit::
-
-    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
-    assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
-    moving_window.clear(one_per_minute", "test_namespace", "foo")
-    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
-
-
+###########
 Development
------------
+###########
+
 Since `limits` integrates with various backend storages, local development and running tests
 can require some setup.
 
@@ -80,16 +46,20 @@ docker installation. Additionally on OSX you will require the ``memcached`` and
     # run tests
     pytest
 
+#######################
 Projects using *limits*
--------------------------
-* `Flask-Limiter <http://flask-limiter.readthedocs.org>`_ : Rate limiting extension for Flask applications.
-* `djlimiter <http://djlimiter.readthedocs.org>`_: Rate limiting middleware for Django applications.
-* `sanic-limiter <https://github.com/bohea/sanic-limiter>`_: Rate limiting middleware for Sanic applications.
-* `Falcon-Limiter <https://falcon-limiter.readthedocs.org>`_ : Rate limiting extension for Falcon applications.
+#######################
 
+   - `Flask-Limiter <http://flask-limiter.readthedocs.org>`_ : Rate limiting extension for Flask applications.
+   - `djlimiter <http://djlimiter.readthedocs.org>`_: Rate limiting middleware for Django applications.
+   - `sanic-limiter <https://github.com/bohea/sanic-limiter>`_: Rate limiting middleware for Sanic applications.
+   - `Falcon-Limiter <https://falcon-limiter.readthedocs.org>`_ : Rate limiting extension for Falcon applications.
+
+##########
 References
-----------
-* `Redis rate limiting pattern #2 <http://redis.io/commands/INCR>`_
-* `DomainTools redis rate limiter <https://github.com/DomainTools/rate-limit>`_
+##########
+
+   - `Redis rate limiting pattern #2 <http://redis.io/commands/INCR>`_
+   - `DomainTools redis rate limiter <https://github.com/DomainTools/rate-limit>`_
 
 .. include:: ../../CONTRIBUTIONS.rst

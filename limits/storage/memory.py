@@ -6,6 +6,7 @@ from typing import List
 from typing import Tuple
 
 from .base import Storage
+from .base import MovingWindowSupport
 
 
 class LockableEntry(threading._RLock):
@@ -17,7 +18,7 @@ class LockableEntry(threading._RLock):
         super(LockableEntry, self).__init__()
 
 
-class MemoryStorage(Storage):
+class MemoryStorage(Storage, MovingWindowSupport):
     """
     rate limit storage using :class:`collections.Counter`
     as an in memory storage for fixed and elastic window strategies,

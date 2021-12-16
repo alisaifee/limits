@@ -1,6 +1,8 @@
 import threading
 from abc import abstractmethod
-from typing import Dict, Optional
+from abc import ABC
+from typing import Dict, Optional, Tuple
+
 
 from limits.storage.registry import StorageRegistry
 
@@ -8,6 +10,9 @@ from limits.storage.registry import StorageRegistry
 class Storage(metaclass=StorageRegistry):
     """
     Base class to extend when implementing an async storage backend.
+
+    .. danger:: Experimental
+    .. versionadded:: 2.1
     """
 
     def __init__(self, uri: Optional[str] = None, **options: Dict) -> None:
@@ -58,5 +63,37 @@ class Storage(metaclass=StorageRegistry):
         """
         resets the rate limit key
         :param str key: the key to clear rate limits for
+        """
+        raise NotImplementedError
+
+
+class MovingWindowSupport(ABC):
+    """
+    Abstract base for storages that intend to support
+    the moving window strategy
+
+    .. danger:: Experimental
+    .. versionadded:: 2.1
+    """
+    async def acquire_entry(
+        self, key: str, limit: int, expiry: int, no_add=False
+    ) -> bool:
+        """
+        :param key: rate limit key to acquire an entry in
+        :param limit: amount of entries allowed
+        :param expiry: expiry of the entry
+        :param no_add: if False an entry is not actually acquired
+         but instead serves as a 'check'
+        """
+        raise NotImplementedError
+
+    async def get_moving_window(self, key, limit, expiry) -> Tuple[int, int]:
+        """
+        returns the starting point and the number of entries in the moving
+        window
+
+        :param key: rate limit key
+        :param expiry: expiry of entry
+        :return: (start of window, number of acquired entries)
         """
         raise NotImplementedError

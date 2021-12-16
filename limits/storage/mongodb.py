@@ -4,15 +4,20 @@ from typing import Any
 from typing import Dict
 
 from .base import Storage
+from .base import MovingWindowSupport
+
 from ..errors import ConfigurationError
 from ..util import get_dependency
 
 
-class MongoDBStorage(Storage):
+class MongoDBStorage(Storage, MovingWindowSupport):
     """
     Rate limit storage with MongoDB as backend.
 
     Depends on the :mod:`pymongo` library.
+
+    .. danger:: Experimental
+    .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["mongodb"]

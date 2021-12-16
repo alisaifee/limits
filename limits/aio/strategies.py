@@ -59,7 +59,7 @@ class RateLimiter(ABC):
 
 class MovingWindowRateLimiter(RateLimiter):
     """
-    Reference: :ref:`moving-window`
+    Reference: :ref:`strategies:moving window`
     """
 
     def __init__(self, storage: Storage) -> None:
@@ -123,7 +123,7 @@ class MovingWindowRateLimiter(RateLimiter):
 
 class FixedWindowRateLimiter(RateLimiter):
     """
-    Reference: :ref:`fixed-window`
+    Reference: :ref:`strategies:fixed window`
     """
 
     async def hit(self, item: RateLimitItem, *identifiers) -> bool:
@@ -171,7 +171,7 @@ class FixedWindowRateLimiter(RateLimiter):
 
 class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
     """
-    Reference: :ref:`fixed-window-elastic`
+    Reference: :ref:`strategies:fixed window with elastic expiry`
     """
 
     async def hit(self, item: RateLimitItem, *identifiers) -> bool:

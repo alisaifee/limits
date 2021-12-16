@@ -6,6 +6,7 @@ from typing import Optional
 from limits.util import get_dependency
 from limits.errors import ConfigurationError
 from .base import Storage
+from .base import MovingWindowSupport
 
 
 class RedisInteractor:
@@ -156,11 +157,14 @@ class RedisInteractor:
             return False
 
 
-class RedisStorage(RedisInteractor, Storage):
+class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
     Rate limit storage with redis as backend.
 
-    Depends on the `aredis` library.
+    Depends on the :mod:`aredis` package.
+
+    .. danger:: Experimental
+    .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]

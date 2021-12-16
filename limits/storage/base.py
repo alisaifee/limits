@@ -1,4 +1,7 @@
 from abc import abstractmethod
+from abc import ABC
+from typing import Tuple
+
 import threading
 
 from limits.storage.registry import StorageRegistry
@@ -57,5 +60,34 @@ class Storage(metaclass=StorageRegistry):
         """
         resets the rate limit key
         :param key: the key to clear rate limits for
+        """
+        raise NotImplementedError
+
+
+class MovingWindowSupport(ABC):
+    """
+    Abstract base for storages that intend to support
+    the moving window strategy
+
+    .. versionadded:: 2.1
+    """
+    def acquire_entry(self, key: str, limit: int, expiry: int, no_add=False) -> bool:
+        """
+        :param key: rate limit key to acquire an entry in
+        :param limit: amount of entries allowed
+        :param expiry: expiry of the entry
+        :param no_add: if False an entry is not actually acquired
+         but instead serves as a 'check'
+        """
+        raise NotImplementedError
+
+    def get_moving_window(self, key, limit, expiry) -> Tuple[int, int]:
+        """
+        returns the starting point and the number of entries in the moving
+        window
+
+        :param key: rate limit key
+        :param expiry: expiry of entry
+        :return: (start of window, number of acquired entries)
         """
         raise NotImplementedError

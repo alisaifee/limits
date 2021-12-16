@@ -4,6 +4,7 @@ from typing import Any
 from ..util import get_dependency
 from ..errors import ConfigurationError
 from .base import Storage
+from .base import MovingWindowSupport
 
 
 class RedisInteractor(object):
@@ -150,11 +151,11 @@ class RedisInteractor(object):
             return False
 
 
-class RedisStorage(RedisInteractor, Storage):
+class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
     Rate limit storage with redis as backend.
 
-    Depends on the `redis-py` library.
+    Depends on the `redis` package.
     """
 
     STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]

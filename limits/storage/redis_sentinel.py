@@ -9,7 +9,7 @@ class RedisSentinelStorage(RedisStorage):
     """
     Rate limit storage with redis sentinel as backend
 
-    Depends on `redis-py` library
+    Depends on the :mod:`redis` package
     """
 
     STORAGE_SCHEME = ["redis+sentinel"]

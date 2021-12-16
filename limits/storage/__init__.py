@@ -4,6 +4,7 @@ from limits.errors import ConfigurationError
 from .memory import MemoryStorage
 
 from .base import Storage
+from .base import MovingWindowSupport
 from .registry import SCHEMES
 from .redis import RedisStorage
 from .redis_cluster import RedisClusterStorage
@@ -30,6 +31,7 @@ def storage_from_string(storage_string: str, **options):
 __all__ = [
     "storage_from_string",
     "Storage",
+    "MovingWindowSupport",
     "MemoryStorage",
     "MongoDBStorage",
     "RedisStorage",
