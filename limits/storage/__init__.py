@@ -9,6 +9,7 @@ from .redis import RedisStorage
 from .redis_cluster import RedisClusterStorage
 from .redis_sentinel import RedisSentinelStorage
 from .memcached import MemcachedStorage
+from .mongodb import MongoDBStorage
 from .gae_memcached import GAEMemcachedStorage
 
 
@@ -30,6 +31,7 @@ __all__ = [
     "storage_from_string",
     "Storage",
     "MemoryStorage",
+    "MongoDBStorage",
     "RedisStorage",
     "RedisClusterStorage",
     "RedisSentinelStorage",

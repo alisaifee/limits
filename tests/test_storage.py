@@ -2,6 +2,7 @@ import time
 
 import mock
 import pymemcache.client
+import pymongo
 import pytest
 import redis
 import redis.sentinel
@@ -13,6 +14,7 @@ from limits.storage import (
     MemoryStorage,
     RedisStorage,
     MemcachedStorage,
+    MongoDBStorage,
     RedisSentinelStorage,
     RedisClusterStorage,
     Storage,
@@ -33,6 +35,8 @@ class BaseStorageTests(unittest.TestCase):
         redis.sentinel.Sentinel([("localhost", 26379)]).master_for(
             "localhost-redis-sentinel"
         ).flushall()
+        pymongo.MongoClient("mongodb://localhost:37017").limits.windows.drop()
+        pymongo.MongoClient("mongodb://localhost:37017").limits.counters.drop()
         rediscluster.RedisCluster("localhost", 7000).flushall()
         if RUN_GAE:
             from google.appengine.ext import testbed
@@ -106,6 +110,11 @@ class BaseStorageTests(unittest.TestCase):
                 RedisClusterStorage,
             )
         )
+        self.assertTrue(
+            isinstance(
+                storage_from_string("mongodb://localhost:37017/"), MongoDBStorage
+            )
+        )
         if RUN_GAE:
             self.assertTrue(
                 isinstance(storage_from_string("gaememcached://"), GAEMemcachedStorage)
@@ -150,6 +159,7 @@ class BaseStorageTests(unittest.TestCase):
             ).check()
         )
         self.assertTrue(storage_from_string("redis+cluster://localhost:7000").check())
+        self.assertTrue(storage_from_string("mongodb://localhost:37017").check())
         if RUN_GAE:
             self.assertTrue(storage_from_string("gaememcached://").check())
 

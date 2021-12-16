@@ -61,4 +61,5 @@ intersphinx_mapping = {
     "rediscluster": ("https://redis-py-cluster.readthedocs.io/en/latest/", None),
     "redis": ("https://redis-py.readthedocs.io/en/latest/", None),
     "pymemcache": ("https://pymemcache.readthedocs.io/en/latest/", None),
+    "pymongo": ("https://pymongo.readthedocs.io/en/stable/", None),
 }
