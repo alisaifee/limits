@@ -76,7 +76,7 @@ class AsyncSharedRedisTests:
 class TestAsyncRedisStorage(AsyncSharedRedisTests):
     def setup_method(self):
         self.real_storage_url = "redis://localhost:7379"
-        self.storage_url = f"a{self.real_storage_url}"
+        self.storage_url = f"async+{self.real_storage_url}"
         self.storage = RedisStorage(self.storage_url)
         redis.from_url(self.real_storage_url).flushall()
 
@@ -95,7 +95,7 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
 @pytest.mark.asynchronous
 class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
     def setup_method(self):
-        self.storage_url = "aredis+unix:///tmp/limits.redis.sock"
+        self.storage_url = "async+redis+unix:///tmp/limits.redis.sock"
         self.storage = RedisStorage(self.storage_url)
         redis.from_url("unix:///tmp/limits.redis.sock").flushall()
 

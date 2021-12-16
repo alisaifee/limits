@@ -19,7 +19,7 @@ class TestAsyncMemcachedStorage:
     def setup_method(self):
         pymemcache.client.Client(("localhost", 22122)).flush_all()
         pymemcache.client.Client(("localhost", 22123)).flush_all()
-        self.storage_url = "amemcached://localhost:22122"
+        self.storage_url = "async+memcached://localhost:22122"
 
     @pytest.mark.asyncio
     async def test_check(self):
@@ -29,7 +29,7 @@ class TestAsyncMemcachedStorage:
     @fixed_start
     @pytest.mark.asyncio
     async def test_fixed_window(self):
-        storage = MemcachedStorage("amemcached://localhost:22122")
+        storage = MemcachedStorage("async+memcached://localhost:22122")
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
         start = time.time()

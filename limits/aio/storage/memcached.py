@@ -13,7 +13,7 @@ class MemcachedStorage(Storage):
     Depends on the `emcache` library.
     """
 
-    STORAGE_SCHEME = ["amemcached"]
+    STORAGE_SCHEME = ["async+memcached"]
 
     def __init__(self, uri: str, **options):
         """
