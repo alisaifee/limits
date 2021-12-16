@@ -116,3 +116,20 @@ Redis Cluster
  or :code:`redis+cluster://localhost:7000,localhost:70001`
 
  Depends on: `redis-py-cluster <https://redis-py-cluster.readthedocs.io/en/latest/>`_
+
+.. _mongodb:
+
+=======
+MongoDB
+=======
+
+ Requires the location(s) of a mongodb installation using the uri schema
+ described by the `Mongodb URI Specification <https://github.com/mongodb/specifications/blob/master/source/uri-options/uri-options.rst>`_
+
+ Examples:
+
+  - Local instance: ``mongodb://localhost:27017/``
+  - Instance with SSL: ``mongodb://mymongo.com/?tls=true``
+  - Local instance with SSL & self signed/invalid certificate: ``mongodb://localhost:27017/?tls=true&tlsAllowInvalidCertificates=true``
+
+ Depends on: `pymongo <https://pymongo.readthedocs.io>`_

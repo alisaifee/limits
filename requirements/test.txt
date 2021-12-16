@@ -5,6 +5,7 @@ pytest-cov
 coverage<7
 pymemcache
 redis<4.1.0
+pymongo
 redis-py-cluster>=1.1.0
 PyYAML
 hiro>0.1.6

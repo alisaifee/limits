@@ -101,3 +101,8 @@ services:
       - type: bind
         source: /tmp/
         target: /sockets/
+  mongodb:
+    image: percona/percona-server-mongodb
+    command: --storageEngine inMemory
+    ports:
+      - '37017:27017'

@@ -37,6 +37,10 @@ Memcached
 ^^^^^^^^^
 .. autoclass:: limits.storage.MemcachedStorage
 
+MongoDB
+^^^^^^^
+.. autoclass:: limits.storage.MongoDBStorage
+
 Google App Engine Memcached
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. autoclass:: limits.storage.GAEMemcachedStorage
