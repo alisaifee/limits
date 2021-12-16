@@ -15,7 +15,6 @@ class MemcachedStorage(Storage):
     Depends on the `pymemcache` library.
     """
 
-    MAX_CAS_RETRIES = 10
     STORAGE_SCHEME = ["memcached"]
 
     def __init__(self, uri: str, **options):
@@ -113,34 +112,17 @@ class MemcachedStorage(Storage):
         if not self.call_memcached_func(
             self.storage.add, key, 1, expiry, noreply=False
         ):
+            value = self.storage.incr(key, 1) or 1
             if elastic_expiry:
-                value, cas = self.storage.gets(key)
-                retry = 0
-                while (
-                    not self.call_memcached_func(
-                        self.storage.cas, key, int(value or 0) + 1, cas, expiry
-                    )
-                    and retry < self.MAX_CAS_RETRIES
-                ):
-                    value, cas = self.storage.gets(key)
-                    retry += 1
-                self.call_memcached_func(
-                    self.storage.set,
-                    key + "/expires",
-                    expiry + time.time(),
-                    expire=expiry,
-                    noreply=False,
-                )
-                return int(value or 0) + 1
-            else:
-                return self.storage.incr(key, 1) or 1
-        self.call_memcached_func(
-            self.storage.set,
-            key + "/expires",
-            expiry + time.time(),
-            expire=expiry,
-            noreply=False,
-        )
+                self.call_memcached_func(self.storage.touch, key, expiry)
+            self.call_memcached_func(
+                self.storage.set,
+                key + "/expires",
+                expiry + time.time(),
+                expire=expiry,
+                noreply=False,
+            )
+            return value
         return 1
 
     def get_expiry(self, key: str) -> int:
