@@ -23,7 +23,7 @@ class MemoryStorage(Storage):
 
     """
 
-    STORAGE_SCHEME = ["amemory"]
+    STORAGE_SCHEME = ["async+memory"]
 
     def __init__(self, uri: Optional[str] = None, **_: Dict) -> None:
         self.storage: Counter = Counter()

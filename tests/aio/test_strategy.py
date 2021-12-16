@@ -62,8 +62,8 @@ class TestAsyncWindow:
 
     @pytest.mark.asyncio
     async def test_fixed_window_with_elastic_expiry_redis(self):
-        await aredis.StrictRedis.from_url("aredis://localhost:7379").flushall()
-        storage = RedisStorage("aredis://localhost:7379")
+        await aredis.StrictRedis.from_url("async+redis://localhost:7379").flushall()
+        storage = RedisStorage("async+redis://localhost:7379")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
 
@@ -97,8 +97,8 @@ class TestAsyncWindow:
 
     @pytest.mark.asyncio
     async def test_moving_window_redis(self):
-        await aredis.StrictRedis.from_url("aredis://localhost:7379").flushall()
-        storage = RedisStorage("aredis://localhost:7379")
+        await aredis.StrictRedis.from_url("async+redis://localhost:7379").flushall()
+        storage = RedisStorage("async+redis://localhost:7379")
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
 

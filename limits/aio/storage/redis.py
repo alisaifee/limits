@@ -163,13 +163,13 @@ class RedisStorage(RedisInteractor, Storage):
     Depends on the `aredis` library.
     """
 
-    STORAGE_SCHEME = ["aredis", "arediss", "aredis+unix"]
+    STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
 
     def __init__(self, uri: str, **options) -> None:
         """
-        :param uri: uri of the form `aredis://[:password]@host:port`,
-         `aredis://[:password]@host:port/db`,
-         `arediss://[:password]@host:port`, `aredis+unix:///path/to/sock` etc.
+        :param uri: uri of the form `async+redis://[:password]@host:port`,
+         `async+redis://[:password]@host:port/db`,
+         `async+rediss://[:password]@host:port`, `async+unix:///path/to/sock` etc.
          This uri is passed directly to :func:`aredis.StrictRedis.from_url` with
          the initial `a` removed, except for the case of `redis+unix` where it
          is replaced with `unix`.
@@ -181,8 +181,10 @@ class RedisStorage(RedisInteractor, Storage):
             raise ConfigurationError(
                 "aredis prerequisite not available"
             )  # pragma: no cover
-        uri = uri.replace("aredis", "redis", 1)
+
+        uri = uri.replace("async+redis", "redis", 1)
         uri = uri.replace("redis+unix", "unix")
+
         self.storage = get_dependency("aredis").StrictRedis.from_url(uri, **options)
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
