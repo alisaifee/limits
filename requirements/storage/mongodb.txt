@@ -1,1 +1,1 @@
-pymongo
+pymongo>=4

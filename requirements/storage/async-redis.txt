@@ -1,1 +1,1 @@
-aredis
+aredis>1.0.4,<2;python_version<"3.10"
