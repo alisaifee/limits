@@ -71,6 +71,7 @@ class MovingWindowSupport(ABC):
 
     .. versionadded:: 2.1
     """
+
     def acquire_entry(self, key: str, limit: int, expiry: int, no_add=False) -> bool:
         """
         :param key: rate limit key to acquire an entry in

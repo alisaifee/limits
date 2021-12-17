@@ -82,6 +82,15 @@ Redis
 
 .. autoclass:: limits.aio.storage.RedisStorage
 
+Redis Cluster
+-------------
+
+.. autoclass:: limits.aio.storage.RedisClusterStorage
+
+Redis Sentinel
+--------------
+
+.. autoclass:: limits.aio.storage.RedisSentinelStorage
 
 Memcached
 ---------

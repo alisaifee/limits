@@ -104,7 +104,7 @@ Redis Cluster
 
  Requires the location(s) of the redis cluster startup nodes (One is enough).
  :code:`redis+cluster://localhost:7000`
- or :code:`redis+cluster://localhost:7000,localhost:70001`
+ or :code:`redis+cluster://localhost:7000,localhost:7001`
 
  Depends on: :pypi:`redis-py-cluster`
 
@@ -130,13 +130,16 @@ Async Storage
 .. danger:: Experimental
 
 When using limits in an async code base the same uri schema can be used
-to query for an async (limited support) implementation of the storage
-by prefixing the scheme with ``async+``.
+to query for an async implementation of the storage by prefixing the
+scheme with ``async+``.
 
 For example:
 
-- ``async+redis://``
-- ``async+memcached://``
+- ``async+redis://localhost:6379/0``
+- ``async+rediss://localhost:6379/0``
+- ``async+redis+cluster://localhost:7000,localhost:7001``
+- ``async+redis+sentinel://:sekret@localhost:26379/my-redis-service``
+- ``async+memcached://localhost:11211``
 - ``async+memory://``
 
 For implementation details of currently supported async backends refer to :ref:`api:async storage`

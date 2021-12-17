@@ -1,9 +1,9 @@
 import time
+import urllib
 
 from typing import Any
 from typing import Optional
 
-from limits.util import get_dependency
 from limits.errors import ConfigurationError
 from .base import Storage
 from .base import MovingWindowSupport
@@ -168,6 +168,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
 
     STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
+    DEPENDENCY = "aredis"
 
     def __init__(self, uri: str, **options) -> None:
         """
@@ -181,15 +182,11 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
          directly to the constructor of :class:`redis.Redis`
         :raise ConfigurationError: when the redis library is not available
         """
-        if not get_dependency("aredis"):
-            raise ConfigurationError(
-                "aredis prerequisite not available"
-            )  # pragma: no cover
 
         uri = uri.replace("async+redis", "redis", 1)
         uri = uri.replace("redis+unix", "unix")
 
-        self.storage = get_dependency("aredis").StrictRedis.from_url(uri, **options)
+        self.storage = self.dependency.StrictRedis.from_url(uri, **options)
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
 
@@ -268,3 +265,145 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         cleared = await self.lua_clear_keys.execute(["LIMITER*"])
         return cleared
+
+
+class RedisClusterStorage(RedisStorage):
+    """
+    Rate limit storage with redis cluster as backend
+
+    Depends on `aredis`
+
+    .. danger:: Experimental
+    .. versionadded:: 2.1
+    """
+
+    STORAGE_SCHEME = ["async+redis+cluster"]
+
+    def __init__(self, uri: str, **options):
+        """
+        :param uri: url of the form
+         `async+redis+cluster://[:password]@host:port,host:port`
+        :param options: all remaining keyword arguments are passed
+         directly to the constructor of :class:`aredis.RedisCluster`
+        :raise ConfigurationError: when the aredis library is not
+         available or if the redis host cannot be pinged.
+        """
+        parsed = urllib.parse.urlparse(uri)
+        cluster_hosts = []
+        for loc in parsed.netloc.split(","):
+            host, port = loc.split(":")
+            cluster_hosts.append({"host": host, "port": int(port)})
+
+        options.setdefault("max_connections", 1000)
+
+        self.storage = self.dependency.StrictRedisCluster(
+            startup_nodes=cluster_hosts, **options
+        )
+        self.initialize_storage(uri)
+        super(RedisStorage, self).__init__()
+
+    async def reset(self):
+        """
+        Redis Clusters are sharded and deleting across shards
+        can't be done atomically. Because of this, this reset loops over all
+        keys that are prefixed with 'LIMITER' and calls delete on them, one at
+        a time.
+
+        .. warning::
+         This operation was not tested with extremely large data sets.
+         On a large production based system, care should be taken with its
+         usage as it could be slow on very large data sets"""
+
+        keys = await self.storage.keys("LIMITER*")
+
+        return sum([await self.storage.delete(k.decode("utf-8")) for k in keys])
+
+
+class RedisSentinelStorage(RedisStorage):
+    """
+    Rate limit storage with redis sentinel as backend
+
+    Depends on `aredis`
+
+    .. danger:: Experimental
+    .. versionadded:: 2.1
+    """
+
+    STORAGE_SCHEME = ["async+redis+sentinel"]
+    DEPENDENCY = "aredis.sentinel"
+
+    def __init__(
+        self,
+        uri: str,
+        service_name: str = None,
+        sentinel_kwargs: Optional[dict[str, Any]] = None,
+        **options,
+    ):
+        """
+        :param uri: url of the form
+         `async+redis+sentinel://host:port,host:port/service_name`
+        :param service_name, optional: sentinel service name
+         (if not provided in `uri`)
+        :param sentinel_kwargs, optional: sentinel service name
+         (if not provided in `uri`)
+        :param options: all remaining keyword arguments are passed
+         directly to the constructor of :class:`redis.sentinel.Sentinel`
+        :raise ConfigurationError: when the aredis library is not available
+         or if the redis master host cannot be pinged.
+        """
+
+        parsed = urllib.parse.urlparse(uri)
+        sentinel_configuration = []
+        password = None
+        connection_options = options.copy()
+        sentinel_options = sentinel_kwargs.copy() if sentinel_kwargs else {}
+
+        if parsed.username:
+            sentinel_options["username"] = parsed.username
+        if parsed.password:
+            sentinel_options["password"] = parsed.password
+
+        sep = parsed.netloc.find("@") + 1
+
+        for loc in parsed.netloc[sep:].split(","):
+            host, port = loc.split(":")
+            sentinel_configuration.append((host, int(port)))
+        self.service_name = (
+            parsed.path.replace("/", "") if parsed.path else service_name
+        )
+
+        if self.service_name is None:
+            raise ConfigurationError("'service_name' not provided")
+
+        connection_options.setdefault("stream_timeout", 0.2)
+
+        self.sentinel = self.dependency.Sentinel(
+            sentinel_configuration,
+            sentinel_kwargs=sentinel_options,
+            **connection_options,
+        )
+        self.storage = self.sentinel.master_for(self.service_name)
+        self.storage_slave = self.sentinel.slave_for(self.service_name)
+        self.initialize_storage(uri)
+        super(RedisStorage, self).__init__()
+
+    async def get(self, key: str) -> int:
+        """
+        :param key: the key to get the counter value for
+        """
+
+        return super(RedisStorage, self)._get(key, self.storage_slave)
+
+    async def get_expiry(self, key: str) -> int:
+        """
+        :param key: the key to get the expiry for
+        """
+
+        return super(RedisStorage, self)._get_expiry(key, self.storage_slave)
+
+    async def check(self) -> bool:
+        """
+        check if storage is healthy
+        """
+
+        return super(RedisStorage, self)._check(self.storage_slave)

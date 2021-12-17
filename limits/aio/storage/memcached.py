@@ -1,8 +1,6 @@
 import time
 import urllib.parse
 
-from ...errors import ConfigurationError
-from ...util import get_dependency
 from .base import Storage
 
 
@@ -17,6 +15,7 @@ class MemcachedStorage(Storage):
     """
 
     STORAGE_SCHEME = ["async+memcached"]
+    DEPENDENCY = "emcache"
 
     def __init__(self, uri: str, **options):
         """
@@ -35,14 +34,9 @@ class MemcachedStorage(Storage):
             host, port = loc.split(":")
             self.hosts.append((host, int(port)))
 
-        self.dependency = get_dependency("emcache")
-
-        if not self.dependency:
-            raise ConfigurationError(
-                "memcached prerequisite not available." " please install emcache"
-            )  # pragma: no cover
         self._options = options
         self._storage = None
+        super(MemcachedStorage, self).__init__()
 
     async def get_storage(self):
         if not self._storage:

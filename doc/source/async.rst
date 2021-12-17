@@ -7,8 +7,9 @@ Async Support
 A new namespace ``limits.aio`` is available which mirrors the original
 ``limits.storage`` and ``limits.strategies`` packages.
 
-Limits supports the following storage options:
+The following async storage backends are implemented:
 
+ - In-Memory
  - Redis (via `aredis <https://aredis.readthedocs.org>`_)
  - Memcached (via `emcache <https://emcache.readthedocs.org>`_)
 
@@ -34,6 +35,6 @@ This example demonstrates the subtle differences in the ``limits.aio`` namespace
 
 
 Refer to :ref:`api:async storage` for more implementation details of the async
-storage backends, and :ref:`api:strategies` (Async) for the async rate limit strategies
-API.
+storage backends, and :ref:`api:strategies` (Async) for the async rate limit
+strategies API.
 

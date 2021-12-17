@@ -1,10 +1,11 @@
-import threading
 from abc import abstractmethod
 from abc import ABC
 from typing import Dict, Optional, Tuple
 
 
 from limits.storage.registry import StorageRegistry
+from limits.util import get_dependency
+from limits.errors import ConfigurationError
 
 
 class Storage(metaclass=StorageRegistry):
@@ -15,8 +16,22 @@ class Storage(metaclass=StorageRegistry):
     .. versionadded:: 2.1
     """
 
+    DEPENDENCY: Optional[str] = None
+
     def __init__(self, uri: Optional[str] = None, **options: Dict) -> None:
-        self.lock = threading.RLock()
+        if self.DEPENDENCY:
+            assert self.dependency
+
+    @property
+    def dependency(self):
+        dependency = get_dependency(self.DEPENDENCY)
+
+        if not dependency:
+            raise ConfigurationError(
+                f"{self.DEPENDENCY} prerequisite not available"
+            )  # pragma: no cover
+
+        return dependency
 
     @abstractmethod
     async def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
@@ -75,6 +90,7 @@ class MovingWindowSupport(ABC):
     .. danger:: Experimental
     .. versionadded:: 2.1
     """
+
     async def acquire_entry(
         self, key: str, limit: int, expiry: int, no_add=False
     ) -> bool:
