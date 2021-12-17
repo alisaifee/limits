@@ -1,13 +1,11 @@
 import time
 
-import mock
 import pymemcache.client
 import pymongo
 import pytest
 import redis
 import redis.sentinel
 import rediscluster
-import unittest
 
 from limits.errors import ConfigurationError
 from limits.storage import (
@@ -18,16 +16,14 @@ from limits.storage import (
     RedisSentinelStorage,
     RedisClusterStorage,
     Storage,
-    GAEMemcachedStorage,
     storage_from_string,
 )
 from limits.strategies import MovingWindowRateLimiter
-from tests import RUN_GAE
 
 
 @pytest.mark.unit
-class BaseStorageTests(unittest.TestCase):
-    def setUp(self):
+class TestBaseStorage:
+    def setup_method(self):
         pymemcache.client.Client(("localhost", 22122)).flush_all()
         redis.from_url("unix:///tmp/limits.redis.sock").flushall()
         redis.from_url("redis://localhost:7379").flushall()
@@ -38,130 +34,86 @@ class BaseStorageTests(unittest.TestCase):
         pymongo.MongoClient("mongodb://localhost:37017").limits.windows.drop()
         pymongo.MongoClient("mongodb://localhost:37017").limits.counters.drop()
         rediscluster.RedisCluster("localhost", 7000).flushall()
-        if RUN_GAE:
-            from google.appengine.ext import testbed
 
-            tb = testbed.Testbed()
-            tb.activate()
-            tb.init_memcache_stub()
-
-    def test_storage_string(self):
-        self.assertTrue(isinstance(storage_from_string("memory://"), MemoryStorage))
-        self.assertTrue(
-            isinstance(storage_from_string("redis://localhost:7379"), RedisStorage)
-        )
-        self.assertTrue(
-            isinstance(
-                storage_from_string("redis+unix:///tmp/limits.redis.sock"), RedisStorage
-            )
+    def test_storage_string(self, mocker):
+        assert isinstance(storage_from_string("memory://"), MemoryStorage)
+        assert isinstance(storage_from_string("redis://localhost:7379"), RedisStorage)
+        assert isinstance(
+            storage_from_string("redis+unix:///tmp/limits.redis.sock"), RedisStorage
         )
 
-        self.assertTrue(
-            isinstance(
-                storage_from_string(
-                    "redis+unix://:password/tmp/limits.redis.sock"
-                ),  # noqa: E501
-                RedisStorage,
-            )
+        assert isinstance(
+            storage_from_string("redis+unix://:password/tmp/limits.redis.sock"),
+            RedisStorage,
         )
 
-        self.assertTrue(
-            isinstance(
-                storage_from_string("memcached://localhost:22122"), MemcachedStorage
-            )
+        assert isinstance(
+            storage_from_string("memcached://localhost:22122"), MemcachedStorage
         )
 
-        self.assertTrue(
-            isinstance(
-                storage_from_string(
-                    "memcached://localhost:22122,localhost:22123"
-                ),  # noqa: E501
-                MemcachedStorage,
-            )
+        assert isinstance(
+            storage_from_string("memcached://localhost:22122,localhost:22123"),
+            MemcachedStorage,
         )
 
-        self.assertTrue(
-            isinstance(
-                storage_from_string("memcached:///tmp/limits.memcached.sock"),
-                MemcachedStorage,
-            )
+        assert isinstance(
+            storage_from_string("memcached:///tmp/limits.memcached.sock"),
+            MemcachedStorage,
         )
 
-        self.assertTrue(
-            isinstance(
-                storage_from_string(
-                    "redis+sentinel://localhost:26379",
-                    service_name="localhost-redis-sentinel",
-                ),
-                RedisSentinelStorage,
-            )
-        )
-        self.assertTrue(
-            isinstance(
-                storage_from_string(
-                    "redis+sentinel://localhost:26379/localhost-redis-sentinel"
-                ),
-                RedisSentinelStorage,
-            )
-        )
-        self.assertTrue(
-            isinstance(
-                storage_from_string("redis+cluster://localhost:7000/"),
-                RedisClusterStorage,
-            )
-        )
-        self.assertTrue(
-            isinstance(
-                storage_from_string("mongodb://localhost:37017/"), MongoDBStorage
-            )
-        )
-        if RUN_GAE:
-            self.assertTrue(
-                isinstance(storage_from_string("gaememcached://"), GAEMemcachedStorage)
-            )
-        self.assertRaises(ConfigurationError, storage_from_string, "blah://")
-        self.assertRaises(
-            ConfigurationError, storage_from_string, "redis+sentinel://localhost:26379"
-        )
-        with mock.patch(
-            "limits.storage.redis_sentinel.get_dependency"
-        ) as get_dependency:
-            self.assertTrue(
-                isinstance(
-                    storage_from_string(
-                        "redis+sentinel://:foobared@localhost:26379/localhost-redis-sentinel"
-                    ),  # noqa: E501
-                    RedisSentinelStorage,
-                )
-            )
-            self.assertEqual(
-                get_dependency().Sentinel.call_args[1]["password"], "foobared"
-            )
-
-    def test_storage_check(self):
-        self.assertTrue(storage_from_string("memory://").check())
-        self.assertTrue(storage_from_string("redis://localhost:7379").check())
-        self.assertTrue(storage_from_string("redis://:sekret@localhost:7389").check())
-        self.assertTrue(
-            storage_from_string("redis+unix:///tmp/limits.redis.sock").check()
-        )
-        self.assertTrue(storage_from_string("memcached://localhost:22122").check())
-        self.assertTrue(
-            storage_from_string("memcached://localhost:22122,localhost:22123").check()
-        )
-        self.assertTrue(
-            storage_from_string("memcached:///tmp/limits.memcached.sock").check()
-        )
-        self.assertTrue(
+        assert isinstance(
             storage_from_string(
                 "redis+sentinel://localhost:26379",
                 service_name="localhost-redis-sentinel",
-            ).check()
+            ),
+            RedisSentinelStorage,
         )
-        self.assertTrue(storage_from_string("redis+cluster://localhost:7000").check())
-        self.assertTrue(storage_from_string("mongodb://localhost:37017").check())
-        if RUN_GAE:
-            self.assertTrue(storage_from_string("gaememcached://").check())
+
+        assert isinstance(
+            storage_from_string(
+                "redis+sentinel://localhost:26379/localhost-redis-sentinel"
+            ),
+            RedisSentinelStorage,
+        )
+        assert isinstance(
+            storage_from_string("redis+cluster://localhost:7000/"),
+            RedisClusterStorage,
+        )
+        assert isinstance(
+            storage_from_string("mongodb://localhost:37017/"), MongoDBStorage
+        )
+        with pytest.raises(ConfigurationError):
+            storage_from_string("blah://")
+        with pytest.raises(ConfigurationError):
+            storage_from_string("redis+sentinel://localhost:26379")
+        sentinel = mocker.Mock()
+        mocker.patch(
+            "limits.storage.redis_sentinel.get_dependency", return_value=sentinel
+        )
+        assert isinstance(
+            storage_from_string(
+                "redis+sentinel://:foobared@localhost:26379/localhost-redis-sentinel"
+            ),
+            RedisSentinelStorage,
+        )
+        assert sentinel.Sentinel.call_args[1]["password"] == "foobared"
+
+    def test_storage_check(self):
+        assert storage_from_string("memory://").check()
+        assert storage_from_string("redis://localhost:7379").check()
+        assert storage_from_string("redis://:sekret@localhost:7389").check()
+        assert storage_from_string("redis+unix:///tmp/limits.redis.sock").check()
+        assert storage_from_string("memcached://localhost:22122").check()
+        assert storage_from_string(
+            "memcached://localhost:22122,localhost:22123"
+        ).check()
+        assert storage_from_string("memcached:///tmp/limits.memcached.sock").check()
+        assert storage_from_string(
+            "redis+sentinel://localhost:26379",
+            service_name="localhost-redis-sentinel",
+        ).check()
+        assert storage_from_string("redis+cluster://localhost:7000").check()
+        assert storage_from_string("mongodb://localhost:37017").check()
 
     def test_pluggable_storage_invalid_construction(self):
         def cons():
@@ -175,7 +127,8 @@ class BaseStorageTests(unittest.TestCase):
                 def get_expiry(self, key):
                     return time.time()
 
-        self.assertRaises(ConfigurationError, cons)
+        with pytest.raises(ConfigurationError):
+            cons()
 
     def test_pluggable_storage_no_moving_window(self):
         class MyStorage(Storage):
@@ -200,8 +153,9 @@ class BaseStorageTests(unittest.TestCase):
                 return
 
         storage = storage_from_string("mystorage://")
-        self.assertTrue(isinstance(storage, MyStorage))
-        self.assertRaises(NotImplementedError, MovingWindowRateLimiter, storage)
+        assert isinstance(storage, MyStorage)
+        with pytest.raises(NotImplementedError):
+            MovingWindowRateLimiter(storage)
 
     def test_pluggable_storage_moving_window(self):
         class MyStorage(Storage):
@@ -232,5 +186,5 @@ class BaseStorageTests(unittest.TestCase):
                 return (time.time(), 1)
 
         storage = storage_from_string("mystorage://")
-        self.assertTrue(isinstance(storage, MyStorage))
+        assert isinstance(storage, MyStorage)
         MovingWindowRateLimiter(storage)

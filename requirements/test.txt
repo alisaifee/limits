@@ -5,10 +5,11 @@
 -r storage/memcached.txt
 -r storage/async-memcached.txt
 -r storage/async-redis.txt
-mock
+coverage
+flaky
 pytest
 pytest-asyncio
 pytest-cov
-coverage
+pytest-mock
 PyYAML
 hiro>0.1.6

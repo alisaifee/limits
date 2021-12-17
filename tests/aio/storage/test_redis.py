@@ -82,9 +82,7 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
 
     @pytest.mark.asyncio
     async def test_init_options(self):
-        with mock.patch(
-            "limits.aio.storage.redis.get_dependency"
-        ) as get_dependency:
+        with mock.patch("limits.aio.storage.redis.get_dependency") as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
             assert (
                 get_dependency().StrictRedis.from_url.call_args[1]["connection_timeout"]
@@ -101,9 +99,7 @@ class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
 
     @pytest.mark.asyncio
     async def test_init_options(self):
-        with mock.patch(
-            "limits.aio.storage.redis.get_dependency"
-        ) as get_dependency:
+        with mock.patch("limits.aio.storage.redis.get_dependency") as get_dependency:
             storage_from_string(self.storage_url, connection_timeout=1)
             assert (
                 get_dependency().StrictRedis.from_url.call_args[1]["connection_timeout"]

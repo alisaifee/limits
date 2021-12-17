@@ -14,6 +14,7 @@ from limits.aio.strategies import (
 from tests import fixed_start
 
 
+@pytest.mark.flaky
 @pytest.mark.asynchronous
 class TestAsyncMemcachedStorage:
     def setup_method(self):

@@ -1,6 +1,5 @@
 import threading
 import time
-import unittest
 from uuid import uuid4
 
 import pytest
@@ -11,7 +10,7 @@ from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 
 
 @pytest.mark.integration
-class ConcurrencyTests(unittest.TestCase):
+class TestMemoryConcurrency:
     def test_memory_storage_fixed_window(self):
         storage = MemoryStorage()
         limiter = FixedWindowRateLimiter(storage)
@@ -32,8 +31,8 @@ class ConcurrencyTests(unittest.TestCase):
         [t.start() for t in threads]
         [t.join() for t in threads]
 
-        self.assertTrue(time.time() - start < 1)
-        self.assertEqual(len(hits), 100)
+        assert time.time() - start < 1
+        assert len(hits) == 100
 
     def test_memory_storage_moving_window(self):
         storage = MemoryStorage()
@@ -55,5 +54,5 @@ class ConcurrencyTests(unittest.TestCase):
         [t.start() for t in threads]
         [t.join() for t in threads]
 
-        self.assertTrue(time.time() - start < 1)
-        self.assertEqual(len(hits), 100)
+        assert time.time() - start < 1
+        assert len(hits) == 100
