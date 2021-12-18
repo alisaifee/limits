@@ -40,6 +40,16 @@ services:
       - REDIS_MASTER_PORT_NUMBER=6380
     ports:
       - '26379:26379'
+  redis-sentinel-auth:
+    image: 'bitnami/redis-sentinel:latest'
+    depends_on: [redis-sentinel-slave]
+    environment:
+      - REDIS_MASTER_SET=localhost-redis-sentinel
+      - REDIS_MASTER_HOST=${HOST_IP}
+      - REDIS_MASTER_PORT_NUMBER=6380
+      - REDIS_SENTINEL_PASSWORD=sekret
+    ports:
+      - '36379:26379'
   # cluster
   redis-cluster-0:
     image: redis

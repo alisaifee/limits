@@ -154,7 +154,8 @@ class RedisInteractor:
         :param connection: Redis connection
         """
         try:
-            return connection.ping()
+            await connection.ping()
+            return True
         except:  # noqa
             return False
 
@@ -299,12 +300,10 @@ class RedisClusterStorage(RedisStorage):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})
 
-        options.setdefault("max_connections", 1000)
-
         super(RedisStorage, self).__init__()
         self.dependency = self.dependencies["aredis"]
         self.storage = self.dependency.StrictRedisCluster(
-            startup_nodes=cluster_hosts, **options
+            startup_nodes=cluster_hosts, **{**self.DEFAULT_OPTIONS, **options}
         )
         self.initialize_storage(uri)
 

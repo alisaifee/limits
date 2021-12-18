@@ -96,7 +96,9 @@ class TestBaseStorage:
             ),
             RedisSentinelStorage,
         )
-        assert sentinel.Sentinel.call_args[1]["password"] == "foobared"
+        assert (
+            sentinel.Sentinel.call_args[1]["sentinel_kwargs"]["password"] == "foobared"
+        )
 
     def test_storage_check(self):
         assert storage_from_string("memory://").check()

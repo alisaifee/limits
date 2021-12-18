@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 import pytest  # type: ignore
@@ -80,6 +81,10 @@ class AsyncSharedRedisTests:
             time.sleep(0.05)
         assert await self.storage.storage.keys("%s/*" % limit.namespace) == []
 
+    @pytest.mark.asyncio
+    async def test_connectivity(self):
+        assert await self.storage.check() is True
+
 
 @pytest.mark.asynchronous
 class TestAsyncRedisStorage(AsyncSharedRedisTests):
@@ -92,12 +97,12 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
         lib = mocker.Mock()
+        ping_response = asyncio.Future()
+        ping_response.set_result({})
+        lib.StrictRedis.from_url.return_value.ping.return_value = ping_response
         mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
         assert await storage_from_string(self.storage_url, connection_timeout=1).check()
-        assert (
-            lib.StrictRedis.from_url.call_args[1]["connection_timeout"]
-            == 1
-        )
+        assert lib.StrictRedis.from_url.call_args[1]["connection_timeout"] == 1
 
 
 @pytest.mark.asynchronous
@@ -110,6 +115,9 @@ class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
         lib = mocker.Mock()
+        ping_response = asyncio.Future()
+        ping_response.set_result({})
+        lib.StrictRedis.from_url.return_value.ping.return_value = ping_response
         mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
         assert await storage_from_string(self.storage_url, connection_timeout=1).check()
         assert lib.StrictRedis.from_url.call_args[1]["connection_timeout"] == 1
@@ -125,6 +133,9 @@ class TestAsyncRedisClusterStorage(AsyncSharedRedisTests):
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
         lib = mocker.Mock()
+        ping_response = asyncio.Future()
+        ping_response.set_result({})
+        lib.StrictRedisCluster.return_value.ping.return_value = ping_response
         mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
         assert await storage_from_string(
             f"async+{self.storage_url}", max_connections=1
@@ -148,13 +159,16 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
         lib = mocker.Mock()
         mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
         with pytest.raises(ConfigurationError):
-            await storage_from_string(
-                    f"async+{self.storage_url}", connection_timeout=1
-            )
+            await storage_from_string(f"async+{self.storage_url}", connection_timeout=1)
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
         lib = mocker.Mock()
+        ping_response = asyncio.Future()
+        ping_response.set_result({})
+        lib.Sentinel.return_value.slave_for.return_value.ping.return_value = (
+            ping_response
+        )
         mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
         assert await storage_from_string(
             f"async+{self.storage_url}/{self.service_name}", connection_timeout=1
@@ -162,17 +176,35 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
         assert lib.Sentinel.call_args[1]["connection_timeout"] == 1
 
     @pytest.mark.parametrize(
-        'username, password, opts',
+        "username, password, opts",
         [
-            ('', '', {}),
-            ('username', '', {"username": "username"}),
-            ('', 'sekret', {"password": "sekret"}),
-        ]
+            ("", "", {}),
+            ("username", "", {"username": "username"}),
+            ("", "sekret", {"password": "sekret"}),
+        ],
     )
     @pytest.mark.asyncio
     async def test_auth(self, mocker, username, password, opts):
         lib = mocker.Mock()
         mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
-        storage_url = f"async+redis+sentinel://{username}:{password}@localhost:26379/service_name"
-        assert await storage_from_string(storage_url).check()
+        storage_url = (
+            f"async+redis+sentinel://{username}:{password}@localhost:26379/service_name"
+        )
+        storage_from_string(storage_url)
         assert lib.Sentinel.call_args[1]["sentinel_kwargs"] == opts
+
+    @pytest.mark.parametrize(
+        "username, password, success",
+        [
+            ("", "", False),
+            ("username", "", False),
+            ("", "sekret", True),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_auth_connect(self, username, password, success):
+        storage_url = (
+            f"async+redis+sentinel://{username}:{password}@localhost:36379/"
+            "localhost-redis-sentinel"
+        )
+        assert success == await storage_from_string(storage_url).check()

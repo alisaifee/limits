@@ -1,4 +1,7 @@
 import urllib.parse
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 from ..errors import ConfigurationError
 from ..util import get_dependency
@@ -14,12 +17,20 @@ class RedisSentinelStorage(RedisStorage):
 
     STORAGE_SCHEME = ["redis+sentinel"]
 
-    def __init__(self, uri: str, service_name: str = None, **options):
+    def __init__(
+        self,
+        uri: str,
+        service_name: str = None,
+        sentinel_kwargs: Optional[Dict[str, Any]] = None,
+        **options
+    ):
         """
         :param uri: url of the form
          `redis+sentinel://host:port,host:port/service_name`
         :param service_name, optional: sentinel service name
          (if not provided in `uri`)
+        :param sentinel_kwargs, optional: kwargs to pass as
+         ``sentinel_kwargs`` to :class:`redis.sentinel.Sentinel`
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.sentinel.Sentinel`
         :raise ConfigurationError: when the redis library is not available
@@ -33,12 +44,17 @@ class RedisSentinelStorage(RedisStorage):
 
         parsed = urllib.parse.urlparse(uri)
         sentinel_configuration = []
-        password = None
+        connection_options = options.copy()
+        sentinel_options = sentinel_kwargs.copy() if sentinel_kwargs else {}
+
+        if parsed.username:
+            sentinel_options["username"] = parsed.username
 
         if parsed.password:
-            password = parsed.password
+            sentinel_options["password"] = parsed.password
 
         sep = parsed.netloc.find("@") + 1
+
         for loc in parsed.netloc[sep:].split(","):
             host, port = loc.split(":")
             sentinel_configuration.append((host, int(port)))
@@ -49,10 +65,12 @@ class RedisSentinelStorage(RedisStorage):
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
 
-        options.setdefault("socket_timeout", 0.2)
+        connection_options.setdefault("socket_timeout", 0.2)
 
         self.sentinel = get_dependency("redis.sentinel").Sentinel(
-            sentinel_configuration, password=password, **options
+            sentinel_configuration,
+            sentinel_kwargs=sentinel_options,
+            **connection_options
         )
         self.storage = self.sentinel.master_for(self.service_name)
         self.storage_slave = self.sentinel.slave_for(self.service_name)
