@@ -6,7 +6,7 @@ from limits import limits
 @pytest.mark.unit
 class TestLimits:
     class FakeLimit(limits.RateLimitItem):
-        granularity = (1, "fake")
+        GRANULARITY = limits.Granularity(1, "fake")
 
     def test_key_all_strings_default_namespace(self):
         item = self.FakeLimit(1, 1)

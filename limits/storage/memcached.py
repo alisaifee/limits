@@ -12,20 +12,22 @@ class MemcachedStorage(Storage):
     """
     Rate limit storage with memcached as backend.
 
-    Depends on the `pymemcache` package.
+    Depends on the :pypi:`pymemcache`.
     """
 
     STORAGE_SCHEME = ["memcached"]
+    """The storage scheme for memcached"""
 
     def __init__(self, uri: str, **options):
         """
         :param uri: memcached location of the form
-         `memcached://host:port,host:port`, `memcached:///var/tmp/path/to/sock`
+         ``memcached://host:port,host:port``,
+         ``memcached:///var/tmp/path/to/sock``
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`pymemcache.client.base.PooledClient`
          or :class:`pymemcache.client.hash.HashClient` (if there are more than
          one hosts specified)
-        :raise ConfigurationError: when `pymemcache` is not available
+        :raise ConfigurationError: when :pypi:`pymemcache` is not available
         """
         parsed = urllib.parse.urlparse(uri)
         self.hosts = []
@@ -55,9 +57,9 @@ class MemcachedStorage(Storage):
     def get_client(self, module, hosts, **kwargs):
         """
         returns a memcached client.
+
         :param module: the memcached module
         :param hosts: list of memcached hosts
-        :return:
         """
         return (
             module.HashClient(hosts, **kwargs)
@@ -133,7 +135,8 @@ class MemcachedStorage(Storage):
 
     def check(self) -> bool:
         """
-        check if storage is healthy
+        Check if storage is healthy by calling the ``get`` command
+        on the key ``limiter-check``
         """
         try:
             self.call_memcached_func(self.storage.get, "limiter-check")

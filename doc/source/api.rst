@@ -1,133 +1,176 @@
+
+=============
+API Reference
+=============
+
+.. autosummary::
+
+   limits
+   limits.strategies
+   limits.storage
+   limits.aio.strategies
+   limits.aio.storage
+
 .. currentmodule:: limits
 
-####
-API
-####
-
-**********
 Strategies
-**********
+==========
+
 
 .. tabbed:: Default
 
-    .. autoclass:: limits.strategies.FixedWindowRateLimiter
-    .. autoclass:: limits.strategies.FixedWindowElasticExpiryRateLimiter
-    .. autoclass:: limits.strategies.MovingWindowRateLimiter
+    The available built in rate limiting strategies which expect
+    a single parameter: a subclass of :class:`~limits.storage.Storage`.
 
-    All strategies implement the same base class:
+    .. currentmodule:: limits.strategies
 
-    .. autoclass:: limits.strategies.RateLimiter
+    Provided by :mod:`limits.strategies`
+
+    .. autoclass:: FixedWindowRateLimiter
+    .. autoclass:: FixedWindowElasticExpiryRateLimiter
+    .. autoclass:: MovingWindowRateLimiter
+
+    All strategies implement the same abstract base class:
+
+    .. autoclass:: RateLimiter
 
 .. tabbed:: Async
 
 
-    For asyncio support use the ``limits.aio`` namespace. This
-    will expose async methods and expect a subclass of :class:`limits.aio.storage.Storage`
+    These variants should be used in for asyncio support. These strategies
+    expose async variants and expect a subclass of :class:`limits.aio.storage.Storage`
 
-    .. autoclass:: limits.aio.strategies.FixedWindowRateLimiter
-    .. autoclass:: limits.aio.strategies.FixedWindowElasticExpiryRateLimiter
-    .. autoclass:: limits.aio.strategies.MovingWindowRateLimiter
+    .. currentmodule:: limits.aio.strategies
 
-    All strategies implement the same base class:
+    Provided by :mod:`limits.aio.strategies`
 
-    .. autoclass:: limits.aio.strategies.RateLimiter
+    .. autoclass:: FixedWindowRateLimiter
+    .. autoclass:: FixedWindowElasticExpiryRateLimiter
+    .. autoclass:: MovingWindowRateLimiter
 
-*******
+    All strategies implement the same abstract base class:
+
+    .. autoclass:: RateLimiter
+
 Storage
-*******
+=======
+
+Storage Factory function
+------------------------
+Provided by :mod:`limits.storage`
+
+.. autofunction:: limits.storage.storage_from_string
+
 
 Synchronous Storage
-===================
+-------------------
+
+Provided by :mod:`limits.storage`
+
+.. currentmodule:: limits.storage
 
 In-Memory
----------
+^^^^^^^^^
 
-.. autoclass:: limits.storage.MemoryStorage
+.. autoclass:: MemoryStorage
 
 Redis
------
-.. autoclass:: limits.storage.RedisStorage
+^^^^^
+.. autoclass:: RedisStorage
 
 Redis Cluster
--------------
+^^^^^^^^^^^^^
 
-.. autoclass:: limits.storage.RedisClusterStorage
+.. autoclass:: RedisClusterStorage
 
 Redis Sentinel
---------------
+^^^^^^^^^^^^^^
 
-.. autoclass:: limits.storage.RedisSentinelStorage
+.. autoclass:: RedisSentinelStorage
 
 Memcached
----------
+^^^^^^^^^
 
-.. autoclass:: limits.storage.MemcachedStorage
+.. autoclass:: MemcachedStorage
 
 MongoDB
--------
+^^^^^^^
 
-.. autoclass:: limits.storage.MongoDBStorage
+.. autoclass:: MongoDBStorage
 
 
 Async Storage
-=============
+-------------
+Provided by :mod:`limits.aio.storage`
+
+.. currentmodule:: limits.aio.storage
+
 
 In-Memory
----------
+^^^^^^^^^
 
-.. autoclass:: limits.aio.storage.MemoryStorage
+.. autoclass:: MemoryStorage
 
 Redis
------
+^^^^^
 
-.. autoclass:: limits.aio.storage.RedisStorage
+.. autoclass:: RedisStorage
 
 Redis Cluster
--------------
+^^^^^^^^^^^^^
 
-.. autoclass:: limits.aio.storage.RedisClusterStorage
+.. autoclass:: RedisClusterStorage
 
 Redis Sentinel
---------------
+^^^^^^^^^^^^^^
 
-.. autoclass:: limits.aio.storage.RedisSentinelStorage
+.. autoclass:: RedisSentinelStorage
 
 Memcached
----------
+^^^^^^^^^
 
-.. autoclass:: limits.aio.storage.MemcachedStorage
+.. autoclass:: MemcachedStorage
 
 MongoDB
--------
+^^^^^^^
 
-.. autoclass:: limits.aio.storage.MongoDBStorage
+.. autoclass:: MongoDBStorage
 
 Abstract storage classes
-========================
+------------------------
 
 .. autoclass:: limits.storage.Storage
 .. autoclass:: limits.storage.MovingWindowSupport
 
 
 Async variants
---------------
+^^^^^^^^^^^^^^
 
 .. autoclass:: limits.aio.storage.Storage
 .. autoclass:: limits.aio.storage.MovingWindowSupport
 
 
-************************
-Storage Factory function
-************************
-.. autofunction:: limits.storage.storage_from_string
-
-
-***********
 Rate Limits
-***********
+===========
+
+.. currentmodule:: limits
+
+Provided by :mod:`limits`
+
+Parsing functions
+-----------------
+.. autofunction:: parse
+.. autofunction:: parse_many
+
 
 Rate limit granularities
-========================
+------------------------
+All rate limit items implement :class:`RateLimitItem` by
+declaring a :attr:`GRANULARITY`
+
+.. autoclass:: RateLimitItem
+
+------
 
 .. autoclass:: RateLimitItemPerSecond
 .. autoclass:: RateLimitItemPerMinute
@@ -136,18 +179,10 @@ Rate limit granularities
 .. autoclass:: RateLimitItemPerMonth
 .. autoclass:: RateLimitItemPerYear
 
-Abstract base class in case you have custom needs
--------------------------------------------------
-
-.. autoclass:: RateLimitItem
-
-Parsing functions
-=================
-.. autofunction:: parse
-.. autofunction:: parse_many
 
 
-**********
 Exceptions
-**********
+==========
 .. autoexception:: limits.errors.ConfigurationError
+
+

@@ -1,88 +1,109 @@
-##########
+==========
 Quickstart
-##########
+==========
 
-******************************
+Initialize the strategy & storage
+=================================
+
 Initialize the storage backend
-******************************
+------------------------------
 
-    .. code:: python
+.. tabbed:: In Memory
 
-       from limits import storage
-       memory_storage = storage.MemoryStorage()
+    .. code::
 
-******************************************************************************************
+        from limits import storage
+        memory_storage = storage.MemoryStorage()
+
+.. tabbed:: Memcached
+
+    .. code::
+
+        from limits import storage
+        memory_storage = storage.MemcachedStorage(
+            "memcached://localhost:11211"
+        )
+
+.. tabbed:: Redis
+
+    .. code::
+
+        from limits import storage
+        memory_storage = storage.RedisStorage("redis://localhost:6379/1")
+
 Initialize a rate limiter with the :ref:`Moving Window<strategies:moving window>` Strategy
-******************************************************************************************
+------------------------------------------------------------------------------------------
 
-    .. code:: python
+.. code::
 
-       from limits import strategies
-       moving_window = strategies.MovingWindowRateLimiter(memory_storage)
+    from limits import strategies
+    moving_window = strategies.MovingWindowRateLimiter(memory_storage)
 
 
-***********************************************************************************************
+Describe the rate limit
+=======================
+
 Initialize a rate limit using the :ref:`string notation<quickstart:rate limit string notation>`
-***********************************************************************************************
+-----------------------------------------------------------------------------------------------
 
-    .. code:: python
+.. code::
 
-       from limits import parse
-       one_per_minute = parse("1/minute")
+    from limits import parse
+    one_per_minute = parse("1/minute")
 
-*************************************************************************************
 Initialize a rate limit explicitly using a subclass of :class:`~limits.RateLimitItem`
-*************************************************************************************
+-------------------------------------------------------------------------------------
 
-    .. code:: python
+.. code::
 
-       from limits import RateLimitItemPerSecond
-       one_per_second = RateLimitItemPerSecond(1, 1)
+    from limits import RateLimitItemPerSecond
+    one_per_second = RateLimitItemPerSecond(1, 1)
 
-***************
+
 Test the limits
-***************
+===============
 
-    .. code:: python
+Consume the limits
+------------------
 
-       assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
-       assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
-       assert True == moving_window.hit(one_per_minute, "test_namespace", "bar")
+.. code::
 
-       assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
-       assert False == moving_window.hit(one_per_second, "test_namespace", "foo")
-       time.sleep(1)
-       assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
+    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
+    assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
+    assert True == moving_window.hit(one_per_minute, "test_namespace", "bar")
 
-******************************************
-Check specific limits without hitting them
-******************************************
+    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
+    assert False == moving_window.hit(one_per_second, "test_namespace", "foo")
+    time.sleep(1)
+    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
 
-    .. code:: python
+Check without consuming
+-----------------------
 
-       assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
-       while not moving_window.test(one_per_second, "test_namespace", "foo"):
-           time.sleep(0.01)
-       assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
+.. code::
 
-*************
+    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
+    while not moving_window.test(one_per_second, "test_namespace", "foo"):
+        time.sleep(0.01)
+    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
+
 Clear a limit
-*************
+=============
 
-    .. code:: python
+.. code::
 
-       assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
-       assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
-       moving_window.clear(one_per_minute, "test_namespace", "foo")
-       assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
+    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
+    assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
+    moving_window.clear(one_per_minute, "test_namespace", "foo")
+    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
 
 
 
 .. _ratelimit-string:
 
-**************************
+==========================
 Rate limit string notation
-**************************
+==========================
 
 Instead of manually constructing instances of :class:`~limits.RateLimitItem`
 you can instead use the following :ref:`api:parsing functions`.

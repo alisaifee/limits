@@ -7,21 +7,127 @@ import os
 sys.path.insert(0, os.path.abspath("../../"))
 import limits
 
-on_rtd = os.environ.get("READTHEDOCS", None) == "True"
+copyright = "2015, Ali-Akber Saifee"
+master_doc = "index"
+project = "limits"
+description = (
+    "Python library for performing rate limiting with commonly used storage backends"
+)
+version = release = limits.__version__.split("+")[0]
+colors = {
+    "bg0": " #fbf1c7",
+    "bg1": " #ebdbb2",
+    "bg2": " #d5c4a1",
+    "bg3": " #bdae93",
+    "bg4": " #a89984",
+    "gry": " #928374",
+    "fg4": " #7c6f64",
+    "fg3": " #665c54",
+    "fg2": " #504945",
+    "fg1": " #3c3836",
+    "fg0": " #282828",
+    "red": " #cc241d",
+    "red2": " #9d0006",
+    "orange": " #d65d0e",
+    "orange2": " #af3a03",
+    "yellow": " #d79921",
+    "yellow2": " #b57614",
+    "green": " #98971a",
+    "green2": " #79740e",
+    "aqua": " #689d6a",
+    "aqua2": " #427b58",
+    "blue": " #458588",
+    "blue2": " #076678",
+    "purple": " #b16286",
+    "purple2": " #8f3f71",
+}
+html_static_path = ["./_static"]
+html_css_files = [
+        "custom.css",
+        "https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;700&family=Fira+Sans:ital,wght@0,100;0,400;0,800;0,900;1,800;1,900&display=swap"
+]
+html_theme = "alabaster"
 
-if not on_rtd:  # only import and set the theme if we're building docs locally
-    import sphinx_rtd_theme
+html_theme_options = {
+    "github_user": "alisaifee",
+    "github_repo": "limits",
+    "github_button": False,
+    "github_banner": True,
+    #"fixed_sidebar": False,
+    "globaltoc_collapse": True,
+    "globaltoc_maxdepth": -1,
+    "description": "limits is a python library to perform rate limiting with commonly used storage backends",
+    # Style related overrides
+    "anchor": "",
+    "anchor_hover_bg": "",
+    "anchor_hover_fg": colors["purple"],
+    "body_text": colors["fg0"],
+    "pre_bg": colors["fg0"],
+    "code_highlight": colors["bg4"],
+    "code_bg": colors["bg1"],
+    "code_text": colors["fg3"],
+    "footer_text": colors["fg0"],
+    # "footnote_bg": "",
+    # "footnote_border": "",
+    "gray_1": colors["fg0"],
+    "gray_2": colors["fg1"],
+    "gray_3": colors["fg2"],
+    "link_hover": colors["blue"],
+    "link": colors["blue2"],
+    "narrow_sidebar_bg": colors["fg0"],
+    "narrow_sidebar_fg": colors["bg0"],
+    "narrow_sidebar_link": colors["purple2"],
+    "important_bg": colors["blue"],
+    "important_border": colors["blue"],
+    "note_bg": colors["blue"],
+    "note_border": colors["blue"],
+    "warn_bg": colors["orange"],
+    "warn_border": colors["orange"],
+    "pink_1": colors["red"],
+    "pink_2": colors["red"],
+    # "relbar_border": "",
+    # "seealso_bg": "",
+    # "seealso_border": "",
+    # "sidebar_header": "",
+    # "sidebar_hr": "",
+    "sidebar_link": colors["purple2"],
+    "sidebar_list": colors["fg3"],
+    "sidebar_link_underscore": colors["purple"],
+    "sidebar_search_button": colors["fg3"],
+    "sidebar_text": colors["fg2"],
+    "caption_font_family": "Fira Sans",
+    "code_font_family": "Fira Code",
+    "font_family": "Fira Sans",
+    "head_font_family": "Fira Sans",
+    # "caption_font_size": "",
+    "code_font_size": "smaller",
+    # "font_size": "",
+}
+panels_css_variables = {
+    "tabs-color-label-active": colors["purple2"],
+    "tabs-color-label-inactive": colors["purple"],
+    "tabs-color-overline": colors['purple'],
+    "tabs-color-underline": colors["purple2"],
+    "tabs-size-label": "1rem",
+}
+html_sidebars = {
+    "**": [
+        "about.html",
+        "searchbox.html",
+        "globaltoc.html",
+        "relations.html",
+        "donate.html",
+    ]
+}
 
-    html_theme = "sphinx_rtd_theme"
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-
-autodoc_default_options = {"members": True, "show-inheritance": True}
-
-autoclass_content = "both"
+highlight_language = "python3"
+pygments_style = "gruvbox-dark"
 
 extensions = [
+    "alabaster",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
@@ -29,42 +135,19 @@ extensions = [
     "sphinxcontrib.programoutput",
     "sphinx_autodoc_typehints",
     "sphinx_panels",
-    "sphinx_rtd_theme",
 ]
+
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": True,
+    "inherit-docstrings": True,
+    "member-order": "bysource",
+}
+add_module_names = False
+autoclass_content = "both"
 autosectionlabel_maxdepth = 3
 autosectionlabel_prefix_document = True
-
-extlinks = {
-    "pypi": ("https://pypi.org/project/%s", "%s")
-}
-source_suffix = ".rst"
-master_doc = "index"
-project = u"limits"
-copyright = u"2015, Ali-Akber Saifee"
-
-version = release = limits.__version__
-exclude_patterns = []
-pygments_style = "gruvbox-light"
-htmlhelp_basename = "limitsdoc"
-
-latex_documents = [
-    ("index", "limits.tex", u"limits Documentation", u"Ali-Akber Saifee", "manual"),
-]
-man_pages = [
-    ("index", "flask-limiter", u"limits Documentation", [u"Ali-Akber Saifee"], 1)
-]
-
-texinfo_documents = [
-    (
-        "index",
-        "limits",
-        u"limits Documentation",
-        u"Ali-Akber Saifee",
-        "limits",
-        "One line description of project.",
-        "Miscellaneous",
-    ),
-]
+extlinks = {"pypi": ("https://pypi.org/project/%s", "%s")}
 
 intersphinx_mapping = {
     "python": ("http://docs.python.org/", None),

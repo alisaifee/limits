@@ -2,15 +2,14 @@
 
 .. _storage:
 
-################
+================
 Storage Backends
-################
+================
 
 .. _storage-scheme:
 
-**************
 Storage scheme
-**************
+==============
 
 **limits** uses a url style storage scheme notation (similar to the JDBC driver
 connection string notation) for configuring and initializing
@@ -33,9 +32,8 @@ and handled differently by each implementation. Please refer to the API document
 the :ref:`api:storage` section for details.
 
 
-********
 Examples
-********
+========
 
 In-Memory
 ---------
@@ -122,12 +120,11 @@ MongoDB
 
  Depends on: :pypi:`pymongo`
 
-*************
 Async Storage
-*************
+=============
 
 .. versionadded:: 2.1
-.. danger:: Experimental
+.. warning:: Experimental
 
 When using limits in an async code base the same uri schema can be used
 to query for an async implementation of the storage by prefixing the

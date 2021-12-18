@@ -12,10 +12,16 @@ class RedisSentinelStorage(RedisStorage):
     """
     Rate limit storage with redis sentinel as backend
 
-    Depends on the :mod:`redis` package
+    Depends on the :pypi:`redis` package
     """
 
     STORAGE_SCHEME = ["redis+sentinel"]
+    """The storage scheme for redis accessed via a redis sentinel installation"""
+
+    DEFAULT_OPTIONS = {
+        "socket_timeout": 0.2,
+    }
+    "Default options passed to :class:`~redis.sentinel.Sentinel`"
 
     def __init__(
         self,
@@ -26,11 +32,11 @@ class RedisSentinelStorage(RedisStorage):
     ):
         """
         :param uri: url of the form
-         `redis+sentinel://host:port,host:port/service_name`
-        :param service_name, optional: sentinel service name
-         (if not provided in `uri`)
-        :param sentinel_kwargs, optional: kwargs to pass as
-         ``sentinel_kwargs`` to :class:`redis.sentinel.Sentinel`
+         ``redis+sentinel://host:port,host:port/service_name``
+        :param service_name: sentinel service name
+         (if not provided in :attr:`uri`)
+        :param sentinel_kwargs: kwargs to pass as
+         :attr:`sentinel_kwargs` to :class:`redis.sentinel.Sentinel`
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.sentinel.Sentinel`
         :raise ConfigurationError: when the redis library is not available
@@ -44,12 +50,10 @@ class RedisSentinelStorage(RedisStorage):
 
         parsed = urllib.parse.urlparse(uri)
         sentinel_configuration = []
-        connection_options = options.copy()
         sentinel_options = sentinel_kwargs.copy() if sentinel_kwargs else {}
 
         if parsed.username:
             sentinel_options["username"] = parsed.username
-
         if parsed.password:
             sentinel_options["password"] = parsed.password
 
@@ -65,12 +69,10 @@ class RedisSentinelStorage(RedisStorage):
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
 
-        connection_options.setdefault("socket_timeout", 0.2)
-
         self.sentinel = get_dependency("redis.sentinel").Sentinel(
             sentinel_configuration,
             sentinel_kwargs=sentinel_options,
-            **connection_options
+            **{**self.DEFAULT_OPTIONS, **options}
         )
         self.storage = self.sentinel.master_for(self.service_name)
         self.storage_slave = self.sentinel.slave_for(self.service_name)
@@ -93,7 +95,8 @@ class RedisSentinelStorage(RedisStorage):
 
     def check(self) -> bool:
         """
-        check if storage is healthy
+        Check if storage is healthy by calling :class:`aredis.StrictRedis.ping`
+        on the slave.
         """
 
         return super(RedisStorage, self)._check(self.storage_slave)

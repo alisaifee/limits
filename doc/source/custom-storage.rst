@@ -1,8 +1,8 @@
 .. currentmodule:: limits
 
-#######################
+=======================
 Custom storage backends
-#######################
+=======================
 
 The **limits** package ships with a few storage implementations which allow you
 to get started with some common data stores (redis & memcached) used for rate limiting.
@@ -21,9 +21,8 @@ Creating a custom backend requires:
     #. Providing naming *schemes* that can be used to lookup the custom storage in the storage registry.
        (Refer to :ref:`storage:storage scheme` for more details)
 
-*******
 Example
-*******
+=======
 
 The following example shows two backend stores: one which doesn't implement the
 :ref:`strategies:moving window` strategy and one that does. Do note the :code:`STORAGE_SCHEME` class

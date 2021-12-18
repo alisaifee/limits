@@ -1,6 +1,7 @@
 """
-Rate limiting utilities
+Rate limiting with commonly used storage backends
 """
+
 from ._version import get_versions
 
 from .limits import (

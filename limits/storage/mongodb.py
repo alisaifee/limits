@@ -14,9 +14,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     """
     Rate limit storage with MongoDB as backend.
 
-    Depends on the :mod:`pymongo` library.
+    Depends on the :pypi:`pymongo`.
 
-    .. danger:: Experimental
+    .. warning:: This is a beta feature
     .. versionadded:: 2.1
     """
 
@@ -26,18 +26,18 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         "socketTimeoutMS": 100,
         "connectTimeoutMS": 100,
     }
-    "Default options passed to the :class:`~pymongo.mongo_client.MongoClient`"
+    "Default options passed to :class:`~pymongo.mongo_client.MongoClient`"
 
     def __init__(self, uri: str, database_name: str = "limits", **options):
         """
-        :param uri: uri of the form `mongodb://[user:password]@host:port?...`,
+        :param uri: uri of the form ``mongodb://[user:password]@host:port?...``,
          This uri is passed directly to :class:`~pymongo.mongo_client.MongoClient`
         :param database_name: The database to use for storing the rate limit
-         collections (Default: limits).
+         collections.
         :param options: all remaining keyword arguments are merged with
          :data:`DEFAULT_OPTIONS` and passed to the constructor of
          :class:`~pymongo.mongo_client.MongoClient`
-        :raise ConfigurationError: when the pymongo library is not available
+        :raise ConfigurationError: when the :pypi:`pymongo` library is not available
         """
         self.lib = get_dependency("pymongo")
 
@@ -131,7 +131,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
     def check(self) -> bool:
         """
-        check if storage is healthy
+        Check if storage is healthy by calling :meth:`pymongo.mongo_client.MongoClient.server_info`
         """
         try:
             self.storage.server_info()

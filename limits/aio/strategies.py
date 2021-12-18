@@ -1,9 +1,10 @@
 """
-Async rate limiting strategies
+Asynchronous rate limiting strategies
 """
 
 from abc import ABC, abstractmethod
 from typing import Tuple
+from typing import Iterable
 import weakref
 
 from limits import RateLimitItem
@@ -15,27 +16,24 @@ class RateLimiter(ABC):
         self.storage = weakref.ref(storage)
 
     @abstractmethod
-    async def hit(self, item: RateLimitItem, *identifiers) -> bool:
+    async def hit(self, item: RateLimitItem, *identifiers: Iterable[str]) -> bool:
         """
-        creates a hit on the rate limit and returns True if successful.
+        Consume the rate limit
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
         raise NotImplementedError
 
     @abstractmethod
     async def test(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        checks  the rate limit and returns True if it is not
-        currently exceeded.
+        Check if the rate limit can be consumed
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
         raise NotImplementedError
 
@@ -44,12 +42,12 @@ class RateLimiter(ABC):
         self, item: RateLimitItem, *identifiers
     ) -> Tuple[int, int]:
         """
-        returns the number of requests remaining and reset of this limit.
+        Query the reset time and remaining amount for the limit
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: tuple (reset time (int), remaining (int))
+        :return: (reset time, remaining))
         """
         raise NotImplementedError
 
@@ -74,12 +72,11 @@ class MovingWindowRateLimiter(RateLimiter):
 
     async def hit(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        creates a hit on the rate limit and returns True if successful.
+        Consume the rate limit
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
         return await self.storage().acquire_entry(  # type: ignore
             item.key_for(*identifiers), item.amount, item.get_expiry()
@@ -87,13 +84,11 @@ class MovingWindowRateLimiter(RateLimiter):
 
     async def test(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        checks  the rate limit and returns True if it is not
-        currently exceeded.
+        Check if the rate limit can be consumed
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
         res = await self.storage().get_moving_window(  # type: ignore
             item.key_for(*identifiers),
@@ -109,10 +104,10 @@ class MovingWindowRateLimiter(RateLimiter):
         """
         returns the number of requests remaining within this limit.
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: tuple (reset time (int), remaining (int))
+        :return: (reset time, remaining)
         """
         window_start, window_items = await self.storage().get_moving_window(  # type: ignore
             item.key_for(*identifiers), item.amount, item.get_expiry()
@@ -128,38 +123,37 @@ class FixedWindowRateLimiter(RateLimiter):
 
     async def hit(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        creates a hit on the rate limit and returns True if successful.
+        Consume the rate limit
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
         return (
             await self.storage().incr(item.key_for(*identifiers), item.get_expiry())
             <= item.amount
         )
 
-    async def test(self, item, *identifiers) -> bool:
+    async def test(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        checks  the rate limit and returns True if it is not
-        currently exceeded.
+        Check if the rate limit can be consumed
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
         return await self.storage().get(item.key_for(*identifiers)) < item.amount
 
-    async def get_window_stats(self, item, *identifiers) -> Tuple[int, int]:
+    async def get_window_stats(
+        self, item: RateLimitItem, *identifiers
+    ) -> Tuple[int, int]:
         """
-        returns the number of requests remaining and reset of this limit.
+        Query the reset time and remaining amount for the limit
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: tuple (reset time (int), remaining (int))
+        :return: reset time, remaining
         """
         remaining = max(
             0,
@@ -176,12 +170,11 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
 
     async def hit(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        creates a hit on the rate limit and returns True if successful.
+        Consume the rate limit
 
-        :param item: a :class:`RateLimitItem` instance
+        :param item: a :class:`limits.limits.RateLimitItem` instance
         :param identifiers: variable list of strings to uniquely identify the
          limit
-        :return: True/False
         """
         amount = await self.storage().incr(
             item.key_for(*identifiers), item.get_expiry(), True

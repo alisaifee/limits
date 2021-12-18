@@ -1,3 +1,4 @@
+import logging
 import time
 import urllib
 
@@ -8,6 +9,8 @@ from typing import Optional
 from limits.errors import ConfigurationError
 from .base import Storage
 from .base import MovingWindowSupport
+
+logger = logging.getLogger()
 
 
 class RedisInteractor:
@@ -161,11 +164,14 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
     Depends on the :mod:`aredis` package.
 
-    .. danger:: Experimental
+    .. warning:: This is a beta feature
     .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
+    """
+    The storage schemes for redis to be used in an async context
+    """
     DEPENDENCIES = ["aredis"]
 
     def __init__(self, uri: str, **options) -> None:
@@ -177,7 +183,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
          the initial `a` removed, except for the case of `redis+unix` where it
          is replaced with `unix`.
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`redis.Redis`
+         directly to the constructor of :class:`aredis.StrictRedis`
         :raise ConfigurationError: when the redis library is not available
         """
 
@@ -246,7 +252,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
     async def check(self) -> bool:
         """
-        check if storage is healthy
+        Check if storage is healthy by calling :meth:`aredis.StrictRedis.ping`
         """
         return await super(RedisStorage, self)._check(self.storage)
 
@@ -272,18 +278,26 @@ class RedisClusterStorage(RedisStorage):
 
     Depends on `aredis`
 
-    .. danger:: Experimental
+    .. warning:: This is a beta feature
     .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+redis+cluster"]
+    """
+    The storage schemes for redis cluster to be used in an async context
+    """
+
+    DEFAULT_OPTIONS = {
+        "max_connections": 1000,
+    }
+    "Default options passed to :class:`aredis.StrictRedisCluster`"
 
     def __init__(self, uri: str, **options):
         """
         :param uri: url of the form
          `async+redis+cluster://[:password]@host:port,host:port`
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`aredis.RedisCluster`
+         directly to the constructor of :class:`aredis.StrictRedisCluster`
         :raise ConfigurationError: when the aredis library is not
          available or if the redis host cannot be pinged.
         """
@@ -323,11 +337,18 @@ class RedisSentinelStorage(RedisStorage):
 
     Depends on `aredis`
 
-    .. danger:: Experimental
+    .. warning:: This is a beta feature
     .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+redis+sentinel"]
+    """The storage scheme for redis accessed via a redis sentinel installation"""
+
+    DEFAULT_OPTIONS = {
+        "stream_timeout": 0.2,
+    }
+    "Default options passed to :class:`~aredis.sentinel.Sentinel`"
+
     DEPENDENCIES = ["aredis.sentinel"]
 
     def __init__(
@@ -404,7 +425,7 @@ class RedisSentinelStorage(RedisStorage):
 
     async def check(self) -> bool:
         """
-        check if storage is healthy
+        Check if storage is healthy by calling :meth:`aredis.StrictRedis.ping`
+        on the slave.
         """
-
         return await super(RedisStorage, self)._check(self.storage_slave)

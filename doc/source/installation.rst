@@ -1,6 +1,6 @@
-############
+============
 Installation
-############
+============
 
 Install the package with pip. You can also automatically install
 the required dependencies with recommended versions for a specific storage
@@ -19,7 +19,7 @@ by using the extras notation:
 
 .. tabbed:: Redis
 
-   .. code:: bash
+   .. code:: console
 
       $ pip install limits[redis]
 
@@ -29,7 +29,7 @@ by using the extras notation:
 
 .. tabbed:: RedisCluster
 
-   .. code:: bash
+   .. code:: console
 
       $ pip install limits[rediscluster]
 
@@ -39,7 +39,7 @@ by using the extras notation:
 
 .. tabbed:: Memcached
 
-   .. code:: bash
+   .. code:: console
 
       $ pip install limits[memcached]
 
@@ -49,7 +49,7 @@ by using the extras notation:
 
 .. tabbed:: MongoDB
 
-   .. code-block:: shell
+   .. code:: console
 
       $ pip install limits[mongodb]
 
@@ -61,9 +61,8 @@ More details around the specifics of each storage backend can be
 found in :ref:`storage`
 
 
-*************
 Async Storage
-*************
+=============
 
 If you are using an async code base you can install the storage dependencies
 along with the package using the following extras:
@@ -71,7 +70,7 @@ along with the package using the following extras:
 
 .. tabbed:: Redis
 
-   .. code:: bash
+   .. code:: console
 
       $ pip install limits[async-redis]
 
@@ -81,7 +80,7 @@ along with the package using the following extras:
 
 .. tabbed:: Memcached
 
-   .. code:: bash
+   .. code:: console
 
       $ pip install limits[async-memcached]
 
@@ -91,7 +90,7 @@ along with the package using the following extras:
 
 .. tabbed:: MongoDB
 
-   .. code:: bash
+   .. code:: console
 
       $ pip install limits[async-mongodb]
 

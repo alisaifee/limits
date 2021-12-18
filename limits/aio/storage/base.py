@@ -12,17 +12,28 @@ class Storage(metaclass=StorageRegistry):
     """
     Base class to extend when implementing an async storage backend.
 
-    .. danger:: Experimental
+    .. warning:: This is a beta feature
     .. versionadded:: 2.1
     """
 
+    STORAGE_SCHEME: Optional[List[str]]
+    """The storage schemes to register against this implementation"""
+
     DEPENDENCIES: List[str] = []
+    """
+    The python modules this storage is dependency on.
+    Used to automatically populate the :attr:`dependencies`
+    """
 
     def __init__(self, uri: Optional[str] = None, **options: Dict) -> None:
         self._dependencies: Dict[str, Any] = {}
 
     @property
     def dependencies(self) -> Dict[str, Any]:
+        """
+        Cached mapping of the modules this storage depends on. This is done so that the module
+        is only imported lazily when the storage is instantiated.
+        """
         if not self._dependencies:
             for name in self.DEPENDENCIES:
                 dependency = get_dependency(name)
@@ -40,9 +51,9 @@ class Storage(metaclass=StorageRegistry):
         """
         increments the counter for a given rate limit key
 
-        :param str key: the key to increment
-        :param int expiry: amount in seconds for the key to expire in
-        :param bool elastic_expiry: whether to keep extending the rate limit
+        :param key: the key to increment
+        :param expiry: amount in seconds for the key to expire in
+        :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
         """
         raise NotImplementedError
@@ -50,14 +61,14 @@ class Storage(metaclass=StorageRegistry):
     @abstractmethod
     async def get(self, key: str) -> int:
         """
-        :param str key: the key to get the counter value for
+        :param key: the key to get the counter value for
         """
         raise NotImplementedError
 
     @abstractmethod
     async def get_expiry(self, key: str) -> int:
         """
-        :param str key: the key to get the expiry for
+        :param key: the key to get the expiry for
         """
         raise NotImplementedError
 
@@ -79,7 +90,8 @@ class Storage(metaclass=StorageRegistry):
     async def clear(self, key: str) -> int:
         """
         resets the rate limit key
-        :param str key: the key to clear rate limits for
+
+        :param key: the key to clear rate limits for
         """
         raise NotImplementedError
 
@@ -89,7 +101,7 @@ class MovingWindowSupport(ABC):
     Abstract base for storages that intend to support
     the moving window strategy
 
-    .. danger:: Experimental
+    .. warning:: This is a beta feature
     .. versionadded:: 2.1
     """
 

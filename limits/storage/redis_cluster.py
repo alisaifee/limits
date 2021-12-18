@@ -9,18 +9,24 @@ class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend
 
-    Depends on `redis-cluster-py` package
+    Depends on :pypi:`redis-cluster-py`
     """
 
     STORAGE_SCHEME = ["redis+cluster"]
+    """The storage scheme for redis cluster"""
+
+    DEFAULT_OPTIONS = {
+        "max_connections": 1000,
+    }
+    "Default options passed to the :class:`~rediscluster.RedisCluster`"
 
     def __init__(self, uri: str, **options):
         """
         :param uri: url of the form
-         `redis+cluster://[:password]@host:port,host:port`
+         ``redis+cluster://[:password]@host:port,host:port``
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`rediscluster.RedisCluster`
-        :raise ConfigurationError: when the rediscluster library is not
+        :raise ConfigurationError: when the :pypi:`redis-cluster-py` library is not
          available or if the redis host cannot be pinged.
         """
         if not get_dependency("rediscluster"):
@@ -33,10 +39,8 @@ class RedisClusterStorage(RedisStorage):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})
 
-        options.setdefault("max_connections", 1000)
-
         self.storage = get_dependency("rediscluster").RedisCluster(
-            startup_nodes=cluster_hosts, **options
+            startup_nodes=cluster_hosts, **{**self.DEFAULT_OPTIONS, **options}
         )
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()

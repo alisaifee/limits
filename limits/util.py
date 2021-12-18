@@ -42,7 +42,7 @@ def get_dependency(dep) -> Any:
 def parse_many(limit_string: str) -> List[RateLimitItem]:
     """
     parses rate limits in string notation containing multiple rate limits
-    (e.g. '1/second; 5/minute')
+    (e.g. ``1/second; 5/minute``)
 
     :param limit_string: rate limit string using :ref:`ratelimit-string`
     :raise ValueError: if the string notation is invalid.
@@ -69,7 +69,7 @@ def parse_many(limit_string: str) -> List[RateLimitItem]:
 def parse(limit_string: str) -> RateLimitItem:
     """
     parses a single rate limit in string notation
-    (e.g. '1/second' or '1 per second'
+    (e.g. ``1/second`` or ``1 per second``)
 
     :param limit_string: rate limit string using :ref:`ratelimit-string`
     :raise ValueError: if the string notation is invalid.

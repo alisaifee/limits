@@ -15,9 +15,8 @@ limits
 ------
 |docs| |ci| |codecov| |pypi| |pypi-versions| |license|
 
-A high level python API to perform rate limiting using fixed or moving window
-strategies and some commonly used storage backends.
 
+**limits** is a python library to perform rate limiting with commonly used storage backends (Redis, Memcached & MongoDB).
 
 Supported Strategies
 ====================

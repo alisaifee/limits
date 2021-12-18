@@ -8,22 +8,24 @@ class MemcachedStorage(Storage):
     """
     Rate limit storage with memcached as backend.
 
-    Depends on the :mod:`emcache` package.
+    Depends on the :pypi:`emcache` package.
 
-    .. danger:: Experimental
+    .. warning:: This is a beta feature
     .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+memcached"]
+    """The storage scheme for memcached to be used in an async context"""
+
     DEPENDENCIES = ["emcache"]
 
     def __init__(self, uri: str, **options):
         """
         :param uri: memcached location of the form
-         `async+memcached://host:port,host:port`
+         ``async+memcached://host:port,host:port``
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`emcache.Client`
-        :raise ConfigurationError: when `emcache` is not available
+        :raise ConfigurationError: when :pypi:`emcache` is not available
         """
         parsed = urllib.parse.urlparse(uri)
         self.hosts = []
@@ -108,7 +110,8 @@ class MemcachedStorage(Storage):
 
     async def check(self) -> bool:
         """
-        check if storage is healthy
+        Check if storage is healthy by calling the ``get`` command
+        on the key ``limiter-check``
         """
         try:
             storage = await self.get_storage()

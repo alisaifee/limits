@@ -1,5 +1,5 @@
 """
-rate limiting strategies
+Rate limiting strategies
 """
 
 from abc import ABCMeta, abstractmethod
@@ -20,34 +20,33 @@ class RateLimiter(metaclass=ABCMeta):
     @abstractmethod
     def hit(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        creates a hit on the rate limit and returns True if successful.
+        Consume the rate limit
 
-        :param item: a :class:`RateLimitItem` instance
-        :param identifiers: variable list of strings to uniquely identify the
-         limit
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
         """
         raise NotImplementedError
 
     @abstractmethod
     def test(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        checks  the rate limit and returns True if it is not
-        currently exceeded.
+        Check the rate limit without consuming from it.
 
         :param item: The rate limit item
-        :param identifiers: variable list of strings to uniquely identify the
-         limit
+        :param identifiers: variable list of strings to uniquely identify this
+          instance of the limit
         """
         raise NotImplementedError
 
     @abstractmethod
     def get_window_stats(self, item: RateLimitItem, *identifiers) -> Tuple[int, int]:
         """
-        returns the number of requests remaining and reset of this limit.
+        Query the reset time and remaining amount for the limit
 
         :param item: The rate limit item
-        :param identifiers: variable list of strings to uniquely identify the
-         limit
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
         :return: (reset time, remaining)
         """
         raise NotImplementedError
@@ -73,11 +72,12 @@ class MovingWindowRateLimiter(RateLimiter):
 
     def hit(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        creates a hit on the rate limit and returns True if successful.
+        Consume the rate limit
 
         :param item: The rate limit item
-        :param identifiers: variable list of strings to uniquely identify the
-         limit
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :return: (reset time, remaining)
         """
 
         return self.storage().acquire_entry(  # type: ignore
@@ -86,12 +86,11 @@ class MovingWindowRateLimiter(RateLimiter):
 
     def test(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        checks  the rate limit and returns True if it is not
-        currently exceeded.
+        Check if the rate limit can be consumed
 
         :param item: The rate limit item
-        :param identifiers: variable list of strings to uniquely identify the
-         limit
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
         """
 
         return (
@@ -108,8 +107,8 @@ class MovingWindowRateLimiter(RateLimiter):
         returns the number of requests remaining within this limit.
 
         :param item: The rate limit item
-        :param identifiers: variable list of strings to uniquely identify the
-         limit
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
         :return: tuple (reset time, remaining)
         """
         window_start, window_items = self.storage().get_moving_window(  # type: ignore
@@ -127,11 +126,11 @@ class FixedWindowRateLimiter(RateLimiter):
 
     def hit(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        creates a hit on the rate limit and returns True if successful.
+        Consume the rate limit
 
         :param item: The rate limit item
-        :param identifiers: variable list of strings to uniquely identify the
-         limit
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
         """
 
         return (
@@ -141,23 +140,22 @@ class FixedWindowRateLimiter(RateLimiter):
 
     def test(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        checks  the rate limit and returns True if it is not
-        currently exceeded.
+        Check if the rate limit can be consumed
 
         :param item: The rate limit item
-        :param identifiers: variable list of strings to uniquely identify the
-         limit
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
         """
 
         return self.storage().get(item.key_for(*identifiers)) < item.amount
 
     def get_window_stats(self, item: RateLimitItem, *identifiers) -> Tuple[int, int]:
         """
-        returns the number of requests remaining and reset of this limit.
+        Query the reset time and remaining amount for the limit
 
         :param item: The rate limit item
-        :param identifiers: variable list of strings to uniquely identify the
-         limit
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
         :return: (reset time, remaining)
         """
         remaining = max(0, item.amount - self.storage().get(item.key_for(*identifiers)))
@@ -173,11 +171,11 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
 
     def hit(self, item: RateLimitItem, *identifiers) -> bool:
         """
-        creates a hit on the rate limit and returns True if successful.
+        Consume the rate limit
 
         :param item: The rate limit item
-        :param identifiers: variable list of strings to uniquely identify the
-         limit
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
         """
 
         return (

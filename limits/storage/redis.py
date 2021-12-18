@@ -145,21 +145,22 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
     Rate limit storage with redis as backend.
 
-    Depends on the `redis` package.
+    Depends on the :pypi:`redis`.
     """
 
     STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]
+    """The storage scheme for redis"""
 
     def __init__(self, uri: str, **options):
         """
-        :param uri: uri of the form `redis://[:password]@host:port`,
-         `redis://[:password]@host:port/db`,
-         `rediss://[:password]@host:port`, `redis+unix:///path/to/sock` etc.
+        :param uri: uri of the form ``redis://[:password]@host:port``,
+         ``redis://[:password]@host:port/db``,
+         ``rediss://[:password]@host:port``, ``redis+unix:///path/to/sock`` etc.
          This uri is passed directly to :func:`redis.from_url` except for the
-         case of `redis+unix` where it is replaced with `unix`.
+         case of ``redis+unix://`` where it is replaced with ``unix://``.
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.Redis`
-        :raise ConfigurationError: when the redis library is not available
+        :raise ConfigurationError: when the :pypi:`redis` library is not available
         """
         redis = get_dependency("redis")
         if not redis:

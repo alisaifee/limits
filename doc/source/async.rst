@@ -1,8 +1,9 @@
-#############
+=============
 Async Support
-#############
+=============
+
 .. versionadded:: 2.1
-.. danger:: Experimental
+.. warning:: Experimental
 
 A new namespace ``limits.aio`` is available which mirrors the original
 ``limits.storage`` and ``limits.strategies`` packages.
@@ -13,9 +14,8 @@ The following async storage backends are implemented:
  - Redis (via `aredis <https://aredis.readthedocs.org>`_)
  - Memcached (via `emcache <https://emcache.readthedocs.org>`_)
 
-***********
 Quick start
-***********
+===========
 
 This example demonstrates the subtle differences in the ``limits.aio`` namespace:
 

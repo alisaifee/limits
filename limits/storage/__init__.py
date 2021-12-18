@@ -1,5 +1,12 @@
+"""
+Implementations of storage backends to be used with
+:class:`limits.strategies.RateLimiter` strategies
+"""
+
+from typing import Union
 import urllib
 
+import limits
 from limits.errors import ConfigurationError
 from .memory import MemoryStorage
 
@@ -13,18 +20,44 @@ from .memcached import MemcachedStorage
 from .mongodb import MongoDBStorage
 from .gae_memcached import GAEMemcachedStorage
 
+StorageTypes = Union[Storage, "limits.aio.storage.Storage"]
 
-def storage_from_string(storage_string: str, **options):
+
+def storage_from_string(storage_string: str, **options) -> StorageTypes:
     """
-    factory function to get an instance of the storage class based
-    on the uri of the storage
+    Factory function to get an instance of the storage class based
+    on the uri of the storage. In most cases using it should be sufficient
+    instead of directly instantiating the storage classes. for example::
 
-    :param storage_string: a string of the form method://host:port
-    :return: an instance of :class:`flask_limiter.storage.Storage`
+        from limits.storage import storage_from_string
+
+        memory = from_string("memory://")
+        memcached = from_string("memcached://localhost:11211")
+        redis = from_string("redis://localhost:6379")
+
+    The same function can be used to construct the :ref:`storage:async storage`
+    variants, for example::
+
+        from limits.storage import storage_from_string
+
+        memory = storage_from_string("async+memory://")
+        memcached = storage_from_string("async+memcached://localhost:11211")
+        redis = storage_from_string("asycn+redis://localhost:6379")
+
+    :param storage_string: a string of the form ``scheme://host:port``.
+     More details about supported storage schemes can be found at
+     :ref:`storage:storage scheme`
+    :raises ConfigurationError: when the :attr:`storage_string` cannot be
+     mapped to a registered :class:`limits.storage.Storage`
+     or :class:`limits.aio.storage.Storage` instance.
+
+
     """
     scheme = urllib.parse.urlparse(storage_string).scheme
+
     if scheme not in SCHEMES:
         raise ConfigurationError("unknown storage scheme : %s" % storage_string)
+
     return SCHEMES[scheme](storage_string, **options)
 
 

@@ -3,7 +3,7 @@
 """
 from __future__ import annotations
 from functools import total_ordering
-from typing import cast, Dict, Optional, Tuple, Type, Union
+from typing import cast, Dict, NamedTuple, Optional, Type, Union
 
 
 def safe_string(value: Union[bytes, str, int]) -> str:
@@ -17,13 +17,18 @@ def safe_string(value: Union[bytes, str, int]) -> str:
     return str(value)
 
 
+class Granularity(NamedTuple):
+    seconds: int
+    name: str
+
+
 TIME_TYPES = dict(
-    day=(60 * 60 * 24, "day"),
-    month=(60 * 60 * 24 * 30, "month"),
-    year=(60 * 60 * 24 * 30 * 12, "year"),
-    hour=(60 * 60, "hour"),
-    minute=(60, "minute"),
-    second=(1, "second"),
+    day=Granularity(60 * 60 * 24, "day"),
+    month=Granularity(60 * 60 * 24 * 30, "month"),
+    year=Granularity(60 * 60 * 24 * 30 * 12, "year"),
+    hour=Granularity(60 * 60, "hour"),
+    minute=Granularity(60, "minute"),
+    second=Granularity(1, "second"),
 )
 
 GRANULARITIES: Dict[str, Type[RateLimitItem]] = {}
@@ -33,8 +38,8 @@ class RateLimitItemMeta(type):
     def __new__(cls, name, parents, dct):
         granularity = super(RateLimitItemMeta, cls).__new__(cls, name, parents, dct)
 
-        if "granularity" in dct:
-            GRANULARITIES[dct["granularity"][1]] = cast(
+        if "GRANULARITY" in dct:
+            GRANULARITIES[dct["GRANULARITY"][1]] = cast(
                 Type[RateLimitItem], granularity
             )
 
@@ -49,12 +54,18 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
     namespace, amount and granularity multiples of the rate limiting window.
 
     :param amount: the rate limit amount
-    :param multiples: multiple of the 'per' granularity
+    :param multiples: multiple of the 'per' :attr:`GRANULARITY`
      (e.g. 'n' per 'm' seconds)
     :param namespace: category for the specific rate limit
     """
 
     __slots__ = ["namespace", "amount", "multiples", "granularity"]
+
+    GRANULARITY: Granularity
+    """
+    A tuple describing the granularity of this limit as
+    (number of seconds, name)
+    """
 
     def __init__(
         self, amount: int, multiples: Optional[int] = 1, namespace: str = "LIMITER"
@@ -62,26 +73,30 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
         self.namespace = namespace
         self.amount = int(amount)
         self.multiples = int(multiples or 1)
-        self.granularity: Tuple[int, str]
 
     @classmethod
     def check_granularity_string(cls, granularity_string: str) -> bool:
         """
-        checks if this instance matches a granularity string
-        of type 'n per hour' etc.
+        Checks if this instance matches a *granularity_string*
+        of type ``n per hour``, ``n per minute`` etc,
+        by comparing with :attr:`GRANULARITY`
+
         """
 
-        return granularity_string.lower() in cls.granularity[1:]
+        return granularity_string.lower() in cls.GRANULARITY.name
 
     def get_expiry(self) -> int:
         """
-        :return: the size of the window in seconds.
+        :return: the duration the limit is enforced for in seconds.
         """
 
-        return self.granularity[0] * self.multiples
+        return self.GRANULARITY.seconds * self.multiples
 
     def key_for(self, *identifiers) -> str:
         """
+        Constructs a key for the current limit and any additional
+        identifiers provided.
+
         :param identifiers: a list of strings to append to the key
         :return: a string key identifying this resource with
          each identifier appended with a '/' delimiter.
@@ -91,20 +106,20 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
             + [
                 safe_string(self.amount),
                 safe_string(self.multiples),
-                self.granularity[1],
+                self.GRANULARITY.name,
             ]
         )
 
         return "%s/%s" % (self.namespace, remainder)
 
     def __eq__(self, other):
-        return self.amount == other.amount and self.granularity == other.granularity
+        return self.amount == other.amount and self.GRANULARITY == other.GRANULARITY
 
     def __repr__(self):
-        return "%d per %d %s" % (self.amount, self.multiples, self.granularity[1])
+        return "%d per %d %s" % (self.amount, self.multiples, self.GRANULARITY.name)
 
     def __lt__(self, other):
-        return self.granularity[0] < other.granularity[0]
+        return self.GRANULARITY.seconds < other.GRANULARITY.seconds
 
 
 class RateLimitItemPerYear(RateLimitItem):
@@ -112,7 +127,8 @@ class RateLimitItemPerYear(RateLimitItem):
     per year rate limited resource.
     """
 
-    granularity = TIME_TYPES["year"]
+    GRANULARITY = TIME_TYPES["year"]
+    """A year"""
 
 
 class RateLimitItemPerMonth(RateLimitItem):
@@ -120,7 +136,8 @@ class RateLimitItemPerMonth(RateLimitItem):
     per month rate limited resource.
     """
 
-    granularity = TIME_TYPES["month"]
+    GRANULARITY = TIME_TYPES["month"]
+    """A month"""
 
 
 class RateLimitItemPerDay(RateLimitItem):
@@ -128,7 +145,8 @@ class RateLimitItemPerDay(RateLimitItem):
     per day rate limited resource.
     """
 
-    granularity = TIME_TYPES["day"]
+    GRANULARITY = TIME_TYPES["day"]
+    """A day"""
 
 
 class RateLimitItemPerHour(RateLimitItem):
@@ -136,7 +154,8 @@ class RateLimitItemPerHour(RateLimitItem):
     per hour rate limited resource.
     """
 
-    granularity = TIME_TYPES["hour"]
+    GRANULARITY = TIME_TYPES["hour"]
+    """An hour"""
 
 
 class RateLimitItemPerMinute(RateLimitItem):
@@ -144,7 +163,8 @@ class RateLimitItemPerMinute(RateLimitItem):
     per minute rate limited resource.
     """
 
-    granularity = TIME_TYPES["minute"]
+    GRANULARITY = TIME_TYPES["minute"]
+    """A minute"""
 
 
 class RateLimitItemPerSecond(RateLimitItem):
@@ -152,4 +172,5 @@ class RateLimitItemPerSecond(RateLimitItem):
     per second rate limited resource.
     """
 
-    granularity = TIME_TYPES["second"]
+    GRANULARITY = TIME_TYPES["second"]
+    """A second"""

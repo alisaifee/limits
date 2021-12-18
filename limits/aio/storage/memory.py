@@ -22,12 +22,16 @@ class MemoryStorage(Storage, MovingWindowSupport):
     as an in memory storage for fixed and elastic window strategies,
     and a simple list to implement moving window strategy.
 
-    .. danger:: Experimental
+    .. warning:: This is a beta feature
     .. versionadded:: 2.1
 
     """
 
     STORAGE_SCHEME = ["async+memory"]
+    """
+    The storage scheme for in process memory storage for use in an
+    async context
+    """
 
     def __init__(self, uri: Optional[str] = None, **_: Dict) -> None:
         self.storage: Counter = Counter()

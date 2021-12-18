@@ -1,3 +1,8 @@
+"""
+Implementations of storage backends to be used with
+:class:`limits.aio.strategies.RateLimiter` strategies
+"""
+
 from .base import Storage
 from .base import MovingWindowSupport
 from .memcached import MemcachedStorage

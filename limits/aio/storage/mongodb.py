@@ -26,31 +26,35 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
     Depends on the :pypi:`motor` package.
 
-    .. danger:: Experimental
+    .. warning:: This is a beta feature
     .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+mongodb"]
+    """
+    The storage scheme for MongoDB for use in an async context
+    """
 
     DEFAULT_OPTIONS = {
         "serverSelectionTimeoutMS": 100,
         "socketTimeoutMS": 100,
         "connectTimeoutMS": 100,
     }
-    "Default options passed to the :class:`~motor.motor_asyncio.AsyncIOMotorClient`"
+    "Default options passed to :class:`~motor.motor_asyncio.AsyncIOMotorClient`"
 
     DEPENDENCIES = ["motor.motor_asyncio", "pymongo"]
 
     def __init__(self, uri: str, database_name: str = "limits", **options):
         """
-        :param uri: uri of the form `async+mongodb://[user:password]@host:port?...`,
+        :param uri: uri of the form ``async+mongodb://[user:password]@host:port?...``,
          This uri is passed directly to :class:`~motor.motor_asyncio.AsyncIOMotorClient`
         :param database_name: The database to use for storing the rate limit
-         collections (Default: limits).
+         collections.
         :param options: all remaining keyword arguments are merged with
          :data:`DEFAULT_OPTIONS` and passed to the constructor of
          :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-        :raise ConfigurationError: when the pymongo library is not available
+        :raise ConfigurationError: when the :pypi:`motor` or :pypi:`pymongo` are
+         not available
         """
 
         mongo_opts = options.copy()
@@ -162,7 +166,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
     async def check(self) -> bool:
         """
-        check if storage is healthy
+        Check if storage is healthy by calling
+        :meth:`motor.motor_asyncio.AsyncIOMotorClient.server_info`
         """
         try:
             await self.storage.server_info()

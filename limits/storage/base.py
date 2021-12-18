@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from abc import ABC
+from typing import Optional
 from typing import Tuple
+from typing import List
 
 import threading
 
@@ -11,6 +13,9 @@ class Storage(metaclass=StorageRegistry):
     """
     Base class to extend when implementing a storage backend.
     """
+
+    STORAGE_SCHEME: Optional[List[str]]
+    """The storage schemes to register against this implementation"""
 
     def __init__(self, uri: str = None, **options):
         self.lock = threading.RLock()
@@ -59,6 +64,7 @@ class Storage(metaclass=StorageRegistry):
     def clear(self, key: str):
         """
         resets the rate limit key
+
         :param key: the key to clear rate limits for
         """
         raise NotImplementedError
