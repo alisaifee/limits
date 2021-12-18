@@ -42,13 +42,13 @@ variables which result in the classes getting registered with the **limits** sto
             self.host = urlparse.urlparse(uri).netloc
             self.port = urlparse.urlparse(uri).port
 
-        def check(self):
+        def check(self) -> bool:
             return True
 
-        def get_expiry(self, key):
+        def get_expiry(self, key:str) -> int:
             return int(time.time())
 
-        def incr(self, key, expiry, elastic_expiry=False):
+        def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
             return
 
         def get(self, key):
@@ -74,9 +74,7 @@ variables which result in the classes getting registered with the **limits** sto
         def get(self, key):
             return 0
 
-        def acquire_entry(
-            self, key, limit, expiry, no_add=False
-        ):
+        def acquire_entry(self, key, limit, expiry):
             return True
 
         def get_moving_window(

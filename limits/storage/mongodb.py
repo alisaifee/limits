@@ -187,13 +187,11 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         return (int(timestamp), 0)
 
-    def acquire_entry(self, key: str, limit: int, expiry: int, no_add=False) -> bool:
+    def acquire_entry(self, key: str, limit: int, expiry: int) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
-        :param no_add: if False an entry is not actually acquired but
-         instead serves as a 'check'
         """
         timestamp = time.time()
         try:
@@ -201,13 +199,12 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                 "$push": {"entries": {"$each": [], "$position": 0, "$slice": limit}}
             }
 
-            if not no_add:
-                updates["$set"] = {
-                    "expireAt": (
-                        datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
-                    )
-                }
-                updates["$push"]["entries"]["$each"] = [timestamp]
+            updates["$set"] = {
+                "expireAt": (
+                    datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
+                )
+            }
+            updates["$push"]["entries"]["$each"] = [timestamp]
             self.windows.update_one(
                 {
                     "_id": key,

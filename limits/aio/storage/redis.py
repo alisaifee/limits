@@ -41,13 +41,10 @@ class RedisInteractor:
             return false
         end
         local limit = tonumber(ARGV[2])
-        local no_add = tonumber(ARGV[4])
 
-        if 0 == no_add then
-            redis.call('lpush', KEYS[1], timestamp)
-            redis.call('ltrim', KEYS[1], 0, limit - 1)
-            redis.call('expire', KEYS[1], expiry)
-        end
+        redis.call('lpush', KEYS[1], timestamp)
+        redis.call('ltrim', KEYS[1], 0, limit - 1)
+        redis.call('expire', KEYS[1], expiry)
 
         return true
         """
@@ -124,19 +121,17 @@ class RedisInteractor:
         return window or (timestamp, 0)
 
     async def _acquire_entry(
-        self, key: str, limit: int, expiry: int, connection, no_add=False
+        self, key: str, limit: int, expiry: int, connection
     ) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
-        :param no_add: if False an entry is not actually acquired but
-         instead serves as a 'check'
         :param connection: Redis connection
         """
         timestamp = time.time()
         acquired = await self.lua_acquire_window.execute(
-            [key], [timestamp, limit, expiry, int(no_add)]
+            [key], [timestamp, limit, expiry]
         )
         return bool(acquired)
 
@@ -233,16 +228,14 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         """
         return await super(RedisStorage, self)._clear(key, self.storage)
 
-    async def acquire_entry(self, key, limit, expiry, no_add=False) -> bool:
+    async def acquire_entry(self, key, limit, expiry) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
-        :param no_add: if False an entry is not actually acquired but
-         instead serves as a 'check'
         """
         return await super(RedisStorage, self)._acquire_entry(
-            key, limit, expiry, self.storage, no_add=no_add
+            key, limit, expiry, self.storage
         )
 
     async def get_expiry(self, key: str) -> int:

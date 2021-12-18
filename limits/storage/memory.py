@@ -90,13 +90,11 @@ class MemoryStorage(Storage, MovingWindowSupport):
         self.expirations.pop(key, None)
         self.events.pop(key, None)
 
-    def acquire_entry(self, key: str, limit: int, expiry: int, no_add=False) -> bool:
+    def acquire_entry(self, key: str, limit: int, expiry: int) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
-        :param no_add: if False an entry is not actually acquired
-         but instead serves as a 'check'
         """
         self.events.setdefault(key, [])
         self.__schedule_expiry()
@@ -109,9 +107,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
         if entry and entry.atime >= timestamp - expiry:
             return False
         else:
-            if not no_add:
-                self.events[key].insert(0, LockableEntry(expiry))
-
+            self.events[key].insert(0, LockableEntry(expiry))
             return True
 
     def get_expiry(self, key: str) -> int:

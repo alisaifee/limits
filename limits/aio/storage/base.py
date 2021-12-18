@@ -93,15 +93,11 @@ class MovingWindowSupport(ABC):
     .. versionadded:: 2.1
     """
 
-    async def acquire_entry(
-        self, key: str, limit: int, expiry: int, no_add=False
-    ) -> bool:
+    async def acquire_entry(self, key: str, limit: int, expiry: int) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
-        :param no_add: if False an entry is not actually acquired
-         but instead serves as a 'check'
         """
         raise NotImplementedError
 
