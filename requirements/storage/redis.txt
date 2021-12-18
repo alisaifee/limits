@@ -1,1 +1,1 @@
-redis[hiredis]>3,<4.0.0
+redis>3,<4.0.0
