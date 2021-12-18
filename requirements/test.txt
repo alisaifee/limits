@@ -4,6 +4,7 @@
 -r storage/mongodb.txt
 -r storage/memcached.txt
 -r storage/async-memcached.txt
+-r storage/async-mongodb.txt
 -r storage/async-redis.txt
 
 # Test related packages

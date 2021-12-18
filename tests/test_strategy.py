@@ -3,6 +3,7 @@ import time
 
 import pytest
 import pymemcache
+import pymongo
 import redis
 import redis.sentinel
 import rediscluster
@@ -13,6 +14,7 @@ from limits.storage import (
     MemoryStorage,
     RedisStorage,
     MemcachedStorage,
+    MongoDBStorage,
     RedisSentinelStorage,
 )
 from limits.strategies import (
@@ -32,6 +34,8 @@ class TestWindow:
             "localhost-redis-sentinel"
         ).flushall()
         rediscluster.RedisCluster("localhost", 7000).flushall()
+        pymongo.MongoClient("mongodb://localhost:37017").limits.windows.drop()
+        pymongo.MongoClient("mongodb://localhost:37017").limits.counters.drop()
 
     def test_fixed_window(self):
         storage = MemoryStorage()
@@ -48,6 +52,7 @@ class TestWindow:
             assert limiter.get_window_stats(limit)[1] == 10
             assert limiter.hit(limit)
 
+    @pytest.mark.flaky
     def test_fixed_window_with_elastic_expiry_in_memory(self):
         storage = MemoryStorage()
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -68,6 +73,7 @@ class TestWindow:
             assert limiter.get_window_stats(limit)[1] == 9
             assert limiter.get_window_stats(limit)[0] == start + 2
 
+    @pytest.mark.flaky
     def test_fixed_window_with_elastic_expiry_memcache(self):
         storage = MemcachedStorage("memcached://localhost:22122")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -78,6 +84,7 @@ class TestWindow:
         time.sleep(1)
         assert not limiter.hit(limit)
 
+    @pytest.mark.flaky
     def test_fixed_window_with_elastic_expiry_memcache_concurrency(self):
         storage = MemcachedStorage("memcached://localhost:22122")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -94,6 +101,16 @@ class TestWindow:
         assert limiter.get_window_stats(limit)[1] == 0
         assert start + 2 <= limiter.get_window_stats(limit)[0] <= start + 3
         assert storage.get(limit.key_for()) == 10
+
+    def test_fixed_window_with_elastic_expiry_mongo(self):
+        storage = MongoDBStorage("mongodb://localhost:37017")
+        limiter = FixedWindowElasticExpiryRateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+        assert all([limiter.hit(limit) for _ in range(0, 10)])
+        time.sleep(1)
+        assert not limiter.hit(limit)
+        time.sleep(1)
+        assert not limiter.hit(limit)
 
     def test_fixed_window_with_elastic_expiry_redis(self):
         storage = RedisStorage("redis://localhost:7379")
@@ -140,6 +157,21 @@ class TestWindow:
 
     def test_moving_window_redis(self):
         storage = RedisStorage("redis://localhost:7379")
+        limiter = MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        for i in range(0, 10):
+            assert limiter.hit(limit)
+            assert limiter.get_window_stats(limit)[1] == 10 - (i + 1)
+            time.sleep(2 * 0.095)
+        assert not limiter.hit(limit)
+        time.sleep(0.4)
+        assert limiter.hit(limit)
+        assert limiter.hit(limit)
+        assert limiter.get_window_stats(limit)[1] == 0
+
+    def test_moving_window_mongo(self):
+        storage = MongoDBStorage("mongodb://localhost:37017")
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
 

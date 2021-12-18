@@ -2,6 +2,7 @@ import time
 import urllib
 
 from typing import Any
+from typing import Dict
 from typing import Optional
 
 from limits.errors import ConfigurationError
@@ -148,8 +149,9 @@ class RedisInteractor:
 
     async def _check(self, connection) -> bool:
         """
-        :param connection: Redis connection
         check if storage is healthy
+
+        :param connection: Redis connection
         """
         try:
             return connection.ping()
@@ -168,7 +170,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
 
     STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
-    DEPENDENCY = "aredis"
+    DEPENDENCIES = ["aredis"]
 
     def __init__(self, uri: str, **options) -> None:
         """
@@ -186,9 +188,12 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         uri = uri.replace("async+redis", "redis", 1)
         uri = uri.replace("redis+unix", "unix")
 
-        self.storage = self.dependency.StrictRedis.from_url(uri, **options)
-        self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
+
+        self.dependency = self.dependencies["aredis"]
+        self.storage = self.dependency.StrictRedis.from_url(uri, **options)
+
+        self.initialize_storage(uri)
 
     def initialize_storage(self, _uri: str) -> None:
         # all these methods are coroutines, so must be called with await
@@ -296,11 +301,12 @@ class RedisClusterStorage(RedisStorage):
 
         options.setdefault("max_connections", 1000)
 
+        super(RedisStorage, self).__init__()
+        self.dependency = self.dependencies["aredis"]
         self.storage = self.dependency.StrictRedisCluster(
             startup_nodes=cluster_hosts, **options
         )
         self.initialize_storage(uri)
-        super(RedisStorage, self).__init__()
 
     async def reset(self):
         """
@@ -330,13 +336,13 @@ class RedisSentinelStorage(RedisStorage):
     """
 
     STORAGE_SCHEME = ["async+redis+sentinel"]
-    DEPENDENCY = "aredis.sentinel"
+    DEPENDENCIES = ["aredis.sentinel"]
 
     def __init__(
         self,
         uri: str,
         service_name: str = None,
-        sentinel_kwargs: Optional[dict[str, Any]] = None,
+        sentinel_kwargs: Optional[Dict[str, Any]] = None,
         **options,
     ):
         """
@@ -344,22 +350,22 @@ class RedisSentinelStorage(RedisStorage):
          `async+redis+sentinel://host:port,host:port/service_name`
         :param service_name, optional: sentinel service name
          (if not provided in `uri`)
-        :param sentinel_kwargs, optional: sentinel service name
-         (if not provided in `uri`)
+        :param sentinel_kwargs, optional: kwargs to pass as
+         ``sentinel_kwargs`` to :class:`aredis.sentinel.Sentinel`
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`redis.sentinel.Sentinel`
+         directly to the constructor of :class:`aredis.sentinel.Sentinel`
         :raise ConfigurationError: when the aredis library is not available
          or if the redis master host cannot be pinged.
         """
 
         parsed = urllib.parse.urlparse(uri)
         sentinel_configuration = []
-        password = None
         connection_options = options.copy()
         sentinel_options = sentinel_kwargs.copy() if sentinel_kwargs else {}
 
         if parsed.username:
             sentinel_options["username"] = parsed.username
+
         if parsed.password:
             sentinel_options["password"] = parsed.password
 
@@ -377,6 +383,10 @@ class RedisSentinelStorage(RedisStorage):
 
         connection_options.setdefault("stream_timeout", 0.2)
 
+        super(RedisStorage, self).__init__()
+
+        self.dependency = self.dependencies["aredis.sentinel"]
+
         self.sentinel = self.dependency.Sentinel(
             sentinel_configuration,
             sentinel_kwargs=sentinel_options,
@@ -385,25 +395,24 @@ class RedisSentinelStorage(RedisStorage):
         self.storage = self.sentinel.master_for(self.service_name)
         self.storage_slave = self.sentinel.slave_for(self.service_name)
         self.initialize_storage(uri)
-        super(RedisStorage, self).__init__()
 
     async def get(self, key: str) -> int:
         """
         :param key: the key to get the counter value for
         """
 
-        return super(RedisStorage, self)._get(key, self.storage_slave)
+        return await super(RedisStorage, self)._get(key, self.storage_slave)
 
     async def get_expiry(self, key: str) -> int:
         """
         :param key: the key to get the expiry for
         """
 
-        return super(RedisStorage, self)._get_expiry(key, self.storage_slave)
+        return await super(RedisStorage, self)._get_expiry(key, self.storage_slave)
 
     async def check(self) -> bool:
         """
         check if storage is healthy
         """
 
-        return super(RedisStorage, self)._check(self.storage_slave)
+        return await super(RedisStorage, self)._check(self.storage_slave)

@@ -97,6 +97,11 @@ Memcached
 
 .. autoclass:: limits.aio.storage.MemcachedStorage
 
+MongoDB
+-------
+
+.. autoclass:: limits.aio.storage.MongoDBStorage
+
 Abstract storage classes
 ========================
 

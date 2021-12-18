@@ -32,8 +32,8 @@ def get_dependency(dep) -> Any:
     safe function to import a module programmatically
     """
     try:
-        __import__(dep)
-
+        if dep not in sys.modules:
+            __import__(dep)
         return sys.modules[dep]
     except ImportError:  # pragma: no cover
         return None

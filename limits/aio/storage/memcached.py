@@ -15,28 +15,28 @@ class MemcachedStorage(Storage):
     """
 
     STORAGE_SCHEME = ["async+memcached"]
-    DEPENDENCY = "emcache"
+    DEPENDENCIES = ["emcache"]
 
     def __init__(self, uri: str, **options):
         """
         :param uri: memcached location of the form
-         `amemcached://host:port,host:port`
+         `async+memcached://host:port,host:port`
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`emcache.Client`
-        :raise ConfigurationError: when `aiomcache` is not available
+        :raise ConfigurationError: when `emcache` is not available
         """
         parsed = urllib.parse.urlparse(uri)
         self.hosts = []
 
-        for loc in parsed.netloc.strip().split(","):
-            if not loc:
-                continue
-            host, port = loc.split(":")
+        for host, port in (
+            loc.split(":") for loc in parsed.netloc.strip().split(",") if loc.strip()
+        ):
             self.hosts.append((host, int(port)))
 
         self._options = options
         self._storage = None
         super(MemcachedStorage, self).__init__()
+        self.dependency = self.dependencies["emcache"]
 
     async def get_storage(self):
         if not self._storage:
@@ -83,6 +83,7 @@ class MemcachedStorage(Storage):
 
         if not added:
             value = await storage.increment(limit_key, 1) or 1
+
             if elastic_expiry:
                 await storage.touch(limit_key, exptime=expiry)
             await storage.set(
@@ -91,6 +92,7 @@ class MemcachedStorage(Storage):
                 exptime=expiry,
                 noreply=False,
             )
+
             return value
 
         return 1
@@ -100,10 +102,9 @@ class MemcachedStorage(Storage):
         :param key: the key to get the expiry for
         """
         storage = await self.get_storage()
+        item = await storage.get(f"{key}/expires".encode("utf-8"))
 
-        return int(
-            float(await storage.get(f"{key}/expires".encode("utf-8")) or time.time())
-        )
+        return int(item and float(item.value) or time.time())
 
     async def check(self) -> bool:
         """

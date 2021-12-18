@@ -17,6 +17,10 @@ class TestAsyncMemoryStorage:
         self.storage = MemoryStorage()
 
     @pytest.mark.asyncio
+    async def test_init(self):
+        assert await self.storage.check()
+
+    @pytest.mark.asyncio
     async def test_in_memory(self):
         with hiro.Timeline().freeze() as timeline:
             limiter = FixedWindowRateLimiter(self.storage)

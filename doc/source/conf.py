@@ -70,6 +70,7 @@ intersphinx_mapping = {
     "python": ("http://docs.python.org/", None),
     "aredis": ("https://aredis.readthedocs.io/en/latest/", None),
     "emcache": ("https://emcache.readthedocs.io/en/latest/", None),
+    "motor": ("https://motor.readthedocs.io/en/stable/", None),
     "redis-py-cluster": ("https://redis-py-cluster.readthedocs.io/en/latest/", None),
     "redis-py": ("https://redis-py.readthedocs.io/en/latest/", None),
     "pymemcache": ("https://pymemcache.readthedocs.io/en/latest/", None),

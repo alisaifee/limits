@@ -1,99 +1,128 @@
+import asyncio
 import datetime
+import functools
 import time
+
 from typing import Any
 from typing import Dict
 
 from .base import Storage
 from .base import MovingWindowSupport
 
-from ..errors import ConfigurationError
-from ..util import get_dependency
+
+def ensure_indices(func):
+    @functools.wraps(func)
+    async def wrapped(self, *args):
+        await self.create_indices()
+
+        return await func(self, *args)
+
+    return wrapped
 
 
 class MongoDBStorage(Storage, MovingWindowSupport):
     """
     Rate limit storage with MongoDB as backend.
 
-    Depends on the :mod:`pymongo` library.
+    Depends on the :pypi:`motor` package.
 
     .. danger:: Experimental
     .. versionadded:: 2.1
     """
 
-    STORAGE_SCHEME = ["mongodb"]
+    STORAGE_SCHEME = ["async+mongodb"]
+
     DEFAULT_OPTIONS = {
         "serverSelectionTimeoutMS": 100,
         "socketTimeoutMS": 100,
         "connectTimeoutMS": 100,
     }
-    "Default options passed to the :class:`~pymongo.mongo_client.MongoClient`"
+    "Default options passed to the :class:`~motor.motor_asyncio.AsyncIOMotorClient`"
+
+    DEPENDENCIES = ["motor.motor_asyncio", "pymongo"]
 
     def __init__(self, uri: str, database_name: str = "limits", **options):
         """
-        :param uri: uri of the form `mongodb://[user:password]@host:port?...`,
-         This uri is passed directly to :class:`~pymongo.mongo_client.MongoClient`
+        :param uri: uri of the form `async+mongodb://[user:password]@host:port?...`,
+         This uri is passed directly to :class:`~motor.motor_asyncio.AsyncIOMotorClient`
         :param database_name: The database to use for storing the rate limit
          collections (Default: limits).
         :param options: all remaining keyword arguments are merged with
          :data:`DEFAULT_OPTIONS` and passed to the constructor of
-         :class:`~pymongo.mongo_client.MongoClient`
+         :class:`~motor.motor_asyncio.AsyncIOMotorClient`
         :raise ConfigurationError: when the pymongo library is not available
         """
-        self.lib = get_dependency("pymongo")
-
-        if not self.lib:
-            raise ConfigurationError("pymongo prerequisite not available")
 
         mongo_opts = options.copy()
         [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]
-        self.storage = self.lib.MongoClient(uri, **mongo_opts)
-        self.counters = self.storage.get_database(database_name).counters
-        self.windows = self.storage.get_database(database_name).windows
-        self.__initialize_database()
+        uri = uri.replace("async+mongodb", "mongodb", 1)
+
         super(MongoDBStorage, self).__init__(uri, **options)
 
-    def __initialize_database(self):
-        self.counters.create_index("expireAt", expireAfterSeconds=0)
-        self.windows.create_index("expireAt", expireAfterSeconds=0)
+        self.dependency = self.dependencies["motor.motor_asyncio"]
+        self.proxy_dependency = self.dependencies["pymongo"]
 
-    def reset(self) -> int:
+        self.storage = self.dependency.AsyncIOMotorClient(uri, **mongo_opts)
+        self.__database_name = database_name
+        self.__indices_created = False
+
+    @property
+    def database(self):
+        return self.storage.get_database(self.__database_name)
+
+    async def create_indices(self):
+        if not self.__indices_created:
+            await asyncio.gather(
+                self.database.counters.create_index("expireAt", expireAfterSeconds=0),
+                self.database.windows.create_index("expireAt", expireAfterSeconds=0),
+            )
+        self.__indices_created = True
+
+    async def reset(self) -> int:
         """
         Delete all rate limit keys in the rate limit collections (counters, windows)
         """
-        num_keys = self.counters.count_documents({}) + self.windows.count_documents({})
-        self.counters.drop()
-        self.windows.drop()
+        num_keys = sum(
+            await asyncio.gather(
+                self.database.counters.count_documents({}),
+                self.database.windows.count_documents({}),
+            )
+        )
+        await asyncio.gather(
+            self.database.counters.drop(), self.database.windows.drop()
+        )
 
         return num_keys
 
-    def clear(self, key: str):
+    async def clear(self, key: str):
         """
         :param key: the key to clear rate limits for
         """
-        self.counters.find_one_and_delete({"_id": key})
-        self.windows.find_one_and_delete({"_id": key})
+        await self.database.counters.find_one_and_delete({"_id": key})
+        await self.database.windows.find_one_and_delete({"_id": key})
 
-    def get_expiry(self, key: str) -> int:
+    async def get_expiry(self, key: str) -> int:
         """
         :param key: the key to get the expiry for
         """
-        counter = self.counters.find_one({"_id": key})
+        counter = await self.database.counters.find_one({"_id": key})
         expiry = counter["expireAt"] if counter else datetime.datetime.utcnow()
 
         return int(time.mktime(expiry.timetuple()))
 
-    def get(self, key: str):
+    async def get(self, key: str):
         """
         :param key: the key to get the counter value for
         """
-        counter = self.counters.find_one(
+        counter = await self.database.counters.find_one(
             {"_id": key, "expireAt": {"$gte": datetime.datetime.utcnow()}},
             projection=["count"],
         )
 
         return counter and counter["count"] or 0
 
-    def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
+    @ensure_indices
+    async def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -102,7 +131,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         """
         expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
 
-        return self.counters.find_one_and_update(
+        response = await self.database.counters.find_one_and_update(
             {"_id": key},
             [
                 {
@@ -126,21 +155,23 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             ],
             upsert=True,
             projection=["count"],
-            return_document=self.lib.ReturnDocument.AFTER,
-        )["count"]
+            return_document=self.proxy_dependency.ReturnDocument.AFTER,
+        )
 
-    def check(self) -> bool:
+        return response["count"]
+
+    async def check(self) -> bool:
         """
         check if storage is healthy
         """
         try:
-            self.storage.server_info()
+            await self.storage.server_info()
 
             return True
         except:  # noqa: E722
             return False
 
-    def get_moving_window(self, key, limit, expiry):
+    async def get_moving_window(self, key, limit, expiry):
         """
         returns the starting point and the number of entries in the moving
         window
@@ -150,50 +181,47 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
-        result = list(
-            self.windows.aggregate(
-                [
-                    {"$match": {"_id": key}},
-                    {
-                        "$project": {
-                            "entries": {
-                                "$filter": {
-                                    "input": "$entries",
-                                    "as": "entry",
-                                    "cond": {
-                                        "$gte": [
-                                            "$$entry",
-                                            timestamp - expiry,
-                                        ]
-                                    },
-                                }
+        result = await self.database.windows.aggregate(
+            [
+                {"$match": {"_id": key}},
+                {
+                    "$project": {
+                        "entries": {
+                            "$filter": {
+                                "input": "$entries",
+                                "as": "entry",
+                                "cond": {
+                                    "$gte": [
+                                        "$$entry",
+                                        timestamp - expiry,
+                                    ]
+                                },
                             }
                         }
-                    },
-                    {"$unwind": "$entries"},
-                    {
-                        "$group": {
-                            "_id": "$_id",
-                            "max": {"$max": "$entries"},
-                            "count": {"$sum": 1},
-                        }
-                    },
-                ]
-            )
-        )
+                    }
+                },
+                {"$unwind": "$entries"},
+                {
+                    "$group": {
+                        "_id": "$_id",
+                        "max": {"$max": "$entries"},
+                        "count": {"$sum": 1},
+                    }
+                },
+            ]
+        ).to_list(length=1)
 
         if result:
             return (int(result[0]["max"]), result[0]["count"])
 
         return (int(timestamp), 0)
 
-    def acquire_entry(self, key: str, limit: int, expiry: int, no_add=False) -> bool:
+    @ensure_indices
+    async def acquire_entry(self, key: str, limit: int, expiry: int) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
-        :param no_add: if False an entry is not actually acquired but
-         instead serves as a 'check'
         """
         timestamp = time.time()
         try:
@@ -201,14 +229,13 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                 "$push": {"entries": {"$each": [], "$position": 0, "$slice": limit}}
             }
 
-            if not no_add:
-                updates["$set"] = {
-                    "expireAt": (
-                        datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
-                    )
-                }
-                updates["$push"]["entries"]["$each"] = [timestamp]
-            self.windows.update_one(
+            updates["$set"] = {
+                "expireAt": (
+                    datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
+                )
+            }
+            updates["$push"]["entries"]["$each"] = [timestamp]
+            await self.database.windows.update_one(
                 {
                     "_id": key,
                     "entries.%d" % (limit - 1): {"$not": {"$gte": timestamp - expiry}},
@@ -218,5 +245,5 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             )
 
             return True
-        except self.lib.errors.DuplicateKeyError:
+        except self.proxy_dependency.errors.DuplicateKeyError:
             return False

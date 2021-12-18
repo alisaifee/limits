@@ -11,7 +11,7 @@ by using the extras notation:
    and tests in CI.
 
 
-.. tabbed:: Default
+.. tabbed:: Standalone
 
    .. code:: console
 
@@ -23,7 +23,7 @@ by using the extras notation:
 
       $ pip install limits[redis]
 
-   Dependencies
+   Includes
 
    .. literalinclude:: ../../requirements/storage/redis.txt
 
@@ -33,7 +33,7 @@ by using the extras notation:
 
       $ pip install limits[rediscluster]
 
-   Dependencies
+   Includes
 
    .. literalinclude:: ../../requirements/storage/rediscluster.txt
 
@@ -43,7 +43,7 @@ by using the extras notation:
 
       $ pip install limits[memcached]
 
-   Dependencies
+   Includes
 
    .. literalinclude:: ../../requirements/storage/memcached.txt
 
@@ -53,7 +53,7 @@ by using the extras notation:
 
       $ pip install limits[mongodb]
 
-   Dependencies
+   Includes:
 
    .. literalinclude:: ../../requirements/storage/mongodb.txt
 
@@ -65,8 +65,8 @@ found in :ref:`storage`
 Async Storage
 *************
 
-If you are using an async code base you can install
-the storage dependencies along with the package.
+If you are using an async code base you can install the storage dependencies
+along with the package using the following extras:
 
 
 .. tabbed:: Redis
@@ -75,7 +75,7 @@ the storage dependencies along with the package.
 
       $ pip install limits[async-redis]
 
-   Dependencies
+   Includes:
 
    .. literalinclude:: ../../requirements/storage/async-redis.txt
 
@@ -85,8 +85,18 @@ the storage dependencies along with the package.
 
       $ pip install limits[async-memcached]
 
-   Dependencies
+   Includes:
 
    .. literalinclude:: ../../requirements/storage/async-memcached.txt
+
+.. tabbed:: MongoDB
+
+   .. code:: bash
+
+      $ pip install limits[async-mongodb]
+
+   Includes:
+
+   .. literalinclude:: ../../requirements/storage/async-mongodb.txt
 
 

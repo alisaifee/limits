@@ -1,6 +1,5 @@
 import time
 
-import mock
 import pytest  # type: ignore
 import redis
 import redis.sentinel
@@ -15,6 +14,7 @@ from limits.aio.strategies import (
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
 )
+from limits.errors import ConfigurationError
 
 
 @pytest.mark.asynchronous
@@ -90,13 +90,14 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
         redis.from_url(self.real_storage_url).flushall()
 
     @pytest.mark.asyncio
-    async def test_init_options(self):
-        with mock.patch("limits.aio.storage.base.get_dependency") as get_dependency:
-            storage_from_string(self.storage_url, connection_timeout=1)
-            assert (
-                get_dependency().StrictRedis.from_url.call_args[1]["connection_timeout"]
-                == 1
-            )
+    async def test_init_options(self, mocker):
+        lib = mocker.Mock()
+        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
+        assert await storage_from_string(self.storage_url, connection_timeout=1).check()
+        assert (
+            lib.StrictRedis.from_url.call_args[1]["connection_timeout"]
+            == 1
+        )
 
 
 @pytest.mark.asynchronous
@@ -107,13 +108,11 @@ class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
         redis.from_url("unix:///tmp/limits.redis.sock").flushall()
 
     @pytest.mark.asyncio
-    async def test_init_options(self):
-        with mock.patch("limits.aio.storage.base.get_dependency") as get_dependency:
-            storage_from_string(self.storage_url, connection_timeout=1)
-            assert (
-                get_dependency().StrictRedis.from_url.call_args[1]["connection_timeout"]
-                == 1
-            )
+    async def test_init_options(self, mocker):
+        lib = mocker.Mock()
+        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
+        assert await storage_from_string(self.storage_url, connection_timeout=1).check()
+        assert lib.StrictRedis.from_url.call_args[1]["connection_timeout"] == 1
 
 
 @pytest.mark.asynchronous
@@ -123,10 +122,11 @@ class TestAsyncRedisClusterStorage(AsyncSharedRedisTests):
         self.storage_url = "redis+cluster://localhost:7000"
         self.storage = RedisClusterStorage(f"async+{self.storage_url}")
 
-    def test_init_options(self, mocker):
+    @pytest.mark.asyncio
+    async def test_init_options(self, mocker):
         lib = mocker.Mock()
         mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
-        assert storage_from_string(
+        assert await storage_from_string(
             f"async+{self.storage_url}", max_connections=1
         ).check()
         assert lib.StrictRedisCluster.call_args[1]["max_connections"] == 1
@@ -143,10 +143,36 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
             self.service_name
         ).flushall()
 
-    def test_init_options(self, mocker):
+    @pytest.mark.asyncio
+    async def test_init_no_service_name(self, mocker):
         lib = mocker.Mock()
         mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
-        assert storage_from_string(
+        with pytest.raises(ConfigurationError):
+            await storage_from_string(
+                    f"async+{self.storage_url}", connection_timeout=1
+            )
+
+    @pytest.mark.asyncio
+    async def test_init_options(self, mocker):
+        lib = mocker.Mock()
+        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
+        assert await storage_from_string(
             f"async+{self.storage_url}/{self.service_name}", connection_timeout=1
-        )
+        ).check()
         assert lib.Sentinel.call_args[1]["connection_timeout"] == 1
+
+    @pytest.mark.parametrize(
+        'username, password, opts',
+        [
+            ('', '', {}),
+            ('username', '', {"username": "username"}),
+            ('', 'sekret', {"password": "sekret"}),
+        ]
+    )
+    @pytest.mark.asyncio
+    async def test_auth(self, mocker, username, password, opts):
+        lib = mocker.Mock()
+        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
+        storage_url = f"async+redis+sentinel://{username}:{password}@localhost:26379/service_name"
+        assert await storage_from_string(storage_url).check()
+        assert lib.Sentinel.call_args[1]["sentinel_kwargs"] == opts

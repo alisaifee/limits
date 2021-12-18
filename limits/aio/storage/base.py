@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from abc import ABC
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 from limits.storage.registry import StorageRegistry
@@ -16,22 +16,24 @@ class Storage(metaclass=StorageRegistry):
     .. versionadded:: 2.1
     """
 
-    DEPENDENCY: Optional[str] = None
+    DEPENDENCIES: List[str] = []
 
     def __init__(self, uri: Optional[str] = None, **options: Dict) -> None:
-        if self.DEPENDENCY:
-            assert self.dependency
+        self._dependencies: Dict[str, Any] = {}
 
     @property
-    def dependency(self):
-        dependency = get_dependency(self.DEPENDENCY)
+    def dependencies(self) -> Dict[str, Any]:
+        if not self._dependencies:
+            for name in self.DEPENDENCIES:
+                dependency = get_dependency(name)
 
-        if not dependency:
-            raise ConfigurationError(
-                f"{self.DEPENDENCY} prerequisite not available"
-            )  # pragma: no cover
+                if not dependency:
+                    raise ConfigurationError(
+                        f"{name} prerequisite not available"
+                    )  # pragma: no cover
+                self._dependencies[name] = dependency
 
-        return dependency
+        return self._dependencies
 
     @abstractmethod
     async def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:

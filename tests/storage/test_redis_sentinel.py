@@ -1,3 +1,4 @@
+import pytest
 import redis.sentinel
 
 from limits.storage import RedisSentinelStorage, storage_from_string
