@@ -67,6 +67,11 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self.proxy_dependency = self.dependencies["pymongo"]
 
         self.storage = self.dependency.AsyncIOMotorClient(uri, **mongo_opts)
+        # TODO: Fix this hack. It was noticed when running a benchmark
+        # with FastAPI - however - doesn't appear in unit tests or in an isolated
+        # use. Reference: https://jira.mongodb.org/browse/MOTOR-822
+        self.storage.get_io_loop = asyncio.get_running_loop
+
         self.__database_name = database_name
         self.__indices_created = False
 
