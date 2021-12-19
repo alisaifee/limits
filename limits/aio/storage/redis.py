@@ -6,72 +6,21 @@ from typing import Dict
 from typing import Optional
 
 from limits.errors import ConfigurationError
+from limits.util import get_package_data
+
 from .base import Storage
 from .base import MovingWindowSupport
 
 
 class RedisInteractor:
-    SCRIPT_MOVING_WINDOW = """
-        local items = redis.call('lrange', KEYS[1], 0, tonumber(ARGV[2]))
-        local expiry = tonumber(ARGV[1])
-        local a = 0
-        local oldest = nil
+    RES_DIR = "resources/redis/lua_scripts"
 
-        for idx=1,#items do
-            if tonumber(items[idx]) >= expiry then
-                a = a + 1
-
-                if oldest == nil then
-                    oldest = tonumber(items[idx])
-                end
-            else
-                break
-            end
-        end
-
-        return {oldest, a}
-        """
-
-    SCRIPT_ACQUIRE_MOVING_WINDOW = """
-        local entry = redis.call('lindex', KEYS[1], tonumber(ARGV[2]) - 1)
-        local timestamp = tonumber(ARGV[1])
-        local expiry = tonumber(ARGV[3])
-
-        if entry and tonumber(entry) >= timestamp - expiry then
-            return false
-        end
-        local limit = tonumber(ARGV[2])
-
-        redis.call('lpush', KEYS[1], timestamp)
-        redis.call('ltrim', KEYS[1], 0, limit - 1)
-        redis.call('expire', KEYS[1], expiry)
-
-        return true
-        """
-
-    SCRIPT_CLEAR_KEYS = """
-        local keys = redis.call('keys', KEYS[1])
-        local res = 0
-
-        for i=1,#keys,5000 do
-            res = res + redis.call(
-                'del', unpack(keys, i, math.min(i+4999, #keys))
-            )
-        end
-
-        return res
-        """
-
-    SCRIPT_INCR_EXPIRE = """
-        local current
-        current = redis.call("incr",KEYS[1])
-
-        if tonumber(current) == 1 then
-            redis.call("expire",KEYS[1],ARGV[1])
-        end
-
-        return current
-    """
+    SCRIPT_MOVING_WINDOW = get_package_data(f"{RES_DIR}/moving_window.lua")
+    SCRIPT_ACQUIRE_MOVING_WINDOW = get_package_data(
+        f"{RES_DIR}/acquire_moving_window.lua"
+    )
+    SCRIPT_CLEAR_KEYS = get_package_data(f"{RES_DIR}/clear_keys.lua")
+    SCRIPT_INCR_EXPIRE = get_package_data(f"{RES_DIR}/incr_expire.lua")
 
     lua_moving_window: Any
     lua_acquire_window: Any
@@ -87,8 +36,10 @@ class RedisInteractor:
         :param expiry: amount in seconds for the key to expire in
         """
         value = await connection.incr(key)
+
         if elastic_expiry or value == 1:
             await connection.expire(key, expiry)
+
         return value
 
     async def _get(self, key: str, connection) -> int:
@@ -96,6 +47,7 @@ class RedisInteractor:
         :param connection: Redis connection
         :param key: the key to get the counter value for
         """
+
         return int(await connection.get(key) or 0)
 
     async def _clear(self, key: str, connection) -> None:
@@ -118,6 +70,7 @@ class RedisInteractor:
         window = await self.lua_moving_window.execute(
             [key], [int(timestamp - expiry), limit]
         )
+
         return window or (timestamp, 0)
 
     async def _acquire_entry(
@@ -133,6 +86,7 @@ class RedisInteractor:
         acquired = await self.lua_acquire_window.execute(
             [key], [timestamp, limit, expiry]
         )
+
         return bool(acquired)
 
     async def _get_expiry(self, key, connection=None):
@@ -140,6 +94,7 @@ class RedisInteractor:
         :param key: the key to get the expiry for
         :param connection: Redis connection
         """
+
         return int(max(await connection.ttl(key), 0) + time.time())
 
     async def _check(self, connection) -> bool:
@@ -150,6 +105,7 @@ class RedisInteractor:
         """
         try:
             await connection.ping()
+
             return True
         except:  # noqa
             return False
@@ -212,6 +168,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
         """
+
         if elastic_expiry:
             return await super(RedisStorage, self)._incr(
                 key, expiry, self.storage, elastic_expiry
@@ -223,12 +180,14 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         """
         :param key: the key to get the counter value for
         """
+
         return await super(RedisStorage, self)._get(key, self.storage)
 
     async def clear(self, key: str) -> None:
         """
         :param key: the key to clear rate limits for
         """
+
         return await super(RedisStorage, self)._clear(key, self.storage)
 
     async def acquire_entry(self, key, limit, expiry) -> bool:
@@ -237,6 +196,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
         """
+
         return await super(RedisStorage, self)._acquire_entry(
             key, limit, expiry, self.storage
         )
@@ -245,12 +205,14 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         """
         :param key: the key to get the expiry for
         """
+
         return await super(RedisStorage, self)._get_expiry(key, self.storage)
 
     async def check(self) -> bool:
         """
         Check if storage is healthy by calling :meth:`aredis.StrictRedis.ping`
         """
+
         return await super(RedisStorage, self)._check(self.storage)
 
     async def reset(self) -> Optional[int]:
@@ -266,6 +228,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         """
 
         cleared = await self.lua_clear_keys.execute(["LIMITER*"])
+
         return cleared
 
 
@@ -300,6 +263,7 @@ class RedisClusterStorage(RedisStorage):
         """
         parsed = urllib.parse.urlparse(uri)
         cluster_hosts = []
+
         for loc in parsed.netloc.split(","):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})

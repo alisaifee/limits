@@ -52,6 +52,7 @@ setup(
     packages=find_packages(exclude=["google.*", "google", "tests*"]),
     python_requires=">3.7",
     extras_require=EXTRA_REQUIREMENTS,
+    include_package_data=True,
     package_data={
         "limits": ["py.typed"],
     },

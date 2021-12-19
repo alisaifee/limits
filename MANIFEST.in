@@ -9,3 +9,4 @@ recursive-include requirements/storage *.txt
 recursive-include doc/source *
 recursive-include doc *.py Make*
 include limits/_version.py
+recursive-include limits/resources *

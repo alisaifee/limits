@@ -1,6 +1,7 @@
 """
 
 """
+import pkg_resources
 import re
 import sys
 from typing import Any
@@ -34,9 +35,14 @@ def get_dependency(dep) -> Any:
     try:
         if dep not in sys.modules:
             __import__(dep)
+
         return sys.modules[dep]
     except ImportError:  # pragma: no cover
         return None
+
+
+def get_package_data(path: str) -> bytes:
+    return pkg_resources.resource_string(__name__, path)
 
 
 def parse_many(limit_string: str) -> List[RateLimitItem]:

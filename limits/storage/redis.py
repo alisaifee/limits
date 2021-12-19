@@ -1,74 +1,23 @@
 import time
 from typing import Any
 
-from ..util import get_dependency
-from ..errors import ConfigurationError
 from .base import Storage
 from .base import MovingWindowSupport
+from ..errors import ConfigurationError
+from ..util import get_dependency
+from ..util import get_package_data
 
 
 class RedisInteractor(object):
-    SCRIPT_MOVING_WINDOW = """
-        local items = redis.call('lrange', KEYS[1], 0, tonumber(ARGV[2]))
-        local expiry = tonumber(ARGV[1])
-        local a = 0
-        local oldest = nil
+    RES_DIR = "resources/redis/lua_scripts"
 
-        for idx=1,#items do
-            if tonumber(items[idx]) >= expiry then
-                a = a + 1
+    SCRIPT_MOVING_WINDOW = get_package_data(f"{RES_DIR}/moving_window.lua")
+    SCRIPT_ACQUIRE_MOVING_WINDOW = get_package_data(
+        f"{RES_DIR}/acquire_moving_window.lua"
+    )
+    SCRIPT_CLEAR_KEYS = get_package_data(f"{RES_DIR}/clear_keys.lua")
+    SCRIPT_INCR_EXPIRE = get_package_data(f"{RES_DIR}/incr_expire.lua")
 
-                if oldest == nil then
-                    oldest = tonumber(items[idx])
-                end
-            else
-                break
-            end
-        end
-
-        return {oldest, a}
-        """
-
-    SCRIPT_ACQUIRE_MOVING_WINDOW = """
-        local entry = redis.call('lindex', KEYS[1], tonumber(ARGV[2]) - 1)
-        local timestamp = tonumber(ARGV[1])
-        local expiry = tonumber(ARGV[3])
-
-        if entry and tonumber(entry) >= timestamp - expiry then
-            return false
-        end
-        local limit = tonumber(ARGV[2])
-
-        redis.call('lpush', KEYS[1], timestamp)
-        redis.call('ltrim', KEYS[1], 0, limit - 1)
-        redis.call('expire', KEYS[1], expiry)
-
-        return true
-        """
-
-    SCRIPT_CLEAR_KEYS = """
-        local keys = redis.call('keys', KEYS[1])
-        local res = 0
-
-        for i=1,#keys,5000 do
-            res = res + redis.call(
-                'del', unpack(keys, i, math.min(i+4999, #keys))
-            )
-        end
-
-        return res
-        """
-
-    SCRIPT_INCR_EXPIRE = """
-        local current
-        current = redis.call("incr",KEYS[1])
-
-        if tonumber(current) == 1 then
-            redis.call("expire",KEYS[1],ARGV[1])
-        end
-
-        return current
-    """
     lua_moving_window: Any
     lua_acquire_window: Any
 
