@@ -3,8 +3,6 @@ include =
     limits/*
 omit =
     /*/limits/_version*
-    /*/limits/backports/*
-    /*/google_appengine/*
     /*/tests/*
     setup.py
     versioneer.py
