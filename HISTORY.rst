@@ -3,6 +3,27 @@
 Changelog
 =========
 
+v2.1.0b1
+--------
+Release Date: 2021-12-19
+
+* Feature
+  * Add beta asyncio support
+  * Add beta mongodb support
+  * Add option to install with extras for different storages
+
+* Bug fix
+  * Fix custom option for cluster client in memcached
+  * Fix separation of sentinel & connection args in :class:`RedisSentinelStorage`
+
+* Deprecations
+  * Deprecate GAEMemcached support
+  * Remove use of unused `no_add` argument in :meth:`Storage.acquire_entry`
+
+* Chore
+  * Update documentation
+  * Improve tests to use less mocking
+
 v2.0.3
 ------
 Release Date: 2021-11-28
@@ -146,6 +167,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
