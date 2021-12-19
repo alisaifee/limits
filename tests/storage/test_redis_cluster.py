@@ -14,6 +14,6 @@ class TestRedisClusterStorage(SharedRedisTests):
 
     def test_init_options(self, mocker):
         lib = mocker.Mock()
-        mocker.patch("limits.storage.redis_cluster.get_dependency", return_value=lib)
-        assert storage_from_string(self.storage_url, connection_timeout=1).check()
-        assert lib.RedisCluster.call_args[1]["connection_timeout"] == 1
+        constructor = mocker.spy(rediscluster, "RedisCluster")
+        assert storage_from_string(self.storage_url, socket_timeout=1).check()
+        assert constructor.call_args[1]["socket_timeout"] == 1

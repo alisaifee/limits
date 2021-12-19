@@ -73,10 +73,9 @@ class TestRedisStorage(SharedRedisTests):
         redis.from_url(self.storage_url).flushall()
 
     def test_init_options(self, mocker):
-        lib = mocker.Mock()
-        mocker.patch("limits.storage.redis.get_dependency", return_value=lib)
-        assert storage_from_string(self.storage_url, connection_timeout=1).check()
-        assert lib.from_url.call_args[1]["connection_timeout"] == 1
+        from_url = mocker.spy(redis, "from_url")
+        assert storage_from_string(self.storage_url, socket_timeout=1).check()
+        assert from_url.call_args[1]["socket_timeout"] == 1
 
 
 @pytest.mark.unit
@@ -87,10 +86,9 @@ class TestRedisUnixSocketStorage(SharedRedisTests):
         redis.from_url("unix:///tmp/limits.redis.sock").flushall()
 
     def test_init_options(self, mocker):
-        lib = mocker.Mock()
-        mocker.patch("limits.storage.redis.get_dependency", return_value=lib)
-        assert storage_from_string(self.storage_url, connection_timeout=1).check()
-        assert lib.from_url.call_args[1]["connection_timeout"] == 1
+        from_url = mocker.spy(redis, "from_url")
+        assert storage_from_string(self.storage_url, socket_timeout=1).check()
+        assert from_url.call_args[1]["socket_timeout"] == 1
 
 
 @pytest.mark.unit
@@ -106,7 +104,6 @@ class TestRedisSSLStorage(SharedRedisTests):
         redis.from_url(self.storage_url).flushall()
 
     def test_init_options(self, mocker):
-        lib = mocker.Mock()
-        mocker.patch("limits.storage.redis.get_dependency", return_value=lib)
-        assert storage_from_string(self.storage_url, connection_timeout=1).check()
-        assert lib.from_url.call_args[1]["connection_timeout"] == 1
+        from_url = mocker.spy(redis, "from_url")
+        assert storage_from_string(self.storage_url, socket_timeout=1).check()
+        assert from_url.call_args[1]["socket_timeout"] == 1

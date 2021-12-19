@@ -96,13 +96,13 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
-        lib = mocker.Mock()
-        ping_response = asyncio.Future()
-        ping_response.set_result({})
-        lib.StrictRedis.from_url.return_value.ping.return_value = ping_response
-        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
-        assert await storage_from_string(self.storage_url, connection_timeout=1).check()
-        assert lib.StrictRedis.from_url.call_args[1]["connection_timeout"] == 1
+        import aredis
+
+        from_url = mocker.spy(aredis.StrictRedis, "from_url")
+        assert await storage_from_string(self.storage_url, stream_timeout=1).check()
+        assert (
+            from_url.spy_return.connection_pool.connection_kwargs["stream_timeout"] == 1
+        )
 
 
 @pytest.mark.asynchronous
@@ -114,13 +114,13 @@ class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
-        lib = mocker.Mock()
-        ping_response = asyncio.Future()
-        ping_response.set_result({})
-        lib.StrictRedis.from_url.return_value.ping.return_value = ping_response
-        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
-        assert await storage_from_string(self.storage_url, connection_timeout=1).check()
-        assert lib.StrictRedis.from_url.call_args[1]["connection_timeout"] == 1
+        import aredis
+
+        from_url = mocker.spy(aredis.StrictRedis, "from_url")
+        assert await storage_from_string(self.storage_url, stream_timeout=1).check()
+        assert (
+            from_url.spy_return.connection_pool.connection_kwargs["stream_timeout"] == 1
+        )
 
 
 @pytest.mark.asynchronous
@@ -132,15 +132,13 @@ class TestAsyncRedisClusterStorage(AsyncSharedRedisTests):
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
-        lib = mocker.Mock()
-        ping_response = asyncio.Future()
-        ping_response.set_result({})
-        lib.StrictRedisCluster.return_value.ping.return_value = ping_response
-        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
+        import aredis
+
+        constructor = mocker.spy(aredis, "StrictRedisCluster")
         assert await storage_from_string(
-            f"async+{self.storage_url}", max_connections=1
+            f"async+{self.storage_url}", max_connections=10
         ).check()
-        assert lib.StrictRedisCluster.call_args[1]["max_connections"] == 1
+        assert constructor.call_args[1]["max_connections"] == 10
 
 
 class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
@@ -159,21 +157,20 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
         lib = mocker.Mock()
         mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
         with pytest.raises(ConfigurationError):
-            await storage_from_string(f"async+{self.storage_url}", connection_timeout=1)
+            await storage_from_string(f"async+{self.storage_url}", stream_timeout=1)
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
-        lib = mocker.Mock()
-        ping_response = asyncio.Future()
-        ping_response.set_result({})
-        lib.Sentinel.return_value.slave_for.return_value.ping.return_value = (
-            ping_response
-        )
-        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
+        import aredis
+
+        constructor = mocker.spy(aredis.sentinel, "Sentinel")
         assert await storage_from_string(
-            f"async+{self.storage_url}/{self.service_name}", connection_timeout=1
+            f"async+{self.storage_url}/{self.service_name}",
+            stream_timeout=42,
+            sentinel_kwargs={"stream_timeout": 1},
         ).check()
-        assert lib.Sentinel.call_args[1]["connection_timeout"] == 1
+        assert constructor.call_args[1]["sentinel_kwargs"]["stream_timeout"] == 1
+        assert constructor.call_args[1]["stream_timeout"] == 42
 
     @pytest.mark.parametrize(
         "username, password, opts",

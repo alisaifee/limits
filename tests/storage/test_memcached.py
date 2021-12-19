@@ -19,11 +19,10 @@ class TestMemcachedStorage:
         pymemcache.client.Client(("localhost", 22122)).flush_all()
         self.storage_url = "memcached://localhost:22122"
 
-    def test_options(self, mocker):
-        lib = mocker.Mock()
-        mocker.patch("limits.storage.memcached.get_dependency", return_value=lib)
+    def test_init_options(self, mocker):
+        constructor = mocker.spy(pymemcache.client, "PooledClient")
         assert storage_from_string(self.storage_url, connect_timeout=1).check()
-        lib.PooledClient.call_args[1]["connect_timeout"] == 1
+        assert constructor.call_args[1]["connect_timeout"] == 1
 
     @fixed_start
     def test_fixed_window(self):

@@ -21,17 +21,13 @@ class TestAsyncMongoDBStorage:
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
-        lib = mocker.Mock()
-        server_info_response = asyncio.Future()
-        server_info_response.set_result({})
-        lib.AsyncIOMotorClient.return_value.server_info.return_value = (
-            server_info_response
-        )
-        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
+        import motor.motor_asyncio
+
+        constructor = mocker.spy(motor.motor_asyncio, "AsyncIOMotorClient")
         assert await storage_from_string(
             f"async+{self.storage_url}", connectTimeoutMS=1
         ).check()
-        assert lib.AsyncIOMotorClient.call_args[1]["connectTimeoutMS"] == 1
+        assert constructor.call_args[1]["connectTimeoutMS"] == 1
 
     @pytest.mark.asyncio
     async def test_fixed_window(self):

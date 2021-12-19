@@ -17,12 +17,14 @@ class TestRedisSentinelStorage(SharedRedisTests):
         ).flushall()
 
     def test_init_options(self, mocker):
-        lib = mocker.Mock()
-        mocker.patch("limits.storage.redis_sentinel.get_dependency", return_value=lib)
+        constructor = mocker.spy(redis.sentinel, "Sentinel")
         assert storage_from_string(
-            self.storage_url + "/" + self.service_name, connection_timeout=1
+            self.storage_url + "/" + self.service_name,
+            sentinel_kwargs={"socket_timeout": 1},
+            socket_timeout=42,
         )
-        assert lib.Sentinel.call_args[1]["connection_timeout"] == 1
+        assert constructor.call_args[1]["sentinel_kwargs"]["socket_timeout"] == 1
+        assert constructor.call_args[1]["socket_timeout"] == 42
 
     @pytest.mark.parametrize(
         "username, password, opts",

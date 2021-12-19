@@ -18,10 +18,9 @@ class TestMongoDBStorage:
         pymongo.MongoClient(self.storage_url).limits.counters.drop()
 
     def test_init_options(self, mocker):
-        lib = mocker.Mock()
-        mocker.patch("limits.storage.mongodb.get_dependency", return_value=lib)
-        assert storage_from_string(self.storage_url, connection_timeout=1).check()
-        assert lib.MongoClient.call_args[1]["connection_timeout"] == 1
+        constructor = mocker.spy(pymongo, "MongoClient")
+        assert storage_from_string(self.storage_url, socketTimeoutMS=100).check()
+        assert constructor.call_args[1]["socketTimeoutMS"] == 100
 
     def test_fixed_window(self):
         limiter = FixedWindowRateLimiter(self.storage)

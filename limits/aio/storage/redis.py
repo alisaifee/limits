@@ -1,4 +1,3 @@
-import logging
 import time
 import urllib
 
@@ -9,8 +8,6 @@ from typing import Optional
 from limits.errors import ConfigurationError
 from .base import Storage
 from .base import MovingWindowSupport
-
-logger = logging.getLogger()
 
 
 class RedisInteractor:
