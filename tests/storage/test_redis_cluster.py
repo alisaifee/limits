@@ -13,7 +13,6 @@ class TestRedisClusterStorage(SharedRedisTests):
         self.storage = RedisClusterStorage("redis+cluster://localhost:7000")
 
     def test_init_options(self, mocker):
-        lib = mocker.Mock()
         constructor = mocker.spy(rediscluster, "RedisCluster")
         assert storage_from_string(self.storage_url, socket_timeout=1).check()
         assert constructor.call_args[1]["socket_timeout"] == 1
