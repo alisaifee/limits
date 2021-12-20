@@ -28,6 +28,16 @@
 div.body {
   min-width: inherit !important;
 }
+div.sphinxsidebar {
+    max-height: 100%;
+    overflow-y: auto;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.sphinxsidebar::-webkit-scrollbar {
+  display: none;
+}
 
 pre,
 .py {

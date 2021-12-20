@@ -53,7 +53,7 @@ html_theme_options = {
     "github_repo": "limits",
     "github_button": False,
     "github_banner": True,
-    #"fixed_sidebar": False,
+    "fixed_sidebar": True,
     "globaltoc_collapse": True,
     "globaltoc_maxdepth": -1,
     "description": "limits is a python library to perform rate limiting with commonly used storage backends",
