@@ -3,6 +3,12 @@
 Changelog
 =========
 
+v2.1.0b3
+--------
+Release Date: 2021-12-19
+* Bug fix
+  * Allow python 3.7
+
 v2.1.0b2
 --------
 Release Date: 2021-12-19
@@ -174,6 +180,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
