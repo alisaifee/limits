@@ -50,7 +50,7 @@ setup(
     description="Rate limiting utilities",
     long_description=open("README.rst").read(),
     packages=find_packages(exclude=["google.*", "google", "tests*"]),
-    python_requires=">3.7",
+    python_requires=">=3.7",
     extras_require=EXTRA_REQUIREMENTS,
     include_package_data=True,
     package_data={
