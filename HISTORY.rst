@@ -6,7 +6,9 @@ Changelog
 v2.1.0b3
 --------
 Release Date: 2021-12-19
+
 * Bug fix
+
   * Allow python 3.7
 
 v2.1.0b2
@@ -14,6 +16,7 @@ v2.1.0b2
 Release Date: 2021-12-19
 
 * Patch
+
   * Ensure motor uses the current event loop
 
 v2.1.0b1
@@ -21,19 +24,23 @@ v2.1.0b1
 Release Date: 2021-12-19
 
 * Feature
+
   * Add beta asyncio support
   * Add beta mongodb support
   * Add option to install with extras for different storages
 
 * Bug fix
+
   * Fix custom option for cluster client in memcached
-  * Fix separation of sentinel & connection args in :class:`RedisSentinelStorage`
+  * Fix separation of sentinel & connection args in :class:`limits.storage.RedisSentinelStorage`
 
 * Deprecations
+
   * Deprecate GAEMemcached support
-  * Remove use of unused `no_add` argument in :meth:`Storage.acquire_entry`
+  * Remove use of unused `no_add` argument in :meth:`limits.storage.Storage.acquire_entry`
 
 * Chore
+
   * Update documentation
   * Improve tests to use less mocking
 
@@ -41,25 +48,33 @@ v2.0.3
 ------
 Release Date: 2021-11-28
 
-Ensure package is marked PEP-561 compliant
+* Chore
+
+  * Ensure package is marked PEP-561 compliant
 
 v2.0.1
 ------
 Release Date: 2021-11-28
 
-Added type annotations
+* Chore
+
+  * Added type annotations
 
 v2.0.0
 ------
 Release Date: 2021-11-27
 
-Drop support for python < 3.7
+* Chore
+
+  * Drop support for python < 3.7
 
 v1.6
 ----
 Release Date: 2021-11-27
 
-Final release for python < 3.7
+* Chore
+
+  * Final release for python < 3.7
 
 v1.5.1
 ------
