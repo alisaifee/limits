@@ -8,6 +8,92 @@ Storage Backends
 
 .. _storage-scheme:
 
+Supported versions
+=================
+
+.. image:: https://img.shields.io/github/workflow/status/alisaifee/limits/Compatibility?label=Compatibility%20Tests&style=for-the-badge
+   :alt: GitHub Workflow Status
+   :target: https://github.com/alisaifee/limits/actions/workflows/compatibility.yml
+
+-----
+
+**limits** is tested and known to work with the following versions of the
+dependency libraries and the associated storage versions.
+
+The CI tests against these versions on a nightly basis and you can see
+the results in `github <https://github.com/alisaifee/limits/actions/workflows/compatibility.yml>`_.
+
+.. tabbed:: Redis
+
+   Dependency versions:
+
+     .. literalinclude:: ../../requirements/storage/redis.txt
+
+   Dependency versions (async):
+
+     .. literalinclude:: ../../requirements/storage/async-redis.txt
+
+   `Redis <https://redis.io>`_
+
+     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+
+.. tabbed:: Redis with Sentinel
+
+   Dependency versions:
+
+     .. literalinclude:: ../../requirements/storage/redis.txt
+
+   Dependency versions (async):
+
+     .. literalinclude:: ../../requirements/storage/async-redis.txt
+
+   `Redis Sentinel <https://redis.io/topics/sentinel>`_
+
+     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SENTINEL_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+
+.. tabbed:: Redis Cluster
+
+   Dependency versions:
+
+     .. literalinclude:: ../../requirements/storage/rediscluster.txt
+
+   Dependency versions (async):
+
+     .. literalinclude:: ../../requirements/storage/async-redis.txt
+
+   `Redis cluster <https://redis.io/topics/cluster-tutorial>`_
+
+     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_CLUSTER_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+
+.. tabbed:: Memcached
+
+   Dependency versions:
+
+     .. literalinclude:: ../../requirements/storage/memcached.txt
+
+   Dependency versions (async):
+
+     .. literalinclude:: ../../requirements/storage/async-memcached.txt
+
+   `Memcached <https://memcached.org/>`_
+
+     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MEMCACHED_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+
+.. tabbed:: MongoDB
+
+   Dependency versions:
+
+     .. literalinclude:: ../../requirements/storage/mongodb.txt
+
+   Dependency versions (async):
+
+     .. literalinclude:: ../../requirements/storage/async-mongodb.txt
+
+   `MongoDB <https://www.mongodb.com/>`_
+
+     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MONGODB_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+
+
 Storage scheme
 ==============
 
