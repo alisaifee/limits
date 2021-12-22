@@ -1,5 +1,6 @@
 import time
 from typing import Any
+from typing import Tuple
 
 from .base import Storage
 from .base import MovingWindowSupport
@@ -19,7 +20,7 @@ class RedisInteractor(object):
     lua_moving_window: Any
     lua_acquire_window: Any
 
-    def get_moving_window(self, key: str, limit: int, expiry):
+    def get_moving_window(self, key, limit, expiry) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -31,9 +32,9 @@ class RedisInteractor(object):
         timestamp = time.time()
         window = self.lua_moving_window([key], [int(timestamp - expiry), limit])
 
-        return window or (timestamp, 0)
+        return window or (int(timestamp), 0)
 
-    def _incr(self, key: str, expiry: int, connection, elastic_expiry=False):
+    def _incr(self, key: str, expiry: int, connection, elastic_expiry=False) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -48,7 +49,7 @@ class RedisInteractor(object):
 
         return value
 
-    def _get(self, key: str, connection):
+    def _get(self, key: str, connection) -> int:
         """
         :param connection: Redis connection
         :param key: the key to get the counter value for
@@ -147,7 +148,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         else:
             return self.lua_incr_expire([key], [expiry])
 
-    def get(self, key: str):
+    def get(self, key: str) -> int:
         """
         :param key: the key to get the counter value for
         """

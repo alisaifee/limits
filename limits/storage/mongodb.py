@@ -2,6 +2,7 @@ import datetime
 import time
 from typing import Any
 from typing import Dict
+from typing import Tuple
 
 from .base import Storage
 from .base import MovingWindowSupport
@@ -136,13 +137,13 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         except:  # noqa: E722
             return False
 
-    def get_moving_window(self, key, limit, expiry):
+    def get_moving_window(self, key, limit, expiry) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving
         window
 
-        :param str key: rate limit key
-        :param int expiry: expiry of entry
+        :param key: rate limit key
+        :param expiry: expiry of entry
         :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
@@ -178,10 +179,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             )
         )
 
-        if result:
-            return (int(result[0]["max"]), result[0]["count"])
-
-        return (int(timestamp), 0)
+        return (int(result[0]["max"]), result[0]["count"])
 
     def acquire_entry(self, key: str, limit: int, expiry: int) -> bool:
         """
