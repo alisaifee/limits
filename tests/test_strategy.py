@@ -111,6 +111,7 @@ class TestWindow:
         assert not limiter.hit(limit)
         time.sleep(1)
         assert not limiter.hit(limit)
+        assert limiter.get_window_stats(limit)[1] == 0
 
     def test_fixed_window_with_elastic_expiry_redis(self):
         storage = RedisStorage("redis://localhost:7379")
