@@ -33,7 +33,7 @@ html_theme_options = {
     "github_banner": True,
     "fixed_sidebar": True,
     "globaltoc_collapse": True,
-    "globaltoc_maxdepth": 0,
+    "globaltoc_maxdepth": -1,
     # Style related overrides
     #"admonition_xref_bg": colors["purple"],
     #"admonition_xref_border": colors["red"],

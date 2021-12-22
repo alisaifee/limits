@@ -27,7 +27,7 @@ To learn more about the different strategies refer to the
 :ref:`strategies:rate limiting strategies` section.
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 3
 
     installation
     quickstart
