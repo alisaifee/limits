@@ -1,6 +1,5 @@
 import time
 
-import pytest
 import redis
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
@@ -8,7 +7,6 @@ from limits.storage import RedisStorage, storage_from_string
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 
 
-@pytest.mark.unit
 class SharedRedisTests(object):
     def test_fixed_window(self):
         limiter = FixedWindowRateLimiter(self.storage)
@@ -65,7 +63,6 @@ class SharedRedisTests(object):
         assert self.storage.storage.keys("%s/*" % limit.namespace) == []
 
 
-@pytest.mark.unit
 class TestRedisStorage(SharedRedisTests):
     def setup_method(self):
         self.storage_url = "redis://localhost:7379"
@@ -78,7 +75,6 @@ class TestRedisStorage(SharedRedisTests):
         assert from_url.call_args[1]["socket_timeout"] == 1
 
 
-@pytest.mark.unit
 class TestRedisUnixSocketStorage(SharedRedisTests):
     def setup_method(self):
         self.storage_url = "redis+unix:///tmp/limits.redis.sock"
@@ -91,7 +87,6 @@ class TestRedisUnixSocketStorage(SharedRedisTests):
         assert from_url.call_args[1]["socket_timeout"] == 1
 
 
-@pytest.mark.unit
 class TestRedisSSLStorage(SharedRedisTests):
     def setup_method(self):
         self.storage_url = (

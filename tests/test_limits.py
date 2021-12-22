@@ -1,9 +1,6 @@
-import pytest
-
 from limits import limits
 
 
-@pytest.mark.unit
 class TestLimits:
     class FakeLimit(limits.RateLimitItem):
         GRANULARITY = limits.Granularity(1, "fake")

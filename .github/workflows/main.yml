@@ -12,12 +12,11 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
-        marker: [unit or asynchronous]
+        marker: [not integration]
         include:
           - python-version: 3.9
-            marker: 'unit or integration or asynchronous'
           - python-version: "3.10"
-            marker: 'unit or integration'
+            marker: 'not asynchronous'
     steps:
     - uses: actions/checkout@v2
     - name: Cache dependencies
@@ -40,6 +39,6 @@ jobs:
         make setup-test-backends
     - name: Tests
       run: |
-        py.test -m "${{ matrix.marker || 'unit' }}" --cov-report=xml --cov-branch
+        py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2

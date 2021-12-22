@@ -1,9 +1,6 @@
-import pytest
-
 from limits import limits
 
 
-@pytest.mark.unit
 class TestGranularity:
     def test_seconds_value(self):
         assert limits.RateLimitItemPerSecond(1).get_expiry() == 1

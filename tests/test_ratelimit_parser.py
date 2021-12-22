@@ -4,7 +4,6 @@ from limits import limits
 from limits.util import granularity_from_string, parse, parse_many
 
 
-@pytest.mark.unit
 class TestRatelimitParser:
     def test_singles(self):
         for rl_string in ["1 per second", "1/SECOND", "1 / Second"]:
@@ -53,10 +52,7 @@ class TestRatelimitParser:
             granularity_from_string(value)
 
     @pytest.mark.parametrize(
-        "value",
-        [
-            "1 per yearl; 2 per decade",
-        ],
+        "value", ["1 per yearl; 2 per decade"],
     )
     def test_invalid_string_parse_many(self, value):
         with pytest.raises(ValueError):

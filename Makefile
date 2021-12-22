@@ -36,11 +36,10 @@ setup-test-backends: $(OS_HACKS) docker-up
 teardown-test-backends: $(OS_HACKS) docker-down
 
 tests: setup-test-backends
-	pytest -m unit --durations=10
+	pytest -m "not integration" --durations=10
 
 integration-tests: setup-test-backends
 	pytest -m integration
 
 all-tests: setup-test-backends
-	pytest -m "unit or integration" --durations=10
-.PHONY: test
+	pytest -m --durations=10

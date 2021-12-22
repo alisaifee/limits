@@ -2,14 +2,12 @@ import datetime
 import time
 
 import pymongo
-import pytest
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import MongoDBStorage, storage_from_string
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 
 
-@pytest.mark.unit
 class TestMongoDBStorage:
     def setup_method(self):
         self.storage_url = "mongodb://localhost:37017"

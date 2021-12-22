@@ -13,7 +13,6 @@ from tests import fixed_start
 
 
 @pytest.mark.flaky
-@pytest.mark.unit
 class TestMemcachedStorage:
     def setup_method(self):
         pymemcache.client.Client(("localhost", 22122)).flush_all()

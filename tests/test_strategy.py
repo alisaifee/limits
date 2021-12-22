@@ -24,7 +24,6 @@ from limits.strategies import (
 )
 
 
-@pytest.mark.unit
 class TestWindow:
     def setup_method(self):
         pymemcache.client.Client(("localhost", 22122)).flush_all()

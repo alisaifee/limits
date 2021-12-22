@@ -1,11 +1,9 @@
-import pytest
 import rediscluster
 
 from limits.storage import RedisClusterStorage, storage_from_string
 from tests.storage.test_redis import SharedRedisTests
 
 
-@pytest.mark.unit
 class TestRedisClusterStorage(SharedRedisTests):
     def setup_method(self):
         rediscluster.RedisCluster("localhost", 7000).flushall()
