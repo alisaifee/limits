@@ -1,14 +1,19 @@
 ========
 *limits*
 ========
-.. image:: https://img.shields.io/github/last-commit/alisaifee/limits?logo=github&style=flat-square&labelColor=#282828
-   :target: https://github.com/alisaifee/limits
-.. image:: https://img.shields.io/github/workflow/status/alisaifee/limits/CI?logo=github&style=flat-square&labelColor=#282828
-   :target: https://github.com/alisaifee/limits/actions/workflows/main.yml
-.. image:: https://img.shields.io/codecov/c/github/alisaifee/limits?logo=codecov&style=flat-square&labelColor=#282828
-   :target: https://app.codecov.io/gh/alisaifee/limits
-.. image:: https://img.shields.io/pypi/pyversions/limits?style=flat-square&logo=pypi
-   :target: https://pypi.org/project/limits
+.. container:: badges
+
+   .. image:: https://img.shields.io/github/last-commit/alisaifee/limits?logo=github&style=flat-square&labelColor=#282828
+      :target: https://github.com/alisaifee/limits
+      :class: header-badge
+   .. image:: https://img.shields.io/github/workflow/status/alisaifee/limits/CI?logo=github&style=flat-square&labelColor=#282828
+      :target: https://github.com/alisaifee/limits/actions/workflows/main.yml
+   .. image:: https://img.shields.io/codecov/c/github/alisaifee/limits?logo=codecov&style=flat-square&labelColor=#282828
+      :target: https://app.codecov.io/gh/alisaifee/limits
+      :class: header-badge
+   .. image:: https://img.shields.io/pypi/pyversions/limits?style=flat-square&logo=pypi
+      :target: https://pypi.org/project/limits
+      :class: header-badge
 
 *limits* is a python library to perform rate limiting with commonly used
 storage backends (Redis, Memcached & MongoDB).

@@ -2,20 +2,11 @@
 Installation
 ============
 
-Install the package with pip. You can also automatically install
-the required dependencies with recommended versions for a specific storage
-by using the extras notation:
+Install the package with pip:
 
-.. note:: When using the methods below, we use version constraints for the
-   storage packages based on compatibility with the supported Python versions
-   and tests in CI.
+.. code:: console
 
-
-.. tabbed:: Standalone
-
-   .. code:: console
-
-      $ pip install limits
+   $ pip install limits
 
 .. tabbed:: Redis
 
@@ -97,5 +88,3 @@ along with the package using the following extras:
    Includes:
 
    .. literalinclude:: ../../requirements/storage/async-mongodb.txt
-
-
