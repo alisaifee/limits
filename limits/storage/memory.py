@@ -15,7 +15,7 @@ class LockableEntry(threading._RLock):
     def __init__(self, expiry):
         self.atime = time.time()
         self.expiry = self.atime + expiry
-        super(LockableEntry, self).__init__()
+        super().__init__()
 
 
 class MemoryStorage(Storage, MovingWindowSupport):
@@ -34,7 +34,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
-        super(MemoryStorage, self).__init__(uri)
+        super().__init__(uri)
 
     def __expire_events(self):
         for key in list(self.events.keys()):

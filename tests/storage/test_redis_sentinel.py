@@ -36,7 +36,7 @@ class TestRedisSentinelStorage(SharedRedisTests):
     )
     def test_auth(self, mocker, username, password, opts):
         lib = mocker.Mock()
-        mocker.patch("limits.storage.redis_sentinel.get_dependency", return_value=lib)
+        mocker.patch("limits.util.get_dependency", return_value=lib)
         storage_url = (
             f"redis+sentinel://{username}:{password}@localhost:26379/service_name"
         )

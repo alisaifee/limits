@@ -5,11 +5,13 @@ import pkg_resources
 import re
 import sys
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Type
 
 from .limits import RateLimitItem
 from .limits import GRANULARITIES
+from .errors import ConfigurationError
 
 SEPARATORS = re.compile(r"[,;|]{1}")
 SINGLE_EXPR = re.compile(
@@ -28,9 +30,45 @@ EXPR = re.compile(
 )
 
 
+class LazyDependency:
+    """
+    Simple utility that provides an :attr:`dependency`
+    to the child class to fetch any dependencies
+    without having to import them explicitly.
+    """
+
+    DEPENDENCIES: List[str] = []
+    """
+    The python modules this class has a dependency on.
+    Used to lazily populate the :attr:`dependencies`
+    """
+
+    def __init__(self):
+        self._dependencies = {}
+
+    @property
+    def dependencies(self) -> Dict[str, Any]:
+        """
+        Cached mapping of the modules this storage depends on. This is done so that the module
+        is only imported lazily when the storage is instantiated.
+        """
+        if not getattr(self, "_dependencies", {}):
+            dependencies = {}
+            for name in self.DEPENDENCIES:
+                dependency = get_dependency(name)
+
+                if not dependency:
+                    raise ConfigurationError(
+                        f"{name} prerequisite not available"
+                    )  # pragma: no cover
+                dependencies[name] = dependency
+            self._dependencies = dependencies
+        return self._dependencies
+
+
 def get_dependency(dep) -> Any:
     """
-    safe function to import a module programmatically
+    safe function to import a module at runtime
     """
     try:
         if dep not in sys.modules:

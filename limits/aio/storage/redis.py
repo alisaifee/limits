@@ -143,7 +143,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         uri = uri.replace("async+redis", "redis", 1)
         uri = uri.replace("redis+unix", "unix")
 
-        super(RedisStorage, self).__init__()
+        super().__init__()
 
         self.dependency = self.dependencies["aredis"]
         self.storage = self.dependency.StrictRedis.from_url(uri, **options)
@@ -170,9 +170,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         """
 
         if elastic_expiry:
-            return await super(RedisStorage, self)._incr(
-                key, expiry, self.storage, elastic_expiry
-            )
+            return await super()._incr(key, expiry, self.storage, elastic_expiry)
         else:
             return await self.lua_incr_expire.execute([key], [expiry])
 
@@ -181,14 +179,14 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         :param key: the key to get the counter value for
         """
 
-        return await super(RedisStorage, self)._get(key, self.storage)
+        return await super()._get(key, self.storage)
 
     async def clear(self, key: str) -> None:
         """
         :param key: the key to clear rate limits for
         """
 
-        return await super(RedisStorage, self)._clear(key, self.storage)
+        return await super()._clear(key, self.storage)
 
     async def acquire_entry(self, key, limit, expiry) -> bool:
         """
@@ -197,23 +195,21 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         :param expiry: expiry of the entry
         """
 
-        return await super(RedisStorage, self)._acquire_entry(
-            key, limit, expiry, self.storage
-        )
+        return await super()._acquire_entry(key, limit, expiry, self.storage)
 
     async def get_expiry(self, key: str) -> int:
         """
         :param key: the key to get the expiry for
         """
 
-        return await super(RedisStorage, self)._get_expiry(key, self.storage)
+        return await super()._get_expiry(key, self.storage)
 
     async def check(self) -> bool:
         """
         Check if storage is healthy by calling :meth:`aredis.StrictRedis.ping`
         """
 
-        return await super(RedisStorage, self)._check(self.storage)
+        return await super()._check(self.storage)
 
     async def reset(self) -> Optional[int]:
         """
@@ -375,18 +371,19 @@ class RedisSentinelStorage(RedisStorage):
         :param key: the key to get the counter value for
         """
 
-        return await super(RedisStorage, self)._get(key, self.storage_slave)
+        return await super()._get(key, self.storage_slave)
 
     async def get_expiry(self, key: str) -> int:
         """
         :param key: the key to get the expiry for
         """
 
-        return await super(RedisStorage, self)._get_expiry(key, self.storage_slave)
+        return await super()._get_expiry(key, self.storage_slave)
 
     async def check(self) -> bool:
         """
         Check if storage is healthy by calling :meth:`aredis.StrictRedis.ping`
         on the slave.
         """
-        return await super(RedisStorage, self)._check(self.storage_slave)
+
+        return await super()._check(self.storage_slave)

@@ -1,14 +1,13 @@
 from abc import abstractmethod
 from abc import ABC
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 from limits.storage.registry import StorageRegistry
-from limits.util import get_dependency
-from limits.errors import ConfigurationError
+from limits.util import LazyDependency
 
 
-class Storage(metaclass=StorageRegistry):
+class Storage(LazyDependency, metaclass=StorageRegistry):
     """
     Base class to extend when implementing an async storage backend.
 
@@ -19,32 +18,8 @@ class Storage(metaclass=StorageRegistry):
     STORAGE_SCHEME: Optional[List[str]]
     """The storage schemes to register against this implementation"""
 
-    DEPENDENCIES: List[str] = []
-    """
-    The python modules this storage is dependency on.
-    Used to automatically populate the :attr:`dependencies`
-    """
-
     def __init__(self, uri: Optional[str] = None, **options: Dict) -> None:
-        self._dependencies: Dict[str, Any] = {}
-
-    @property
-    def dependencies(self) -> Dict[str, Any]:
-        """
-        Cached mapping of the modules this storage depends on. This is done so that the module
-        is only imported lazily when the storage is instantiated.
-        """
-        if not self._dependencies:
-            for name in self.DEPENDENCIES:
-                dependency = get_dependency(name)
-
-                if not dependency:
-                    raise ConfigurationError(
-                        f"{name} prerequisite not available"
-                    )  # pragma: no cover
-                self._dependencies[name] = dependency
-
-        return self._dependencies
+        super().__init__()
 
     @abstractmethod
     async def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:

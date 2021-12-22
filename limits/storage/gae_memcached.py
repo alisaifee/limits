@@ -13,7 +13,7 @@ class GAEMemcachedStorage(MemcachedStorage):  # noqa
 
     def __init__(self, uri: str, **options):
         options["library"] = "google.appengine.api.memcache"
-        super(GAEMemcachedStorage, self).__init__(uri, **options)
+        super().__init__(uri, **options)
 
     def incr(self, key: str, expiry: int, elastic_expiry: bool = False):
         """

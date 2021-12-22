@@ -1,7 +1,5 @@
 import urllib
 
-from ..errors import ConfigurationError
-from ..util import get_dependency
 from .redis import RedisStorage
 
 
@@ -20,6 +18,8 @@ class RedisClusterStorage(RedisStorage):
     }
     "Default options passed to the :class:`~rediscluster.RedisCluster`"
 
+    DEPENDENCIES = ["rediscluster"]
+
     def __init__(self, uri: str, **options):
         """
         :param uri: url of the form
@@ -29,17 +29,13 @@ class RedisClusterStorage(RedisStorage):
         :raise ConfigurationError: when the :pypi:`redis-cluster-py` library is not
          available or if the redis host cannot be pinged.
         """
-        if not get_dependency("rediscluster"):
-            raise ConfigurationError(
-                "redis-py-cluster prerequisite not available"
-            )  # pragma: no cover
         parsed = urllib.parse.urlparse(uri)
         cluster_hosts = []
         for loc in parsed.netloc.split(","):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})
 
-        self.storage = get_dependency("rediscluster").RedisCluster(
+        self.storage = self.dependencies["rediscluster"].RedisCluster(
             startup_nodes=cluster_hosts, **{**self.DEFAULT_OPTIONS, **options}
         )
         self.initialize_storage(uri)

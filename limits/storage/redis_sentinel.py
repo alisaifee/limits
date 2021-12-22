@@ -4,7 +4,6 @@ from typing import Dict
 from typing import Optional
 
 from ..errors import ConfigurationError
-from ..util import get_dependency
 from .redis import RedisStorage
 
 
@@ -22,6 +21,8 @@ class RedisSentinelStorage(RedisStorage):
         "socket_timeout": 0.2,
     }
     "Default options passed to :class:`~redis.sentinel.Sentinel`"
+
+    DEPENDENCIES = ["redis.sentinel"]
 
     def __init__(
         self,
@@ -43,10 +44,7 @@ class RedisSentinelStorage(RedisStorage):
          or if the redis master host cannot be pinged.
         """
 
-        if not get_dependency("redis"):
-            raise ConfigurationError(
-                "redis prerequisite not available"
-            )  # pragma: no cover
+        super(RedisStorage, self).__init__()
 
         parsed = urllib.parse.urlparse(uri)
         sentinel_configuration = []
@@ -69,7 +67,7 @@ class RedisSentinelStorage(RedisStorage):
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
 
-        self.sentinel = get_dependency("redis.sentinel").Sentinel(
+        self.sentinel = self.dependencies["redis.sentinel"].Sentinel(
             sentinel_configuration,
             sentinel_kwargs=sentinel_options,
             **{**self.DEFAULT_OPTIONS, **options}
@@ -77,21 +75,20 @@ class RedisSentinelStorage(RedisStorage):
         self.storage = self.sentinel.master_for(self.service_name)
         self.storage_slave = self.sentinel.slave_for(self.service_name)
         self.initialize_storage(uri)
-        super(RedisStorage, self).__init__()
 
     def get(self, key: str) -> int:
         """
         :param key: the key to get the counter value for
         """
 
-        return super(RedisStorage, self)._get(key, self.storage_slave)
+        return super()._get(key, self.storage_slave)
 
     def get_expiry(self, key: str) -> int:
         """
         :param key: the key to get the expiry for
         """
 
-        return super(RedisStorage, self)._get_expiry(key, self.storage_slave)
+        return super()._get_expiry(key, self.storage_slave)
 
     def check(self) -> bool:
         """
@@ -99,4 +96,4 @@ class RedisSentinelStorage(RedisStorage):
         on the slave.
         """
 
-        return super(RedisStorage, self)._check(self.storage_slave)
+        return super()._check(self.storage_slave)

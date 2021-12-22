@@ -68,7 +68,7 @@ class MovingWindowRateLimiter(RateLimiter):
                 "MovingWindowRateLimiting is not implemented for storage "
                 "of type %s" % storage.__class__
             )
-        super(MovingWindowRateLimiter, self).__init__(storage)
+        super().__init__(storage)
 
     def hit(self, item: RateLimitItem, *identifiers) -> bool:
         """

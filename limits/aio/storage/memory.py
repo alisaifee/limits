@@ -13,7 +13,7 @@ class LockableEntry(asyncio.Lock):
     def __init__(self, expiry: int) -> None:
         self.atime = time.time()
         self.expiry = self.atime + expiry
-        super(LockableEntry, self).__init__()
+        super().__init__()
 
 
 class MemoryStorage(Storage, MovingWindowSupport):
@@ -38,7 +38,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
         self.expirations: Dict = {}
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer: Optional[asyncio.Task] = None
-        super(MemoryStorage, self).__init__(uri)  # type: ignore
+        super().__init__()
 
     async def __expire_events(self) -> None:
         for key in self.events.keys():

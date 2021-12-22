@@ -87,9 +87,7 @@ class TestBaseStorage:
         with pytest.raises(ConfigurationError):
             storage_from_string("redis+sentinel://localhost:26379")
         sentinel = mocker.Mock()
-        mocker.patch(
-            "limits.storage.redis_sentinel.get_dependency", return_value=sentinel
-        )
+        mocker.patch("limits.util.get_dependency", return_value=sentinel)
         assert isinstance(
             storage_from_string(
                 "redis+sentinel://:foobared@localhost:26379/localhost-redis-sentinel"
@@ -116,21 +114,6 @@ class TestBaseStorage:
         ).check()
         assert storage_from_string("redis+cluster://localhost:7000").check()
         assert storage_from_string("mongodb://localhost:37017").check()
-
-    def test_pluggable_storage_invalid_construction(self):
-        def cons():
-            class _(Storage):
-                def incr(self, key, expiry, elastic_expiry=False):
-                    return
-
-                def get(self, key):
-                    return 0
-
-                def get_expiry(self, key):
-                    return time.time()
-
-        with pytest.raises(ConfigurationError):
-            cons()
 
     def test_pluggable_storage_no_moving_window(self):
         class MyStorage(Storage):

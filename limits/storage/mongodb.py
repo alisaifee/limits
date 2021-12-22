@@ -6,9 +6,6 @@ from typing import Dict
 from .base import Storage
 from .base import MovingWindowSupport
 
-from ..errors import ConfigurationError
-from ..util import get_dependency
-
 
 class MongoDBStorage(Storage, MovingWindowSupport):
     """
@@ -28,6 +25,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     }
     "Default options passed to :class:`~pymongo.mongo_client.MongoClient`"
 
+    DEPENDENCIES = ["pymongo"]
+
     def __init__(self, uri: str, database_name: str = "limits", **options):
         """
         :param uri: uri of the form ``mongodb://[user:password]@host:port?...``,
@@ -39,18 +38,15 @@ class MongoDBStorage(Storage, MovingWindowSupport):
          :class:`~pymongo.mongo_client.MongoClient`
         :raise ConfigurationError: when the :pypi:`pymongo` library is not available
         """
-        self.lib = get_dependency("pymongo")
 
-        if not self.lib:
-            raise ConfigurationError("pymongo prerequisite not available")
-
+        super().__init__(uri, **options)
+        self.lib = self.dependencies["pymongo"]
         mongo_opts = options.copy()
         [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]
         self.storage = self.lib.MongoClient(uri, **mongo_opts)
         self.counters = self.storage.get_database(database_name).counters
         self.windows = self.storage.get_database(database_name).windows
         self.__initialize_database()
-        super(MongoDBStorage, self).__init__(uri, **options)
 
     def __initialize_database(self):
         self.counters.create_index("expireAt", expireAfterSeconds=0)

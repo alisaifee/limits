@@ -7,9 +7,10 @@ from typing import List
 import threading
 
 from limits.storage.registry import StorageRegistry
+from limits.util import LazyDependency
 
 
-class Storage(metaclass=StorageRegistry):
+class Storage(LazyDependency, metaclass=StorageRegistry):
     """
     Base class to extend when implementing a storage backend.
     """
@@ -19,6 +20,7 @@ class Storage(metaclass=StorageRegistry):
 
     def __init__(self, uri: str = None, **options):
         self.lock = threading.RLock()
+        super().__init__()
 
     @abstractmethod
     def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:

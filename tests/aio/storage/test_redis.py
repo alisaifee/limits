@@ -1,4 +1,3 @@
-import asyncio
 import time
 
 import pytest  # type: ignore
@@ -155,7 +154,7 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
     @pytest.mark.asyncio
     async def test_init_no_service_name(self, mocker):
         lib = mocker.Mock()
-        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
+        mocker.patch("limits.util.get_dependency", return_value=lib)
         with pytest.raises(ConfigurationError):
             await storage_from_string(f"async+{self.storage_url}", stream_timeout=1)
 
@@ -183,7 +182,7 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
     @pytest.mark.asyncio
     async def test_auth(self, mocker, username, password, opts):
         lib = mocker.Mock()
-        mocker.patch("limits.aio.storage.base.get_dependency", return_value=lib)
+        mocker.patch("limits.util.get_dependency", return_value=lib)
         storage_url = (
             f"async+redis+sentinel://{username}:{password}@localhost:26379/service_name"
         )

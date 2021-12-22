@@ -3,8 +3,6 @@ from typing import Any
 
 from .base import Storage
 from .base import MovingWindowSupport
-from ..errors import ConfigurationError
-from ..util import get_dependency
 from ..util import get_package_data
 
 
@@ -32,6 +30,7 @@ class RedisInteractor(object):
         """
         timestamp = time.time()
         window = self.lua_moving_window([key], [int(timestamp - expiry), limit])
+
         return window or (timestamp, 0)
 
     def _incr(self, key: str, expiry: int, connection, elastic_expiry=False):
@@ -43,8 +42,10 @@ class RedisInteractor(object):
         :param expiry: amount in seconds for the key to expire in
         """
         value = connection.incr(key)
+
         if elastic_expiry or value == 1:
             connection.expire(key, expiry)
+
         return value
 
     def _get(self, key: str, connection):
@@ -52,6 +53,7 @@ class RedisInteractor(object):
         :param connection: Redis connection
         :param key: the key to get the counter value for
         """
+
         return int(connection.get(key) or 0)
 
     def _clear(self, key: str, connection):
@@ -70,6 +72,7 @@ class RedisInteractor(object):
         """
         timestamp = time.time()
         acquired = self.lua_acquire_window([key], [timestamp, limit, expiry])
+
         return bool(acquired)
 
     def _get_expiry(self, key: str, connection=None) -> int:
@@ -77,6 +80,7 @@ class RedisInteractor(object):
         :param key: the key to get the expiry for
         :param connection: Redis connection
         """
+
         return int(max(connection.ttl(key), 0) + time.time())
 
     def _check(self, connection) -> bool:
@@ -100,6 +104,8 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]
     """The storage scheme for redis"""
 
+    DEPENDENCIES = ["redis"]
+
     def __init__(self, uri: str, **options):
         """
         :param uri: uri of the form ``redis://[:password]@host:port``,
@@ -111,16 +117,12 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
          directly to the constructor of :class:`redis.Redis`
         :raise ConfigurationError: when the :pypi:`redis` library is not available
         """
-        redis = get_dependency("redis")
-        if not redis:
-            raise ConfigurationError(
-                "redis prerequisite not available"
-            )  # pragma: no cover
+        super().__init__()
+        redis = self.dependencies["redis"]
         uri = uri.replace("redis+unix", "unix")
 
         self.storage = redis.from_url(uri, **options)
         self.initialize_storage(uri)
-        super(RedisStorage, self).__init__()
 
     def initialize_storage(self, _uri: str):
         self.lua_moving_window = self.storage.register_script(self.SCRIPT_MOVING_WINDOW)
@@ -139,10 +141,9 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
         """
+
         if elastic_expiry:
-            return super(RedisStorage, self)._incr(
-                key, expiry, self.storage, elastic_expiry
-            )
+            return super()._incr(key, expiry, self.storage, elastic_expiry)
         else:
             return self.lua_incr_expire([key], [expiry])
 
@@ -150,13 +151,15 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         """
         :param key: the key to get the counter value for
         """
-        return super(RedisStorage, self)._get(key, self.storage)
+
+        return super()._get(key, self.storage)
 
     def clear(self, key: str):
         """
         :param key: the key to clear rate limits for
         """
-        return super(RedisStorage, self)._clear(key, self.storage)
+
+        return super()._clear(key, self.storage)
 
     def acquire_entry(self, key: str, limit: int, expiry: int):
         """
@@ -164,21 +167,22 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
         """
-        return super(RedisStorage, self)._acquire_entry(
-            key, limit, expiry, self.storage
-        )
+
+        return super()._acquire_entry(key, limit, expiry, self.storage)
 
     def get_expiry(self, key: str) -> int:
         """
         :param key: the key to get the expiry for
         """
-        return super(RedisStorage, self)._get_expiry(key, self.storage)
+
+        return super()._get_expiry(key, self.storage)
 
     def check(self) -> bool:
         """
         check if storage is healthy
         """
-        return super(RedisStorage, self)._check(self.storage)
+
+        return super()._check(self.storage)
 
     def reset(self) -> int:
         """
@@ -193,4 +197,5 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         """
 
         cleared = self.lua_clear_keys(["LIMITER*"])
+
         return cleared
