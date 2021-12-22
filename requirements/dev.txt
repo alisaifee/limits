@@ -5,4 +5,5 @@ flake8
 keyring
 mypy
 twine
+types-setuptools
 wheel
