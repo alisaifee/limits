@@ -1,11 +1,8 @@
 import datetime
 import time
-from typing import Any
-from typing import Dict
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
-from .base import Storage
-from .base import MovingWindowSupport
+from .base import MovingWindowSupport, Storage
 
 
 class MongoDBStorage(Storage, MovingWindowSupport):

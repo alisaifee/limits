@@ -1,15 +1,11 @@
 import time
 import urllib
-
-from typing import Any
-from typing import Dict
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from limits.errors import ConfigurationError
 from limits.util import get_package_data
 
-from .base import Storage
-from .base import MovingWindowSupport
+from .base import MovingWindowSupport, Storage
 
 
 class RedisInteractor:

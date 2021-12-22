@@ -2,13 +2,12 @@
 Asynchronous rate limiting strategies
 """
 
-from abc import ABC, abstractmethod
-from typing import Tuple
-from typing import Iterable
 import weakref
+from abc import ABC, abstractmethod
+from typing import Iterable, Tuple
 
-from limits import RateLimitItem
-from limits.aio.storage import Storage
+from ..limits import RateLimitItem
+from .storage import Storage
 
 
 class RateLimiter(ABC):

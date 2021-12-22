@@ -1,10 +1,8 @@
 import time
-from typing import Any
-from typing import Tuple
+from typing import Any, Tuple
 
-from .base import Storage
-from .base import MovingWindowSupport
 from ..util import get_package_data
+from .base import MovingWindowSupport, Storage
 
 
 class RedisInteractor(object):

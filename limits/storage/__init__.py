@@ -3,22 +3,21 @@ Implementations of storage backends to be used with
 :class:`limits.strategies.RateLimiter` strategies
 """
 
-from typing import Union
 import urllib
+from typing import Union
 
 import limits
-from limits.errors import ConfigurationError
-from .memory import MemoryStorage
 
-from .base import Storage
-from .base import MovingWindowSupport
-from .registry import SCHEMES
+from ..errors import ConfigurationError
+from .base import MovingWindowSupport, Storage
+from .gae_memcached import GAEMemcachedStorage
+from .memcached import MemcachedStorage
+from .memory import MemoryStorage
+from .mongodb import MongoDBStorage
 from .redis import RedisStorage
 from .redis_cluster import RedisClusterStorage
 from .redis_sentinel import RedisSentinelStorage
-from .memcached import MemcachedStorage
-from .mongodb import MongoDBStorage
-from .gae_memcached import GAEMemcachedStorage
+from .registry import SCHEMES
 
 StorageTypes = Union[Storage, "limits.aio.storage.Storage"]
 

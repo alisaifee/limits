@@ -1,10 +1,10 @@
 import datetime
 import time
 
-import pytest
 import pymongo
+import pytest
 
-from limits import RateLimitItemPerSecond, RateLimitItemPerMinute
+from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import MongoDBStorage, storage_from_string
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 

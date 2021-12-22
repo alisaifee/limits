@@ -1,7 +1,5 @@
-from abc import abstractmethod
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple
-
 
 from limits.storage.registry import StorageRegistry
 from limits.util import LazyDependency

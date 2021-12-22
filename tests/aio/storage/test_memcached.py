@@ -1,16 +1,16 @@
 import asyncio
 import time
 
-import pytest
 import pymemcache
+import pytest
 
-from limits import RateLimitItemPerSecond, RateLimitItemPerMinute
-from limits.storage import storage_from_string
+from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.aio.storage import MemcachedStorage
 from limits.aio.strategies import (
-    FixedWindowRateLimiter,
     FixedWindowElasticExpiryRateLimiter,
+    FixedWindowRateLimiter,
 )
+from limits.storage import storage_from_string
 from tests import fixed_start
 
 

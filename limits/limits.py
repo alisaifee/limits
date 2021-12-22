@@ -2,8 +2,9 @@
 
 """
 from __future__ import annotations
+
 from functools import total_ordering
-from typing import cast, Dict, NamedTuple, Optional, Type, Union
+from typing import Dict, NamedTuple, Optional, Type, Union, cast
 
 
 def safe_string(value: Union[bytes, str, int]) -> str:

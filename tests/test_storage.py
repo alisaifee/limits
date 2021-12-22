@@ -9,12 +9,12 @@ import rediscluster
 
 from limits.errors import ConfigurationError
 from limits.storage import (
-    MemoryStorage,
-    RedisStorage,
     MemcachedStorage,
+    MemoryStorage,
     MongoDBStorage,
-    RedisSentinelStorage,
     RedisClusterStorage,
+    RedisSentinelStorage,
+    RedisStorage,
     Storage,
     storage_from_string,
 )

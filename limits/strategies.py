@@ -2,12 +2,9 @@
 Rate limiting strategies
 """
 
-from abc import ABCMeta, abstractmethod
 import weakref
-from typing import Dict
-from typing import Tuple
-from typing import Type
-from typing import Union
+from abc import ABCMeta, abstractmethod
+from typing import Dict, Tuple, Type, Union
 
 from .limits import RateLimitItem
 from .storage import Storage

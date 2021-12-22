@@ -1,6 +1,4 @@
-from . import storage
-from . import strategies
-
+from . import storage, strategies
 
 __all__ = [
     "storage",

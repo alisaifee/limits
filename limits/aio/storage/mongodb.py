@@ -2,12 +2,9 @@ import asyncio
 import datetime
 import functools
 import time
+from typing import Any, Dict
 
-from typing import Any
-from typing import Dict
-
-from .base import Storage
-from .base import MovingWindowSupport
+from .base import MovingWindowSupport, Storage
 
 
 def ensure_indices(func):

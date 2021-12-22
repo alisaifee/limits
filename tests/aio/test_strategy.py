@@ -1,27 +1,25 @@
 import time
 
-import pytest
-
+import hiro
 import pymemcache
 import pymongo
+import pytest
 import redis
 import redis.sentinel
 
-import hiro
-
-from limits.limits import RateLimitItemPerSecond, RateLimitItemPerMinute
 from limits.aio.storage import (
-    MemoryStorage,
     MemcachedStorage,
+    MemoryStorage,
     MongoDBStorage,
-    RedisStorage,
     RedisSentinelStorage,
+    RedisStorage,
 )
 from limits.aio.strategies import (
-    MovingWindowRateLimiter,
     FixedWindowElasticExpiryRateLimiter,
     FixedWindowRateLimiter,
+    MovingWindowRateLimiter,
 )
+from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 
 
 @pytest.mark.asynchronous

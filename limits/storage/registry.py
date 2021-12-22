@@ -1,8 +1,5 @@
 from abc import ABCMeta
-
-from typing import cast
-from typing import Dict
-from typing import Type
+from typing import Dict, Type, cast
 
 SCHEMES: Dict[str, Type] = {}
 

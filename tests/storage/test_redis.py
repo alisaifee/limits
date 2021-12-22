@@ -3,7 +3,7 @@ import time
 import pytest
 import redis
 
-from limits import RateLimitItemPerSecond, RateLimitItemPerMinute
+from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import RedisStorage, storage_from_string
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 

@@ -1,14 +1,14 @@
-import datetime
 import asyncio
+import datetime
 import time
 
-import pytest
 import pymongo
+import pytest
 
-from limits import RateLimitItemPerSecond, RateLimitItemPerMinute
-from limits.storage import storage_from_string
+from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.aio.storage import MongoDBStorage
 from limits.aio.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
+from limits.storage import storage_from_string
 
 
 @pytest.mark.asynchronous

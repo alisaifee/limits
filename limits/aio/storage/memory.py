@@ -1,10 +1,9 @@
 import asyncio
 import time
-from typing import Dict, Tuple, List, Optional
 from collections import Counter
+from typing import Dict, List, Optional, Tuple
 
-from .base import Storage
-from .base import MovingWindowSupport
+from .base import MovingWindowSupport, Storage
 
 
 class LockableEntry(asyncio.Lock):

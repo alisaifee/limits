@@ -1,7 +1,7 @@
 import pytest
 
-from limits.util import parse, parse_many, granularity_from_string
 from limits import limits
+from limits.util import granularity_from_string, parse, parse_many
 
 
 @pytest.mark.unit

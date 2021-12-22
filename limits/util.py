@@ -1,17 +1,14 @@
 """
 
 """
-import pkg_resources
 import re
 import sys
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Type
+from typing import Any, Dict, List, Type
 
-from .limits import RateLimitItem
-from .limits import GRANULARITIES
+import pkg_resources
+
 from .errors import ConfigurationError
+from .limits import GRANULARITIES, RateLimitItem
 
 SEPARATORS = re.compile(r"[,;|]{1}")
 SINGLE_EXPR = re.compile(

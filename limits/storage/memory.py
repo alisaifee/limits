@@ -1,12 +1,9 @@
 import threading
 import time
 from collections import Counter
-from typing import Dict
-from typing import List
-from typing import Tuple
+from typing import Dict, List, Tuple
 
-from .base import Storage
-from .base import MovingWindowSupport
+from .base import MovingWindowSupport, Storage
 
 
 class LockableEntry(threading._RLock):

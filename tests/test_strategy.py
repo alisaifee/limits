@@ -1,26 +1,26 @@
 import threading
 import time
 
-import pytest
+import hiro
 import pymemcache
 import pymongo
+import pytest
 import redis
 import redis.sentinel
 import rediscluster
-import hiro
 
-from limits.limits import RateLimitItemPerSecond, RateLimitItemPerMinute
+from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import (
-    MemoryStorage,
-    RedisStorage,
     MemcachedStorage,
+    MemoryStorage,
     MongoDBStorage,
     RedisSentinelStorage,
+    RedisStorage,
 )
 from limits.strategies import (
-    MovingWindowRateLimiter,
     FixedWindowElasticExpiryRateLimiter,
     FixedWindowRateLimiter,
+    MovingWindowRateLimiter,
 )
 
 
