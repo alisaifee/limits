@@ -178,8 +178,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                 ]
             )
         )
-
-        return (int(result[0]["max"]), result[0]["count"])
+        if result:
+            return (int(result[0]["max"]), result[0]["count"])
+        return (int(timestamp), 0)
 
     def acquire_entry(self, key: str, limit: int, expiry: int) -> bool:
         """

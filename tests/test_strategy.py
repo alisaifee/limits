@@ -173,17 +173,21 @@ class TestWindow:
     def test_moving_window_mongo(self):
         storage = MongoDBStorage("mongodb://localhost:37017")
         limiter = MovingWindowRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
+        with hiro.Timeline().freeze() as timeline:
+            limit = RateLimitItemPerMinute(10)
 
-        for i in range(0, 10):
-            assert limiter.hit(limit)
-            assert limiter.get_window_stats(limit)[1] == 10 - (i + 1)
-            time.sleep(2 * 0.095)
-        assert not limiter.hit(limit)
-        time.sleep(0.4)
-        assert limiter.hit(limit)
-        assert limiter.hit(limit)
-        assert limiter.get_window_stats(limit)[1] == 0
+            for i in range(0, 5):
+                assert limiter.hit(limit)
+                assert limiter.hit(limit)
+                assert limiter.get_window_stats(limit)[1] == 10 - ((i + 1) * 2)
+                timeline.forward(10)
+            assert limiter.get_window_stats(limit)[1] == 0
+            assert not limiter.hit(limit)
+            timeline.forward(20)
+            assert limiter.get_window_stats(limit)[1] == 2
+            assert limiter.get_window_stats(limit)[0] == int(time.time() + 30)
+            timeline.forward(31)
+            assert limiter.get_window_stats(limit)[1] == 10
 
     def test_moving_window_memcached(self):
         storage = MemcachedStorage("memcached://localhost:22122")
