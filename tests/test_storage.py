@@ -75,7 +75,8 @@ class TestBaseStorage:
             RedisSentinelStorage,
         )
         assert isinstance(
-            storage_from_string("redis+cluster://localhost:7000/"), RedisClusterStorage,
+            storage_from_string("redis+cluster://localhost:7000/"),
+            RedisClusterStorage,
         )
         assert isinstance(
             storage_from_string("mongodb://localhost:37017/"), MongoDBStorage
@@ -107,7 +108,8 @@ class TestBaseStorage:
         ).check()
         assert storage_from_string("memcached:///tmp/limits.memcached.sock").check()
         assert storage_from_string(
-            "redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel",
+            "redis+sentinel://localhost:26379",
+            service_name="localhost-redis-sentinel",
         ).check()
         assert storage_from_string("redis+cluster://localhost:7000").check()
         assert storage_from_string("mongodb://localhost:37017").check()

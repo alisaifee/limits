@@ -43,3 +43,13 @@ integration-tests: setup-test-backends
 
 all-tests: setup-test-backends
 	pytest -m --durations=10
+
+lint:
+	black --check
+	mypy limits
+	flake8 limits tests
+
+lint-fix:
+	black tests limits
+	mypy limits
+	autoflake8 -i -r tests limits
