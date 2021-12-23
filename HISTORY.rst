@@ -3,6 +3,17 @@
 Changelog
 =========
 
+v2.1.0.b4
+---------
+Release Date: 2021-12-22
+
+* Chore
+
+  * Documentation theme upgrades
+  * Code linting
+  * Add compatibility CI workflow
+
+
 v2.1.0b3
 --------
 Release Date: 2021-12-19
@@ -195,6 +206,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
