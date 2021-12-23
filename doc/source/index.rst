@@ -15,19 +15,21 @@
       :target: https://pypi.org/project/limits
       :class: header-badge
 
+----
+
 *limits* is a python library to perform rate limiting with commonly used
 storage backends (Redis, Memcached & MongoDB).
 
-----
 
-Take a look at :ref:`installation:installation` and :ref:`quickstart:quickstart`
-to start using *limits*.
+Get started by taking a look at :ref:`installation:installation` and :ref:`quickstart:quickstart`.
 
-To learn more about the different strategies refer to the
-:ref:`strategies:rate limiting strategies` section.
+To learn more about the different strategies refer to the :ref:`strategies:rate limiting strategies` section.
+
+For an overview of supported backends refer to :ref:`storage:storage backends`.
 
 .. toctree::
     :maxdepth: 3
+    :hidden:
 
     installation
     quickstart
@@ -37,6 +39,7 @@ To learn more about the different strategies refer to the
     api
     custom-storage
     changelog
+
 
 ----
 
