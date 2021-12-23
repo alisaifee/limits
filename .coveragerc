@@ -1,6 +1,4 @@
 [run]
-include =
-    limits/*
 omit =
     /*/limits/_version*
     /*/tests/*
