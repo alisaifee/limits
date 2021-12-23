@@ -6,15 +6,13 @@ from tests.storage.test_redis import SharedRedisTests
 
 
 class TestRedisSentinelStorage(SharedRedisTests):
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_sentinel):
         self.storage_url = "redis+sentinel://localhost:26379"
         self.service_name = "localhost-redis-sentinel"
         self.storage = RedisSentinelStorage(
             self.storage_url, service_name=self.service_name
         )
-        redis.sentinel.Sentinel([("localhost", 26379)]).master_for(
-            self.service_name
-        ).flushall()
 
     def test_init_options(self, mocker):
         constructor = mocker.spy(redis.sentinel, "Sentinel")
@@ -51,7 +49,8 @@ class TestRedisSentinelStorage(SharedRedisTests):
             ("", "sekret", True),
         ],
     )
-    def test_auth_connect(self, username, password, success):
+    def test_auth_connect(self, username, password, success, redis_sentinel_auth):
+        redis_sentinel_auth.master_for(self.service_name).flushall()
         storage_url = (
             f"redis+sentinel://{username}:{password}@localhost:36379/"
             "localhost-redis-sentinel"

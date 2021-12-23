@@ -1,11 +1,7 @@
 import time
 
 import hiro
-import pymemcache
-import pymongo
 import pytest
-import redis
-import redis.sentinel
 
 from limits.aio.storage import (
     MemcachedStorage,
@@ -24,15 +20,6 @@ from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 
 @pytest.mark.asynchronous
 class TestAsyncWindow:
-    def setup_method(self, method):
-        pymemcache.client.Client(("localhost", 22122)).flush_all()
-        redis.StrictRedis.from_url("redis://localhost:7379").flushall()
-        pymongo.MongoClient("mongodb://localhost:37017").limits.windows.drop()
-        pymongo.MongoClient("mongodb://localhost:37017").limits.counters.drop()
-        redis.sentinel.Sentinel([("localhost", 26379)]).master_for(
-            "localhost-redis-sentinel"
-        ).flushall()
-
     @pytest.mark.asyncio
     async def test_fixed_window(self):
         storage = MemoryStorage()
@@ -49,7 +36,6 @@ class TestAsyncWindow:
             assert (await limiter.get_window_stats(limit))[1] == 10
             assert await limiter.hit(limit)
 
-    @pytest.mark.flaky
     @pytest.mark.asyncio
     async def test_fixed_window_with_elastic_expiry_in_memory(self):
         storage = MemoryStorage()
@@ -73,7 +59,7 @@ class TestAsyncWindow:
 
     @pytest.mark.flaky
     @pytest.mark.asyncio
-    async def test_fixed_window_with_elastic_expiry_memcached(self):
+    async def test_fixed_window_with_elastic_expiry_memcached(self, memcached):
         storage = MemcachedStorage("async+memcached://localhost:22122")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
@@ -87,7 +73,7 @@ class TestAsyncWindow:
         assert (await limiter.get_window_stats(limit))[1] == 0
 
     @pytest.mark.asyncio
-    async def test_fixed_window_with_elastic_expiry_mongo(self):
+    async def test_fixed_window_with_elastic_expiry_mongo(self, mongodb):
         storage = MongoDBStorage("async+mongodb://localhost:37017")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)

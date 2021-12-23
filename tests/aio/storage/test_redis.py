@@ -1,9 +1,6 @@
 import time
 
 import pytest  # type: ignore
-import redis
-import redis.sentinel
-import rediscluster
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.aio.storage import RedisClusterStorage, RedisSentinelStorage, RedisStorage
@@ -82,11 +79,11 @@ class AsyncSharedRedisTests:
 
 @pytest.mark.asynchronous
 class TestAsyncRedisStorage(AsyncSharedRedisTests):
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_basic):
         self.real_storage_url = "redis://localhost:7379"
         self.storage_url = f"async+{self.real_storage_url}"
         self.storage = RedisStorage(self.storage_url)
-        redis.from_url(self.real_storage_url).flushall()
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
@@ -101,10 +98,10 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
 
 @pytest.mark.asynchronous
 class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_uds):
         self.storage_url = "async+redis+unix:///tmp/limits.redis.sock"
         self.storage = RedisStorage(self.storage_url)
-        redis.from_url("unix:///tmp/limits.redis.sock").flushall()
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
@@ -119,9 +116,9 @@ class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
 
 @pytest.mark.asynchronous
 class TestAsyncRedisClusterStorage(AsyncSharedRedisTests):
-    def setup_method(self):
-        rediscluster.RedisCluster("localhost", 7000).flushall()
-        self.storage_url = "redis+cluster://localhost:7000"
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_cluster):
+        self.storage_url = "redis+cluster://localhost:7001"
         self.storage = RedisClusterStorage(f"async+{self.storage_url}")
 
     @pytest.mark.asyncio
@@ -136,15 +133,13 @@ class TestAsyncRedisClusterStorage(AsyncSharedRedisTests):
 
 
 class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_sentinel):
         self.storage_url = "redis+sentinel://localhost:26379"
         self.service_name = "localhost-redis-sentinel"
         self.storage = RedisSentinelStorage(
             f"async+{self.storage_url}", service_name=self.service_name
         )
-        redis.sentinel.Sentinel([("localhost", 26379)]).master_for(
-            self.service_name
-        ).flushall()
 
     @pytest.mark.asyncio
     async def test_init_no_service_name(self, mocker):
@@ -193,7 +188,7 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
         ],
     )
     @pytest.mark.asyncio
-    async def test_auth_connect(self, username, password, success):
+    async def test_auth_connect(self, username, password, success, redis_sentinel_auth):
         storage_url = (
             f"async+redis+sentinel://{username}:{password}@localhost:36379/"
             "localhost-redis-sentinel"

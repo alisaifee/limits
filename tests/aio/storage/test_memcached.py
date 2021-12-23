@@ -1,7 +1,6 @@
 import asyncio
 import time
 
-import pymemcache
 import pytest
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
@@ -17,9 +16,8 @@ from tests import fixed_start
 @pytest.mark.flaky
 @pytest.mark.asynchronous
 class TestAsyncMemcachedStorage:
-    def setup_method(self):
-        pymemcache.client.Client(("localhost", 22122)).flush_all()
-        pymemcache.client.Client(("localhost", 22123)).flush_all()
+    @pytest.fixture(autouse=True)
+    def setup(self, memcached, memcached_cluster):
         self.storage_url = "async+memcached://localhost:22122"
 
     @pytest.mark.asyncio

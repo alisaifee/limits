@@ -2,6 +2,7 @@ import datetime
 import time
 
 import pymongo
+import pytest
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import MongoDBStorage, storage_from_string
@@ -9,11 +10,10 @@ from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 
 
 class TestMongoDBStorage:
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, mongodb):
         self.storage_url = "mongodb://localhost:37017"
         self.storage = MongoDBStorage(self.storage_url)
-        pymongo.MongoClient(self.storage_url).limits.windows.drop()
-        pymongo.MongoClient(self.storage_url).limits.counters.drop()
 
     def test_init_options(self, mocker):
         constructor = mocker.spy(pymongo, "MongoClient")
