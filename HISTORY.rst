@@ -3,36 +3,9 @@
 Changelog
 =========
 
-v2.1.0.b4
----------
+v2.1.0
+------
 Release Date: 2021-12-22
-
-* Chore
-
-  * Documentation theme upgrades
-  * Code linting
-  * Add compatibility CI workflow
-
-
-v2.1.0b3
---------
-Release Date: 2021-12-19
-
-* Bug fix
-
-  * Allow python 3.7
-
-v2.1.0b2
---------
-Release Date: 2021-12-19
-
-* Patch
-
-  * Ensure motor uses the current event loop
-
-v2.1.0b1
---------
-Release Date: 2021-12-19
 
 * Feature
 
@@ -45,15 +18,18 @@ Release Date: 2021-12-19
   * Fix custom option for cluster client in memcached
   * Fix separation of sentinel & connection args in :class:`limits.storage.RedisSentinelStorage`
 
-* Deprecations
+* Deprecation
 
   * Deprecate GAEMemcached support
-  * Remove use of unused `no_add` argument in :meth:`limits.storage.Storage.acquire_entry`
+  * Remove use of unused `no_add` argument in :meth:`limits.storage.MovingWindowSupport.acquire_entry`
 
 * Chore
 
-  * Update documentation
-  * Improve tests to use less mocking
+  * Documentation theme upgrades
+  * Code linting
+  * Add compatibility CI workflow
+
+
 
 v2.0.3
 ------
@@ -206,6 +182,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
