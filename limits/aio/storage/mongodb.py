@@ -33,9 +33,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     """
 
     DEFAULT_OPTIONS = {
-        "serverSelectionTimeoutMS": 100,
-        "socketTimeoutMS": 100,
-        "connectTimeoutMS": 100,
+        "serverSelectionTimeoutMS": 1000,
+        "socketTimeoutMS": 1000,
+        "connectTimeoutMS": 1000,
     }
     "Default options passed to :class:`~motor.motor_asyncio.AsyncIOMotorClient`"
 
@@ -104,8 +104,10 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         """
         :param key: the key to clear rate limits for
         """
-        await self.database.counters.find_one_and_delete({"_id": key})
-        await self.database.windows.find_one_and_delete({"_id": key})
+        await asyncio.gather(
+            self.database.counters.find_one_and_delete({"_id": key}),
+            self.database.windows.find_one_and_delete({"_id": key}),
+        )
 
     async def get_expiry(self, key: str) -> int:
         """
