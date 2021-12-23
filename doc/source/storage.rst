@@ -37,17 +37,11 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
      .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
-.. tabbed:: Redis with Sentinel
+   Redis with SSL
 
-   Dependency versions:
+     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_SSL_VERSION=[\d\.]+' | cut -d = -f 2"
 
-     .. literalinclude:: ../../requirements/storage/redis.txt
-
-   Dependency versions (async):
-
-     .. literalinclude:: ../../requirements/storage/async-redis.txt
-
-   `Redis Sentinel <https://redis.io/topics/sentinel>`_
+  `Redis Sentinel <https://redis.io/topics/sentinel>`_
 
      .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SENTINEL_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
@@ -63,7 +57,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    `Redis cluster <https://redis.io/topics/cluster-tutorial>`_
 
-     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_CLUSTER_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
 .. tabbed:: Memcached
 
