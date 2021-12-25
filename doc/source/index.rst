@@ -67,7 +67,7 @@ so as to not incur the overhead of starting up on each test run. To run the test
 
    $ pytest
 
-Once you're done - you will probably want to clean up the docker containers::
+Once you're done - you will probably want to clean up the docker containers:
 
 .. code:: console
 
