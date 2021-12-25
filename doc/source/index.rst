@@ -58,20 +58,20 @@ To get started
    $ pip install -r requirements/dev.txt
 
 Since `limits` integrates with various backend storages, local development and running tests
-can require some setup.
+requires a a working `docker & docker-compose installation <https://docs.docker.com/compose/gettingstarted/>`_.
 
-You can use the provided Makefile to set up all the backends.
-This will require a working `docker & docker-compose installation <https://docs.docker.com/compose/gettingstarted/>`_.
-
-.. note:: On OSX you'll also need a working installation of `redis` & `memcached`
+Running the tests will start the relevant containers automatically - but will leave them running
+so as to not incur the overhead of starting up on each test run. To run the tests:
 
 .. code:: console
 
-   $ make setup-test-backends
-   $ # hack hack hack
    $ pytest
-   $ make teardown-test-backends
 
+Once you're done - you will probably want to clean up the docker containers::
+
+.. code:: console
+
+   $ docker-compose down
 
 
 Projects using *limits*
