@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [3.9]
-        marker: [unit or asynchronous]
+        marker: [not integration]
         service_versions:
           - "ALL_LATEST=true"
           - "LIMITS_REDIS_SERVER_SSL_VERSION=6.2.6"
@@ -47,10 +47,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements/ci.txt
-    - name: Start services
-      run: |
-        eval "export ${{ matrix.service_versions }}"
-        make setup-test-backends
     - name: Tests
       run: |
-        py.test -m "${{ matrix.marker || 'unit' }}" --cov-report=xml --cov-branch
+        eval "export ${{ matrix.service_versions }}"
+        py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch
