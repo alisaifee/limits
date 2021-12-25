@@ -14,7 +14,7 @@ services:
       - 22123:22123
   memcached-uds:
     image: "memcached:${LIMITS_MEMCACHED_SERVER_VERSION:-latest}"
-    command: sh -c "test ${HOST_OS:-linux} = \"Darwin\" && exit || memcached -s /sockets/limits.memcached.sock -a 777"
+    command: sh -c "test ${HOST_OS} = \"Darwin\" && exit || memcached -s /sockets/limits.memcached.sock -a 777"
     volumes:
       - type: bind
         source: /tmp/
@@ -28,7 +28,7 @@ services:
   redis-sentinel-slave:
     image: "redis:${LIMITS_REDIS_SENTINEL_SERVER_VERSION:-latest}"
     depends_on: [redis-sentinel-master]
-    command: redis-server --port 6381 --slaveof 172.17.0.1 6380 --slave-announce-ip 172.17.0.1
+    command: redis-server --port 6381 --slaveof ${HOST_IP} 6380 --slave-announce-ip ${HOST_IP}
     ports:
       - '6381:6381'
   redis-sentinel:
@@ -36,17 +36,16 @@ services:
     depends_on: [redis-sentinel-slave]
     environment:
       - REDIS_MASTER_SET=localhost-redis-sentinel
-      - REDIS_MASTER_HOST=172.17.0.1
+      - REDIS_MASTER_HOST=${HOST_IP}
       - REDIS_MASTER_PORT_NUMBER=6380
     ports:
       - '26379:26379'
-
   redis-sentinel-auth:
     image: 'bitnami/redis-sentinel:${LIMITS_REDIS_SENTINEL_SERVER_VERSION:-latest}'
     depends_on: [redis-sentinel-slave]
     environment:
       - REDIS_MASTER_SET=localhost-redis-sentinel
-      - REDIS_MASTER_HOST=172.17.0.1
+      - REDIS_MASTER_HOST=${HOST_IP}
       - REDIS_MASTER_PORT_NUMBER=6380
       - REDIS_SENTINEL_PASSWORD=sekret
     ports:
@@ -54,43 +53,43 @@ services:
   # cluster
   redis-cluster-1:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 7001 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip 172.17.0.1
+    command: redis-server --port 7001 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7001:7001'
       - '17001:17001'
   redis-cluster-2:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 7002 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip 172.17.0.1
+    command: redis-server --port 7002 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7002:7002'
       - '17002:17002'
   redis-cluster-3:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 7003 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip 172.17.0.1
+    command: redis-server --port 7003 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7003:7003'
       - '17003:17003'
   redis-cluster-4:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 7004 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip 172.17.0.1
+    command: redis-server --port 7004 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7004:7004'
       - '17004:17004'
   redis-cluster-5:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 7005 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip 172.17.0.1
+    command: redis-server --port 7005 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7005:7005'
       - '17005:17005'
   redis-cluster-6:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 7006 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip 172.17.0.1
+    command: redis-server --port 7006 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
     ports:
       - '7006:7006'
       - '17006:17006'
   redis-cluster-init:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: bash -c "echo yes | redis-cli --cluster create --cluster-replicas 1 172.17.0.1:7001 172.17.0.1:7002 172.17.0.1:7003 172.17.0.1:7004 172.17.0.1:7005 172.17.0.1:7006"
+    command: bash -c "echo yes | redis-cli --cluster create --cluster-replicas 1 ${HOST_IP}:7001 ${HOST_IP}:7002 ${HOST_IP}:7003 ${HOST_IP}:7004 ${HOST_IP}:7005 ${HOST_IP}:7006"
     depends_on: [redis-cluster-1, redis-cluster-2, redis-cluster-3, redis-cluster-4, redis-cluster-5, redis-cluster-6]
   redis-basic:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
@@ -111,7 +110,7 @@ services:
       - ./tests/tls:/tls
   redis-uds:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: sh -c "test ${HOST_OS:-linux} = \"Darwin\" && exit || redis-server --port 0 --unixsocket /sockets/limits.redis.sock --unixsocketperm 777"
+    command: sh -c "test ${HOST_OS} = \"Darwin\" && exit || redis-server --port 0 --unixsocket /sockets/limits.redis.sock --unixsocketperm 777"
     volumes:
       - type: bind
         source: /tmp/

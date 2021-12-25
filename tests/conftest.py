@@ -1,4 +1,6 @@
+import os
 import platform
+import socket
 
 import pymemcache
 import pymemcache.client
@@ -11,12 +13,8 @@ import rediscluster
 
 def check_redis_cluster_ready(*_):
     try:
-        return (
-            rediscluster.RedisCluster("localhost", 7001).cluster_info()[
-                "172.17.0.1:7001"
-            ]["cluster_state"]
-            == "ok"
-        )
+        rediscluster.RedisCluster("localhost", 7001).cluster_info()
+        return True
     except:  # noqa
         return False
 
@@ -51,6 +49,24 @@ def check_mongo_ready(host, port):
         return True
     except:  # noqa
         return False
+
+
+@pytest.fixture(scope="session")
+def host_ip_env():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("10.255.255.255", 1))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    os.environ["HOST_IP"] = str(ip)
+
+
+@pytest.fixture(scope="session")
+def docker_services(host_ip_env, docker_services):
+    return docker_services
 
 
 @pytest.fixture(scope="session")
