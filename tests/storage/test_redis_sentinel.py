@@ -5,6 +5,7 @@ from limits.storage import RedisSentinelStorage, storage_from_string
 from tests.storage.test_redis import SharedRedisTests
 
 
+@pytest.mark.redis_sentinel
 class TestRedisSentinelStorage(SharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_sentinel):

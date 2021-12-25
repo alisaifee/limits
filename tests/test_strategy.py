@@ -57,6 +57,7 @@ class TestWindow:
             assert limiter.get_window_stats(limit)[0] == start + 2
 
     @pytest.mark.flaky
+    @pytest.mark.memcached
     def test_fixed_window_with_elastic_expiry_memcache(self, memcached):
         storage = MemcachedStorage("memcached://localhost:22122")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -68,6 +69,7 @@ class TestWindow:
         assert not limiter.hit(limit)
 
     @pytest.mark.flaky
+    @pytest.mark.memcached
     def test_fixed_window_with_elastic_expiry_memcache_concurrency(self, memcached):
         storage = MemcachedStorage("memcached://localhost:22122")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -85,6 +87,7 @@ class TestWindow:
         assert start + 2 <= limiter.get_window_stats(limit)[0] <= start + 3
         assert storage.get(limit.key_for()) == 10
 
+    @pytest.mark.mongodb
     def test_fixed_window_with_elastic_expiry_mongo(self, mongodb):
         storage = MongoDBStorage("mongodb://localhost:37017")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -96,6 +99,7 @@ class TestWindow:
         assert not limiter.hit(limit)
         assert limiter.get_window_stats(limit)[1] == 0
 
+    @pytest.mark.redis
     def test_fixed_window_with_elastic_expiry_redis(self, redis_basic):
         storage = RedisStorage("redis://localhost:7379")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -107,6 +111,7 @@ class TestWindow:
         assert not limiter.hit(limit)
         assert limiter.get_window_stats(limit)[1] == 0
 
+    @pytest.mark.redis_sentinel
     def test_fixed_window_with_elastic_expiry_redis_sentinel(self, redis_sentinel):
         storage = RedisSentinelStorage(
             "redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel"
@@ -139,6 +144,7 @@ class TestWindow:
             timeline.forward(31)
             assert limiter.get_window_stats(limit)[1] == 10
 
+    @pytest.mark.redis
     def test_moving_window_redis(self, redis_basic):
         storage = RedisStorage("redis://localhost:7379")
         limiter = MovingWindowRateLimiter(storage)
@@ -154,6 +160,7 @@ class TestWindow:
         assert limiter.hit(limit)
         assert limiter.get_window_stats(limit)[1] == 0
 
+    @pytest.mark.mongodb
     def test_moving_window_mongo(self, mongodb):
         storage = MongoDBStorage("mongodb://localhost:37017")
         limiter = MovingWindowRateLimiter(storage)
@@ -173,6 +180,7 @@ class TestWindow:
             timeline.forward(31)
             assert limiter.get_window_stats(limit)[1] == 10
 
+    @pytest.mark.memcached
     def test_moving_window_memcached(self, memcached):
         storage = MemcachedStorage("memcached://localhost:22122")
         with pytest.raises(NotImplementedError):

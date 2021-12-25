@@ -14,23 +14,51 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [3.9]
+        service_version: ["ALL_LATEST=true"]
         marker: [not integration]
-        service_versions:
-          - "ALL_LATEST=true"
-          - "LIMITS_REDIS_SERVER_SSL_VERSION=6.2.6"
-          - "LIMITS_REDIS_SERVER_SSL_VERSION=6.0.16"
-          - "LIMITS_REDIS_SERVER_VERSION=6.2.6"
-          - "LIMITS_REDIS_SERVER_VERSION=6.0.16"
-          - "LIMITS_REDIS_SERVER_VERSION=5.0.14"
-          - "LIMITS_REDIS_SENTINEL_SERVER_VERSION=6.2.6"
-          - "LIMITS_REDIS_SENTINEL_SERVER_VERSION=6.0.16"
-          - "LIMITS_REDIS_SENTINEL_SERVER_VERSION=5.0.14"
-          - "LIMITS_MONGODB_SERVER_VERSION=5.0.3"
-          - "LIMITS_MONGODB_SERVER_VERSION=4.4.9"
-          - "LIMITS_MONGODB_SERVER_VERSION=4.2.17"
-          - "LIMITS_MEMCACHED_SERVER_VERSION=1.6.6"
-          - "LIMITS_MEMCACHED_SERVER_VERSION=1.5.16"
-          - "LIMITS_MEMCACHED_SERVER_VERSION=1.4.34"
+        include:
+          - service_version: "LIMITS_REDIS_SERVER_SSL_VERSION=6.2.6"
+            python-version: 3.9
+            marker: "redis"
+          - service_version: "LIMITS_REDIS_SERVER_SSL_VERSION=6.0.16"
+            python-version: 3.9
+            marker: "redis"
+          - service_version: "LIMITS_REDIS_SERVER_VERSION=6.2.6"
+            python-version: 3.9
+            marker: "redis"
+          - service_version: "LIMITS_REDIS_SERVER_VERSION=6.0.16"
+            python-version: 3.9
+            marker: "redis"
+          - service_version: "LIMITS_REDIS_SERVER_VERSION=5.0.14"
+            python-version: 3.9
+            marker: "redis"
+          - service_version: "LIMITS_REDIS_SENTINEL_SERVER_VERSION=6.2.6"
+            python-version: 3.9
+            marker: "redis_sentinel"
+          - service_version: "LIMITS_REDIS_SENTINEL_SERVER_VERSION=6.0.16"
+            python-version: 3.9
+            marker: "redis_sentinel"
+          - service_version: "LIMITS_REDIS_SENTINEL_SERVER_VERSION=5.0.14"
+            python-version: 3.9
+            marker: "redis_sentinel"
+          - service_version: "LIMITS_MONGODB_SERVER_VERSION=5.0.3"
+            python-version: 3.9
+            marker: "mongodb"
+          - service_version: "LIMITS_MONGODB_SERVER_VERSION=4.4.9"
+            python-version: 3.9
+            marker: "mongodb"
+          - service_version: "LIMITS_MONGODB_SERVER_VERSION=4.2.17"
+            python-version: 3.9
+            marker: "mongodb"
+          - service_version: "LIMITS_MEMCACHED_SERVER_VERSION=1.6.6"
+            python-version: 3.9
+            marker: "memcached"
+          - service_version: "LIMITS_MEMCACHED_SERVER_VERSION=1.5.16"
+            python-version: 3.9
+            marker: "memcached"
+          - service_version: "LIMITS_MEMCACHED_SERVER_VERSION=1.4.34"
+            python-version: 3.9
+            marker: "memcached"
 
     steps:
     - uses: actions/checkout@v2
@@ -51,5 +79,5 @@ jobs:
         pip install -r requirements/ci.txt
     - name: Tests
       run: |
-        eval "export ${{ matrix.service_versions }}"
+        eval "export ${{ matrix.service_version }}"
         py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch

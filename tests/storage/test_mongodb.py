@@ -9,6 +9,7 @@ from limits.storage import MongoDBStorage, storage_from_string
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 
 
+@pytest.mark.mongodb
 class TestMongoDBStorage:
     @pytest.fixture(autouse=True)
     def setup(self, mongodb):

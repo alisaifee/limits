@@ -12,10 +12,11 @@ from limits.strategies import (
 from tests import fixed_start
 
 
+@pytest.mark.memcached
 @pytest.mark.flaky
 class TestMemcachedStorage:
     @pytest.fixture(autouse=True)
-    def setup(self, memcached):
+    def setup(self, memcached, memcached_cluster):
         self.storage_url = "memcached://localhost:22122"
 
     def test_init_options(self, mocker):
@@ -41,7 +42,7 @@ class TestMemcachedStorage:
         assert limiter.hit(per_min)
 
     @fixed_start
-    def test_fixed_window_cluster(self, memcached_cluster):
+    def test_fixed_window_cluster(self):
         storage = MemcachedStorage("memcached://localhost:22122,localhost:22123")
         limiter = FixedWindowRateLimiter(storage)
         per_min = RateLimitItemPerSecond(10)
@@ -73,7 +74,7 @@ class TestMemcachedStorage:
         assert limiter.test(per_sec)
 
     @fixed_start
-    def test_fixed_window_with_elastic_expiry_cluster(self, memcached_cluster):
+    def test_fixed_window_with_elastic_expiry_cluster(self):
         storage = MemcachedStorage("memcached://localhost:22122,localhost:22123")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         per_sec = RateLimitItemPerSecond(2, 2)
