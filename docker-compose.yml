@@ -51,12 +51,6 @@ services:
     ports:
       - '36379:26379'
   # cluster
-  redis-cluster-0:
-    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 7000 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
-    ports:
-      - '7000:7000'
-      - '17000:17000'
   redis-cluster-1:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
     command: redis-server --port 7001 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
@@ -87,6 +81,16 @@ services:
     ports:
       - '7005:7005'
       - '17005:17005'
+  redis-cluster-6:
+    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
+    command: redis-server --port 7006 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '7006:7006'
+      - '17006:17006'
+  redis-cluster-init:
+    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
+    command: bash -c "echo yes | redis-cli --cluster create --cluster-replicas 1 ${HOST_IP}:7001 ${HOST_IP}:7002 ${HOST_IP}:7003 ${HOST_IP}:7004 ${HOST_IP}:7005 ${HOST_IP}:7006"
+    depends_on: [redis-cluster-1, redis-cluster-2, redis-cluster-3, redis-cluster-4, redis-cluster-5, redis-cluster-6]
   redis-basic:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
     command: redis-server --port 7379

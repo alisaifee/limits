@@ -1,13 +1,7 @@
 import time
 
-import pymemcache.client
-import pymongo
 import pytest
-import redis
-import redis.sentinel
-import rediscluster
 
-from limits.errors import ConfigurationError
 from limits.storage import (
     MemcachedStorage,
     MemoryStorage,
@@ -22,97 +16,132 @@ from limits.strategies import MovingWindowRateLimiter
 
 
 class TestBaseStorage:
-    def setup_method(self):
-        pymemcache.client.Client(("localhost", 22122)).flush_all()
-        redis.from_url("unix:///tmp/limits.redis.sock").flushall()
-        redis.from_url("redis://localhost:7379").flushall()
-        redis.from_url("redis://:sekret@localhost:7389").flushall()
-        redis.sentinel.Sentinel([("localhost", 26379)]).master_for(
-            "localhost-redis-sentinel"
-        ).flushall()
-        pymongo.MongoClient("mongodb://localhost:37017").limits.windows.drop()
-        pymongo.MongoClient("mongodb://localhost:37017").limits.counters.drop()
-        rediscluster.RedisCluster("localhost", 7000).flushall()
-
-    def test_storage_string(self, mocker):
-        assert isinstance(storage_from_string("memory://"), MemoryStorage)
-        assert isinstance(storage_from_string("redis://localhost:7379"), RedisStorage)
-        assert isinstance(
-            storage_from_string("redis+unix:///tmp/limits.redis.sock"), RedisStorage
-        )
-
-        assert isinstance(
-            storage_from_string("redis+unix://:password/tmp/limits.redis.sock"),
-            RedisStorage,
-        )
-
-        assert isinstance(
-            storage_from_string("memcached://localhost:22122"), MemcachedStorage
-        )
-
-        assert isinstance(
-            storage_from_string("memcached://localhost:22122,localhost:22123"),
-            MemcachedStorage,
-        )
-
-        assert isinstance(
-            storage_from_string("memcached:///tmp/limits.memcached.sock"),
-            MemcachedStorage,
-        )
-
-        assert isinstance(
-            storage_from_string(
+    @pytest.mark.parametrize(
+        "uri, args, expected_instance, fixture",
+        [
+            ("memory://", {}, MemoryStorage, None),
+            (
+                "redis://localhost:7379",
+                {},
+                RedisStorage,
+                pytest.lazy_fixture("redis_basic"),
+            ),
+            (
+                "redis+unix:///tmp/limits.redis.sock",
+                {},
+                RedisStorage,
+                pytest.lazy_fixture("redis_uds"),
+            ),
+            (
+                "redis+unix://:password/tmp/limits.redis.sock",
+                {},
+                RedisStorage,
+                pytest.lazy_fixture("redis_uds"),
+            ),
+            (
+                "memcached://localhost:22122",
+                {},
+                MemcachedStorage,
+                pytest.lazy_fixture("memcached"),
+            ),
+            (
+                "memcached://localhost:22122,localhost:22123",
+                {},
+                MemcachedStorage,
+                pytest.lazy_fixture("memcached_cluster"),
+            ),
+            (
+                "memcached:///tmp/limits.memcached.sock",
+                {},
+                MemcachedStorage,
+                pytest.lazy_fixture("memcached_uds"),
+            ),
+            (
                 "redis+sentinel://localhost:26379",
-                service_name="localhost-redis-sentinel",
+                {"service_name": "localhost-redis-sentinel"},
+                RedisSentinelStorage,
+                pytest.lazy_fixture("redis_sentinel"),
             ),
-            RedisSentinelStorage,
-        )
+            (
+                "redis+sentinel://localhost:26379/localhost-redis-sentinel",
+                {},
+                RedisSentinelStorage,
+                pytest.lazy_fixture("redis_sentinel"),
+            ),
+            (
+                "redis+sentinel://:sekret@localhost:26379/localhost-redis-sentinel",
+                {},
+                RedisSentinelStorage,
+                pytest.lazy_fixture("redis_sentinel_auth"),
+            ),
+            (
+                "redis+cluster://localhost:7001/",
+                {},
+                RedisClusterStorage,
+                pytest.lazy_fixture("redis_cluster"),
+            ),
+            (
+                "mongodb://localhost:37017/",
+                {},
+                MongoDBStorage,
+                pytest.lazy_fixture("mongodb"),
+            ),
+        ],
+    )
+    def test_storage_string(self, uri, args, expected_instance, fixture):
+        assert isinstance(storage_from_string(uri, **args), expected_instance)
 
-        assert isinstance(
-            storage_from_string(
-                "redis+sentinel://localhost:26379/localhost-redis-sentinel"
+    @pytest.mark.parametrize(
+        "uri, args, fixture",
+        [
+            ("memory://", {}, None),
+            ("redis://localhost:7379", {}, pytest.lazy_fixture("redis_basic")),
+            (
+                "redis+unix:///tmp/limits.redis.sock",
+                {},
+                pytest.lazy_fixture("redis_uds"),
             ),
-            RedisSentinelStorage,
-        )
-        assert isinstance(
-            storage_from_string("redis+cluster://localhost:7000/"),
-            RedisClusterStorage,
-        )
-        assert isinstance(
-            storage_from_string("mongodb://localhost:37017/"), MongoDBStorage
-        )
-        with pytest.raises(ConfigurationError):
-            storage_from_string("blah://")
-        with pytest.raises(ConfigurationError):
-            storage_from_string("redis+sentinel://localhost:26379")
-        sentinel = mocker.Mock()
-        mocker.patch("limits.util.get_dependency", return_value=sentinel)
-        assert isinstance(
-            storage_from_string(
-                "redis+sentinel://:foobared@localhost:26379/localhost-redis-sentinel"
+            (
+                "redis+unix://:password/tmp/limits.redis.sock",
+                {},
+                pytest.lazy_fixture("redis_uds"),
             ),
-            RedisSentinelStorage,
-        )
-        assert (
-            sentinel.Sentinel.call_args[1]["sentinel_kwargs"]["password"] == "foobared"
-        )
-
-    def test_storage_check(self):
-        assert storage_from_string("memory://").check()
-        assert storage_from_string("redis://localhost:7379").check()
-        assert storage_from_string("redis://:sekret@localhost:7389").check()
-        assert storage_from_string("redis+unix:///tmp/limits.redis.sock").check()
-        assert storage_from_string("memcached://localhost:22122").check()
-        assert storage_from_string(
-            "memcached://localhost:22122,localhost:22123"
-        ).check()
-        assert storage_from_string("memcached:///tmp/limits.memcached.sock").check()
-        assert storage_from_string(
-            "redis+sentinel://localhost:26379",
-            service_name="localhost-redis-sentinel",
-        ).check()
-        assert storage_from_string("redis+cluster://localhost:7000").check()
-        assert storage_from_string("mongodb://localhost:37017").check()
+            ("memcached://localhost:22122", {}, pytest.lazy_fixture("memcached")),
+            (
+                "memcached://localhost:22122,localhost:22123",
+                {},
+                pytest.lazy_fixture("memcached_cluster"),
+            ),
+            (
+                "memcached:///tmp/limits.memcached.sock",
+                {},
+                pytest.lazy_fixture("memcached_uds"),
+            ),
+            (
+                "redis+sentinel://localhost:26379",
+                {"service_name": "localhost-redis-sentinel"},
+                pytest.lazy_fixture("redis_sentinel"),
+            ),
+            (
+                "redis+sentinel://localhost:26379/localhost-redis-sentinel",
+                {},
+                pytest.lazy_fixture("redis_sentinel"),
+            ),
+            (
+                "redis+sentinel://:sekret@localhost:36379/localhost-redis-sentinel",
+                {},
+                pytest.lazy_fixture("redis_sentinel_auth"),
+            ),
+            (
+                "redis+cluster://localhost:7001/",
+                {},
+                pytest.lazy_fixture("redis_cluster"),
+            ),
+            ("mongodb://localhost:37017/", {}, pytest.lazy_fixture("mongodb")),
+        ],
+    )
+    def test_storage_check(self, uri, args, fixture):
+        assert storage_from_string(uri, **args).check()
 
     def test_pluggable_storage_no_moving_window(self):
         class MyStorage(Storage):

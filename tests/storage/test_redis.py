@@ -1,5 +1,6 @@
 import time
 
+import pytest
 import redis
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
@@ -64,10 +65,10 @@ class SharedRedisTests(object):
 
 
 class TestRedisStorage(SharedRedisTests):
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_basic):
         self.storage_url = "redis://localhost:7379"
         self.storage = RedisStorage(self.storage_url)
-        redis.from_url(self.storage_url).flushall()
 
     def test_init_options(self, mocker):
         from_url = mocker.spy(redis, "from_url")
@@ -76,10 +77,10 @@ class TestRedisStorage(SharedRedisTests):
 
 
 class TestRedisUnixSocketStorage(SharedRedisTests):
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_uds):
         self.storage_url = "redis+unix:///tmp/limits.redis.sock"
         self.storage = RedisStorage(self.storage_url)
-        redis.from_url("unix:///tmp/limits.redis.sock").flushall()
 
     def test_init_options(self, mocker):
         from_url = mocker.spy(redis, "from_url")
@@ -88,7 +89,8 @@ class TestRedisUnixSocketStorage(SharedRedisTests):
 
 
 class TestRedisSSLStorage(SharedRedisTests):
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_ssl):
         self.storage_url = (
             "rediss://localhost:8379/0?ssl_cert_reqs=required"
             "&ssl_keyfile=./tests/tls/client.key"
@@ -96,7 +98,6 @@ class TestRedisSSLStorage(SharedRedisTests):
             "&ssl_ca_certs=./tests/tls/ca.crt"
         )
         self.storage = RedisStorage(self.storage_url)
-        redis.from_url(self.storage_url).flushall()
 
     def test_init_options(self, mocker):
         from_url = mocker.spy(redis, "from_url")

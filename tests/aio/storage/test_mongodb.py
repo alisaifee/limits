@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import time
 
-import pymongo
 import pytest
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
@@ -13,11 +12,10 @@ from limits.storage import storage_from_string
 
 @pytest.mark.asynchronous
 class TestAsyncMongoDBStorage:
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup(self, mongodb):
         self.storage_url = "mongodb://localhost:37017"
         self.storage = MongoDBStorage(f"async+{self.storage_url}")
-        pymongo.MongoClient(self.storage_url).limits.windows.drop()
-        pymongo.MongoClient(self.storage_url).limits.counters.drop()
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):

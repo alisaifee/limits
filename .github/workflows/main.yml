@@ -11,14 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8]
         marker: [not integration]
         include:
           - python-version: 3.9
+            marker: ''
           - python-version: "3.10"
             marker: 'not asynchronous'
     steps:
     - uses: actions/checkout@v2
+    - uses: docker-practice/actions-setup-docker@master
     - name: Cache dependencies
       uses: actions/cache@v1
       with:
@@ -34,9 +36,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements/ci.txt
-    - name: Start services
-      run: |
-        make setup-test-backends
     - name: Tests
       run: |
         py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch

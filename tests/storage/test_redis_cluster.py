@@ -1,3 +1,4 @@
+import pytest
 import rediscluster
 
 from limits.storage import RedisClusterStorage, storage_from_string
@@ -5,10 +6,10 @@ from tests.storage.test_redis import SharedRedisTests
 
 
 class TestRedisClusterStorage(SharedRedisTests):
-    def setup_method(self):
-        rediscluster.RedisCluster("localhost", 7000).flushall()
-        self.storage_url = "redis+cluster://localhost:7000"
-        self.storage = RedisClusterStorage("redis+cluster://localhost:7000")
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_cluster):
+        self.storage_url = "redis+cluster://localhost:7001"
+        self.storage = RedisClusterStorage("redis+cluster://localhost:7001")
 
     def test_init_options(self, mocker):
         constructor = mocker.spy(rediscluster, "RedisCluster")
