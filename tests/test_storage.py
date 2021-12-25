@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from limits.errors import ConfigurationError
 from limits.storage import (
     MemcachedStorage,
     MemoryStorage,
@@ -90,6 +91,13 @@ class TestBaseStorage:
     )
     def test_storage_string(self, uri, args, expected_instance, fixture):
         assert isinstance(storage_from_string(uri, **args), expected_instance)
+
+    @pytest.mark.parametrize(
+        "uri, args", [("blah://", {}), ("redis+sentinel://localhost:26379", {})]
+    )
+    def test_invalid_storage_string(self, uri, args):
+        with pytest.raises(ConfigurationError):
+            storage_from_string(uri, **args)
 
     @pytest.mark.parametrize(
         "uri, args, fixture",
