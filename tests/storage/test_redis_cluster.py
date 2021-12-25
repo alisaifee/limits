@@ -5,6 +5,7 @@ from limits.storage import RedisClusterStorage, storage_from_string
 from tests.storage.test_redis import SharedRedisTests
 
 
+@pytest.mark.redis_cluster
 class TestRedisClusterStorage(SharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_cluster):

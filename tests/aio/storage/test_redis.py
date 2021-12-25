@@ -77,7 +77,7 @@ class AsyncSharedRedisTests:
         assert await self.storage.check() is True
 
 
-@pytest.mark.asynchronous
+@pytest.mark.redis
 class TestAsyncRedisStorage(AsyncSharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_basic):
@@ -96,7 +96,7 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
         )
 
 
-@pytest.mark.asynchronous
+@pytest.mark.redis
 class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_uds):
@@ -114,7 +114,7 @@ class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
         )
 
 
-@pytest.mark.asynchronous
+@pytest.mark.redis_cluster
 class TestAsyncRedisClusterStorage(AsyncSharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_cluster):
@@ -132,6 +132,7 @@ class TestAsyncRedisClusterStorage(AsyncSharedRedisTests):
         assert constructor.call_args[1]["max_connections"] == 10
 
 
+@pytest.mark.redis_sentinel
 class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_sentinel):

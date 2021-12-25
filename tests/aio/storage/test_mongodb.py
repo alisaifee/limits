@@ -11,6 +11,7 @@ from limits.storage import storage_from_string
 
 
 @pytest.mark.asynchronous
+@pytest.mark.mongodb
 class TestAsyncMongoDBStorage:
     @pytest.fixture(autouse=True)
     def setup(self, mongodb):

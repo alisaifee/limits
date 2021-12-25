@@ -59,6 +59,7 @@ class TestAsyncWindow:
 
     @pytest.mark.flaky
     @pytest.mark.asyncio
+    @pytest.mark.memcached
     async def test_fixed_window_with_elastic_expiry_memcached(self, memcached):
         storage = MemcachedStorage("async+memcached://localhost:22122")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -73,6 +74,7 @@ class TestAsyncWindow:
         assert (await limiter.get_window_stats(limit))[1] == 0
 
     @pytest.mark.asyncio
+    @pytest.mark.mongodb
     async def test_fixed_window_with_elastic_expiry_mongo(self, mongodb):
         storage = MongoDBStorage("async+mongodb://localhost:37017")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -87,6 +89,7 @@ class TestAsyncWindow:
         assert (await limiter.get_window_stats(limit))[1] == 0
 
     @pytest.mark.asyncio
+    @pytest.mark.redis
     async def test_fixed_window_with_elastic_expiry_redis(self, redis_basic):
         storage = RedisStorage("async+redis://localhost:7379")
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -101,6 +104,7 @@ class TestAsyncWindow:
         assert (await limiter.get_window_stats(limit))[1] == 0
 
     @pytest.mark.asyncio
+    @pytest.mark.redis_sentinel
     async def test_fixed_window_with_elastic_expiry_redis_sentinel(
         self, redis_sentinel
     ):
@@ -139,6 +143,7 @@ class TestAsyncWindow:
             assert (await limiter.get_window_stats(limit))[1] == 10
 
     @pytest.mark.asyncio
+    @pytest.mark.mongodb
     async def test_moving_window_mongo(self, mongodb):
         storage = MongoDBStorage("async+mongodb://localhost:37017")
         limiter = MovingWindowRateLimiter(storage)
@@ -159,6 +164,7 @@ class TestAsyncWindow:
             assert (await limiter.get_window_stats(limit))[1] == 10
 
     @pytest.mark.asyncio
+    @pytest.mark.redis
     async def test_moving_window_redis(self, redis_basic):
         storage = RedisStorage("async+redis://localhost:7379")
         limiter = MovingWindowRateLimiter(storage)

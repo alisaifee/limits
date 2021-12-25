@@ -15,6 +15,7 @@ from tests import fixed_start
 
 @pytest.mark.flaky
 @pytest.mark.asynchronous
+@pytest.mark.memcached
 class TestAsyncMemcachedStorage:
     @pytest.fixture(autouse=True)
     def setup(self, memcached, memcached_cluster):

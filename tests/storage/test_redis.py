@@ -64,6 +64,7 @@ class SharedRedisTests(object):
         assert self.storage.storage.keys("%s/*" % limit.namespace) == []
 
 
+@pytest.mark.redis
 class TestRedisStorage(SharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_basic):
@@ -76,6 +77,7 @@ class TestRedisStorage(SharedRedisTests):
         assert from_url.call_args[1]["socket_timeout"] == 1
 
 
+@pytest.mark.redis
 class TestRedisUnixSocketStorage(SharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_uds):
@@ -88,6 +90,7 @@ class TestRedisUnixSocketStorage(SharedRedisTests):
         assert from_url.call_args[1]["socket_timeout"] == 1
 
 
+@pytest.mark.redis
 class TestRedisSSLStorage(SharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_ssl):
