@@ -1,8 +1,6 @@
 name: Compatibility
 
 on:
-  push:
-    branches: [ '*' ]
   create:
     tags: ['*']
   schedule:
