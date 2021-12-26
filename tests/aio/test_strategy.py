@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 import hiro
@@ -67,9 +68,9 @@ class TestAsyncWindow:
 
         for _ in range(0, 10):
             assert await limiter.hit(limit)
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert not await limiter.hit(limit)
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert not await limiter.hit(limit)
         assert (await limiter.get_window_stats(limit))[1] == 0
 
@@ -82,9 +83,9 @@ class TestAsyncWindow:
 
         for _ in range(0, 10):
             assert await limiter.hit(limit)
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert not await limiter.hit(limit)
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert not await limiter.hit(limit)
         assert (await limiter.get_window_stats(limit))[1] == 0
 
@@ -97,9 +98,9 @@ class TestAsyncWindow:
 
         for _ in range(0, 10):
             assert await limiter.hit(limit)
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert not await limiter.hit(limit)
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert not await limiter.hit(limit)
         assert (await limiter.get_window_stats(limit))[1] == 0
 
@@ -116,9 +117,9 @@ class TestAsyncWindow:
 
         for _ in range(0, 10):
             assert await limiter.hit(limit)
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert not await limiter.hit(limit)
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert not await limiter.hit(limit)
         assert (await limiter.get_window_stats(limit))[1] == 0
 
@@ -173,9 +174,9 @@ class TestAsyncWindow:
         for i in range(0, 10):
             assert await limiter.hit(limit)
             assert (await limiter.get_window_stats(limit))[1] == 10 - (i + 1)
-            time.sleep(2 * 0.095)
+            await asyncio.sleep(2 * 0.095)
         assert not await limiter.hit(limit)
-        time.sleep(0.4)
+        await asyncio.sleep(0.4)
         assert await limiter.hit(limit)
         assert await limiter.hit(limit)
         assert (await limiter.get_window_stats(limit))[1] == 0

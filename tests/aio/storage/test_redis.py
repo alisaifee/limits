@@ -1,6 +1,7 @@
+import asyncio
 import time
 
-import pytest  # type: ignore
+import pytest
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.aio.storage import RedisClusterStorage, RedisSentinelStorage, RedisStorage
@@ -24,7 +25,7 @@ class AsyncSharedRedisTests:
         assert not await limiter.hit(per_second)
 
         while time.time() - start <= 1:
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
 
         for _ in range(10):
             assert await limiter.hit(per_second)
@@ -61,15 +62,15 @@ class AsyncSharedRedisTests:
         limiter = MovingWindowRateLimiter(self.storage)
         limit = RateLimitItemPerSecond(2)
         assert await limiter.hit(limit)
-        time.sleep(0.9)
+        await asyncio.sleep(0.9)
         assert await limiter.hit(limit)
         assert not await limiter.hit(limit)
-        time.sleep(0.1)
+        await asyncio.sleep(0.1)
         assert await limiter.hit(limit)
         last = time.time()
 
         while time.time() - last <= 1:
-            time.sleep(0.05)
+            await asyncio.sleep(0.05)
         assert await self.storage.storage.keys("%s/*" % limit.namespace) == []
 
     @pytest.mark.asyncio
