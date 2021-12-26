@@ -5,7 +5,7 @@ setup.py for limits
 """
 __author__ = "Ali-Akber Saifee"
 __email__ = "ali@indydevs.org"
-__copyright__ = "Copyright 2015, Ali-Akber Saifee"
+__copyright__ = "Copyright 2021, Ali-Akber Saifee"
 
 import itertools
 import os

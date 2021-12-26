@@ -12,7 +12,7 @@ from theme_config import *
 
 project = "limits"
 description = "limits is a python library to perform rate limiting with commonly used storage backends"
-copyright = "2015, Ali-Akber Saifee"
+copyright = "2021, Ali-Akber Saifee"
 version = release = limits.__version__.split("+")[0]
 
 html_theme_options["description"] = description
