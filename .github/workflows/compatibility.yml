@@ -3,6 +3,8 @@ name: Compatibility
 on:
   create:
     tags: ['*']
+  push:
+    branches: ['master']
   schedule:
   - cron: 0 23 * * *
 jobs:
