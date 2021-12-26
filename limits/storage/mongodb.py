@@ -9,7 +9,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     """
     Rate limit storage with MongoDB as backend.
 
-    Depends on the :pypi:`pymongo`.
+    Depends on :pypi:`pymongo`.
 
     .. warning:: This is a beta feature
     .. versionadded:: 2.1

@@ -12,7 +12,7 @@ class MemcachedStorage(Storage):
     """
     Rate limit storage with memcached as backend.
 
-    Depends on the :pypi:`pymemcache`.
+    Depends on :pypi:`pymemcache`.
     """
 
     STORAGE_SCHEME = ["memcached"]

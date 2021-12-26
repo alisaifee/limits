@@ -8,7 +8,7 @@ class MemcachedStorage(Storage):
     """
     Rate limit storage with memcached as backend.
 
-    Depends on the :pypi:`emcache` package.
+    Depends on :pypi:`emcache` package.
 
     .. warning:: This is a beta feature
     .. versionadded:: 2.1

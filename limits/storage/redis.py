@@ -97,7 +97,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
     Rate limit storage with redis as backend.
 
-    Depends on the :pypi:`redis`.
+    Depends on :pypi:`redis`.
     """
 
     STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]
