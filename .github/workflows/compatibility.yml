@@ -65,4 +65,4 @@ jobs:
     - name: Tests
       run: |
         eval "export ${{ matrix.service_version }}"
-        py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch
+        py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch --max-runs=3
