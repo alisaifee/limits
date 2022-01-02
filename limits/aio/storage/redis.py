@@ -111,7 +111,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
     Rate limit storage with redis as backend.
 
-    Depends on the :mod:`aredis` package.
+    Depends on :pypi:`aredis`
 
     .. warning:: This is a beta feature
     .. versionadded:: 2.1
@@ -228,7 +228,7 @@ class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend
 
-    Depends on `aredis`
+    Depends on :pypi:`aredis`
 
     .. warning:: This is a beta feature
     .. versionadded:: 2.1
@@ -288,7 +288,7 @@ class RedisSentinelStorage(RedisStorage):
     """
     Rate limit storage with redis sentinel as backend
 
-    Depends on `aredis`
+    Depends on :pypi:`aredis`
 
     .. warning:: This is a beta feature
     .. versionadded:: 2.1
