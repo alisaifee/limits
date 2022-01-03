@@ -13,6 +13,7 @@ The following async storage backends are implemented:
  - In-Memory
  - Redis (via `aredis <https://aredis.readthedocs.org>`_)
  - Memcached (via `emcache <https://emcache.readthedocs.org>`_)
+ - MongoDB (via `motor <https://motor.readthedocs.org>`_)
 
 Quick start
 ===========
