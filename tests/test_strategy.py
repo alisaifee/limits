@@ -1,184 +1,65 @@
-import threading
+import math
 import time
 
-import hiro
 import pytest
 
-from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
-from limits.storage import (
-    MemcachedStorage,
-    MemoryStorage,
-    MongoDBStorage,
-    RedisSentinelStorage,
-    RedisStorage,
-)
+from limits.limits import RateLimitItemPerSecond
+from limits.storage import MemcachedStorage, storage_from_string
 from limits.strategies import (
     FixedWindowElasticExpiryRateLimiter,
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
 )
+from tests.utils import all_storage, fixed_start, moving_window_storage, window
 
 
 class TestWindow:
-    def test_fixed_window(self):
-        storage = MemoryStorage()
+    @all_storage
+    @fixed_start
+    def test_fixed_window(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
-        with hiro.Timeline().freeze() as timeline:
-            start = int(time.time())
-            limit = RateLimitItemPerSecond(10, 2)
+        limit = RateLimitItemPerSecond(10, 2)
+        with window(1) as (start, end):
             assert all([limiter.hit(limit) for _ in range(0, 10)])
-            timeline.forward(1)
-            assert not limiter.hit(limit)
-            assert limiter.get_window_stats(limit)[1] == 0
-            assert limiter.get_window_stats(limit)[0] == start + 2
-            timeline.forward(1)
-            assert limiter.get_window_stats(limit)[1] == 10
-            assert limiter.hit(limit)
+        assert not limiter.hit(limit)
+        assert limiter.get_window_stats(limit)[1] == 0
+        assert limiter.get_window_stats(limit)[0] == math.floor(start + 2)
 
-    @pytest.mark.flaky
-    def test_fixed_window_with_elastic_expiry_in_memory(self):
-        storage = MemoryStorage()
+    @all_storage
+    def test_fixed_window_with_elastic_expiry(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        with hiro.Timeline().freeze() as timeline:
-            start = int(time.time())
-            limit = RateLimitItemPerSecond(10, 2)
+        limit = RateLimitItemPerSecond(10, 2)
+        with window(1) as (start, end):
             assert all([limiter.hit(limit) for _ in range(0, 10)])
-            timeline.forward(1)
             assert not limiter.hit(limit)
-            assert limiter.get_window_stats(limit)[1] == 0
-            # three extensions to the expiry
-            assert limiter.get_window_stats(limit)[0] == start + 3
-            timeline.forward(1)
+        assert limiter.get_window_stats(limit)[1] == 0
+        assert limiter.get_window_stats(limit)[0] == start + 2
+        with window(3) as (start, end):
             assert not limiter.hit(limit)
-            timeline.forward(3)
-            start = int(time.time())
-            assert limiter.hit(limit)
-            assert limiter.get_window_stats(limit)[1] == 9
-            assert limiter.get_window_stats(limit)[0] == start + 2
-
-    @pytest.mark.flaky
-    @pytest.mark.memcached
-    def test_fixed_window_with_elastic_expiry_memcache(self, memcached):
-        storage = MemcachedStorage("memcached://localhost:22122")
-        limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-        assert all([limiter.hit(limit) for _ in range(0, 10)])
-        time.sleep(1)
-        assert not limiter.hit(limit)
-        time.sleep(1)
-        assert not limiter.hit(limit)
-
-    @pytest.mark.flaky
-    @pytest.mark.memcached
-    def test_fixed_window_with_elastic_expiry_memcache_concurrency(self, memcached):
-        storage = MemcachedStorage("memcached://localhost:22122")
-        limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        start = int(time.time())
-        limit = RateLimitItemPerSecond(10, 2)
-
-        def _c():
-            for i in range(0, 5):
-                limiter.hit(limit)
-
-        t1, t2 = threading.Thread(target=_c), threading.Thread(target=_c)
-        t1.start(), t2.start()
-        t1.join(), t2.join()
-        assert limiter.get_window_stats(limit)[1] == 0
-        assert start + 2 <= limiter.get_window_stats(limit)[0] <= start + 3
-        assert storage.get(limit.key_for()) == 10
-
-    @pytest.mark.mongodb
-    def test_fixed_window_with_elastic_expiry_mongo(self, mongodb):
-        storage = MongoDBStorage("mongodb://localhost:37017")
-        limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-        assert all([limiter.hit(limit) for _ in range(0, 10)])
-        time.sleep(1)
-        assert not limiter.hit(limit)
-        time.sleep(1)
-        assert not limiter.hit(limit)
-        assert limiter.get_window_stats(limit)[1] == 0
-
-    @pytest.mark.redis
-    def test_fixed_window_with_elastic_expiry_redis(self, redis_basic):
-        storage = RedisStorage("redis://localhost:7379")
-        limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-        assert all([limiter.hit(limit) for _ in range(0, 10)])
-        time.sleep(1)
-        assert not limiter.hit(limit)
-        time.sleep(1)
-        assert not limiter.hit(limit)
-        assert limiter.get_window_stats(limit)[1] == 0
-
-    @pytest.mark.redis_sentinel
-    def test_fixed_window_with_elastic_expiry_redis_sentinel(self, redis_sentinel):
-        storage = RedisSentinelStorage(
-            "redis+sentinel://localhost:26379", service_name="localhost-redis-sentinel"
-        )
-        limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-        assert all([limiter.hit(limit) for _ in range(0, 10)])
-        time.sleep(1)
-        assert not limiter.hit(limit)
-        time.sleep(1)
-        assert not limiter.hit(limit)
-        assert limiter.get_window_stats(limit)[1] == 0
-
-    def test_moving_window_in_memory(self):
-        storage = MemoryStorage()
-        limiter = MovingWindowRateLimiter(storage)
-        with hiro.Timeline().freeze() as timeline:
-            limit = RateLimitItemPerMinute(10)
-
-            for i in range(0, 5):
-                assert limiter.hit(limit)
-                assert limiter.hit(limit)
-                assert limiter.get_window_stats(limit)[1] == 10 - ((i + 1) * 2)
-                timeline.forward(10)
-            assert limiter.get_window_stats(limit)[1] == 0
-            assert not limiter.hit(limit)
-            timeline.forward(20)
-            assert limiter.get_window_stats(limit)[1] == 2
-            assert limiter.get_window_stats(limit)[0] == int(time.time() + 30)
-            timeline.forward(31)
-            assert limiter.get_window_stats(limit)[1] == 10
-
-    @pytest.mark.redis
-    def test_moving_window_redis(self, redis_basic):
-        storage = RedisStorage("redis://localhost:7379")
-        limiter = MovingWindowRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-
-        for i in range(0, 10):
-            assert limiter.hit(limit)
-            assert limiter.get_window_stats(limit)[1] == 10 - (i + 1)
-            time.sleep(2 * 0.095)
-        assert not limiter.hit(limit)
-        time.sleep(0.4)
         assert limiter.hit(limit)
-        assert limiter.hit(limit)
-        assert limiter.get_window_stats(limit)[1] == 0
+        assert limiter.get_window_stats(limit)[1] == 9
+        assert limiter.get_window_stats(limit)[0] == end + 2
 
-    @pytest.mark.mongodb
-    def test_moving_window_mongo(self, mongodb):
-        storage = MongoDBStorage("mongodb://localhost:37017")
+    @moving_window_storage
+    def test_moving_window(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
-        with hiro.Timeline().freeze() as timeline:
-            limit = RateLimitItemPerMinute(10)
+        limit = RateLimitItemPerSecond(10, 2)
 
-            for i in range(0, 5):
-                assert limiter.hit(limit)
-                assert limiter.hit(limit)
-                assert limiter.get_window_stats(limit)[1] == 10 - ((i + 1) * 2)
-                timeline.forward(10)
-            assert limiter.get_window_stats(limit)[1] == 0
+        # 5 hits in the first 100ms
+        with window(0.1):
+            assert all(limiter.hit(limit) for i in range(5))
+        # 5 hits in the last 100ms
+        with window(2, delay=1.8):
+            assert all(limiter.hit(limit) for i in range(5))
+            # 11th fails
             assert not limiter.hit(limit)
-            timeline.forward(20)
-            assert limiter.get_window_stats(limit)[1] == 2
-            assert limiter.get_window_stats(limit)[0] == int(time.time() + 30)
-            timeline.forward(31)
-            assert limiter.get_window_stats(limit)[1] == 10
+        # 5 more succeed since there were only 5 in the last 2 seconds
+        assert all(limiter.hit(limit) for i in range(5))
+        assert limiter.get_window_stats(limit)[1] == 0
+        assert limiter.get_window_stats(limit)[0] == int(time.time() + 2)
 
     @pytest.mark.memcached
     def test_moving_window_memcached(self, memcached):
@@ -186,24 +67,24 @@ class TestWindow:
         with pytest.raises(NotImplementedError):
             MovingWindowRateLimiter(storage)
 
-    def test_test_fixed_window(self):
-        with hiro.Timeline().freeze():
-            store = MemoryStorage()
-            limiter = FixedWindowRateLimiter(store)
-            limit = RateLimitItemPerSecond(2, 1)
-            assert limiter.hit(limit), store
-            assert limiter.test(limit), store
-            assert limiter.hit(limit), store
-            assert not limiter.test(limit), store
-            assert not limiter.hit(limit), store
+    @all_storage
+    def test_test_fixed_window(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = FixedWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(2, 1)
+        assert limiter.hit(limit)
+        assert limiter.test(limit)
+        assert limiter.hit(limit)
+        assert not limiter.test(limit)
+        assert not limiter.hit(limit)
 
-    def test_test_moving_window(self):
-        with hiro.Timeline().freeze():
-            store = MemoryStorage()
-            limit = RateLimitItemPerSecond(2, 1)
-            limiter = MovingWindowRateLimiter(store)
-            assert limiter.hit(limit), store
-            assert limiter.test(limit), store
-            assert limiter.hit(limit), store
-            assert not limiter.test(limit), store
-            assert not limiter.hit(limit), store
+    @moving_window_storage
+    def test_test_moving_window(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limit = RateLimitItemPerSecond(2, 1)
+        limiter = MovingWindowRateLimiter(storage)
+        assert limiter.hit(limit)
+        assert limiter.test(limit)
+        assert limiter.hit(limit)
+        assert not limiter.test(limit)
+        assert not limiter.hit(limit)

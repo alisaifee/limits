@@ -1,4 +1,5 @@
 import asyncio
+import calendar
 import datetime
 import functools
 import time
@@ -116,7 +117,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         counter = await self.database.counters.find_one({"_id": key})
         expiry = counter["expireAt"] if counter else datetime.datetime.utcnow()
 
-        return int(time.mktime(expiry.timetuple()))
+        return calendar.timegm(expiry.timetuple())
 
     async def get(self, key: str):
         """

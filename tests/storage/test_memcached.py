@@ -9,7 +9,7 @@ from limits.strategies import (
     FixedWindowElasticExpiryRateLimiter,
     FixedWindowRateLimiter,
 )
-from tests import fixed_start
+from tests.utils import fixed_start
 
 
 @pytest.mark.memcached

@@ -117,6 +117,15 @@ class MemcachedStorage(Storage):
             value = self.storage.incr(key, 1) or 1
             if elastic_expiry:
                 self.call_memcached_func(self.storage.touch, key, expiry)
+                self.call_memcached_func(
+                    self.storage.set,
+                    key + "/expires",
+                    expiry + time.time(),
+                    expire=expiry,
+                    noreply=False,
+                )
+            return value
+        else:
             self.call_memcached_func(
                 self.storage.set,
                 key + "/expires",
@@ -124,7 +133,6 @@ class MemcachedStorage(Storage):
                 expire=expiry,
                 noreply=False,
             )
-            return value
         return 1
 
     def get_expiry(self, key: str) -> int:

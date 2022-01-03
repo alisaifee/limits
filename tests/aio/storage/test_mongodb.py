@@ -24,9 +24,9 @@ class TestAsyncMongoDBStorage:
 
         constructor = mocker.spy(motor.motor_asyncio, "AsyncIOMotorClient")
         assert await storage_from_string(
-            f"async+{self.storage_url}", connectTimeoutMS=1
+            f"async+{self.storage_url}", socketTimeoutMS=100
         ).check()
-        assert constructor.call_args[1]["connectTimeoutMS"] == 1
+        assert constructor.call_args[1]["socketTimeoutMS"] == 100
 
     @pytest.mark.asyncio
     async def test_fixed_window(self):

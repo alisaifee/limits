@@ -88,15 +88,21 @@ class MemcachedStorage(Storage):
 
             if elastic_expiry:
                 await storage.touch(limit_key, exptime=expiry)
+                await storage.set(
+                    expire_key,
+                    str(expiry + time.time()).encode("utf-8"),
+                    exptime=expiry,
+                    noreply=False,
+                )
+
+            return value
+        else:
             await storage.set(
                 expire_key,
                 str(expiry + time.time()).encode("utf-8"),
                 exptime=expiry,
                 noreply=False,
             )
-
-            return value
-
         return 1
 
     async def get_expiry(self, key: str) -> int:

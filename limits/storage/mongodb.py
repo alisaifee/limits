@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import time
 from typing import Any, Dict, Tuple
@@ -74,7 +75,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         counter = self.counters.find_one({"_id": key})
         expiry = counter["expireAt"] if counter else datetime.datetime.utcnow()
 
-        return int(time.mktime(expiry.timetuple()))
+        return calendar.timegm(expiry.timetuple())
 
     def get(self, key: str):
         """

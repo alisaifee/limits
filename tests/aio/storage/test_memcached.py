@@ -10,7 +10,7 @@ from limits.aio.strategies import (
     FixedWindowRateLimiter,
 )
 from limits.storage import storage_from_string
-from tests import fixed_start
+from tests.utils import fixed_start
 
 
 @pytest.mark.flaky
@@ -34,10 +34,12 @@ class TestAsyncMemcachedStorage:
         per_min = RateLimitItemPerSecond(10)
         start = time.time()
         count = 0
+
         while time.time() - start < 0.5 and count < 10:
             assert await limiter.hit(per_min)
             count += 1
         assert not await limiter.hit(per_min)
+
         while time.time() - start <= 1:
             await asyncio.sleep(0.1)
         assert await limiter.hit(per_min)
@@ -50,10 +52,12 @@ class TestAsyncMemcachedStorage:
         per_min = RateLimitItemPerSecond(10)
         start = time.time()
         count = 0
+
         while time.time() - start < 0.5 and count < 10:
             assert await limiter.hit(per_min)
             count += 1
         assert not await limiter.hit(per_min)
+
         while time.time() - start <= 1:
             await asyncio.sleep(0.1)
         assert await limiter.hit(per_min)
