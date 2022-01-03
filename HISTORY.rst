@@ -3,6 +3,23 @@
 Changelog
 =========
 
+v2.1.1
+------
+Release Date: 2022-01-02
+
+* Feature
+
+  * Enable async memcache for python 3.10
+
+* Bug fix
+
+  * Ensure window expiry is reported in local time for mongodb
+  * Fix inconsistent expiry for fixed window with memcached
+
+* Chore
+
+  * Improve strategy tests
+
 v2.1.0
 ------
 Release Date: 2021-12-22
@@ -182,6 +199,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
