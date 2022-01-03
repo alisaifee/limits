@@ -74,13 +74,13 @@ all_storage = pytest.mark.parametrize(
             "memcached://localhost:22122",
             {},
             pytest.lazy_fixture("memcached"),
-            marks=pytest.mark.memcached,
+            marks=[pytest.mark.memcached, pytest.mark.flaky],
         ),
         pytest.param(
             "memcached://localhost:22122,localhost:22123",
             {},
             pytest.lazy_fixture("memcached_cluster"),
-            marks=pytest.mark.memcached,
+            marks=[pytest.mark.memcached, pytest.mark.flaky],
         ),
         pytest.param(
             "redis+sentinel://localhost:26379",
@@ -196,13 +196,13 @@ async_all_storage = pytest.mark.parametrize(
             "async+memcached://localhost:22122",
             {},
             pytest.lazy_fixture("memcached"),
-            marks=pytest.mark.memcached,
+            marks=[pytest.mark.memcached, pytest.mark.flaky],
         ),
         pytest.param(
             "async+memcached://localhost:22122,localhost:22123",
             {},
             pytest.lazy_fixture("memcached_cluster"),
-            marks=pytest.mark.memcached,
+            marks=[pytest.mark.memcached, pytest.mark.flaky],
         ),
         pytest.param(
             "async+redis+sentinel://localhost:26379",
