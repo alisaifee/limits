@@ -88,9 +88,9 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
-        import aredis
+        import coredis
 
-        from_url = mocker.spy(aredis.StrictRedis, "from_url")
+        from_url = mocker.spy(coredis.StrictRedis, "from_url")
         assert await storage_from_string(self.storage_url, stream_timeout=1).check()
         assert (
             from_url.spy_return.connection_pool.connection_kwargs["stream_timeout"] == 1
@@ -106,9 +106,9 @@ class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
-        import aredis
+        import coredis
 
-        from_url = mocker.spy(aredis.StrictRedis, "from_url")
+        from_url = mocker.spy(coredis.StrictRedis, "from_url")
         assert await storage_from_string(self.storage_url, stream_timeout=1).check()
         assert (
             from_url.spy_return.connection_pool.connection_kwargs["stream_timeout"] == 1
@@ -124,9 +124,9 @@ class TestAsyncRedisClusterStorage(AsyncSharedRedisTests):
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
-        import aredis
+        import coredis
 
-        constructor = mocker.spy(aredis, "StrictRedisCluster")
+        constructor = mocker.spy(coredis, "StrictRedisCluster")
         assert await storage_from_string(
             f"async+{self.storage_url}", max_connections=10
         ).check()
@@ -152,9 +152,9 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
 
     @pytest.mark.asyncio
     async def test_init_options(self, mocker):
-        import aredis
+        import coredis
 
-        constructor = mocker.spy(aredis.sentinel, "Sentinel")
+        constructor = mocker.spy(coredis.sentinel, "Sentinel")
         assert await storage_from_string(
             f"async+{self.storage_url}/{self.service_name}",
             stream_timeout=42,

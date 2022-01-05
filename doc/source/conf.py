@@ -63,7 +63,7 @@ extlinks = {"pypi": ("https://pypi.org/project/%s", "%s")}
 
 intersphinx_mapping = {
     "python": ("http://docs.python.org/", None),
-    "aredis": ("https://aredis.readthedocs.io/en/latest/", None),
+    "coredis": ("https://coredis.readthedocs.io/en/latest/", None),
     "emcache": ("https://emcache.readthedocs.io/en/latest/", None),
     "motor": ("https://motor.readthedocs.io/en/stable/", None),
     "redis-py-cluster": ("https://redis-py-cluster.readthedocs.io/en/latest/", None),

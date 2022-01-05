@@ -111,7 +111,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
     Rate limit storage with redis as backend.
 
-    Depends on :pypi:`aredis`
+    Depends on :pypi:`coredis`
 
     .. warning:: This is a beta feature
     .. versionadded:: 2.1
@@ -121,18 +121,18 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
     The storage schemes for redis to be used in an async context
     """
-    DEPENDENCIES = ["aredis"]
+    DEPENDENCIES = ["coredis"]
 
     def __init__(self, uri: str, **options) -> None:
         """
         :param uri: uri of the form `async+redis://[:password]@host:port`,
          `async+redis://[:password]@host:port/db`,
          `async+rediss://[:password]@host:port`, `async+unix:///path/to/sock` etc.
-         This uri is passed directly to :func:`aredis.StrictRedis.from_url` with
+         This uri is passed directly to :func:`coredis.StrictRedis.from_url` with
          the initial `a` removed, except for the case of `redis+unix` where it
          is replaced with `unix`.
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`aredis.StrictRedis`
+         directly to the constructor of :class:`coredis.StrictRedis`
         :raise ConfigurationError: when the redis library is not available
         """
 
@@ -141,7 +141,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         super().__init__()
 
-        self.dependency = self.dependencies["aredis"]
+        self.dependency = self.dependencies["coredis"]
         self.storage = self.dependency.StrictRedis.from_url(uri, **options)
 
         self.initialize_storage(uri)
@@ -202,7 +202,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
     async def check(self) -> bool:
         """
-        Check if storage is healthy by calling :meth:`aredis.StrictRedis.ping`
+        Check if storage is healthy by calling :meth:`coredis.StrictRedis.ping`
         """
 
         return await super()._check(self.storage)
@@ -228,7 +228,7 @@ class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend
 
-    Depends on :pypi:`aredis`
+    Depends on :pypi:`coredis`
 
     .. warning:: This is a beta feature
     .. versionadded:: 2.1
@@ -242,15 +242,15 @@ class RedisClusterStorage(RedisStorage):
     DEFAULT_OPTIONS = {
         "max_connections": 1000,
     }
-    "Default options passed to :class:`aredis.StrictRedisCluster`"
+    "Default options passed to :class:`coredis.StrictRedisCluster`"
 
     def __init__(self, uri: str, **options):
         """
         :param uri: url of the form
          `async+redis+cluster://[:password]@host:port,host:port`
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`aredis.StrictRedisCluster`
-        :raise ConfigurationError: when the aredis library is not
+         directly to the constructor of :class:`coredis.StrictRedisCluster`
+        :raise ConfigurationError: when the coredis library is not
          available or if the redis host cannot be pinged.
         """
         parsed = urllib.parse.urlparse(uri)
@@ -261,7 +261,7 @@ class RedisClusterStorage(RedisStorage):
             cluster_hosts.append({"host": host, "port": int(port)})
 
         super(RedisStorage, self).__init__()
-        self.dependency = self.dependencies["aredis"]
+        self.dependency = self.dependencies["coredis"]
         self.storage = self.dependency.StrictRedisCluster(
             startup_nodes=cluster_hosts, **{**self.DEFAULT_OPTIONS, **options}
         )
@@ -288,7 +288,7 @@ class RedisSentinelStorage(RedisStorage):
     """
     Rate limit storage with redis sentinel as backend
 
-    Depends on :pypi:`aredis`
+    Depends on :pypi:`coredis`
 
     .. warning:: This is a beta feature
     .. versionadded:: 2.1
@@ -300,9 +300,9 @@ class RedisSentinelStorage(RedisStorage):
     DEFAULT_OPTIONS = {
         "stream_timeout": 0.2,
     }
-    "Default options passed to :class:`~aredis.sentinel.Sentinel`"
+    "Default options passed to :class:`~coredis.sentinel.Sentinel`"
 
-    DEPENDENCIES = ["aredis.sentinel"]
+    DEPENDENCIES = ["coredis.sentinel"]
 
     def __init__(
         self,
@@ -317,10 +317,10 @@ class RedisSentinelStorage(RedisStorage):
         :param service_name, optional: sentinel service name
          (if not provided in `uri`)
         :param sentinel_kwargs, optional: kwargs to pass as
-         ``sentinel_kwargs`` to :class:`aredis.sentinel.Sentinel`
+         ``sentinel_kwargs`` to :class:`coredis.sentinel.Sentinel`
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`aredis.sentinel.Sentinel`
-        :raise ConfigurationError: when the aredis library is not available
+         directly to the constructor of :class:`coredis.sentinel.Sentinel`
+        :raise ConfigurationError: when the coredis library is not available
          or if the redis master host cannot be pinged.
         """
 
@@ -351,7 +351,7 @@ class RedisSentinelStorage(RedisStorage):
 
         super(RedisStorage, self).__init__()
 
-        self.dependency = self.dependencies["aredis.sentinel"]
+        self.dependency = self.dependencies["coredis.sentinel"]
 
         self.sentinel = self.dependency.Sentinel(
             sentinel_configuration,
@@ -378,7 +378,7 @@ class RedisSentinelStorage(RedisStorage):
 
     async def check(self) -> bool:
         """
-        Check if storage is healthy by calling :meth:`aredis.StrictRedis.ping`
+        Check if storage is healthy by calling :meth:`coredis.StrictRedis.ping`
         on the slave.
         """
 
