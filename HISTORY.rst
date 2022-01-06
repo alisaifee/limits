@@ -3,6 +3,18 @@
 Changelog
 =========
 
+v2.2.0
+------
+Release Date: 2022-01-05
+
+* Feature
+
+  * Enable async redis for python 3.10 via coredis
+
+* Chore
+
+  * Fix typing issue with strategy constructors
+
 v2.1.1
 ------
 Release Date: 2022-01-02
@@ -199,6 +211,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
