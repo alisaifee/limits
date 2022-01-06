@@ -4,8 +4,7 @@ Rate limiting strategies
 
 import weakref
 from abc import ABCMeta, abstractmethod
-from typing import cast
-from typing import Dict, Tuple, Type, Union
+from typing import Dict, Tuple, Type, Union, cast
 
 from .limits import RateLimitItem
 from .storage import Storage, StorageTypes
@@ -95,7 +94,9 @@ class MovingWindowRateLimiter(RateLimiter):
 
         return (
             self.storage().get_moving_window(  # type: ignore
-                item.key_for(*identifiers), item.amount, item.get_expiry(),
+                item.key_for(*identifiers),
+                item.amount,
+                item.get_expiry(),
             )[1]
             < item.amount
         )
