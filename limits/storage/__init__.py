@@ -4,7 +4,7 @@ Implementations of storage backends to be used with
 """
 
 import urllib
-from typing import Union
+from typing import Any, Union
 
 import limits
 
@@ -22,7 +22,7 @@ from .registry import SCHEMES
 StorageTypes = Union[Storage, "limits.aio.storage.Storage"]
 
 
-def storage_from_string(storage_string: str, **options) -> StorageTypes:
+def storage_from_string(storage_string: str, **options) -> Any:
     """
     Factory function to get an instance of the storage class based
     on the uri of the storage. In most cases using it should be sufficient

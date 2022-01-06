@@ -7,11 +7,11 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, Type, Union, cast
 
 from .limits import RateLimitItem
-from .storage import Storage, StorageTypes
+from .storage import Storage
 
 
 class RateLimiter(metaclass=ABCMeta):
-    def __init__(self, storage: StorageTypes):
+    def __init__(self, storage: Storage):
         self.storage: weakref.ReferenceType[Storage] = weakref.ref(
             cast(Storage, storage)
         )
@@ -59,7 +59,7 @@ class MovingWindowRateLimiter(RateLimiter):
     Reference: :ref:`strategies:moving window`
     """
 
-    def __init__(self, storage: StorageTypes):
+    def __init__(self, storage: Storage):
         if not (
             hasattr(storage, "acquire_entry") or hasattr(storage, "get_moving_window")
         ):
