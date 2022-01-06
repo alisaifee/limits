@@ -4,15 +4,17 @@ Asynchronous rate limiting strategies
 
 import weakref
 from abc import ABC, abstractmethod
+from typing import cast
 from typing import Iterable, Tuple
 
 from ..limits import RateLimitItem
+from ..storage import StorageTypes
 from .storage import Storage
 
 
 class RateLimiter(ABC):
-    def __init__(self, storage: Storage):
-        self.storage = weakref.ref(storage)
+    def __init__(self, storage: StorageTypes):
+        self.storage = weakref.ref(cast(Storage, storage))
 
     @abstractmethod
     async def hit(self, item: RateLimitItem, *identifiers: Iterable[str]) -> bool:
@@ -59,7 +61,7 @@ class MovingWindowRateLimiter(RateLimiter):
     Reference: :ref:`strategies:moving window`
     """
 
-    def __init__(self, storage: Storage) -> None:
+    def __init__(self, storage: StorageTypes) -> None:
         if not (
             hasattr(storage, "acquire_entry") or hasattr(storage, "get_moving_window")
         ):
@@ -155,8 +157,7 @@ class FixedWindowRateLimiter(RateLimiter):
         :return: reset time, remaining
         """
         remaining = max(
-            0,
-            item.amount - await self.storage().get(item.key_for(*identifiers)),
+            0, item.amount - await self.storage().get(item.key_for(*identifiers)),
         )
         reset = await self.storage().get_expiry(item.key_for(*identifiers))
         return (reset, remaining)

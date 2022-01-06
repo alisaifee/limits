@@ -4,15 +4,18 @@ Rate limiting strategies
 
 import weakref
 from abc import ABCMeta, abstractmethod
+from typing import cast
 from typing import Dict, Tuple, Type, Union
 
 from .limits import RateLimitItem
-from .storage import Storage
+from .storage import Storage, StorageTypes
 
 
 class RateLimiter(metaclass=ABCMeta):
-    def __init__(self, storage: Storage):
-        self.storage: weakref.ReferenceType[Storage] = weakref.ref(storage)
+    def __init__(self, storage: StorageTypes):
+        self.storage: weakref.ReferenceType[Storage] = weakref.ref(
+            cast(Storage, storage)
+        )
 
     @abstractmethod
     def hit(self, item: RateLimitItem, *identifiers) -> bool:
@@ -57,7 +60,7 @@ class MovingWindowRateLimiter(RateLimiter):
     Reference: :ref:`strategies:moving window`
     """
 
-    def __init__(self, storage: Storage):
+    def __init__(self, storage: StorageTypes):
         if not (
             hasattr(storage, "acquire_entry") or hasattr(storage, "get_moving_window")
         ):
