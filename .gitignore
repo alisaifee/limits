@@ -4,6 +4,7 @@ cover/*
 .mypy_cache/*
 .coverage*
 .test_env
+.tool-versions
 .idea
 build/
 dist/
