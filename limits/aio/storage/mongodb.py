@@ -10,10 +10,10 @@ from .base import MovingWindowSupport, Storage
 
 def ensure_indices(func):
     @functools.wraps(func)
-    async def wrapped(self, *args):
+    async def wrapped(self, *args, **kwargs):
         await self.create_indices()
 
-        return await func(self, *args)
+        return await func(self, *args, **kwargs)
 
     return wrapped
 
@@ -131,12 +131,17 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         return counter and counter["count"] or 0
 
     @ensure_indices
-    async def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
+    async def incr(
+        self, key: str, expiry: int, elastic_expiry=False, amount: int = 1
+    ) -> int:
         """
         increments the counter for a given rate limit key
 
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
+        :param elastic_expiry: whether to keep extending the rate limit
+         window every hit.
+        :param amount: the number to increment by
         """
         expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
 
@@ -148,8 +153,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                         "count": {
                             "$cond": {
                                 "if": {"$lt": ["$expireAt", "$$NOW"]},
-                                "then": 1,
-                                "else": {"$add": ["$count", 1]},
+                                "then": amount,
+                                "else": {"$add": ["$count", amount]},
                             }
                         },
                         "expireAt": {
@@ -222,11 +227,14 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         return (int(timestamp), 0)
 
     @ensure_indices
-    async def acquire_entry(self, key: str, limit: int, expiry: int) -> bool:
+    async def acquire_entry(
+        self, key: str, limit: int, expiry: int, amount: int = 1
+    ) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
+        :param amount: the number of entries to acquire
         """
         timestamp = time.time()
         try:
@@ -239,11 +247,12 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                     datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
                 )
             }
-            updates["$push"]["entries"]["$each"] = [timestamp]
+            updates["$push"]["entries"]["$each"] = [timestamp] * amount
             await self.database.windows.update_one(
                 {
                     "_id": key,
-                    "entries.%d" % (limit - 1): {"$not": {"$gte": timestamp - expiry}},
+                    "entries.%d"
+                    % (limit - amount): {"$not": {"$gte": timestamp - expiry}},
                 },
                 updates,
                 upsert=True,

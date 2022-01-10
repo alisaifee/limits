@@ -19,7 +19,9 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
         super().__init__()
 
     @abstractmethod
-    def incr(self, key: str, expiry: int, elastic_expiry: bool = False) -> int:
+    def incr(
+        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
+    ) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -27,6 +29,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
         :param expiry: amount in seconds for the key to expire in
         :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
+        :param amount: the number to increment by
         """
         raise NotImplementedError
 
@@ -76,11 +79,12 @@ class MovingWindowSupport(ABC):
     .. versionadded:: 2.1
     """
 
-    def acquire_entry(self, key: str, limit: int, expiry: int) -> bool:
+    def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
+        :param amount: the number of entries to acquire
         """
         raise NotImplementedError
 

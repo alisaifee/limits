@@ -32,17 +32,20 @@ class RedisInteractor(object):
 
         return window or (int(timestamp), 0)
 
-    def _incr(self, key: str, expiry: int, connection, elastic_expiry=False) -> int:
+    def _incr(
+        self, key: str, expiry: int, connection, elastic_expiry=False, amount: int = 1
+    ) -> int:
         """
         increments the counter for a given rate limit key
 
         :param connection: Redis connection
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
+        :param amount: the number to increment by
         """
-        value = connection.incr(key)
+        value = connection.incrby(key, amount)
 
-        if elastic_expiry or value == 1:
+        if elastic_expiry or value == amount:
             connection.expire(key, expiry)
 
         return value
@@ -62,15 +65,18 @@ class RedisInteractor(object):
         """
         connection.delete(key)
 
-    def _acquire_entry(self, key: str, limit: int, expiry: int, connection) -> bool:
+    def _acquire_entry(
+        self, key: str, limit: int, expiry: int, connection, amount: int = 1
+    ) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
         :param connection: Redis connection
+        :param amount: the number of entries to acquire
         """
         timestamp = time.time()
-        acquired = self.lua_acquire_window([key], [timestamp, limit, expiry])
+        acquired = self.lua_acquire_window([key], [timestamp, limit, expiry, amount])
 
         return bool(acquired)
 
@@ -133,18 +139,19 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
             RedisStorage.SCRIPT_INCR_EXPIRE
         )
 
-    def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
+    def incr(self, key: str, expiry: int, elastic_expiry=False, amount: int = 1) -> int:
         """
         increments the counter for a given rate limit key
 
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
+        :param amount: the number to increment by
         """
 
         if elastic_expiry:
-            return super()._incr(key, expiry, self.storage, elastic_expiry)
+            return super()._incr(key, expiry, self.storage, elastic_expiry, amount)
         else:
-            return self.lua_incr_expire([key], [expiry])
+            return self.lua_incr_expire([key], [expiry, amount])
 
     def get(self, key: str) -> int:
         """
@@ -160,14 +167,15 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         return super()._clear(key, self.storage)
 
-    def acquire_entry(self, key: str, limit: int, expiry: int):
+    def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1):
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
+        :param amount: the number to increment by
         """
 
-        return super()._acquire_entry(key, limit, expiry, self.storage)
+        return super()._acquire_entry(key, limit, expiry, self.storage, amount)
 
     def get_expiry(self, key: str) -> int:
         """

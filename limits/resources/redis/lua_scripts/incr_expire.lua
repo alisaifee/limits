@@ -1,8 +1,9 @@
 local current
-current = redis.call("incr",KEYS[1])
+local amount = tonumber(ARGV[2])
+current = redis.call("incrby", KEYS[1], amount)
 
-if tonumber(current) == 1 then
-    redis.call("expire",KEYS[1],ARGV[1])
+if tonumber(current) == amount then
+    redis.call("expire", KEYS[1], ARGV[1])
 end
 
 return current

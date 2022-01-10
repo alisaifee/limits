@@ -88,12 +88,13 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         return counter and counter["count"] or 0
 
-    def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
+    def incr(self, key: str, expiry: int, elastic_expiry=False, amount: int = 1) -> int:
         """
         increments the counter for a given rate limit key
 
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
+        :param amount: the number to increment by
         """
         expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
 
@@ -105,8 +106,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                         "count": {
                             "$cond": {
                                 "if": {"$lt": ["$expireAt", "$$NOW"]},
-                                "then": 1,
-                                "else": {"$add": ["$count", 1]},
+                                "then": amount,
+                                "else": {"$add": ["$count", amount]},
                             }
                         },
                         "expireAt": {
@@ -171,15 +172,18 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                 ]
             )
         )
+
         if result:
             return (int(result[0]["max"]), result[0]["count"])
+
         return (int(timestamp), 0)
 
-    def acquire_entry(self, key: str, limit: int, expiry: int) -> bool:
+    def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
+        :param amount: the number of entries to acquire
         """
         timestamp = time.time()
         try:
@@ -192,11 +196,12 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                     datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
                 )
             }
-            updates["$push"]["entries"]["$each"] = [timestamp]
+            updates["$push"]["entries"]["$each"] = [timestamp] * amount
             self.windows.update_one(
                 {
                     "_id": key,
-                    "entries.%d" % (limit - 1): {"$not": {"$gte": timestamp - expiry}},
+                    "entries.%d"
+                    % (limit - amount): {"$not": {"$gte": timestamp - expiry}},
                 },
                 updates,
                 upsert=True,

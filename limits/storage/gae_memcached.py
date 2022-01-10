@@ -15,7 +15,9 @@ class GAEMemcachedStorage(MemcachedStorage):  # noqa
         options["library"] = "google.appengine.api.memcache"
         super().__init__(uri, **options)
 
-    def incr(self, key: str, expiry: int, elastic_expiry: bool = False):
+    def incr(
+        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
+    ):
         """
         increments the counter for a given rate limit key
 
@@ -23,9 +25,10 @@ class GAEMemcachedStorage(MemcachedStorage):  # noqa
         :param expiry: amount in seconds for the key to expire in
         :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
+        :param amount: the number to increment by
         """
 
-        if not self.call_memcached_func(self.storage.add, key, 1, expiry):
+        if not self.call_memcached_func(self.storage.add, key, amount, expiry):
             if elastic_expiry:
                 # CAS id is set as state on the client object in GAE memcache
                 value = self.storage.gets(key)
@@ -33,7 +36,7 @@ class GAEMemcachedStorage(MemcachedStorage):  # noqa
 
                 while (
                     not self.call_memcached_func(
-                        self.storage.cas, key, int(value or 0) + 1, expiry
+                        self.storage.cas, key, int(value or 0) + amount, expiry
                     )
                     and retry < self.MAX_CAS_RETRIES
                 ):
@@ -43,9 +46,9 @@ class GAEMemcachedStorage(MemcachedStorage):  # noqa
                     self.storage.set, key + "/expires", expiry + time.time(), expiry
                 )
 
-                return int(value or 0) + 1
+                return int(value or 0) + amount
             else:
-                return self.storage.incr(key, 1)
+                return self.storage.incr(key, amount)
         self.call_memcached_func(
             self.storage.set, key + "/expires", expiry + time.time(), expiry
         )

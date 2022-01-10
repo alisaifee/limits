@@ -50,7 +50,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
             self.timer = threading.Timer(0.01, self.__expire_events)
             self.timer.start()
 
-    def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
+    def incr(self, key: str, expiry: int, elastic_expiry=False, amount: int = 1) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -58,12 +58,13 @@ class MemoryStorage(Storage, MovingWindowSupport):
         :param expiry: amount in seconds for the key to expire in
         :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
+        :param amount: the number to increment by
         """
         self.get(key)
         self.__schedule_expiry()
-        self.storage[key] += 1
+        self.storage[key] += amount
 
-        if elastic_expiry or self.storage[key] == 1:
+        if elastic_expiry or self.storage[key] == amount:
             self.expirations[key] = time.time() + expiry
 
         return self.storage.get(key, 0)
@@ -87,24 +88,25 @@ class MemoryStorage(Storage, MovingWindowSupport):
         self.expirations.pop(key, None)
         self.events.pop(key, None)
 
-    def acquire_entry(self, key: str, limit: int, expiry: int) -> bool:
+    def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
+        :param amount: the number of entries to acquire
         """
         self.events.setdefault(key, [])
         self.__schedule_expiry()
         timestamp = time.time()
         try:
-            entry = self.events[key][limit - 1]
+            entry = self.events[key][limit - amount]
         except IndexError:
             entry = None
 
         if entry and entry.atime >= timestamp - expiry:
             return False
         else:
-            self.events[key].insert(0, LockableEntry(expiry))
+            self.events[key][:0] = [LockableEntry(expiry) for _ in range(amount)]
             return True
 
     def get_expiry(self, key: str) -> int:

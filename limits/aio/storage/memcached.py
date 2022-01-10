@@ -64,7 +64,9 @@ class MemcachedStorage(Storage):
         """
         await (await self.get_storage()).delete(key.encode("utf-8"))
 
-    async def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
+    async def incr(
+        self, key: str, expiry: int, elastic_expiry=False, amount: int = 1
+    ) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -72,19 +74,20 @@ class MemcachedStorage(Storage):
         :param expiry: amount in seconds for the key to expire in
         :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
+        :param amount: the number to increment by
         """
         storage = await self.get_storage()
         limit_key = key.encode("utf-8")
         expire_key = f"{key}/expires".encode("utf-8")
         added = True
         try:
-            await storage.add(limit_key, b"1", exptime=expiry)
+            await storage.add(limit_key, f"{amount}".encode("utf-8"), exptime=expiry)
         except self.dependency.NotStoredStorageCommandError:
             added = False
             storage = await self.get_storage()
 
         if not added:
-            value = await storage.increment(limit_key, 1) or 1
+            value = await storage.increment(limit_key, amount) or amount
 
             if elastic_expiry:
                 await storage.touch(limit_key, exptime=expiry)
@@ -103,7 +106,8 @@ class MemcachedStorage(Storage):
                 exptime=expiry,
                 noreply=False,
             )
-        return 1
+
+        return amount
 
     async def get_expiry(self, key: str) -> int:
         """

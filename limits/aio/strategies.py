@@ -15,13 +15,16 @@ class RateLimiter(ABC):
         self.storage = weakref.ref(cast(Storage, storage))
 
     @abstractmethod
-    async def hit(self, item: RateLimitItem, *identifiers: Iterable[str]) -> bool:
+    async def hit(
+        self, item: RateLimitItem, *identifiers: Iterable[str], cost: int = 1
+    ) -> bool:
         """
         Consume the rate limit
 
         :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
+        :param cost: The cost of this hit, default 1
         """
         raise NotImplementedError
 
@@ -69,16 +72,18 @@ class MovingWindowRateLimiter(RateLimiter):
             )
         super().__init__(storage)
 
-    async def hit(self, item: RateLimitItem, *identifiers) -> bool:
+    async def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
         :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
+        :param cost: The cost of this hit, default 1
         """
+
         return await self.storage().acquire_entry(  # type: ignore
-            item.key_for(*identifiers), item.amount, item.get_expiry()
+            item.key_for(*identifiers), item.amount, item.get_expiry(), amount=cost
         )
 
     async def test(self, item: RateLimitItem, *identifiers) -> bool:
@@ -93,6 +98,7 @@ class MovingWindowRateLimiter(RateLimiter):
             item.key_for(*identifiers), item.amount, item.get_expiry(),
         )
         amount = res[1]
+
         return amount < item.amount
 
     async def get_window_stats(
@@ -110,6 +116,7 @@ class MovingWindowRateLimiter(RateLimiter):
             item.key_for(*identifiers), item.amount, item.get_expiry()
         )
         reset = window_start + item.get_expiry()
+
         return (reset, item.amount - window_items)
 
 
@@ -118,16 +125,23 @@ class FixedWindowRateLimiter(RateLimiter):
     Reference: :ref:`strategies:fixed window`
     """
 
-    async def hit(self, item: RateLimitItem, *identifiers) -> bool:
+    async def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
         :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
+        :param cost: The cost of this hit, default 1
         """
+
         return (
-            await self.storage().incr(item.key_for(*identifiers), item.get_expiry())
+            await self.storage().incr(
+                item.key_for(*identifiers),
+                item.get_expiry(),
+                elastic_expiry=False,
+                amount=cost,
+            )
             <= item.amount
         )
 
@@ -139,6 +153,7 @@ class FixedWindowRateLimiter(RateLimiter):
         :param identifiers: variable list of strings to uniquely identify the
          limit
         """
+
         return await self.storage().get(item.key_for(*identifiers)) < item.amount
 
     async def get_window_stats(
@@ -156,6 +171,7 @@ class FixedWindowRateLimiter(RateLimiter):
             0, item.amount - await self.storage().get(item.key_for(*identifiers)),
         )
         reset = await self.storage().get_expiry(item.key_for(*identifiers))
+
         return (reset, remaining)
 
 
@@ -164,17 +180,22 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
     Reference: :ref:`strategies:fixed window with elastic expiry`
     """
 
-    async def hit(self, item: RateLimitItem, *identifiers) -> bool:
+    async def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
         :param item: a :class:`limits.limits.RateLimitItem` instance
         :param identifiers: variable list of strings to uniquely identify the
          limit
+        :param cost: The cost of this hit, default 1
         """
         amount = await self.storage().incr(
-            item.key_for(*identifiers), item.get_expiry(), True
+            item.key_for(*identifiers),
+            item.get_expiry(),
+            elastic_expiry=True,
+            amount=cost,
         )
+
         return amount <= item.amount
 
 

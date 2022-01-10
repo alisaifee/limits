@@ -17,13 +17,14 @@ class RateLimiter(metaclass=ABCMeta):
         )
 
     @abstractmethod
-    def hit(self, item: RateLimitItem, *identifiers) -> bool:
+    def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
         :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
+        :param cost: The cost of this hit, default 1
         """
         raise NotImplementedError
 
@@ -69,18 +70,19 @@ class MovingWindowRateLimiter(RateLimiter):
             )
         super().__init__(storage)
 
-    def hit(self, item: RateLimitItem, *identifiers) -> bool:
+    def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
         :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
+        :param cost: The cost of this hit, default 1
         :return: (reset time, remaining)
         """
 
         return self.storage().acquire_entry(  # type: ignore
-            item.key_for(*identifiers), item.amount, item.get_expiry()
+            item.key_for(*identifiers), item.amount, item.get_expiry(), amount=cost
         )
 
     def test(self, item: RateLimitItem, *identifiers) -> bool:
@@ -121,17 +123,23 @@ class FixedWindowRateLimiter(RateLimiter):
     Reference: :ref:`strategies:fixed window`
     """
 
-    def hit(self, item: RateLimitItem, *identifiers) -> bool:
+    def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
         :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
+        :param cost: The cost of this hit, default 1
         """
 
         return (
-            self.storage().incr(item.key_for(*identifiers), item.get_expiry())
+            self.storage().incr(
+                item.key_for(*identifiers),
+                item.get_expiry(),
+                elastic_expiry=False,
+                amount=cost,
+            )
             <= item.amount
         )
 
@@ -166,17 +174,23 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
     Reference: :ref:`strategies:fixed window with elastic expiry`
     """
 
-    def hit(self, item: RateLimitItem, *identifiers) -> bool:
+    def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
         :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
+        :param cost: The cost of this hit, default 1
         """
 
         return (
-            self.storage().incr(item.key_for(*identifiers), item.get_expiry(), True)
+            self.storage().incr(
+                item.key_for(*identifiers),
+                item.get_expiry(),
+                elastic_expiry=True,
+                amount=cost,
+            )
             <= item.amount
         )
 
