@@ -27,6 +27,14 @@ class TestWindow:
         assert limiter.get_window_stats(limit)[0] == math.floor(start + 2)
 
     @all_storage
+    def test_fixed_window_empty_stats(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = FixedWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+        assert limiter.get_window_stats(limit)[1] == 10
+        assert limiter.get_window_stats(limit)[0] == int(time.time())
+
+    @all_storage
     def test_fixed_window_with_elastic_expiry(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -41,6 +49,14 @@ class TestWindow:
         assert limiter.hit(limit)
         assert limiter.get_window_stats(limit)[1] == 9
         assert limiter.get_window_stats(limit)[0] == end + 2
+
+    @moving_window_storage
+    def test_moving_window_empty_stats(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+        assert limiter.get_window_stats(limit)[1] == 10
+        assert limiter.get_window_stats(limit)[0] == int(time.time() + 2)
 
     @moving_window_storage
     def test_moving_window(self, uri, args, fixture):

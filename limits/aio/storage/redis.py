@@ -62,7 +62,7 @@ class RedisInteractor:
         :param expiry: expiry of entry
         :return: (start of window, number of acquired entries)
         """
-        timestamp = time.time()
+        timestamp = int(time.time())
         window = await self.lua_moving_window.execute(
             [key], [int(timestamp - expiry), limit]
         )

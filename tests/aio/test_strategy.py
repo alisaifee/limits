@@ -34,6 +34,14 @@ class TestAsyncWindow:
         assert (await limiter.get_window_stats(limit))[0] == start + 2
 
     @async_all_storage
+    async def test_fixed_window_empty_stats(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = FixedWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+        assert (await limiter.get_window_stats(limit))[1] == 10
+        assert (await limiter.get_window_stats(limit))[0] == int(time.time())
+
+    @async_all_storage
     async def test_fixed_window_with_elastic_expiry(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -66,6 +74,14 @@ class TestAsyncWindow:
         # 5 more succeed since there were only 5 in the last 2 seconds
         assert all([await limiter.hit(limit) for i in range(5)])
         assert (await limiter.get_window_stats(limit))[1] == 0
+        assert (await limiter.get_window_stats(limit))[0] == int(time.time() + 2)
+
+    @async_moving_window_storage
+    async def test_moving_window_empty_stats(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+        assert (await limiter.get_window_stats(limit))[1] == 10
         assert (await limiter.get_window_stats(limit))[0] == int(time.time() + 2)
 
     @pytest.mark.memcached

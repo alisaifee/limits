@@ -155,12 +155,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                                 "$filter": {
                                     "input": "$entries",
                                     "as": "entry",
-                                    "cond": {
-                                        "$gte": [
-                                            "$$entry",
-                                            timestamp - expiry,
-                                        ]
-                                    },
+                                    "cond": {"$gte": ["$$entry", timestamp - expiry,]},
                                 }
                             }
                         }

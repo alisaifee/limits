@@ -112,7 +112,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
         :param key: the key to get the expiry for
         """
 
-        return int(self.expirations.get(key, -1))
+        return int(self.expirations.get(key, time.time()))
 
     def get_num_acquired(self, key, expiry):
         """

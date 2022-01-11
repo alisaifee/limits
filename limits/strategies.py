@@ -94,9 +94,7 @@ class MovingWindowRateLimiter(RateLimiter):
 
         return (
             self.storage().get_moving_window(  # type: ignore
-                item.key_for(*identifiers),
-                item.amount,
-                item.get_expiry(),
+                item.key_for(*identifiers), item.amount, item.get_expiry(),
             )[1]
             < item.amount
         )

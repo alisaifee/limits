@@ -183,11 +183,7 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
 
     @pytest.mark.parametrize(
         "username, password, success",
-        [
-            ("", "", False),
-            ("username", "", False),
-            ("", "sekret", True),
-        ],
+        [("", "", False), ("username", "", False), ("", "sekret", True),],
     )
     @pytest.mark.asyncio
     async def test_auth_connect(self, username, password, success, redis_sentinel_auth):

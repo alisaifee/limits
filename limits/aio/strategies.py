@@ -90,9 +90,7 @@ class MovingWindowRateLimiter(RateLimiter):
          limit
         """
         res = await self.storage().get_moving_window(  # type: ignore
-            item.key_for(*identifiers),
-            item.amount,
-            item.get_expiry(),
+            item.key_for(*identifiers), item.amount, item.get_expiry(),
         )
         amount = res[1]
         return amount < item.amount
@@ -155,8 +153,7 @@ class FixedWindowRateLimiter(RateLimiter):
         :return: reset time, remaining
         """
         remaining = max(
-            0,
-            item.amount - await self.storage().get(item.key_for(*identifiers)),
+            0, item.amount - await self.storage().get(item.key_for(*identifiers)),
         )
         reset = await self.storage().get_expiry(item.key_for(*identifiers))
         return (reset, remaining)
