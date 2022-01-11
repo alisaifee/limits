@@ -44,7 +44,7 @@ class TestRedisSentinelStorage(SharedRedisTests):
 
     @pytest.mark.parametrize(
         "username, password, success",
-        [("", "", False), ("username", "", False), ("", "sekret", True),],
+        [("", "", False), ("username", "", False), ("", "sekret", True)],
     )
     def test_auth_connect(self, username, password, success, redis_sentinel_auth):
         redis_sentinel_auth.master_for(self.service_name).flushall()
