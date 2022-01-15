@@ -3,6 +3,18 @@
 Changelog
 =========
 
+v2.3.0
+------
+Release Date: 2022-01-15
+
+* Feature
+
+  * Add support for custom cost per hit
+
+* Bug fix
+
+  * Fix installation issues with missing setuptools
+
 v2.2.0
 ------
 Release Date: 2022-01-05
@@ -211,6 +223,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
