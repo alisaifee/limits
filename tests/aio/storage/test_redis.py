@@ -182,13 +182,22 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
         assert lib.Sentinel.call_args[1]["sentinel_kwargs"] == opts
 
     @pytest.mark.parametrize(
-        "username, password, success",
-        [("", "", False), ("username", "", False), ("", "sekret", True)],
+        "username, sentinel_password, password, success",
+        [
+            ("", "", "", False),
+            ("username", "", "", False),
+            ("", "sekret", "", False),
+            ("", "sekret", "sekret", True),
+        ],
     )
     @pytest.mark.asyncio
-    async def test_auth_connect(self, username, password, success, redis_sentinel_auth):
+    async def test_auth_connect(
+        self, username, sentinel_password, password, success, redis_sentinel_auth
+    ):
         storage_url = (
-            f"async+redis+sentinel://{username}:{password}@localhost:36379/"
+            f"async+redis+sentinel://{username}:{sentinel_password}@localhost:36379/"
             "localhost-redis-sentinel"
         )
-        assert success == await storage_from_string(storage_url).check()
+        assert (
+            success == await storage_from_string(storage_url, password=password).check()
+        )

@@ -31,6 +31,17 @@ services:
     command: redis-server --port 6381 --slaveof ${HOST_IP} 6380 --slave-announce-ip ${HOST_IP}
     ports:
       - '6381:6381'
+  redis-sentinel-master-auth:
+    image: "redis:${LIMITS_REDIS_SENTINEL_SERVER_VERSION:-latest}"
+    command: redis-server --port 6382 --requirepass sekret
+    ports:
+      - '6382:6382'
+  redis-sentinel-slave-auth:
+    image: "redis:${LIMITS_REDIS_SENTINEL_SERVER_VERSION:-latest}"
+    depends_on: [redis-sentinel-master-auth]
+    command: redis-server --port 6383 --slaveof ${HOST_IP} 6382 --slave-announce-ip ${HOST_IP} --requirepass sekret --masterauth sekret
+    ports:
+      - '6383:6383'
   redis-sentinel:
     image: 'bitnami/redis-sentinel:${LIMITS_REDIS_SENTINEL_SERVER_VERSION:-latest}'
     depends_on: [redis-sentinel-slave]
@@ -42,11 +53,12 @@ services:
       - '26379:26379'
   redis-sentinel-auth:
     image: 'bitnami/redis-sentinel:${LIMITS_REDIS_SENTINEL_SERVER_VERSION:-latest}'
-    depends_on: [redis-sentinel-slave]
+    depends_on: [redis-sentinel-slave-auth]
     environment:
       - REDIS_MASTER_SET=localhost-redis-sentinel
       - REDIS_MASTER_HOST=${HOST_IP}
-      - REDIS_MASTER_PORT_NUMBER=6380
+      - REDIS_MASTER_PASSWORD=sekret
+      - REDIS_MASTER_PORT_NUMBER=6382
       - REDIS_SENTINEL_PASSWORD=sekret
     ports:
       - '36379:26379'

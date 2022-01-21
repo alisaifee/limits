@@ -34,7 +34,9 @@ def check_sentinel_auth_ready(host, port):
     try:
         return (
             redis.sentinel.Sentinel(
-                [(host, port)], sentinel_kwargs={"password": "sekret"}
+                [(host, port)],
+                sentinel_kwargs={"password": "sekret"},
+                password="sekret",
             )
             .master_for("localhost-redis-sentinel")
             .ping()
@@ -129,7 +131,9 @@ def redis_sentinel_auth_client(docker_services):
     )
 
     return redis.sentinel.Sentinel(
-        [("localhost", 36379)], sentinel_kwargs={"password": "sekret"}
+        [("localhost", 36379)],
+        sentinel_kwargs={"password": "sekret"},
+        password="sekret",
     )
 
 

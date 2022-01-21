@@ -96,7 +96,7 @@ all_storage = pytest.mark.parametrize(
         ),
         pytest.param(
             "redis+sentinel://:sekret@localhost:36379/localhost-redis-sentinel",
-            {},
+            {"password": "sekret"},
             pytest.lazy_fixture("redis_sentinel_auth"),
             marks=pytest.mark.redis_sentinel,
         ),
@@ -218,7 +218,7 @@ async_all_storage = pytest.mark.parametrize(
         ),
         pytest.param(
             "async+redis+sentinel://:sekret@localhost:36379/localhost-redis-sentinel",
-            {},
+            {"password": "sekret"},
             pytest.lazy_fixture("redis_sentinel_auth"),
             marks=pytest.mark.redis_sentinel,
         ),

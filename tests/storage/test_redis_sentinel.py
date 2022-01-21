@@ -43,13 +43,20 @@ class TestRedisSentinelStorage(SharedRedisTests):
         assert lib.Sentinel.call_args[1]["sentinel_kwargs"] == opts
 
     @pytest.mark.parametrize(
-        "username, password, success",
-        [("", "", False), ("username", "", False), ("", "sekret", True)],
+        "username, sentinel_password, password, success",
+        [
+            ("", "", "", False),
+            ("username", "", "", False),
+            ("", "sekret", "", False),
+            ("", "sekret", "sekret", True),
+        ],
     )
-    def test_auth_connect(self, username, password, success, redis_sentinel_auth):
+    def test_auth_connect(
+        self, username, sentinel_password, password, success, redis_sentinel_auth
+    ):
         redis_sentinel_auth.master_for(self.service_name).flushall()
         storage_url = (
-            f"redis+sentinel://{username}:{password}@localhost:36379/"
+            f"redis+sentinel://{username}:{sentinel_password}@localhost:36379/"
             "localhost-redis-sentinel"
         )
-        assert success == storage_from_string(storage_url).check()
+        assert success == storage_from_string(storage_url, password=password).check()
