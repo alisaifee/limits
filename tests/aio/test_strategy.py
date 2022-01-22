@@ -137,6 +137,7 @@ class TestAsyncWindow:
 
     @async_all_storage
     @fixed_start
+    @pytest.mark.flaky
     async def test_test_fixed_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
