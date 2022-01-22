@@ -65,6 +65,14 @@ class SharedRedisTests(object):
 
 
 @pytest.mark.redis
+class TestRedisAuthStorage(SharedRedisTests):
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_auth):
+        self.storage_url = "redis://:sekret@localhost:7389"
+        self.storage = RedisStorage(self.storage_url)
+
+
+@pytest.mark.redis
 class TestRedisStorage(SharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_basic):

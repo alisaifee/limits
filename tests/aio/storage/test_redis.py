@@ -98,6 +98,15 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
 
 
 @pytest.mark.redis
+class TestAsyncRedisAuthStorage(AsyncSharedRedisTests):
+    @pytest.fixture(autouse=True)
+    def setup(self, redis_auth):
+        self.real_storage_url = "redis://:sekret@localhost:7389"
+        self.storage_url = f"async+{self.real_storage_url}"
+        self.storage = RedisStorage(self.storage_url)
+
+
+@pytest.mark.redis
 class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_uds):

@@ -206,9 +206,9 @@ def redis_ssl(redis_ssl_client):
 
 @pytest.fixture
 def redis_auth(redis_auth_client):
-    redis_auth.flushall()
+    redis_auth_client.flushall()
 
-    return redis_auth
+    return redis_auth_client
 
 
 @pytest.fixture
