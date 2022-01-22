@@ -46,6 +46,8 @@ def storage_from_string(storage_string: str, **options) -> Any:
     :param storage_string: a string of the form ``scheme://host:port``.
      More details about supported storage schemes can be found at
      :ref:`storage:storage scheme`
+    :param options: all remaining keyword arguments are passed to the
+     constructor matched by :paramref:`storage_string`.
     :raises ConfigurationError: when the :attr:`storage_string` cannot be
      mapped to a registered :class:`limits.storage.Storage`
      or :class:`limits.aio.storage.Storage` instance.
