@@ -122,83 +122,89 @@ The in-memory storage (:class:`~limits.storage.MemoryStorage`) takes no paramete
 Memcached
 ---------
 
- Requires the location of the memcached server(s). As such
- the parameters is a comma separated list of :code:`{host}:{port}` locations such as
- :code:`memcached://localhost:11211` or
- :code:`memcached://localhost:11211,localhost:11212,192.168.1.1:11211` etc...
- or a path to a unix domain socket such as :code:`memcached:///var/tmp/path/to/sock`
+Requires the location of the memcached server(s). As such
+the parameters is a comma separated list of :code:`{host}:{port}` locations such as
+:code:`memcached://localhost:11211` or
+:code:`memcached://localhost:11211,localhost:11212,192.168.1.1:11211` etc...
+or a path to a unix domain socket such as :code:`memcached:///var/tmp/path/to/sock`
 
- Depends on: :pypi:`pymemcache`
+Depends on: :pypi:`pymemcache`
 
 Memcached on Google App Engine
 ------------------------------
 
-  .. deprecated:: 2.0
+.. deprecated:: 2.0
 
-  Requires that you are working in the GAE SDK and have those API libraries available.
+Requires that you are working in the GAE SDK and have those API libraries available.
 
-  :code:`gaememcached://`
+:code:`gaememcached://`
 
 
 Redis
 -----
 
- Requires the location of the redis server and optionally the database number.
- :code:`redis://localhost:6379` or :code:`redis://localhost:6379/n` (for database `n`).
+Requires the location of the redis server and optionally the database number.
+:code:`redis://localhost:6379` or :code:`redis://localhost:6379/n` (for database `n`).
 
- If the redis server is listening over a unix domain socket you can use :code:`redis+unix:///path/to/sock`
- or :code:`redis+unix:///path/to/socket?db=n` (for database `n`).
+If the redis server is listening over a unix domain socket you can use :code:`redis+unix:///path/to/sock`
+or :code:`redis+unix:///path/to/socket?db=n` (for database `n`).
 
- If the database is password protected the password can be provided in the url, for example
- :code:`redis://:foobared@localhost:6379` or :code:`redis+unix//:foobered/path/to/socket` if using a UDS..
+If the database is password protected the password can be provided in the url, for example
+:code:`redis://:foobared@localhost:6379` or :code:`redis+unix//:foobered/path/to/socket` if using a UDS..
 
- Depends on: :pypi:`redis`
+Depends on: :pypi:`redis`
 
 Redis over SSL
 --------------
 
- The official Redis client :pypi:`redis` supports redis connections over SSL with the scheme
- You can add ssl related parameters in the url itself, for example:
- :code:`rediss://localhost:6379/0?ssl_ca_certs=./tls/ca.crt&ssl_keyfile=./tls/client.key`.
+The official Redis client :pypi:`redis` supports redis connections over SSL with the scheme
+You can add ssl related parameters in the url itself, for example:
+:code:`rediss://localhost:6379/0?ssl_ca_certs=./tls/ca.crt&ssl_keyfile=./tls/client.key`.
 
 
- Depends on: :pypi:`redis`
+Depends on: :pypi:`redis`
 
 Redis with Sentinel
 -------------------
 
- Requires the location(s) of the redis sentinal instances and the `service-name`
- that is monitored by the sentinels.
- :code:`redis+sentinel://localhost:26379/my-redis-service`
- or :code:`redis+sentinel://localhost:26379,localhost:26380/my-redis-service`.
+Requires the location(s) of the redis sentinal instances and the `service-name`
+that is monitored by the sentinels.
+:code:`redis+sentinel://localhost:26379/my-redis-service`
+or :code:`redis+sentinel://localhost:26379,localhost:26380/my-redis-service`.
 
- If the database is password protected the password can be provided in the url, for example
- :code:`redis+sentinel://:sekret@localhost:26379/my-redis-service`
+If the sentinel is password protected the username and/or password can be provided in the url,
+for example  :code:`redis+sentinel://:sekret@localhost:26379/my-redis-service`
 
- Depends on: :pypi:`redis`
+When authentication details are provided in the url they will be used for both the sentinel
+and as connection arguments for the underlying redis nodes managed by the sentinel.
+
+If you need fine grained control it is recommended to use the additional :paramref:`~limits.storage.storage_from_string.options`
+arguments. More details can be found in the API documentation for :class:`~limits.storage.RedisSentinelStorage` (or the aysnc version: :class:`~limits.aio.storage.RedisSentinelStorage`).
+
+Depends on: :pypi:`redis`
 
 Redis Cluster
 -------------
 
- Requires the location(s) of the redis cluster startup nodes (One is enough).
- :code:`redis+cluster://localhost:7000`
- or :code:`redis+cluster://localhost:7000,localhost:7001`
+Requires the location(s) of the redis cluster startup nodes (One is enough).
+:code:`redis+cluster://localhost:7000`
+or :code:`redis+cluster://localhost:7000,localhost:7001`
 
- Depends on: :pypi:`redis-py-cluster`
+Depends on: :pypi:`redis-py-cluster`
 
 MongoDB
 -------
 
- Requires the location(s) of a mongodb installation using the uri schema
- described by the `Mongodb URI Specification <https://github.com/mongodb/specifications/blob/master/source/uri-options/uri-options.rst>`_
+Requires the location(s) of a mongodb installation using the uri schema
+described by the `Mongodb URI Specification <https://github.com/mongodb/specifications/blob/master/source/uri-options/uri-options.rst>`_
 
- Examples:
+Examples:
 
   - Local instance: ``mongodb://localhost:27017/``
   - Instance with SSL: ``mongodb://mymongo.com/?tls=true``
   - Local instance with SSL & self signed/invalid certificate: ``mongodb://localhost:27017/?tls=true&tlsAllowInvalidCertificates=true``
 
- Depends on: :pypi:`pymongo`
+Depends on: :pypi:`pymongo`
 
 Async Storage
 =============

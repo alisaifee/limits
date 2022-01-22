@@ -45,6 +45,7 @@ extensions = [
     "sphinxcontrib.programoutput",
     "sphinx_autodoc_typehints",
     "sphinx_panels",
+    "sphinx_paramlinks",
 ]
 
 autodoc_default_options = {
@@ -55,6 +56,7 @@ autodoc_default_options = {
 }
 
 add_module_names = False
+autoclass_content = "both"
 
 autosectionlabel_maxdepth = 3
 autosectionlabel_prefix_document = True
