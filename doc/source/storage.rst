@@ -41,7 +41,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
      .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_SSL_VERSION=[\d\.]+' | cut -d = -f 2"
 
-  `Redis Sentinel <https://redis.io/topics/sentinel>`_
+   `Redis Sentinel <https://redis.io/topics/sentinel>`_
 
      .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SENTINEL_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
