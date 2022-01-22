@@ -3,6 +3,17 @@
 Changelog
 =========
 
+v2.3.1
+------
+Release Date: 2022-01-21
+
+* Bug fix
+
+  * Fix backward incompatible change that separated sentinel
+    and connection args for redis sentinel (introduced in 2.1.0).
+    Addresses `Issue 97 <https://github.com/alisaifee/limits/issues/97>`_
+
+
 v2.3.0
 ------
 Release Date: 2022-01-15
@@ -223,6 +234,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
