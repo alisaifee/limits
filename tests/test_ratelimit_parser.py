@@ -52,7 +52,8 @@ class TestRatelimitParser:
             granularity_from_string(value)
 
     @pytest.mark.parametrize(
-        "value", ["1 per yearl; 2 per decade"],
+        "value",
+        ["1 per yearl; 2 per decade"],
     )
     def test_invalid_string_parse_many(self, value):
         with pytest.raises(ValueError):
