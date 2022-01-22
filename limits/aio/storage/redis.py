@@ -340,12 +340,13 @@ class RedisSentinelStorage(RedisStorage):
         sentinel_configuration = []
         connection_options = options.copy()
         sentinel_options = sentinel_kwargs.copy() if sentinel_kwargs else {}
+        parsed_auth = {}
 
         if parsed.username:
-            sentinel_options["username"] = parsed.username
+            parsed_auth["username"] = parsed.username
 
         if parsed.password:
-            sentinel_options["password"] = parsed.password
+            parsed_auth["password"] = parsed.password
 
         sep = parsed.netloc.find("@") + 1
 
@@ -367,8 +368,8 @@ class RedisSentinelStorage(RedisStorage):
 
         self.sentinel = self.dependency.Sentinel(
             sentinel_configuration,
-            sentinel_kwargs=sentinel_options,
-            **connection_options,
+            sentinel_kwargs={**parsed_auth, **sentinel_options},
+            **{**parsed_auth, **connection_options},
         )
         self.storage = self.sentinel.master_for(self.service_name)
         self.storage_slave = self.sentinel.slave_for(self.service_name)

@@ -186,7 +186,8 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
         [
             ("", "", "", False),
             ("username", "", "", False),
-            ("", "sekret", "", False),
+            ("", "", "sekret", False),
+            ("", "sekret", "", True),
             ("", "sekret", "sekret", True),
         ],
     )
@@ -198,6 +199,7 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
             f"async+redis+sentinel://{username}:{sentinel_password}@localhost:36379/"
             "localhost-redis-sentinel"
         )
-        assert (
-            success == await storage_from_string(storage_url, password=password).check()
-        )
+        args = {}
+        if password:
+            args["password"] = password
+        assert success == await storage_from_string(storage_url, **args).check()

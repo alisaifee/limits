@@ -47,7 +47,8 @@ class TestRedisSentinelStorage(SharedRedisTests):
         [
             ("", "", "", False),
             ("username", "", "", False),
-            ("", "sekret", "", False),
+            ("", "", "sekret", False),
+            ("", "sekret", "", True),
             ("", "sekret", "sekret", True),
         ],
     )
@@ -59,4 +60,7 @@ class TestRedisSentinelStorage(SharedRedisTests):
             f"redis+sentinel://{username}:{sentinel_password}@localhost:36379/"
             "localhost-redis-sentinel"
         )
-        assert success == storage_from_string(storage_url, password=password).check()
+        args = {}
+        if password:
+            args["password"] = password
+        assert success == storage_from_string(storage_url, **args).check()
