@@ -1,5 +1,6 @@
 import threading
 import time
+import typing
 from collections import Counter
 from typing import Dict, List, Tuple
 
@@ -26,7 +27,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
     STORAGE_SCHEME = ["memory"]
 
     def __init__(self, uri: str = None, **_):
-        self.storage: Counter[str] = Counter()
+        self.storage: typing.Counter[str] = Counter()
         self.expirations: Dict[str, float] = {}
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer = threading.Timer(0.01, self.__expire_events)

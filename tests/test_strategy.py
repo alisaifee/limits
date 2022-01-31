@@ -2,6 +2,7 @@ import math
 import time
 
 import pytest
+
 from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import MemcachedStorage, storage_from_string
 from limits.strategies import (
@@ -9,7 +10,6 @@ from limits.strategies import (
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
 )
-
 from tests.utils import all_storage, fixed_start, moving_window_storage, window
 
 

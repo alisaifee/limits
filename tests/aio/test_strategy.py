@@ -9,7 +9,7 @@ from limits.aio.strategies import (
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
 )
-from limits.limits import RateLimitItemPerSecond, RateLimitItemPerMinute
+from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.storage import storage_from_string
 from tests.utils import (
     async_all_storage,
