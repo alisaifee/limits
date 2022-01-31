@@ -3,6 +3,16 @@
 Changelog
 =========
 
+v2.3.2
+------
+Release Date: 2022-01-30
+
+* Chores
+
+  * Improve authentication tests for redis
+  * Update documentation theme
+  * Pin pip version for CI
+
 v2.3.1
 ------
 Release Date: 2022-01-21
@@ -234,6 +244,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
