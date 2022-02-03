@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v2.3.3
+------
+Release Date: 2022-02-03
+
+* Feature
+
+  * Add support for dns seed list when using mongodb
+
 v2.3.2
 ------
 Release Date: 2022-01-30
@@ -244,6 +252,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
