@@ -16,7 +16,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     .. versionadded:: 2.1
     """
 
-    STORAGE_SCHEME = ["mongodb"]
+    STORAGE_SCHEME = ["mongodb", "mongodb+srv"]
     DEFAULT_OPTIONS = {
         "serverSelectionTimeoutMS": 1000,
         "socketTimeoutMS": 1000,

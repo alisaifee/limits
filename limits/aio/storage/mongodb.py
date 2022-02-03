@@ -28,7 +28,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     .. versionadded:: 2.1
     """
 
-    STORAGE_SCHEME = ["async+mongodb"]
+    STORAGE_SCHEME = ["async+mongodb", "async+mongodb+srv"]
     """
     The storage scheme for MongoDB for use in an async context
     """
