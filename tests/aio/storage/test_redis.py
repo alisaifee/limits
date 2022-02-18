@@ -10,6 +10,7 @@ from limits.errors import ConfigurationError
 from limits.storage import storage_from_string
 
 
+@pytest.mark.flaky
 @pytest.mark.asynchronous
 class AsyncSharedRedisTests:
     @pytest.mark.asyncio
