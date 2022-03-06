@@ -42,6 +42,9 @@ setup(
     author_email=__email__,
     license="MIT",
     url="https://limits.readthedocs.org",
+    project_urls={
+        "Source": "https://github.com/alisaifee/limits",
+    },
     zip_safe=False,
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
