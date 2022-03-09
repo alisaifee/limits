@@ -97,6 +97,15 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
             from_url.spy_return.connection_pool.connection_kwargs["stream_timeout"] == 1
         )
 
+    @pytest.mark.asyncio
+    async def test_custom_connection_pool(self):
+        import coredis
+
+        pool = coredis.BlockingConnectionPool.from_url(self.storage_url)
+        storage = storage_from_string("async+redis://", connection_pool=pool)
+
+        assert await storage.check()
+
 
 @pytest.mark.redis
 class TestAsyncRedisAuthStorage(AsyncSharedRedisTests):

@@ -129,7 +129,9 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
     DEPENDENCIES = ["coredis"]
 
-    def __init__(self, uri: str, **options) -> None:
+    def __init__(
+        self, uri: str, connection_pool: Optional[Any] = None, **options
+    ) -> None:
         """
         :param uri: uri of the form `async+redis://[:password]@host:port`,
          `async+redis://[:password]@host:port/db`,
@@ -137,6 +139,8 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
          This uri is passed directly to :func:`coredis.StrictRedis.from_url` with
          the initial `a` removed, except for the case of `redis+unix` where it
          is replaced with `unix`.
+        :param connection_pool: if provided, the redis client is initialized with
+         the connection pool and any other params passed as :paramref:`options`
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`coredis.StrictRedis`
         :raise ConfigurationError: when the redis library is not available
@@ -148,7 +152,12 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         super().__init__()
 
         self.dependency = self.dependencies["coredis"]
-        self.storage = self.dependency.StrictRedis.from_url(uri, **options)
+        if connection_pool:
+            self.storage = self.dependency.StrictRedis(
+                connection_pool=connection_pool, **options
+            )
+        else:
+            self.storage = self.dependency.StrictRedis.from_url(uri, **options)
 
         self.initialize_storage(uri)
 
