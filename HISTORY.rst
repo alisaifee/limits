@@ -3,6 +3,15 @@
 Changelog
 =========
 
+v2.4.0
+------
+Release Date: 2022-03-10
+
+* Feature
+
+  * Allow passing an explicit connection pool to redis storage.
+    Addresses `Issue 77 <https://github.com/alisaifee/limits/issues/77>`_
+
 v2.3.3
 ------
 Release Date: 2022-02-03
@@ -252,6 +261,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
