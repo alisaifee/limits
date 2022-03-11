@@ -84,6 +84,12 @@ class TestRedisStorage(SharedRedisTests):
         assert storage_from_string(self.storage_url, socket_timeout=1).check()
         assert from_url.call_args[1]["socket_timeout"] == 1
 
+    def test_custom_connection_pool(self):
+        pool = redis.connection.BlockingConnectionPool.from_url(self.storage_url)
+        storage = storage_from_string("redis://", connection_pool=pool)
+
+        assert storage.check()
+
 
 @pytest.mark.redis
 class TestRedisUnixSocketStorage(SharedRedisTests):

@@ -86,7 +86,7 @@ all_storage = pytest.mark.parametrize(
             "redis+sentinel://localhost:26379",
             {"service_name": "localhost-redis-sentinel"},
             pytest.lazy_fixture("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
+            marks=[pytest.mark.redis_sentinel, pytest.mark.flaky],
         ),
         pytest.param(
             "redis+sentinel://localhost:26379/localhost-redis-sentinel",

@@ -1,5 +1,5 @@
 import time
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 from ..util import get_package_data
 from .base import MovingWindowSupport, Storage
@@ -111,13 +111,20 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
     DEPENDENCIES = ["redis"]
 
-    def __init__(self, uri: str, **options):
+    def __init__(
+        self,
+        uri: str,
+        connection_pool: Optional[Any] = None,
+        **options,
+    ):
         """
         :param uri: uri of the form ``redis://[:password]@host:port``,
          ``redis://[:password]@host:port/db``,
          ``rediss://[:password]@host:port``, ``redis+unix:///path/to/sock`` etc.
          This uri is passed directly to :func:`redis.from_url` except for the
          case of ``redis+unix://`` where it is replaced with ``unix://``.
+        :param connection_pool: if provided, the redis client is initialized with
+         the connection pool and any other params passed as :paramref:`options`
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.Redis`
         :raise ConfigurationError: when the :pypi:`redis` library is not available
@@ -126,7 +133,10 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         redis = self.dependencies["redis"]
         uri = uri.replace("redis+unix", "unix")
 
-        self.storage = redis.from_url(uri, **options)
+        if not connection_pool:
+            self.storage = redis.from_url(uri, **options)
+        else:
+            self.storage = redis.Redis(connection_pool=connection_pool, **options)
         self.initialize_storage(uri)
 
     def initialize_storage(self, _uri: str):

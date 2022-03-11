@@ -59,6 +59,7 @@ class AsyncSharedRedisTests:
         assert await limiter.hit(per_min)
 
     @pytest.mark.asyncio
+    @pytest.mark.flaky
     async def test_moving_window_expiry(self):
         limiter = MovingWindowRateLimiter(self.storage)
         limit = RateLimitItemPerSecond(2)
@@ -96,6 +97,15 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
         assert (
             from_url.spy_return.connection_pool.connection_kwargs["stream_timeout"] == 1
         )
+
+    @pytest.mark.asyncio
+    async def test_custom_connection_pool(self):
+        import coredis
+
+        pool = coredis.BlockingConnectionPool.from_url(self.storage_url)
+        storage = storage_from_string("async+redis://", connection_pool=pool)
+
+        assert await storage.check()
 
 
 @pytest.mark.redis
