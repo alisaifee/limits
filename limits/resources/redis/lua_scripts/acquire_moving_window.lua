@@ -12,7 +12,7 @@ for i=1, amount do
     entries[i] = timestamp
 end
 redis.call('lpush', KEYS[1], unpack(entries))
-redis.call('ltrim', KEYS[1], 0, limit - amount)
+redis.call('ltrim', KEYS[1], 0, limit)
 redis.call('expire', KEYS[1], expiry)
 
 return true
