@@ -117,6 +117,16 @@ class TestWindow:
         assert limiter.get_window_stats(limit)[1] == 0
         assert limiter.get_window_stats(limit)[0] == int(time.time() + 2)
 
+    @moving_window_storage
+    def test_moving_window_varying_cost(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = MovingWindowRateLimiter(storage)
+        five_per_min = RateLimitItemPerMinute(5)
+        limiter.hit(five_per_min, cost=5)
+        assert not limiter.hit(five_per_min, cost=2)
+        limiter.clear(five_per_min)
+        assert limiter.hit(five_per_min)
+
     @pytest.mark.memcached
     def test_moving_window_memcached(self, memcached):
         storage = MemcachedStorage("memcached://localhost:22122")

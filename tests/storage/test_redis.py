@@ -48,14 +48,6 @@ class SharedRedisTests(object):
         limiter.clear(per_min)
         assert limiter.hit(per_min)
 
-    def test_moving_window_varying_cost(self):
-        limiter = MovingWindowRateLimiter(self.storage)
-        five_per_min = RateLimitItemPerMinute(5)
-        limiter.hit(five_per_min, cost=5)
-        assert not limiter.hit(five_per_min, cost=2)
-        limiter.clear(five_per_min)
-        assert limiter.hit(five_per_min)
-
     def test_moving_window_expiry(self):
         limiter = MovingWindowRateLimiter(self.storage)
         limit = RateLimitItemPerSecond(2)
