@@ -42,11 +42,17 @@ jobs:
   test:
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.8]
         marker: [not integration]
         os: [ubuntu-latest]
         legacy_cluster: [False]
         include:
+          - python-version: 3.7
+            marker: 'not (integration or asyncio)'
+            os: ubuntu-latest
+          - python-version: 3.9
+            marker: ''
+            os: ubuntu-latest
           - python-version: "3.10"
             marker: ''
             os: ubuntu-latest
