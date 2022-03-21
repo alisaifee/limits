@@ -1,1 +1,1 @@
-coredis[hiredis]>=3.0.0,<4
+coredis[hiredis]>=3.0.0,<4;python_version>"3.7"
