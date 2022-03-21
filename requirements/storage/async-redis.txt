@@ -1,1 +1,1 @@
-coredis[hiredis]>=2.0.0,<3
+coredis[hiredis]>=2.0.0,<4
