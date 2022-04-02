@@ -2,7 +2,6 @@
 -r docs.txt
 autoflake8
 black
-docker-compose
 flake8
 isort
 keyring
