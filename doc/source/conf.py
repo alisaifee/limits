@@ -14,19 +14,26 @@ from theme_config import *
 project = "limits"
 description = "limits is a python library to perform rate limiting with commonly used storage backends"
 copyright = "2021, Ali-Akber Saifee"
-version, _ = release, part = limits.__version__.split("+")
+if ".post0.dev" in limits.__version__:
+    version, ahead = limits.__version__.split(".post0.dev")
+else:
+    version = limits.__version__
+
+release = version
 
 html_static_path = ["./_static"]
 html_css_files = [
     "custom.css",
-    "https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;700&family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+    "https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;700&family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap",
 ]
 
 html_title = f"{project} <small><b style='color: var(--color-brand-primary)'>{{{release}}}</b></small>"
 try:
-    ahead = int(part.rsplit(".")[0])
+    ahead = int(ahead)
     if ahead > 0:
-        html_theme_options["announcement"] = f"""
+        html_theme_options[
+            "announcement"
+        ] = f"""
         This is a development version. The documentation for the latest version: <b>{release}</b> can be found <a href="/en/stable">here</a>
         """
         html_title = f"{project} <small><b style='color: var(--color-brand-primary)'>{{dev}}</b></small>"
