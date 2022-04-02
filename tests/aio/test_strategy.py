@@ -129,7 +129,6 @@ class TestAsyncWindow:
         assert (await limiter.get_window_stats(limit))[1] == 0
         assert (await limiter.get_window_stats(limit))[0] == int(time.time() + 2)
 
-
     @async_moving_window_storage
     async def test_moving_window_varying_cost(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
