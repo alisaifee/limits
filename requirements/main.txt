@@ -1,1 +1,2 @@
 setuptools
+packaging>=21,<22
