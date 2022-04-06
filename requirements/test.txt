@@ -9,6 +9,7 @@
 
 # Test related packages
 coverage
+hiro>0.1.6
 flaky
 lovely-pytest-docker
 pytest
@@ -16,5 +17,5 @@ pytest-asyncio
 pytest-cov
 pytest-lazy-fixture
 pytest-mock
+pytest-testmon
 PyYAML
-hiro>0.1.6
