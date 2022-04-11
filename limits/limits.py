@@ -37,7 +37,7 @@ GRANULARITIES: Dict[str, Type[RateLimitItem]] = {}
 
 class RateLimitItemMeta(type):
     def __new__(cls, name, parents, dct):
-        granularity = super(RateLimitItemMeta, cls).__new__(cls, name, parents, dct)
+        granularity = super().__new__(cls, name, parents, dct)
 
         if "GRANULARITY" in dct:
             GRANULARITIES[dct["GRANULARITY"][1]] = cast(
@@ -111,7 +111,7 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
             ]
         )
 
-        return "%s/%s" % (self.namespace, remainder)
+        return f"{self.namespace}/{remainder}"
 
     def __eq__(self, other):
         return self.amount == other.amount and self.GRANULARITY == other.GRANULARITY

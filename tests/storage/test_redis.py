@@ -8,7 +8,7 @@ from limits.storage import RedisStorage, storage_from_string
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 
 
-class SharedRedisTests(object):
+class SharedRedisTests:
     def test_fixed_window(self):
         limiter = FixedWindowRateLimiter(self.storage)
         per_second = RateLimitItemPerSecond(10)

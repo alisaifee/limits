@@ -37,7 +37,7 @@ class MemcachedStorage(Storage):
 
         self._options = options
         self._storage = None
-        super(MemcachedStorage, self).__init__()
+        super().__init__()
         self.dependency = self.dependencies["emcache"]
 
     async def get_storage(self):
@@ -78,10 +78,10 @@ class MemcachedStorage(Storage):
         """
         storage = await self.get_storage()
         limit_key = key.encode("utf-8")
-        expire_key = f"{key}/expires".encode("utf-8")
+        expire_key = f"{key}/expires".encode()
         added = True
         try:
-            await storage.add(limit_key, f"{amount}".encode("utf-8"), exptime=expiry)
+            await storage.add(limit_key, f"{amount}".encode(), exptime=expiry)
         except self.dependency.NotStoredStorageCommandError:
             added = False
             storage = await self.get_storage()
@@ -114,7 +114,7 @@ class MemcachedStorage(Storage):
         :param key: the key to get the expiry for
         """
         storage = await self.get_storage()
-        item = await storage.get(f"{key}/expires".encode("utf-8"))
+        item = await storage.get(f"{key}/expires".encode())
 
         return int(item and float(item.value) or time.time())
 

@@ -54,4 +54,4 @@ class RedisClusterStorage(RedisStorage):
          usage as it could be slow on very large data sets"""
 
         keys = self.storage.keys("LIMITER*")
-        return sum([self.storage.delete(k.decode("utf-8")) for k in keys])
+        return sum(self.storage.delete(k.decode("utf-8")) for k in keys)

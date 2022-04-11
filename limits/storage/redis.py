@@ -5,7 +5,7 @@ from ..util import get_package_data
 from .base import MovingWindowSupport, Storage
 
 
-class RedisInteractor(object):
+class RedisInteractor:
     RES_DIR = "resources/redis/lua_scripts"
 
     SCRIPT_MOVING_WINDOW = get_package_data(f"{RES_DIR}/moving_window.lua")

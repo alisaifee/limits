@@ -59,7 +59,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]
         uri = uri.replace("async+mongodb", "mongodb", 1)
 
-        super(MongoDBStorage, self).__init__(uri, **options)
+        super().__init__(uri, **options)
 
         self.dependency = self.dependencies["motor.motor_asyncio"]
         self.proxy_dependency = self.dependencies["pymongo"]

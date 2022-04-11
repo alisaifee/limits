@@ -7,7 +7,7 @@ SCHEMES: Dict[str, Type] = {}
 class StorageRegistry(ABCMeta):
     def __new__(mcs, name, bases, dct):
         storage_scheme = dct.get("STORAGE_SCHEME", None)
-        cls = cast(Type, super(StorageRegistry, mcs).__new__(mcs, name, bases, dct))
+        cls = cast(Type, super().__new__(mcs, name, bases, dct))
 
         if storage_scheme:
             if isinstance(storage_scheme, str):  # noqa
