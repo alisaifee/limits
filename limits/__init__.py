@@ -2,8 +2,8 @@
 Rate limiting with commonly used storage backends
 """
 
+from . import _version
 from . import aio, storage, strategies
-from ._version import get_versions
 from .limits import (
     RateLimitItem,
     RateLimitItemPerDay,
@@ -14,9 +14,6 @@ from .limits import (
     RateLimitItemPerYear,
 )
 from .util import parse, parse_many
-
-__version__ = get_versions()["version"]
-del get_versions
 
 __all__ = [
     "RateLimitItem",
@@ -32,3 +29,5 @@ __all__ = [
     "parse",
     "parse_many",
 ]
+
+__version__ = _version.get_versions()['version']
