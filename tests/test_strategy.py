@@ -3,7 +3,11 @@ import time
 
 import pytest
 
-from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
+from limits.limits import (
+    RateLimitItemPerHour,
+    RateLimitItemPerMinute,
+    RateLimitItemPerSecond,
+)
 from limits.storage import MemcachedStorage, storage_from_string
 from limits.strategies import (
     FixedWindowElasticExpiryRateLimiter,
@@ -139,7 +143,7 @@ class TestWindow:
     def test_test_fixed_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
-        limit = RateLimitItemPerMinute(2, 1)
+        limit = RateLimitItemPerHour(2, 1)
         assert limiter.hit(limit)
         assert limiter.test(limit)
         assert limiter.hit(limit)
@@ -149,7 +153,7 @@ class TestWindow:
     @moving_window_storage
     def test_test_moving_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
-        limit = RateLimitItemPerMinute(2, 1)
+        limit = RateLimitItemPerHour(2, 1)
         limiter = MovingWindowRateLimiter(storage)
         assert limiter.hit(limit)
         assert limiter.test(limit)

@@ -9,7 +9,11 @@ from limits.aio.strategies import (
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
 )
-from limits.limits import RateLimitItemPerMinute, RateLimitItemPerSecond
+from limits.limits import (
+    RateLimitItemPerHour,
+    RateLimitItemPerMinute,
+    RateLimitItemPerSecond,
+)
 from limits.storage import storage_from_string
 from tests.utils import (
     async_all_storage,
@@ -151,7 +155,7 @@ class TestAsyncWindow:
     async def test_test_fixed_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
-        limit = RateLimitItemPerMinute(2, 1)
+        limit = RateLimitItemPerHour(2, 1)
         assert await limiter.hit(limit)
         assert await limiter.test(limit)
         assert await limiter.hit(limit)
@@ -161,7 +165,7 @@ class TestAsyncWindow:
     @async_moving_window_storage
     async def test_test_moving_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
-        limit = RateLimitItemPerMinute(2, 1)
+        limit = RateLimitItemPerHour(2, 1)
         limiter = MovingWindowRateLimiter(storage)
         assert await limiter.hit(limit)
         assert await limiter.test(limit)
