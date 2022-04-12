@@ -1,4 +1,3 @@
-import math
 import time
 
 import pytest
@@ -52,11 +51,9 @@ class TestAsyncWindow:
     async def test_fixed_window_multiple_cost(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-        async with async_window(0) as (start, _):
-            assert await limiter.hit(limit, cost=5)
-            assert (await limiter.get_window_stats(limit))[1] == 5
-            assert (await limiter.get_window_stats(limit))[0] == math.floor(start + 2)
+        limit = RateLimitItemPerMinute(10, 2)
+        assert await limiter.hit(limit, cost=5)
+        assert (await limiter.get_window_stats(limit))[1] == 5
 
     @async_all_storage
     @fixed_start
@@ -131,7 +128,6 @@ class TestAsyncWindow:
             assert not await limiter.hit(limit)
         assert all([await limiter.hit(limit) for i in range(5)])
         assert (await limiter.get_window_stats(limit))[1] == 0
-        assert (await limiter.get_window_stats(limit))[0] == int(time.time() + 2)
 
     @async_moving_window_storage
     async def test_moving_window_varying_cost(self, uri, args, fixture):

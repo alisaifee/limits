@@ -44,11 +44,9 @@ class TestWindow:
     def test_fixed_window_multiple_cost(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-        with window(0) as (start, _):
-            assert limiter.hit(limit, cost=5)
-            assert limiter.get_window_stats(limit)[1] == 5
-            assert limiter.get_window_stats(limit)[0] == math.floor(start + 2)
+        limit = RateLimitItemPerMinute(10, 2)
+        assert limiter.hit(limit, cost=5)
+        assert limiter.get_window_stats(limit)[1] == 5
 
     @all_storage
     @fixed_start
@@ -119,7 +117,6 @@ class TestWindow:
         # 5 more succeed since there were only 5 in the last 2 seconds
         assert all([limiter.hit(limit) for i in range(5)])
         assert limiter.get_window_stats(limit)[1] == 0
-        assert limiter.get_window_stats(limit)[0] == int(time.time() + 2)
 
     @moving_window_storage
     def test_moving_window_varying_cost(self, uri, args, fixture):
