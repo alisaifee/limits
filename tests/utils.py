@@ -59,18 +59,6 @@ all_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis,
         ),
         pytest.param(
-            "redis+unix:///tmp/limits.redis.sock",
-            {},
-            pytest.lazy_fixture("redis_uds"),
-            marks=pytest.mark.redis,
-        ),
-        pytest.param(
-            "redis+unix://:password/tmp/limits.redis.sock",
-            {},
-            pytest.lazy_fixture("redis_uds"),
-            marks=pytest.mark.redis,
-        ),
-        pytest.param(
             "memcached://localhost:22122",
             {},
             pytest.lazy_fixture("memcached"),
@@ -81,24 +69,6 @@ all_storage = pytest.mark.parametrize(
             {},
             pytest.lazy_fixture("memcached_cluster"),
             marks=[pytest.mark.memcached, pytest.mark.flaky],
-        ),
-        pytest.param(
-            "redis+sentinel://localhost:26379",
-            {"service_name": "localhost-redis-sentinel"},
-            pytest.lazy_fixture("redis_sentinel"),
-            marks=[pytest.mark.redis_sentinel, pytest.mark.flaky],
-        ),
-        pytest.param(
-            "redis+sentinel://localhost:26379/localhost-redis-sentinel",
-            {},
-            pytest.lazy_fixture("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-        ),
-        pytest.param(
-            "redis+sentinel://:sekret@localhost:36379/localhost-redis-sentinel",
-            {"password": "sekret"},
-            pytest.lazy_fixture("redis_sentinel_auth"),
-            marks=pytest.mark.redis_sentinel,
         ),
         pytest.param(
             "redis+cluster://localhost:7001/",
@@ -126,36 +96,6 @@ moving_window_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis,
         ),
         pytest.param(
-            "redis+unix:///tmp/limits.redis.sock",
-            {},
-            pytest.lazy_fixture("redis_uds"),
-            marks=pytest.mark.redis,
-        ),
-        pytest.param(
-            "redis+unix://:password/tmp/limits.redis.sock",
-            {},
-            pytest.lazy_fixture("redis_uds"),
-            marks=pytest.mark.redis,
-        ),
-        pytest.param(
-            "redis+sentinel://localhost:26379",
-            {"service_name": "localhost-redis-sentinel"},
-            pytest.lazy_fixture("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-        ),
-        pytest.param(
-            "redis+sentinel://localhost:26379/localhost-redis-sentinel",
-            {},
-            pytest.lazy_fixture("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-        ),
-        pytest.param(
-            "redis+sentinel://:sekret@localhost:36379/localhost-redis-sentinel",
-            {"password": "sekret"},
-            pytest.lazy_fixture("redis_sentinel_auth"),
-            marks=pytest.mark.redis_sentinel,
-        ),
-        pytest.param(
             "redis+cluster://localhost:7001/",
             {},
             pytest.lazy_fixture("redis_cluster"),
@@ -181,18 +121,6 @@ async_all_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis,
         ),
         pytest.param(
-            "async+redis+unix:///tmp/limits.redis.sock",
-            {},
-            pytest.lazy_fixture("redis_uds"),
-            marks=pytest.mark.redis,
-        ),
-        pytest.param(
-            "async+redis+unix://:password/tmp/limits.redis.sock",
-            {},
-            pytest.lazy_fixture("redis_uds"),
-            marks=pytest.mark.redis,
-        ),
-        pytest.param(
             "async+memcached://localhost:22122",
             {},
             pytest.lazy_fixture("memcached"),
@@ -203,24 +131,6 @@ async_all_storage = pytest.mark.parametrize(
             {},
             pytest.lazy_fixture("memcached_cluster"),
             marks=[pytest.mark.memcached, pytest.mark.flaky],
-        ),
-        pytest.param(
-            "async+redis+sentinel://localhost:26379",
-            {"service_name": "localhost-redis-sentinel"},
-            pytest.lazy_fixture("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-        ),
-        pytest.param(
-            "async+redis+sentinel://localhost:26379/localhost-redis-sentinel",
-            {},
-            pytest.lazy_fixture("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-        ),
-        pytest.param(
-            "async+redis+sentinel://:sekret@localhost:36379/localhost-redis-sentinel",
-            {"password": "sekret"},
-            pytest.lazy_fixture("redis_sentinel_auth"),
-            marks=pytest.mark.redis_sentinel,
         ),
         pytest.param(
             "async+redis+cluster://localhost:7001/",
@@ -246,36 +156,6 @@ async_moving_window_storage = pytest.mark.parametrize(
             {},
             pytest.lazy_fixture("redis_basic"),
             marks=pytest.mark.redis,
-        ),
-        pytest.param(
-            "async+redis+unix:///tmp/limits.redis.sock",
-            {},
-            pytest.lazy_fixture("redis_uds"),
-            marks=pytest.mark.redis,
-        ),
-        pytest.param(
-            "async+redis+unix://:password/tmp/limits.redis.sock",
-            {},
-            pytest.lazy_fixture("redis_uds"),
-            marks=pytest.mark.redis,
-        ),
-        pytest.param(
-            "async+redis+sentinel://localhost:26379",
-            {"service_name": "localhost-redis-sentinel"},
-            pytest.lazy_fixture("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-        ),
-        pytest.param(
-            "async+redis+sentinel://localhost:26379/localhost-redis-sentinel",
-            {},
-            pytest.lazy_fixture("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-        ),
-        pytest.param(
-            "async+redis+sentinel://:sekret@localhost:36379/localhost-redis-sentinel",
-            {"password": "sekret"},
-            pytest.lazy_fixture("redis_sentinel_auth"),
-            marks=pytest.mark.redis_sentinel,
         ),
         pytest.param(
             "async+redis+cluster://localhost:7001/",
