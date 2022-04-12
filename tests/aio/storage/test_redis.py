@@ -66,7 +66,7 @@ class AsyncSharedRedisTests:
         assert await limiter.hit(limit)
         assert not await limiter.hit(limit)
         await asyncio.sleep(1.1)
-        assert await self.storage.storage.keys("%s/*" % limit.namespace) == []
+        assert not await self.storage.storage.keys("%s/*" % limit.namespace)
 
     @pytest.mark.asyncio
     async def test_connectivity(self):
@@ -85,7 +85,7 @@ class TestAsyncRedisStorage(AsyncSharedRedisTests):
     async def test_init_options(self, mocker):
         import coredis
 
-        from_url = mocker.spy(coredis.StrictRedis, "from_url")
+        from_url = mocker.spy(coredis.Redis, "from_url")
         assert await storage_from_string(self.storage_url, stream_timeout=1).check()
         assert (
             from_url.spy_return.connection_pool.connection_kwargs["stream_timeout"] == 1
@@ -121,7 +121,7 @@ class TestAsyncRedisUnixSocketStorage(AsyncSharedRedisTests):
     async def test_init_options(self, mocker):
         import coredis
 
-        from_url = mocker.spy(coredis.StrictRedis, "from_url")
+        from_url = mocker.spy(coredis.Redis, "from_url")
         assert await storage_from_string(self.storage_url, stream_timeout=1).check()
         assert (
             from_url.spy_return.connection_pool.connection_kwargs["stream_timeout"] == 1
@@ -139,7 +139,7 @@ class TestAsyncRedisClusterStorage(AsyncSharedRedisTests):
     async def test_init_options(self, mocker):
         import coredis
 
-        constructor = mocker.spy(coredis, "StrictRedisCluster")
+        constructor = mocker.spy(coredis, "RedisCluster")
         assert await storage_from_string(
             f"async+{self.storage_url}", max_connections=10
         ).check()

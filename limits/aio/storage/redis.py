@@ -57,7 +57,7 @@ class RedisInteractor:
         :param key: the key to clear rate limits for
         :param connection: Redis connection
         """
-        await connection.delete(key)
+        await connection.delete([key])
 
     async def get_moving_window(self, key, limit, expiry):
         """
@@ -136,16 +136,15 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         :param uri: uri of the form `async+redis://[:password]@host:port`,
          `async+redis://[:password]@host:port/db`,
          `async+rediss://[:password]@host:port`, `async+unix:///path/to/sock` etc.
-         This uri is passed directly to :func:`coredis.StrictRedis.from_url` with
+         This uri is passed directly to :func:`coredis.Redis.from_url` with
          the initial `a` removed, except for the case of `redis+unix` where it
          is replaced with `unix`.
         :param connection_pool: if provided, the redis client is initialized with
          the connection pool and any other params passed as :paramref:`options`
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`coredis.StrictRedis`
+         directly to the constructor of :class:`coredis.Redis`
         :raise ConfigurationError: when the redis library is not available
         """
-
         uri = uri.replace("async+redis", "redis", 1)
         uri = uri.replace("redis+unix", "unix")
 
@@ -153,11 +152,11 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         self.dependency = self.dependencies["coredis"]
         if connection_pool:
-            self.storage = self.dependency.StrictRedis(
+            self.storage = self.dependency.Redis(
                 connection_pool=connection_pool, **options
             )
         else:
-            self.storage = self.dependency.StrictRedis.from_url(uri, **options)
+            self.storage = self.dependency.Redis.from_url(uri, **options)
 
         self.initialize_storage(uri)
 
@@ -223,7 +222,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
     async def check(self) -> bool:
         """
-        Check if storage is healthy by calling :meth:`coredis.StrictRedis.ping`
+        Check if storage is healthy by calling :meth:`coredis.Redis.ping`
         """
 
         return await super()._check(self.storage)
@@ -263,14 +262,14 @@ class RedisClusterStorage(RedisStorage):
     DEFAULT_OPTIONS = {
         "max_connections": 1000,
     }
-    "Default options passed to :class:`coredis.StrictRedisCluster`"
+    "Default options passed to :class:`coredis.RedisCluster`"
 
     def __init__(self, uri: str, **options):
         """
         :param uri: url of the form
          `async+redis+cluster://[:password]@host:port,host:port`
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`coredis.StrictRedisCluster`
+         directly to the constructor of :class:`coredis.RedisCluster`
         :raise ConfigurationError: when the coredis library is not
          available or if the redis host cannot be pinged.
         """
@@ -283,7 +282,7 @@ class RedisClusterStorage(RedisStorage):
 
         super(RedisStorage, self).__init__()
         self.dependency = self.dependencies["coredis"]
-        self.storage = self.dependency.StrictRedisCluster(
+        self.storage = self.dependency.RedisCluster(
             startup_nodes=cluster_hosts, **{**self.DEFAULT_OPTIONS, **options}
         )
         self.initialize_storage(uri)
@@ -301,8 +300,7 @@ class RedisClusterStorage(RedisStorage):
          usage as it could be slow on very large data sets"""
 
         keys = await self.storage.keys("LIMITER*")
-
-        return sum([await self.storage.delete(k.decode("utf-8")) for k in keys])
+        return await self.storage.delete(keys)
 
 
 class RedisSentinelStorage(RedisStorage):
