@@ -1,1 +1,1 @@
-redis-py-cluster>=2.0.0,<3
+redis>=4.2.0

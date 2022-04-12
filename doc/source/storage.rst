@@ -157,7 +157,7 @@ in :paramref:`~limits.storage.storage_from_string.options`, for example::
 
     pool = redis.connections.BlockingConnectionPool.from_url("redis://.....")
     storage_from_string("redis://", connection_pool=pool)
-    
+
 Depends on: :pypi:`redis`
 
 Redis over SSL
@@ -196,7 +196,7 @@ Requires the location(s) of the redis cluster startup nodes (One is enough).
 :code:`redis+cluster://localhost:7000`
 or :code:`redis+cluster://localhost:7000,localhost:7001`
 
-Depends on: :pypi:`redis-py-cluster`
+Depends on: :pypi:`redis`
 
 MongoDB
 -------

@@ -35,6 +35,7 @@ class LazyDependency:
     """
 
     DEPENDENCIES: List[str] = []
+    FAIL_ON_MISSING_DEPENDENCY: bool = True
     """
     The python modules this class has a dependency on.
     Used to lazily populate the :attr:`dependencies`
@@ -54,7 +55,7 @@ class LazyDependency:
             for name in self.DEPENDENCIES:
                 dependency = get_dependency(name)
 
-                if not dependency:
+                if not dependency and self.FAIL_ON_MISSING_DEPENDENCY:
                     raise ConfigurationError(
                         f"{name} prerequisite not available"
                     )  # pragma: no cover

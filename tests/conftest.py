@@ -8,12 +8,19 @@ import pymongo
 import pytest
 import redis
 import redis.sentinel
-import rediscluster
+from packaging.version import Version
 
 
 def check_redis_cluster_ready(*_):
     try:
+        import rediscluster
+
         rediscluster.RedisCluster("localhost", 7001).cluster_info()
+
+        return True
+    except ImportError:
+        redis.cluster.RedisCluster("localhost", 7001).cluster_info()
+
         return True
     except:  # noqa
         return False
@@ -48,6 +55,7 @@ def check_sentinel_auth_ready(host, port):
 def check_mongo_ready(host, port):
     try:
         pymongo.MongoClient("mongodb://localhost:37017").server_info()
+
         return True
     except:  # noqa
         return False
@@ -112,7 +120,12 @@ def redis_cluster_client(docker_services):
     docker_services.start("redis-cluster-init")
     docker_services.wait_for_service("redis-cluster-1", 7001, check_redis_cluster_ready)
 
-    return rediscluster.RedisCluster("localhost", 7001)
+    if Version(redis.__version__) > Version("4.2.0"):
+        return redis.cluster.RedisCluster("localhost", 7001)
+    else:
+        import rediscluster
+
+        return rediscluster.RedisCluster("localhost", 7001)
 
 
 @pytest.fixture(scope="session")
