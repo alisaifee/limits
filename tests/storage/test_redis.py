@@ -50,17 +50,10 @@ class SharedRedisTests:
 
     def test_moving_window_expiry(self):
         limiter = MovingWindowRateLimiter(self.storage)
-        limit = RateLimitItemPerSecond(2)
-        assert limiter.hit(limit)
-        time.sleep(0.9)
+        limit = RateLimitItemPerSecond(1)
         assert limiter.hit(limit)
         assert not limiter.hit(limit)
-        time.sleep(0.1)
-        assert limiter.hit(limit)
-        last = time.time()
-
-        while time.time() - last <= 1:
-            time.sleep(0.05)
+        time.sleep(1.1)
         assert self.storage.storage.keys("%s/*" % limit.namespace) == []
 
 

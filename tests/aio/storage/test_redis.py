@@ -62,17 +62,10 @@ class AsyncSharedRedisTests:
     @pytest.mark.flaky
     async def test_moving_window_expiry(self):
         limiter = MovingWindowRateLimiter(self.storage)
-        limit = RateLimitItemPerSecond(2)
-        assert await limiter.hit(limit)
-        await asyncio.sleep(0.9)
+        limit = RateLimitItemPerSecond(1)
         assert await limiter.hit(limit)
         assert not await limiter.hit(limit)
-        await asyncio.sleep(0.1)
-        assert await limiter.hit(limit)
-        last = time.time()
-
-        while time.time() - last <= 1:
-            await asyncio.sleep(0.05)
+        await asyncio.sleep(1.1)
         assert await self.storage.storage.keys("%s/*" % limit.namespace) == []
 
     @pytest.mark.asyncio
