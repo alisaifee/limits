@@ -1,8 +1,16 @@
 import time
 
+from deprecated.sphinx import deprecated
+
 from .memcached import MemcachedStorage
 
 
+@deprecated(
+    reason="""The implementation has not been tested at all
+in version 2.0 (and for many years) and will be removed in limits 2.5""",
+    version="2.0",
+    action="once",
+)
 class GAEMemcachedStorage(MemcachedStorage):  # noqa
     """
     rate limit storage with GAE memcache as backend

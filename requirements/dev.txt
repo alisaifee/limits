@@ -7,5 +7,6 @@ isort
 keyring
 mypy
 twine
+types-deprecated
 types-setuptools
 wheel

@@ -2,17 +2,28 @@ import urllib
 import warnings
 from typing import Any, List, Tuple
 
+from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
 from ..errors import ConfigurationError
 from .redis import RedisStorage
 
 
+@versionchanged(
+    version="2.5.0",
+    reason="""
+Cluster support was provided by the :pypi:`redis-py-cluster` library
+which has been absorbed into the official :pypi:`redis` client. By
+default the :class:`~redis.cluster.RedisCluster` client will be used
+however if the version of the package is lower than ``4.2.0`` the implementation
+will fallback to trying to use :class:`rediscluster.RedisCluster`.
+""",
+)
 class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend
 
-    Depends on :pypi:`redis`
+    Depends on :pypi:`redis`.
     """
 
     STORAGE_SCHEME = ["redis+cluster"]
@@ -50,7 +61,6 @@ class RedisClusterStorage(RedisStorage):
 
     def __pick_storage(self, cluster_hosts: List[Tuple[str, int]], **options: Any):
         redis_py = self.dependencies["redis"]
-        redis_cluster = self.dependencies["rediscluster"]
         if redis_py:
             redis_py_version = Version(redis_py.__version__)
             if redis_py_version > Version("4.2.0"):
@@ -62,6 +72,20 @@ class RedisClusterStorage(RedisStorage):
                 )
                 self.using_redis_py = True
                 return
+
+        self.__use_legacy_cluster_implementation(cluster_hosts, **options)
+
+        if not self.storage:
+            raise ConfigurationError(
+                (
+                    "Unable to find an implementation for redis cluster"
+                    " Cluster support requires either redis-py>=4.2 or"
+                    " redis-py-cluster"
+                )
+            )  # pragma: no cover
+
+    def __use_legacy_cluster_implementation(self, cluster_hosts, **options):
+        redis_cluster = self.dependencies["rediscluster"]
         if redis_cluster:
             warnings.warn(
                 (
@@ -76,14 +100,6 @@ class RedisClusterStorage(RedisStorage):
                 startup_nodes=[{"host": c[0], "port": c[1]} for c in cluster_hosts],
                 **options
             )
-        if not self.storage:
-            raise ConfigurationError(
-                (
-                    "Unable to find an implementation for redis cluster"
-                    " Cluster support requires either redis-py>=4.2 or"
-                    " redis-py-cluster"
-                )
-            )  # pragma: no cover
 
     def reset(self) -> int:
         """
