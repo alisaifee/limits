@@ -2,6 +2,7 @@ import asyncio
 import time
 
 import pytest
+from packaging.version import Version
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.aio.storage import RedisClusterStorage, RedisSentinelStorage, RedisStorage
@@ -186,13 +187,13 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
     )
     @pytest.mark.asyncio
     async def test_auth(self, mocker, username, password, opts):
-        lib = mocker.Mock()
+        lib = (mocker.Mock(), Version("3.4.0"))
         mocker.patch("limits.util.get_dependency", return_value=lib)
         storage_url = (
             f"async+redis+sentinel://{username}:{password}@localhost:26379/service_name"
         )
         storage_from_string(storage_url)
-        assert lib.Sentinel.call_args[1]["sentinel_kwargs"] == opts
+        assert lib[0].Sentinel.call_args[1]["sentinel_kwargs"] == opts
 
     @pytest.mark.parametrize(
         "username, sentinel_password, password, success",

@@ -1,5 +1,6 @@
 import pytest
 import redis.sentinel
+from packaging.version import Version
 
 from limits.storage import RedisSentinelStorage, storage_from_string
 from tests.storage.test_redis import SharedRedisTests
@@ -34,13 +35,13 @@ class TestRedisSentinelStorage(SharedRedisTests):
         ],
     )
     def test_auth(self, mocker, username, password, opts):
-        lib = mocker.Mock()
+        lib = (mocker.Mock(), Version("3.0.0"))
         mocker.patch("limits.util.get_dependency", return_value=lib)
         storage_url = (
             f"redis+sentinel://{username}:{password}@localhost:26379/service_name"
         )
         assert storage_from_string(storage_url).check()
-        assert lib.Sentinel.call_args[1]["sentinel_kwargs"] == opts
+        assert lib[0].Sentinel.call_args[1]["sentinel_kwargs"] == opts
 
     @pytest.mark.parametrize(
         "username, sentinel_password, password, success",
