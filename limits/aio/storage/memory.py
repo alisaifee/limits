@@ -21,8 +21,6 @@ class MemoryStorage(Storage, MovingWindowSupport):
     rate limit storage using :class:`collections.Counter`
     as an in memory storage for fixed and elastic window strategies,
     and a simple list to implement moving window strategy.
-
-    .. warning:: This is a beta feature
     """
 
     STORAGE_SCHEME = ["async+memory"]

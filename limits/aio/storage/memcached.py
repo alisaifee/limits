@@ -12,8 +12,6 @@ class MemcachedStorage(Storage):
     Rate limit storage with memcached as backend.
 
     Depends on :pypi:`emcache`
-
-    .. warning:: This is a beta feature
     """
 
     STORAGE_SCHEME = ["async+memcached"]

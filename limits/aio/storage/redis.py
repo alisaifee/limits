@@ -121,8 +121,6 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     Rate limit storage with redis as backend.
 
     Depends on :pypi:`coredis`
-
-    .. warning:: This is a beta feature
     """
 
     STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
@@ -252,8 +250,6 @@ class RedisClusterStorage(RedisStorage):
     Rate limit storage with redis cluster as backend
 
     Depends on :pypi:`coredis`
-
-    .. warning:: This is a beta feature
     """
 
     STORAGE_SCHEME = ["async+redis+cluster"]
@@ -311,8 +307,6 @@ class RedisSentinelStorage(RedisStorage):
     Rate limit storage with redis sentinel as backend
 
     Depends on :pypi:`coredis`
-
-    .. warning:: This is a beta feature
     """
 
     STORAGE_SCHEME = ["async+redis+sentinel"]

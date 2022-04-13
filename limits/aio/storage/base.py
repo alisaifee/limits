@@ -11,8 +11,6 @@ from limits.util import LazyDependency
 class Storage(LazyDependency, metaclass=StorageRegistry):
     """
     Base class to extend when implementing an async storage backend.
-
-    .. warning:: This is a beta feature
     """
 
     STORAGE_SCHEME: Optional[List[str]]
@@ -78,8 +76,6 @@ class MovingWindowSupport(ABC):
     """
     Abstract base for storages that intend to support
     the moving window strategy
-
-    .. warning:: This is a beta feature
     """
 
     async def acquire_entry(

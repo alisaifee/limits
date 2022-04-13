@@ -26,8 +26,6 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     Rate limit storage with MongoDB as backend.
 
     Depends on :pypi:`motor`
-
-    .. warning:: This is a beta feature
     """
 
     STORAGE_SCHEME = ["async+mongodb", "async+mongodb+srv"]
