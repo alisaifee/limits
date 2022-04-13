@@ -1,5 +1,5 @@
 lint:
-	black --check
+	black --check limits tests
 	mypy limits
 	flake8 limits tests
 
