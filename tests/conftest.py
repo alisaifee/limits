@@ -1,6 +1,7 @@
 import os
 import platform
 import socket
+import time
 
 import pymemcache
 import pymemcache.client
@@ -11,18 +12,10 @@ import redis.sentinel
 from packaging.version import Version
 
 
-def check_redis_cluster_ready(*_):
+def check_redis_cluster_ready(host, port):
     try:
-        import rediscluster
-
-        rediscluster.RedisCluster("localhost", 7001).cluster_info()
-
-        return True
-    except ImportError:
-        redis.cluster.RedisCluster("localhost", 7001).cluster_info()
-
-        return True
-    except:  # noqa
+        return redis.Redis(host, port).cluster("info")["cluster_state"] == "ok"
+    except Exception:
         return False
 
 
@@ -118,7 +111,9 @@ def redis_ssl_client(docker_services):
 @pytest.fixture(scope="session")
 def redis_cluster_client(docker_services):
     docker_services.start("redis-cluster-init")
-    docker_services.wait_for_service("redis-cluster-1", 7001, check_redis_cluster_ready)
+    docker_services.wait_for_service("redis-cluster-6", 7006, check_redis_cluster_ready)
+    if os.environ.get("CI") == "True":
+        time.sleep(10)
 
     if Version(redis.__version__) > Version("4.2.0"):
         return redis.cluster.RedisCluster("localhost", 7001)

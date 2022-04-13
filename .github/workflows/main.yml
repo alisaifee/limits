@@ -85,6 +85,8 @@ jobs:
         pip uninstall redis -y
         pip install redis-py-cluster
     - name: Tests
+      env:
+        CI: "True"
       run: |
         py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch --max-runs=3
     - name: Upload coverage to Codecov
