@@ -15,6 +15,7 @@ class LockableEntry(asyncio.Lock):
         super().__init__()
 
 
+@versionadded(version="2.1")
 class MemoryStorage(Storage, MovingWindowSupport):
     """
     rate limit storage using :class:`collections.Counter`
@@ -22,8 +23,6 @@ class MemoryStorage(Storage, MovingWindowSupport):
     and a simple list to implement moving window strategy.
 
     .. warning:: This is a beta feature
-    .. versionadded:: 2.1
-
     """
 
     STORAGE_SCHEME = ["async+memory"]

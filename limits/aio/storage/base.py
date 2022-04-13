@@ -1,16 +1,18 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple
 
+from deprecated.sphinx import versionadded
+
 from limits.storage.registry import StorageRegistry
 from limits.util import LazyDependency
 
 
+@versionadded(version="2.1")
 class Storage(LazyDependency, metaclass=StorageRegistry):
     """
     Base class to extend when implementing an async storage backend.
 
     .. warning:: This is a beta feature
-    .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME: Optional[List[str]]
@@ -78,7 +80,6 @@ class MovingWindowSupport(ABC):
     the moving window strategy
 
     .. warning:: This is a beta feature
-    .. versionadded:: 2.1
     """
 
     async def acquire_entry(

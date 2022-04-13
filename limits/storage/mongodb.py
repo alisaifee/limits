@@ -3,17 +3,17 @@ import datetime
 import time
 from typing import Any, Dict, Tuple
 
+from deprecated.sphinx import versionadded
+
 from .base import MovingWindowSupport, Storage
 
 
+@versionadded(version="2.1")
 class MongoDBStorage(Storage, MovingWindowSupport):
     """
     Rate limit storage with MongoDB as backend.
 
     Depends on :pypi:`pymongo`.
-
-    .. warning:: This is a beta feature
-    .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["mongodb", "mongodb+srv"]

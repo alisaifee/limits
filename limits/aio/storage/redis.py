@@ -2,6 +2,8 @@ import time
 import urllib
 from typing import Any, Dict, Optional
 
+from deprecated.sphinx import versionadded
+
 from limits.errors import ConfigurationError
 from limits.util import get_package_data
 
@@ -113,6 +115,7 @@ class RedisInteractor:
             return False
 
 
+@versionadded(version="2.1")
 class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
     Rate limit storage with redis as backend.
@@ -120,7 +123,6 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     Depends on :pypi:`coredis`
 
     .. warning:: This is a beta feature
-    .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
@@ -244,6 +246,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         return cleared
 
 
+@versionadded(version="2.1")
 class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend
@@ -251,7 +254,6 @@ class RedisClusterStorage(RedisStorage):
     Depends on :pypi:`coredis`
 
     .. warning:: This is a beta feature
-    .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+redis+cluster"]
@@ -303,6 +305,7 @@ class RedisClusterStorage(RedisStorage):
         return await self.storage.delete(keys)
 
 
+@versionadded(version="2.1")
 class RedisSentinelStorage(RedisStorage):
     """
     Rate limit storage with redis sentinel as backend
@@ -310,7 +313,6 @@ class RedisSentinelStorage(RedisStorage):
     Depends on :pypi:`coredis`
 
     .. warning:: This is a beta feature
-    .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+redis+sentinel"]

@@ -1,9 +1,12 @@
 import time
 import urllib.parse
 
+from deprecated.sphinx import versionadded
+
 from .base import Storage
 
 
+@versionadded(version="2.1")
 class MemcachedStorage(Storage):
     """
     Rate limit storage with memcached as backend.
@@ -11,7 +14,6 @@ class MemcachedStorage(Storage):
     Depends on :pypi:`emcache`
 
     .. warning:: This is a beta feature
-    .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+memcached"]

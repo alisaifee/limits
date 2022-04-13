@@ -75,8 +75,6 @@ class MovingWindowSupport(ABC):
     """
     Abstract base for storages that intend to support
     the moving window strategy
-
-    .. versionadded:: 2.1
     """
 
     def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:

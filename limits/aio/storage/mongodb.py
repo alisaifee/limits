@@ -5,6 +5,8 @@ import functools
 import time
 from typing import Any, Dict
 
+from deprecated.sphinx import versionadded
+
 from .base import MovingWindowSupport, Storage
 
 
@@ -18,6 +20,7 @@ def ensure_indices(func):
     return wrapped
 
 
+@versionadded(version="2.1")
 class MongoDBStorage(Storage, MovingWindowSupport):
     """
     Rate limit storage with MongoDB as backend.
@@ -25,7 +28,6 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     Depends on :pypi:`motor`
 
     .. warning:: This is a beta feature
-    .. versionadded:: 2.1
     """
 
     STORAGE_SCHEME = ["async+mongodb", "async+mongodb+srv"]
