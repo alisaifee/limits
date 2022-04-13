@@ -3,6 +3,24 @@
 Changelog
 =========
 
+v2.5.0
+------
+Release Date: 2022-04-13
+
+* Feature
+
+  * Add support for using redis cluster via the official redis client
+  * Update coredis dependency to use 3.x
+
+* Deprecations
+
+  * Deprecate using redis-py-cluster
+
+* Chores
+
+  * Remove beta tags for async support
+  * Update code base to remove legacy syntax
+  * Tighten up CI test dependencies
 v2.4.0
 ------
 Release Date: 2022-03-10
@@ -261,6 +279,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
