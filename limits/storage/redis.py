@@ -1,6 +1,8 @@
 import time
 from typing import Any, Optional, Tuple
 
+from packaging.version import Version
+
 from ..util import get_package_data
 from .base import MovingWindowSupport, Storage
 
@@ -109,7 +111,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]
     """The storage scheme for redis"""
 
-    DEPENDENCIES = ["redis"]
+    DEPENDENCIES = {"redis": Version("3.0")}
 
     def __init__(
         self,

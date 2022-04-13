@@ -3,6 +3,8 @@ import time
 from collections import Counter
 from typing import Dict, List, Optional, Tuple
 
+from deprecated.sphinx import versionadded
+
 from .base import MovingWindowSupport, Storage
 
 

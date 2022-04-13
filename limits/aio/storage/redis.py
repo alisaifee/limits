@@ -3,6 +3,7 @@ import urllib
 from typing import Any, Dict, Optional
 
 from deprecated.sphinx import versionadded
+from packaging.version import Version
 
 from limits.errors import ConfigurationError
 from limits.util import get_package_data
@@ -127,7 +128,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     """
     The storage schemes for redis to be used in an async context
     """
-    DEPENDENCIES = ["coredis"]
+    DEPENDENCIES = {"coredis": Version("3.4.0")}
 
     def __init__(
         self, uri: str, connection_pool: Optional[Any] = None, **options
@@ -317,7 +318,7 @@ class RedisSentinelStorage(RedisStorage):
     }
     "Default options passed to :class:`~coredis.sentinel.Sentinel`"
 
-    DEPENDENCIES = ["coredis.sentinel"]
+    DEPENDENCIES = {"coredis.sentinel": Version("3.4.0")}
 
     def __init__(
         self,

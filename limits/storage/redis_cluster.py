@@ -34,7 +34,7 @@ class RedisClusterStorage(RedisStorage):
     }
     "Default options passed to the :class:`~redis.cluster.RedisCluster`"
 
-    DEPENDENCIES = ["redis", "rediscluster"]
+    DEPENDENCIES = {"redis": Version("4.2.0"), "rediscluster": Version("2.0.0")}
     FAIL_ON_MISSING_DEPENDENCY = False
 
     def __init__(self, uri: str, **options):
@@ -62,16 +62,12 @@ class RedisClusterStorage(RedisStorage):
     def __pick_storage(self, cluster_hosts: List[Tuple[str, int]], **options: Any):
         redis_py = self.dependencies["redis"]
         if redis_py:
-            redis_py_version = Version(redis_py.__version__)
-            if redis_py_version > Version("4.2.0"):
-                startup_nodes = [
-                    redis_py.cluster.ClusterNode(*c) for c in cluster_hosts
-                ]
-                self.storage = redis_py.cluster.RedisCluster(
-                    startup_nodes=startup_nodes, **options
-                )
-                self.using_redis_py = True
-                return
+            startup_nodes = [redis_py.cluster.ClusterNode(*c) for c in cluster_hosts]
+            self.storage = redis_py.cluster.RedisCluster(
+                startup_nodes=startup_nodes, **options
+            )
+            self.using_redis_py = True
+            return
 
         self.__use_legacy_cluster_implementation(cluster_hosts, **options)
 

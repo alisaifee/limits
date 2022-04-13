@@ -1,6 +1,8 @@
 import urllib.parse
 from typing import Any, Dict, Optional
 
+from packaging.version import Version
+
 from ..errors import ConfigurationError
 from .redis import RedisStorage
 
@@ -20,7 +22,7 @@ class RedisSentinelStorage(RedisStorage):
     }
     "Default options passed to :class:`~redis.sentinel.Sentinel`"
 
-    DEPENDENCIES = ["redis.sentinel"]
+    DEPENDENCIES = {"redis.sentinel": Version("3.0")}
 
     def __init__(
         self,

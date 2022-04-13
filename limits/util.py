@@ -3,9 +3,10 @@
 """
 import re
 import sys
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import pkg_resources
+from packaging.version import Version
 
 from .errors import ConfigurationError
 from .limits import GRANULARITIES, RateLimitItem
@@ -34,7 +35,7 @@ class LazyDependency:
     without having to import them explicitly.
     """
 
-    DEPENDENCIES: List[str] = []
+    DEPENDENCIES: Union[Dict[str, Optional[Version]], List[str]] = []
     FAIL_ON_MISSING_DEPENDENCY: bool = True
     """
     The python modules this class has a dependency on.
@@ -47,34 +48,50 @@ class LazyDependency:
     @property
     def dependencies(self) -> Dict[str, Any]:
         """
-        Cached mapping of the modules this storage depends on. This is done so that the module
-        is only imported lazily when the storage is instantiated.
+        Cached mapping of the modules this storage depends on.
+        This is done so that the module is only imported lazily
+        when the storage is instantiated.
         """
         if not getattr(self, "_dependencies", {}):
             dependencies = {}
-            for name in self.DEPENDENCIES:
-                dependency = get_dependency(name)
+            mapping: Dict[str, Optional[Version]]
 
-                if not dependency and self.FAIL_ON_MISSING_DEPENDENCY:
-                    raise ConfigurationError(
-                        f"{name} prerequisite not available"
-                    )  # pragma: no cover
+            if isinstance(self.DEPENDENCIES, list):
+                mapping = {dependency: None for dependency in self.DEPENDENCIES}
+            else:
+                mapping = self.DEPENDENCIES
+
+            for name, minimum_version in mapping.items():
+                dependency, version = get_dependency(name)
+
+                if self.FAIL_ON_MISSING_DEPENDENCY:
+                    if not dependency:
+                        raise ConfigurationError(
+                            f"{name} prerequisite not available"
+                        )  # pragma: no cover
+                    if minimum_version and version < minimum_version:
+                        raise ConfigurationError(
+                            f"The minimum version of {minimum_version} of {name} could not be found"
+                        )
+                if minimum_version and not (version and version >= minimum_version):
+                    dependency = None
                 dependencies[name] = dependency
             self._dependencies = dependencies
         return self._dependencies
 
 
-def get_dependency(dep) -> Any:
+def get_dependency(dep) -> Tuple[Any, Version]:
     """
     safe function to import a module at runtime
     """
     try:
         if dep not in sys.modules:
             __import__(dep)
-
-        return sys.modules[dep]
+        root = dep.split(".")[0]
+        version = getattr(sys.modules[root], "__version__", "0.0.0")
+        return sys.modules[dep], Version(version)
     except ImportError:  # pragma: no cover
-        return None
+        return None, None
 
 
 def get_package_data(path: str) -> bytes:

@@ -89,7 +89,7 @@ class MemcachedStorage(Storage):
             self.local_storage.storage = self.client_getter(
                 get_dependency(
                     self.cluster_library if len(self.hosts) > 1 else self.library
-                ),
+                )[0],
                 self.hosts,
                 **self.options
             )
