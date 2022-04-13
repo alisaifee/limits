@@ -67,7 +67,7 @@ class RedisClusterStorage(RedisStorage):
                 (
                     "Using redis-py-cluster is deprecated as the library has been"
                     " absorbed by redis-py (>=4.2). This support will be removed"
-                    " in limits 2.5. To get rid of this warning, uninstall"
+                    " in limits 2.6. To get rid of this warning, uninstall"
                     " redis-py-cluster and ensure redis-py>=4.2.0 is installed"
                 )
             )
