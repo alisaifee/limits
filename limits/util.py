@@ -3,6 +3,7 @@
 """
 import re
 import sys
+from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import pkg_resources
@@ -42,8 +43,8 @@ class LazyDependency:
     Used to lazily populate the :attr:`dependencies`
     """
 
-    def __init__(self):
-        self._dependencies = {}
+    def __init__(self) -> None:
+        self._dependencies: Dict[str, Optional[ModuleType]] = {}
 
     @property
     def dependencies(self) -> Dict[str, Any]:
@@ -69,7 +70,7 @@ class LazyDependency:
                         raise ConfigurationError(
                             f"{name} prerequisite not available"
                         )  # pragma: no cover
-                    if minimum_version and version < minimum_version:
+                    if minimum_version and version and version < minimum_version:
                         raise ConfigurationError(
                             f"The minimum version of {minimum_version} of {name} could not be found"
                         )
@@ -80,16 +81,16 @@ class LazyDependency:
         return self._dependencies
 
 
-def get_dependency(dep) -> Tuple[Any, Version]:
+def get_dependency(module_path: str) -> Tuple[Optional[ModuleType], Optional[Version]]:
     """
     safe function to import a module at runtime
     """
     try:
-        if dep not in sys.modules:
-            __import__(dep)
-        root = dep.split(".")[0]
+        if module_path not in sys.modules:
+            __import__(module_path)
+        root = module_path.split(".")[0]
         version = getattr(sys.modules[root], "__version__", "0.0.0")
-        return sys.modules[dep], Version(version)
+        return sys.modules[module_path], Version(version)
     except ImportError:  # pragma: no cover
         return None, None
 
@@ -138,7 +139,7 @@ def parse(limit_string: str) -> RateLimitItem:
     return list(parse_many(limit_string))[0]
 
 
-def granularity_from_string(granularity_string) -> Type[RateLimitItem]:
+def granularity_from_string(granularity_string: str) -> Type[RateLimitItem]:
     """
 
     :param granularity_string:
