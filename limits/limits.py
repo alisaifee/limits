@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from functools import total_ordering
-from typing import Dict, NamedTuple, Optional, Type, Union, cast
+from typing import Dict, NamedTuple, Optional, Type, Union, cast, Tuple
 
 
 def safe_string(value: Union[bytes, str, int]) -> str:
@@ -36,7 +36,9 @@ GRANULARITIES: Dict[str, Type[RateLimitItem]] = {}
 
 
 class RateLimitItemMeta(type):
-    def __new__(cls, name, parents, dct):
+    def __new__(
+        cls, name: str, parents: Tuple[type, ...], dct: Dict[str, Granularity]
+    ) -> RateLimitItemMeta:
         granularity = super().__new__(cls, name, parents, dct)
 
         if "GRANULARITY" in dct:
@@ -93,7 +95,7 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
 
         return self.GRANULARITY.seconds * self.multiples
 
-    def key_for(self, *identifiers) -> str:
+    def key_for(self, *identifiers: str) -> str:
         """
         Constructs a key for the current limit and any additional
         identifiers provided.
@@ -113,13 +115,15 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
 
         return f"{self.namespace}/{remainder}"
 
-    def __eq__(self, other):
-        return self.amount == other.amount and self.GRANULARITY == other.GRANULARITY
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, RateLimitItem):
+            return self.amount == other.amount and self.GRANULARITY == other.GRANULARITY
+        return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "%d per %d %s" % (self.amount, self.multiples, self.GRANULARITY.name)
 
-    def __lt__(self, other):
+    def __lt__(self, other: RateLimitItem) -> bool:
         return self.GRANULARITY.seconds < other.GRANULARITY.seconds
 
 
