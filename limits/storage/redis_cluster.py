@@ -1,6 +1,6 @@
 import urllib
 import warnings
-from typing import Any, List, Tuple, Optional
+from typing import Any, List, Optional, Tuple
 
 from deprecated.sphinx import versionchanged
 from packaging.version import Version

@@ -1,7 +1,7 @@
 import calendar
 import datetime
 import time
-from typing import Any, Dict, Tuple, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from deprecated.sphinx import versionadded
 
