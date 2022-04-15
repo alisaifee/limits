@@ -2,6 +2,7 @@ import inspect
 import threading
 import time
 import urllib.parse
+from typing import Optional
 
 from ..errors import ConfigurationError
 from ..util import get_dependency
@@ -166,5 +167,5 @@ class MemcachedStorage(Storage):
         except:  # noqa
             return False
 
-    def reset(self):
+    def reset(self) -> Optional[int]:
         raise NotImplementedError

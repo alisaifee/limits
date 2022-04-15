@@ -3,7 +3,7 @@ import calendar
 import datetime
 import functools
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from deprecated.sphinx import versionadded
 
@@ -85,7 +85,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             )
         self.__indices_created = True
 
-    async def reset(self) -> int:
+    async def reset(self) -> Optional[int]:
         """
         Delete all rate limit keys in the rate limit collections (counters, windows)
         """

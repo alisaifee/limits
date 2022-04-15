@@ -55,7 +55,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
         raise NotImplementedError
 
     @abstractmethod
-    def reset(self):
+    def reset(self) -> Optional[int]:
         """
         reset storage to clear limits
         """

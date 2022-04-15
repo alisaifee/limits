@@ -1,6 +1,6 @@
 import urllib
 import warnings
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Optional
 
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
@@ -97,7 +97,7 @@ class RedisClusterStorage(RedisStorage):
                 **options
             )
 
-    def reset(self) -> int:
+    def reset(self) -> Optional[int]:
         """
         Redis Clusters are sharded and deleting across shards
         can't be done atomically. Because of this, this reset loops over all

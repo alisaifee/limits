@@ -1,5 +1,6 @@
 import time
 import urllib.parse
+from typing import Optional
 
 from deprecated.sphinx import versionadded
 
@@ -131,5 +132,5 @@ class MemcachedStorage(Storage):
         except:  # noqa
             return False
 
-    async def reset(self):
+    async def reset(self) -> Optional[int]:
         raise NotImplementedError

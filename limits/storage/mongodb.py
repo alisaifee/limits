@@ -1,7 +1,7 @@
 import calendar
 import datetime
 import time
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Optional
 
 from deprecated.sphinx import versionadded
 
@@ -51,7 +51,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self.counters.create_index("expireAt", expireAfterSeconds=0)
         self.windows.create_index("expireAt", expireAfterSeconds=0)
 
-    def reset(self) -> int:
+    def reset(self) -> Optional[int]:
         """
         Delete all rate limit keys in the rate limit collections (counters, windows)
         """

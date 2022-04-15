@@ -157,7 +157,8 @@ class MemoryStorage(Storage, MovingWindowSupport):
 
         return True
 
-    def reset(self):
+    def reset(self) -> typing.Optional[int]:
         self.storage.clear()
         self.expirations.clear()
         self.events.clear()
+        return None
