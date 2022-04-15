@@ -16,7 +16,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     STORAGE_SCHEME: Optional[List[str]]
     """The storage schemes to register against this implementation"""
 
-    def __init__(self, uri: Optional[str] = None, **options: Dict) -> None:
+    def __init__(self, **options: str) -> None:
         super().__init__()
 
     @abstractmethod
@@ -63,7 +63,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
         raise NotImplementedError
 
     @abstractmethod
-    async def clear(self, key: str) -> int:
+    async def clear(self, key: str) -> None:
         """
         resets the rate limit key
 
@@ -89,7 +89,9 @@ class MovingWindowSupport(ABC):
         """
         raise NotImplementedError
 
-    async def get_moving_window(self, key, limit, expiry) -> Tuple[int, int]:
+    async def get_moving_window(
+        self, key: str, limit: int, expiry: int
+    ) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving
         window
