@@ -10,7 +10,7 @@ from .base import MovingWindowSupport, Storage
 class LockableEntry(threading._RLock):
     __slots__ = ["atime", "expiry"]
 
-    def __init__(self, expiry):
+    def __init__(self, expiry: float) -> None:
         self.atime = time.time()
         self.expiry = self.atime + expiry
         super().__init__()
@@ -26,15 +26,15 @@ class MemoryStorage(Storage, MovingWindowSupport):
 
     STORAGE_SCHEME = ["memory"]
 
-    def __init__(self, uri: str = None, **_):
+    def __init__(self, **_: str):
         self.storage: typing.Counter[str] = Counter()
         self.expirations: Dict[str, float] = {}
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
-        super().__init__(uri)
+        super().__init__()
 
-    def __expire_events(self):
+    def __expire_events(self) -> None:
         for key in list(self.events.keys()):
             for event in list(self.events[key]):
                 with event:
@@ -46,12 +46,14 @@ class MemoryStorage(Storage, MovingWindowSupport):
                 self.storage.pop(key, None)
                 self.expirations.pop(key, None)
 
-    def __schedule_expiry(self):
+    def __schedule_expiry(self) -> None:
         if not self.timer.is_alive():
             self.timer = threading.Timer(0.01, self.__expire_events)
             self.timer.start()
 
-    def incr(self, key: str, expiry: int, elastic_expiry=False, amount: int = 1) -> int:
+    def incr(
+        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
+    ) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -117,7 +119,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
 
         return int(self.expirations.get(key, time.time()))
 
-    def get_num_acquired(self, key, expiry):
+    def get_num_acquired(self, key: str, expiry: int) -> int:
         """
         returns the number of entries already acquired
 
@@ -132,7 +134,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
             else 0
         )
 
-    def get_moving_window(self, key, limit, expiry) -> Tuple[int, int]:
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving
         window
