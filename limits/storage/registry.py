@@ -1,13 +1,17 @@
-from abc import ABCMeta
-from typing import Dict, Type, cast
+from __future__ import annotations
 
-SCHEMES: Dict[str, Type] = {}
+from abc import ABCMeta
+from typing import Dict, List, Union, Tuple
+
+SCHEMES: Dict[str, StorageRegistry] = {}
 
 
 class StorageRegistry(ABCMeta):
-    def __new__(mcs, name, bases, dct):
+    def __new__(
+        mcs, name: str, bases: Tuple[type, ...], dct: Dict[str, Union[str, List[str]]]
+    ) -> StorageRegistry:
         storage_scheme = dct.get("STORAGE_SCHEME", None)
-        cls = cast(Type, super().__new__(mcs, name, bases, dct))
+        cls = super().__new__(mcs, name, bases, dct)
 
         if storage_scheme:
             if isinstance(storage_scheme, str):  # noqa
