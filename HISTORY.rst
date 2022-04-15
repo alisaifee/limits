@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v2.5.1
+------
+Release Date: 2022-04-15
+
+* Chore
+
+  * Ensure storage reset methods have consistent signature
+
 v2.5.0
 ------
 Release Date: 2022-04-13
@@ -21,6 +29,7 @@ Release Date: 2022-04-13
   * Remove beta tags for async support
   * Update code base to remove legacy syntax
   * Tighten up CI test dependencies
+
 v2.4.0
 ------
 Release Date: 2022-03-10
@@ -279,6 +288,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
