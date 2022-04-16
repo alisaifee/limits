@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, Type, Union, cast
 
 from .limits import RateLimitItem
-from .storage import Storage, MovingWindowSupport
+from .storage import MovingWindowSupport, Storage
 
 
 class RateLimiter(metaclass=ABCMeta):
