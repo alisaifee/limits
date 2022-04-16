@@ -29,4 +29,4 @@ __all__ = [
     "parse_many",
 ]
 
-__version__ = _version.get_versions()["version"]
+__version__ = _version.get_versions()["version"]  # type: ignore
