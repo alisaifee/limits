@@ -1,6 +1,6 @@
 import time
 import urllib
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
 
 from deprecated.sphinx import versionadded
 from packaging.version import Version
@@ -9,6 +9,12 @@ from limits.errors import ConfigurationError
 from limits.util import get_package_data
 
 from .base import MovingWindowSupport, Storage
+
+if TYPE_CHECKING:
+    import coredis
+    import coredis.commands.script
+
+RedisClient = Union["coredis.Redis", "coredis.RedisCluster"]
 
 
 class RedisInteractor:
@@ -21,14 +27,14 @@ class RedisInteractor:
     SCRIPT_CLEAR_KEYS = get_package_data(f"{RES_DIR}/clear_keys.lua")
     SCRIPT_INCR_EXPIRE = get_package_data(f"{RES_DIR}/incr_expire.lua")
 
-    lua_moving_window: Any
-    lua_acquire_window: Any
+    lua_moving_window: "coredis.commands.script.Script"
+    lua_acquire_window: "coredis.commands.script.Script"
 
     async def _incr(
         self,
         key: str,
         expiry: int,
-        connection,
+        connection: RedisClient,
         elastic_expiry: bool = False,
         amount: int = 1,
     ) -> int:
@@ -47,7 +53,7 @@ class RedisInteractor:
 
         return value
 
-    async def _get(self, key: str, connection) -> int:
+    async def _get(self, key: str, connection: RedisClient) -> int:
         """
         :param connection: Redis connection
         :param key: the key to get the counter value for
@@ -55,14 +61,16 @@ class RedisInteractor:
 
         return int(await connection.get(key) or 0)
 
-    async def _clear(self, key: str, connection) -> None:
+    async def _clear(self, key: str, connection: RedisClient) -> None:
         """
         :param key: the key to clear rate limits for
         :param connection: Redis connection
         """
         await connection.delete([key])
 
-    async def get_moving_window(self, key, limit, expiry):
+    async def get_moving_window(
+        self, key: str, limit: int, expiry: int
+    ) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -79,7 +87,12 @@ class RedisInteractor:
         return window or (timestamp, 0)
 
     async def _acquire_entry(
-        self, key: str, limit: int, expiry: int, connection, amount: int = 1
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        connection: RedisClient,
+        amount: int = 1,
     ) -> bool:
         """
         :param key: rate limit key to acquire an entry in
@@ -94,7 +107,7 @@ class RedisInteractor:
 
         return bool(acquired)
 
-    async def _get_expiry(self, key, connection=None):
+    async def _get_expiry(self, key: str, connection: RedisClient) -> int:
         """
         :param key: the key to get the expiry for
         :param connection: Redis connection
@@ -102,7 +115,7 @@ class RedisInteractor:
 
         return int(max(await connection.ttl(key), 0) + time.time())
 
-    async def _check(self, connection) -> bool:
+    async def _check(self, connection: RedisClient) -> bool:
         """
         check if storage is healthy
 
@@ -131,7 +144,10 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     DEPENDENCIES = {"coredis": Version("3.4.0")}
 
     def __init__(
-        self, uri: str, connection_pool: Optional[Any] = None, **options
+        self,
+        uri: str,
+        connection_pool: Optional["coredis.ConnectionPool"] = None,
+        **options: Union[float, str, bool],
     ) -> None:
         """
         :param uri: uri of the form `async+redis://[:password]@host:port`,
@@ -152,6 +168,8 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         super().__init__()
 
         self.dependency = self.dependencies["coredis"]
+        assert self.dependency
+
         if connection_pool:
             self.storage = self.dependency.Redis(
                 connection_pool=connection_pool, **options
@@ -188,7 +206,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
                 key, expiry, self.storage, elastic_expiry, amount
             )
         else:
-            return await self.lua_incr_expire.execute([key], [expiry, amount])
+            return int(await self.lua_incr_expire.execute([key], [expiry, amount]))
 
     async def get(self, key: str) -> int:
         """
@@ -204,7 +222,9 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         return await super()._clear(key, self.storage)
 
-    async def acquire_entry(self, key, limit, expiry, amount: int = 1) -> bool:
+    async def acquire_entry(
+        self, key: str, limit: int, expiry: int, amount: int = 1
+    ) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
@@ -240,9 +260,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         """
 
-        cleared = await self.lua_clear_keys.execute(["LIMITER*"])
-
-        return cleared
+        return int(await self.lua_clear_keys.execute(["LIMITER*"]))
 
 
 @versionadded(version="2.1")
@@ -258,12 +276,12 @@ class RedisClusterStorage(RedisStorage):
     The storage schemes for redis cluster to be used in an async context
     """
 
-    DEFAULT_OPTIONS = {
+    DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
         "max_connections": 1000,
     }
     "Default options passed to :class:`coredis.RedisCluster`"
 
-    def __init__(self, uri: str, **options):
+    def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
         """
         :param uri: url of the form
          `async+redis+cluster://[:password]@host:port,host:port`
@@ -280,8 +298,11 @@ class RedisClusterStorage(RedisStorage):
             cluster_hosts.append({"host": host, "port": int(port)})
 
         super(RedisStorage, self).__init__()
+
         self.dependency = self.dependencies["coredis"]
-        self.storage = self.dependency.RedisCluster(
+        assert self.dependency
+
+        self.storage: "coredis.RedisCluster[str]" = self.dependency.RedisCluster(
             startup_nodes=cluster_hosts, **{**self.DEFAULT_OPTIONS, **options}
         )
         self.initialize_storage(uri)
@@ -313,7 +334,7 @@ class RedisSentinelStorage(RedisStorage):
     STORAGE_SCHEME = ["async+redis+sentinel"]
     """The storage scheme for redis accessed via a redis sentinel installation"""
 
-    DEFAULT_OPTIONS = {
+    DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
         "stream_timeout": 0.2,
     }
     "Default options passed to :class:`~coredis.sentinel.Sentinel`"
@@ -323,9 +344,9 @@ class RedisSentinelStorage(RedisStorage):
     def __init__(
         self,
         uri: str,
-        service_name: str = None,
-        sentinel_kwargs: Optional[Dict[str, Any]] = None,
-        **options,
+        service_name: Optional[str] = None,
+        sentinel_kwargs: Optional[Dict[str, Union[float, str, bool]]] = None,
+        **options: Union[float, str, bool],
     ):
         """
         :param uri: url of the form
@@ -344,7 +365,7 @@ class RedisSentinelStorage(RedisStorage):
         sentinel_configuration = []
         connection_options = options.copy()
         sentinel_options = sentinel_kwargs.copy() if sentinel_kwargs else {}
-        parsed_auth = {}
+        parsed_auth: Dict[str, Union[float, str, bool]] = {}
 
         if parsed.username:
             parsed_auth["username"] = parsed.username
@@ -369,6 +390,7 @@ class RedisSentinelStorage(RedisStorage):
         super(RedisStorage, self).__init__()
 
         self.dependency = self.dependencies["coredis.sentinel"]
+        assert self.dependency
 
         self.sentinel = self.dependency.Sentinel(
             sentinel_configuration,
