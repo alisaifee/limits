@@ -4,7 +4,7 @@
 import re
 import sys
 from types import ModuleType
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 import pkg_resources
 from packaging.version import Version
@@ -47,7 +47,7 @@ class LazyDependency:
         self._dependencies: Dict[str, Optional[ModuleType]] = {}
 
     @property
-    def dependencies(self) -> Dict[str, Any]:
+    def dependencies(self) -> Dict[str, Optional[ModuleType]]:
         """
         Cached mapping of the modules this storage depends on.
         This is done so that the module is only imported lazily
