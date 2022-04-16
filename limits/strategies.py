@@ -7,17 +7,15 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, Tuple, Type, Union, cast
 
 from .limits import RateLimitItem
-from .storage import Storage
+from .storage import Storage, MovingWindowSupport
 
 
 class RateLimiter(metaclass=ABCMeta):
     def __init__(self, storage: Storage):
-        self.storage: weakref.ReferenceType[Storage] = weakref.ref(
-            cast(Storage, storage)
-        )
+        self.storage: Storage = weakref.proxy(storage)
 
     @abstractmethod
-    def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
+    def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
@@ -29,7 +27,7 @@ class RateLimiter(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def test(self, item: RateLimitItem, *identifiers) -> bool:
+    def test(self, item: RateLimitItem, *identifiers: str) -> bool:
         """
         Check the rate limit without consuming from it.
 
@@ -40,7 +38,9 @@ class RateLimiter(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_window_stats(self, item: RateLimitItem, *identifiers) -> Tuple[int, int]:
+    def get_window_stats(
+        self, item: RateLimitItem, *identifiers: str
+    ) -> Tuple[int, int]:
         """
         Query the reset time and remaining amount for the limit
 
@@ -51,8 +51,8 @@ class RateLimiter(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def clear(self, item: RateLimitItem, *identifiers) -> None:
-        return self.storage().clear(item.key_for(*identifiers))
+    def clear(self, item: RateLimitItem, *identifiers: str) -> None:
+        return self.storage.clear(item.key_for(*identifiers))
 
 
 class MovingWindowRateLimiter(RateLimiter):
@@ -70,7 +70,7 @@ class MovingWindowRateLimiter(RateLimiter):
             )
         super().__init__(storage)
 
-    def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
+    def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
@@ -81,11 +81,11 @@ class MovingWindowRateLimiter(RateLimiter):
         :return: (reset time, remaining)
         """
 
-        return self.storage().acquire_entry(  # type: ignore
+        return cast(MovingWindowSupport, self.storage).acquire_entry(
             item.key_for(*identifiers), item.amount, item.get_expiry(), amount=cost
         )
 
-    def test(self, item: RateLimitItem, *identifiers) -> bool:
+    def test(self, item: RateLimitItem, *identifiers: str) -> bool:
         """
         Check if the rate limit can be consumed
 
@@ -95,7 +95,7 @@ class MovingWindowRateLimiter(RateLimiter):
         """
 
         return (
-            self.storage().get_moving_window(  # type: ignore
+            cast(MovingWindowSupport, self.storage).get_moving_window(
                 item.key_for(*identifiers),
                 item.amount,
                 item.get_expiry(),
@@ -103,7 +103,9 @@ class MovingWindowRateLimiter(RateLimiter):
             < item.amount
         )
 
-    def get_window_stats(self, item: RateLimitItem, *identifiers) -> Tuple[int, int]:
+    def get_window_stats(
+        self, item: RateLimitItem, *identifiers: str
+    ) -> Tuple[int, int]:
         """
         returns the number of requests remaining within this limit.
 
@@ -112,9 +114,9 @@ class MovingWindowRateLimiter(RateLimiter):
          instance of the limit
         :return: tuple (reset time, remaining)
         """
-        window_start, window_items = self.storage().get_moving_window(  # type: ignore
-            item.key_for(*identifiers), item.amount, item.get_expiry()
-        )
+        window_start, window_items = cast(
+            MovingWindowSupport, self.storage
+        ).get_moving_window(item.key_for(*identifiers), item.amount, item.get_expiry())
         reset = window_start + item.get_expiry()
 
         return (reset, item.amount - window_items)
@@ -125,7 +127,7 @@ class FixedWindowRateLimiter(RateLimiter):
     Reference: :ref:`strategies:fixed window`
     """
 
-    def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
+    def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
@@ -136,7 +138,7 @@ class FixedWindowRateLimiter(RateLimiter):
         """
 
         return (
-            self.storage().incr(
+            self.storage.incr(
                 item.key_for(*identifiers),
                 item.get_expiry(),
                 elastic_expiry=False,
@@ -145,7 +147,7 @@ class FixedWindowRateLimiter(RateLimiter):
             <= item.amount
         )
 
-    def test(self, item: RateLimitItem, *identifiers) -> bool:
+    def test(self, item: RateLimitItem, *identifiers: str) -> bool:
         """
         Check if the rate limit can be consumed
 
@@ -154,9 +156,11 @@ class FixedWindowRateLimiter(RateLimiter):
          instance of the limit
         """
 
-        return self.storage().get(item.key_for(*identifiers)) < item.amount
+        return self.storage.get(item.key_for(*identifiers)) < item.amount
 
-    def get_window_stats(self, item: RateLimitItem, *identifiers) -> Tuple[int, int]:
+    def get_window_stats(
+        self, item: RateLimitItem, *identifiers: str
+    ) -> Tuple[int, int]:
         """
         Query the reset time and remaining amount for the limit
 
@@ -165,8 +169,8 @@ class FixedWindowRateLimiter(RateLimiter):
          instance of the limit
         :return: (reset time, remaining)
         """
-        remaining = max(0, item.amount - self.storage().get(item.key_for(*identifiers)))
-        reset = self.storage().get_expiry(item.key_for(*identifiers))
+        remaining = max(0, item.amount - self.storage.get(item.key_for(*identifiers)))
+        reset = self.storage.get_expiry(item.key_for(*identifiers))
 
         return (reset, remaining)
 
@@ -176,7 +180,7 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
     Reference: :ref:`strategies:fixed window with elastic expiry`
     """
 
-    def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
+    def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
@@ -187,7 +191,7 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
         """
 
         return (
-            self.storage().incr(
+            self.storage.incr(
                 item.key_for(*identifiers),
                 item.get_expiry(),
                 elastic_expiry=True,

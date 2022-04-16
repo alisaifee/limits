@@ -7,17 +7,15 @@ from abc import ABC, abstractmethod
 from typing import Iterable, Tuple, cast
 
 from ..limits import RateLimitItem
-from .storage import Storage
+from .storage import Storage, MovingWindowSupport
 
 
 class RateLimiter(ABC):
     def __init__(self, storage: Storage):
-        self.storage = weakref.ref(cast(Storage, storage))
+        self.storage: Storage = weakref.proxy(storage)
 
     @abstractmethod
-    async def hit(
-        self, item: RateLimitItem, *identifiers: Iterable[str], cost: int = 1
-    ) -> bool:
+    async def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
@@ -29,7 +27,7 @@ class RateLimiter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def test(self, item: RateLimitItem, *identifiers) -> bool:
+    async def test(self, item: RateLimitItem, *identifiers: str) -> bool:
         """
         Check if the rate limit can be consumed
 
@@ -41,7 +39,7 @@ class RateLimiter(ABC):
 
     @abstractmethod
     async def get_window_stats(
-        self, item: RateLimitItem, *identifiers
+        self, item: RateLimitItem, *identifiers: str
     ) -> Tuple[int, int]:
         """
         Query the reset time and remaining amount for the limit
@@ -53,8 +51,8 @@ class RateLimiter(ABC):
         """
         raise NotImplementedError
 
-    async def clear(self, item: RateLimitItem, *identifiers):
-        return await self.storage().clear(item.key_for(*identifiers))
+    async def clear(self, item: RateLimitItem, *identifiers: str) -> None:
+        return await self.storage.clear(item.key_for(*identifiers))
 
 
 class MovingWindowRateLimiter(RateLimiter):
@@ -72,7 +70,7 @@ class MovingWindowRateLimiter(RateLimiter):
             )
         super().__init__(storage)
 
-    async def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
+    async def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
@@ -82,11 +80,11 @@ class MovingWindowRateLimiter(RateLimiter):
         :param cost: The cost of this hit, default 1
         """
 
-        return await self.storage().acquire_entry(  # type: ignore
+        return await cast(MovingWindowSupport, self.storage).acquire_entry(
             item.key_for(*identifiers), item.amount, item.get_expiry(), amount=cost
         )
 
-    async def test(self, item: RateLimitItem, *identifiers) -> bool:
+    async def test(self, item: RateLimitItem, *identifiers: str) -> bool:
         """
         Check if the rate limit can be consumed
 
@@ -94,7 +92,7 @@ class MovingWindowRateLimiter(RateLimiter):
         :param identifiers: variable list of strings to uniquely identify the
          limit
         """
-        res = await self.storage().get_moving_window(  # type: ignore
+        res = await cast(MovingWindowSupport, self.storage).get_moving_window(
             item.key_for(*identifiers),
             item.amount,
             item.get_expiry(),
@@ -104,7 +102,7 @@ class MovingWindowRateLimiter(RateLimiter):
         return amount < item.amount
 
     async def get_window_stats(
-        self, item: RateLimitItem, *identifiers
+        self, item: RateLimitItem, *identifiers: str
     ) -> Tuple[int, int]:
         """
         returns the number of requests remaining within this limit.
@@ -114,12 +112,12 @@ class MovingWindowRateLimiter(RateLimiter):
          limit
         :return: (reset time, remaining)
         """
-        window_start, window_items = await self.storage().get_moving_window(  # type: ignore
-            item.key_for(*identifiers), item.amount, item.get_expiry()
-        )
+        window_start, window_items = await cast(
+            MovingWindowSupport, self.storage
+        ).get_moving_window(item.key_for(*identifiers), item.amount, item.get_expiry())
         reset = window_start + item.get_expiry()
 
-        return (reset, item.amount - window_items)
+        return reset, item.amount - window_items
 
 
 class FixedWindowRateLimiter(RateLimiter):
@@ -127,7 +125,7 @@ class FixedWindowRateLimiter(RateLimiter):
     Reference: :ref:`strategies:fixed window`
     """
 
-    async def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
+    async def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
@@ -138,7 +136,7 @@ class FixedWindowRateLimiter(RateLimiter):
         """
 
         return (
-            await self.storage().incr(
+            await self.storage.incr(
                 item.key_for(*identifiers),
                 item.get_expiry(),
                 elastic_expiry=False,
@@ -147,7 +145,7 @@ class FixedWindowRateLimiter(RateLimiter):
             <= item.amount
         )
 
-    async def test(self, item: RateLimitItem, *identifiers) -> bool:
+    async def test(self, item: RateLimitItem, *identifiers: str) -> bool:
         """
         Check if the rate limit can be consumed
 
@@ -156,10 +154,10 @@ class FixedWindowRateLimiter(RateLimiter):
          limit
         """
 
-        return await self.storage().get(item.key_for(*identifiers)) < item.amount
+        return await self.storage.get(item.key_for(*identifiers)) < item.amount
 
     async def get_window_stats(
-        self, item: RateLimitItem, *identifiers
+        self, item: RateLimitItem, *identifiers: str
     ) -> Tuple[int, int]:
         """
         Query the reset time and remaining amount for the limit
@@ -171,11 +169,11 @@ class FixedWindowRateLimiter(RateLimiter):
         """
         remaining = max(
             0,
-            item.amount - await self.storage().get(item.key_for(*identifiers)),
+            item.amount - await self.storage.get(item.key_for(*identifiers)),
         )
-        reset = await self.storage().get_expiry(item.key_for(*identifiers))
+        reset = await self.storage.get_expiry(item.key_for(*identifiers))
 
-        return (reset, remaining)
+        return reset, remaining
 
 
 class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
@@ -183,7 +181,7 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
     Reference: :ref:`strategies:fixed window with elastic expiry`
     """
 
-    async def hit(self, item: RateLimitItem, *identifiers, cost: int = 1) -> bool:
+    async def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Consume the rate limit
 
@@ -192,7 +190,7 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
          limit
         :param cost: The cost of this hit, default 1
         """
-        amount = await self.storage().incr(
+        amount = await self.storage.incr(
             item.key_for(*identifiers),
             item.get_expiry(),
             elastic_expiry=True,
