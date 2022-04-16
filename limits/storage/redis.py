@@ -1,10 +1,37 @@
+from __future__ import annotations
+
 import time
-from typing import Any, Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    List,
+    Optional,
+    Protocol,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 from packaging.version import Version
 
 from ..util import get_package_data
 from .base import MovingWindowSupport, Storage
+
+if TYPE_CHECKING:
+    try:
+        import redis
+    except ImportError:
+        pass
+
+RedisClient = Union["redis.Redis", "redis.cluster.RedisCluster"]
+Serializable = Union[int, str, float]
+R_co = TypeVar("R_co", covariant=True)
+
+
+class ScriptP(Protocol[R_co]):
+    def __call__(self, keys: List[Serializable], args: List[Serializable]) -> R_co:
+        ...
 
 
 class RedisInteractor:
@@ -17,10 +44,10 @@ class RedisInteractor:
     SCRIPT_CLEAR_KEYS = get_package_data(f"{RES_DIR}/clear_keys.lua")
     SCRIPT_INCR_EXPIRE = get_package_data(f"{RES_DIR}/incr_expire.lua")
 
-    lua_moving_window: Any
-    lua_acquire_window: Any
+    lua_moving_window: ScriptP[Tuple[int, int]]
+    lua_acquire_window: ScriptP[bool]
 
-    def get_moving_window(self, key, limit, expiry) -> Tuple[int, int]:
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -35,7 +62,12 @@ class RedisInteractor:
         return window or (int(timestamp), 0)
 
     def _incr(
-        self, key: str, expiry: int, connection, elastic_expiry=False, amount: int = 1
+        self,
+        key: str,
+        expiry: int,
+        connection: RedisClient,
+        elastic_expiry: bool = False,
+        amount: int = 1,
     ) -> int:
         """
         increments the counter for a given rate limit key
@@ -52,7 +84,7 @@ class RedisInteractor:
 
         return value
 
-    def _get(self, key: str, connection) -> int:
+    def _get(self, key: str, connection: RedisClient) -> int:
         """
         :param connection: Redis connection
         :param key: the key to get the counter value for
@@ -60,7 +92,7 @@ class RedisInteractor:
 
         return int(connection.get(key) or 0)
 
-    def _clear(self, key: str, connection):
+    def _clear(self, key: str, connection: RedisClient) -> None:
         """
         :param key: the key to clear rate limits for
         :param connection: Redis connection
@@ -68,7 +100,12 @@ class RedisInteractor:
         connection.delete(key)
 
     def _acquire_entry(
-        self, key: str, limit: int, expiry: int, connection, amount: int = 1
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        connection: RedisClient,
+        amount: int = 1,
     ) -> bool:
         """
         :param key: rate limit key to acquire an entry in
@@ -82,7 +119,7 @@ class RedisInteractor:
 
         return bool(acquired)
 
-    def _get_expiry(self, key: str, connection=None) -> int:
+    def _get_expiry(self, key: str, connection: RedisClient) -> int:
         """
         :param key: the key to get the expiry for
         :param connection: Redis connection
@@ -90,7 +127,7 @@ class RedisInteractor:
 
         return int(max(connection.ttl(key), 0) + time.time())
 
-    def _check(self, connection) -> bool:
+    def _check(self, connection: RedisClient) -> bool:
         """
         :param connection: Redis connection
         check if storage is healthy
@@ -116,9 +153,9 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     def __init__(
         self,
         uri: str,
-        connection_pool: Optional[Any] = None,
-        **options,
-    ):
+        connection_pool: Optional["redis.ConnectionPool"] = None,
+        **options: Union[float, str, bool],
+    ) -> None:
         """
         :param uri: uri of the form ``redis://[:password]@host:port``,
          ``redis://[:password]@host:port/db``,
@@ -133,6 +170,9 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         """
         super().__init__()
         redis = self.dependencies["redis"]
+
+        assert redis
+
         uri = uri.replace("redis+unix", "unix")
 
         if not connection_pool:
@@ -141,7 +181,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
             self.storage = redis.Redis(connection_pool=connection_pool, **options)
         self.initialize_storage(uri)
 
-    def initialize_storage(self, _uri: str):
+    def initialize_storage(self, _uri: str) -> None:
         self.lua_moving_window = self.storage.register_script(self.SCRIPT_MOVING_WINDOW)
         self.lua_acquire_window = self.storage.register_script(
             self.SCRIPT_ACQUIRE_MOVING_WINDOW
@@ -151,7 +191,9 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
             RedisStorage.SCRIPT_INCR_EXPIRE
         )
 
-    def incr(self, key: str, expiry: int, elastic_expiry=False, amount: int = 1) -> int:
+    def incr(
+        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
+    ) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -163,7 +205,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         if elastic_expiry:
             return super()._incr(key, expiry, self.storage, elastic_expiry, amount)
         else:
-            return self.lua_incr_expire([key], [expiry, amount])
+            return int(self.lua_incr_expire([key], [expiry, amount]))
 
     def get(self, key: str) -> int:
         """
@@ -172,14 +214,14 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         return super()._get(key, self.storage)
 
-    def clear(self, key: str):
+    def clear(self, key: str) -> None:
         """
         :param key: the key to clear rate limits for
         """
 
         return super()._clear(key, self.storage)
 
-    def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1):
+    def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
@@ -215,6 +257,4 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         """
 
-        cleared = self.lua_clear_keys(["LIMITER*"])
-
-        return cleared
+        return int(self.lua_clear_keys(["LIMITER*"]))

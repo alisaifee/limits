@@ -1,6 +1,6 @@
 import urllib
 import warnings
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
@@ -29,7 +29,7 @@ class RedisClusterStorage(RedisStorage):
     STORAGE_SCHEME = ["redis+cluster"]
     """The storage scheme for redis cluster"""
 
-    DEFAULT_OPTIONS = {
+    DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
         "max_connections": 1000,
     }
     "Default options passed to the :class:`~redis.cluster.RedisCluster`"
@@ -37,7 +37,7 @@ class RedisClusterStorage(RedisStorage):
     DEPENDENCIES = {"redis": Version("4.2.0"), "rediscluster": Version("2.0.0")}
     FAIL_ON_MISSING_DEPENDENCY = False
 
-    def __init__(self, uri: str, **options):
+    def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
         """
         :param uri: url of the form
          ``redis+cluster://[:password]@host:port,host:port``
@@ -59,7 +59,9 @@ class RedisClusterStorage(RedisStorage):
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__()
 
-    def __pick_storage(self, cluster_hosts: List[Tuple[str, int]], **options: Any):
+    def __pick_storage(
+        self, cluster_hosts: List[Tuple[str, int]], **options: Union[float, str, bool]
+    ) -> None:
         redis_py = self.dependencies["redis"]
         if redis_py:
             startup_nodes = [redis_py.cluster.ClusterNode(*c) for c in cluster_hosts]
@@ -80,7 +82,9 @@ class RedisClusterStorage(RedisStorage):
                 )
             )  # pragma: no cover
 
-    def __use_legacy_cluster_implementation(self, cluster_hosts, **options):
+    def __use_legacy_cluster_implementation(
+        self, cluster_hosts: List[Tuple[str, int]], **options: Union[float, str, bool]
+    ) -> None:
         redis_cluster = self.dependencies["rediscluster"]
         if redis_cluster:
             warnings.warn(

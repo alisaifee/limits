@@ -6,7 +6,9 @@ flake8
 isort
 keyring
 mypy
+pymongo-stubs
 twine
 types-deprecated
+types-redis
 types-setuptools
 wheel

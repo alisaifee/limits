@@ -2,11 +2,54 @@ import inspect
 import threading
 import time
 import urllib.parse
-from typing import Optional
+from types import ModuleType
+from typing import Callable, List, Optional, Protocol, Tuple, TypeVar, Union, cast
+
+from typing_extensions import ParamSpec
 
 from ..errors import ConfigurationError
 from ..util import get_dependency
 from .base import Storage
+
+P = ParamSpec("P")
+R = TypeVar("R")
+Serializable = Union[int, str, float]
+
+
+class MemcachedClientP(Protocol):
+    def add(
+        self,
+        key: str,
+        value: Serializable,
+        expire: Optional[int] = 0,
+        noreply: Optional[bool] = None,
+        flags: Optional[int] = None,
+    ) -> bool:
+        ...
+
+    def get(self, key: str, default: Optional[str] = None) -> bytes:
+        ...
+
+    def incr(self, key: str, value: int, noreply: Optional[bool] = False) -> int:
+        ...
+
+    def delete(self, key: str, noreply: Optional[bool] = None) -> Optional[bool]:
+        ...
+
+    def set(
+        self,
+        key: str,
+        value: Serializable,
+        expire: int = 0,
+        noreply: Optional[bool] = None,
+        flags: Optional[int] = None,
+    ) -> bool:
+        ...
+
+    def touch(
+        self, key: str, expire: Optional[int] = 0, noreply: Optional[bool] = None
+    ) -> bool:
+        ...
 
 
 class MemcachedStorage(Storage):
@@ -19,7 +62,11 @@ class MemcachedStorage(Storage):
     STORAGE_SCHEME = ["memcached"]
     """The storage scheme for memcached"""
 
-    def __init__(self, uri: str, **options):
+    def __init__(
+        self,
+        uri: str,
+        **options: Union[str, Callable[[], MemcachedClientP]],
+    ) -> None:
         """
         :param uri: memcached location of the form
          ``memcached://host:port,host:port``,
@@ -44,9 +91,14 @@ class MemcachedStorage(Storage):
             if parsed.path and not parsed.netloc and not parsed.port:
                 self.hosts = [parsed.path]  # type: ignore
 
-        self.library = options.pop("library", "pymemcache.client")
-        self.cluster_library = options.pop("cluster_library", "pymemcache.client.hash")
-        self.client_getter = options.pop("client_getter", self.get_client)
+        self.library = str(options.pop("library", "pymemcache.client"))
+        self.cluster_library = str(
+            options.pop("cluster_library", "pymemcache.client.hash")
+        )
+        self.client_getter = cast(
+            Callable[[ModuleType, List[Tuple[str, int]]], MemcachedClientP],
+            options.pop("client_getter", self.get_client),
+        )
         self.options = options
 
         if not get_dependency(self.library):
@@ -57,45 +109,49 @@ class MemcachedStorage(Storage):
         self.local_storage = threading.local()
         self.local_storage.storage = None
 
-    def get_client(self, module, hosts, **kwargs):
+    def get_client(
+        self, module: ModuleType, hosts: List[Tuple[str, int]], **kwargs: str
+    ) -> MemcachedClientP:
         """
         returns a memcached client.
 
         :param module: the memcached module
         :param hosts: list of memcached hosts
         """
-
-        return (
+        return cast(
+            MemcachedClientP,
             module.HashClient(hosts, **kwargs)
             if len(hosts) > 1
-            else module.PooledClient(*hosts, **kwargs)
+            else module.PooledClient(*hosts, **kwargs),
         )
 
-    def call_memcached_func(self, func, *args, **kwargs):
-        if "noreply" in kwargs:
+    def call_memcached_func(
+        self, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs
+    ) -> R:
+        if "noreply" in kwargs:  # type: ignore
             argspec = inspect.getfullargspec(func)
-
             if not ("noreply" in argspec.args or argspec.varkw):
-                kwargs.pop("noreply")  # noqa
+                kwargs.pop("noreply")  # type: ignore
 
         return func(*args, **kwargs)
 
     @property
-    def storage(self):
+    def storage(self) -> MemcachedClientP:
         """
         lazily creates a memcached client instance using a thread local
         """
 
         if not (hasattr(self.local_storage, "storage") and self.local_storage.storage):
+            dependency = get_dependency(
+                self.cluster_library if len(self.hosts) > 1 else self.library
+            )[0]
+            if not dependency:
+                raise ConfigurationError(f"Unable to import {self.cluster_library}")
             self.local_storage.storage = self.client_getter(
-                get_dependency(
-                    self.cluster_library if len(self.hosts) > 1 else self.library
-                )[0],
-                self.hosts,
-                **self.options
+                dependency, self.hosts, **self.options
             )
 
-        return self.local_storage.storage
+        return cast(MemcachedClientP, self.local_storage.storage)
 
     def get(self, key: str) -> int:
         """
@@ -110,7 +166,9 @@ class MemcachedStorage(Storage):
         """
         self.storage.delete(key)
 
-    def incr(self, key: str, expiry: int, elastic_expiry=False, amount: int = 1) -> int:
+    def incr(
+        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
+    ) -> int:
         """
         increments the counter for a given rate limit key
 

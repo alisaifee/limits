@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import calendar
 import datetime
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
 
 from deprecated.sphinx import versionadded
 
 from .base import MovingWindowSupport, Storage
+
+if TYPE_CHECKING:
+    import pymongo
 
 
 @versionadded(version="2.1")
@@ -17,7 +22,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     """
 
     STORAGE_SCHEME = ["mongodb", "mongodb+srv"]
-    DEFAULT_OPTIONS = {
+    DEFAULT_OPTIONS: Dict[str, Union[int, str, bool]] = {
         "serverSelectionTimeoutMS": 1000,
         "socketTimeoutMS": 1000,
         "connectTimeoutMS": 1000,
@@ -26,7 +31,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
     DEPENDENCIES = ["pymongo"]
 
-    def __init__(self, uri: str, database_name: str = "limits", **options):
+    def __init__(
+        self, uri: str, database_name: str = "limits", **options: Union[int, str, bool]
+    ) -> None:
         """
         :param uri: uri of the form ``mongodb://[user:password]@host:port?...``,
          This uri is passed directly to :class:`~pymongo.mongo_client.MongoClient`
@@ -38,16 +45,21 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :raise ConfigurationError: when the :pypi:`pymongo` library is not available
         """
 
-        super().__init__(uri, **options)
-        self.lib = self.dependencies["pymongo"]
+        super().__init__(**options)
+
+        pymongo_module = self.dependencies["pymongo"]
+        assert pymongo_module
+        self.lib = pymongo_module
+
         mongo_opts = options.copy()
         [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]
-        self.storage = self.lib.MongoClient(uri, **mongo_opts)
+
+        self.storage: "pymongo.MongoClient" = self.lib.MongoClient(uri, **mongo_opts)
         self.counters = self.storage.get_database(database_name).counters
         self.windows = self.storage.get_database(database_name).windows
         self.__initialize_database()
 
-    def __initialize_database(self):
+    def __initialize_database(self) -> None:
         self.counters.create_index("expireAt", expireAfterSeconds=0)
         self.windows.create_index("expireAt", expireAfterSeconds=0)
 
@@ -59,9 +71,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self.counters.drop()
         self.windows.drop()
 
-        return num_keys
+        return int(num_keys)
 
-    def clear(self, key: str):
+    def clear(self, key: str) -> None:
         """
         :param key: the key to clear rate limits for
         """
@@ -77,7 +89,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         return calendar.timegm(expiry.timetuple())
 
-    def get(self, key: str):
+    def get(self, key: str) -> int:
         """
         :param key: the key to get the counter value for
         """
@@ -88,7 +100,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         return counter and counter["count"] or 0
 
-    def incr(self, key: str, expiry: int, elastic_expiry=False, amount: int = 1) -> int:
+    def incr(
+        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
+    ) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -98,32 +112,36 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         """
         expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
 
-        return self.counters.find_one_and_update(
-            {"_id": key},
-            [
-                {
-                    "$set": {
-                        "count": {
-                            "$cond": {
-                                "if": {"$lt": ["$expireAt", "$$NOW"]},
-                                "then": amount,
-                                "else": {"$add": ["$count", amount]},
-                            }
-                        },
-                        "expireAt": {
-                            "$cond": {
-                                "if": {"$lt": ["$expireAt", "$$NOW"]},
-                                "then": expiration,
-                                "else": (expiration if elastic_expiry else "$expireAt"),
-                            }
-                        },
-                    }
-                },
-            ],
-            upsert=True,
-            projection=["count"],
-            return_document=self.lib.ReturnDocument.AFTER,
-        )["count"]
+        return int(
+            self.counters.find_one_and_update(
+                {"_id": key},
+                [
+                    {
+                        "$set": {
+                            "count": {
+                                "$cond": {
+                                    "if": {"$lt": ["$expireAt", "$$NOW"]},
+                                    "then": amount,
+                                    "else": {"$add": ["$count", amount]},
+                                }
+                            },
+                            "expireAt": {
+                                "$cond": {
+                                    "if": {"$lt": ["$expireAt", "$$NOW"]},
+                                    "then": expiration,
+                                    "else": (
+                                        expiration if elastic_expiry else "$expireAt"
+                                    ),
+                                }
+                            },
+                        }
+                    },
+                ],
+                upsert=True,
+                projection=["count"],
+                return_document=self.lib.ReturnDocument.AFTER,
+            )["count"]
+        )
 
     def check(self) -> bool:
         """
@@ -136,7 +154,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         except:  # noqa: E722
             return False
 
-    def get_moving_window(self, key, limit, expiry) -> Tuple[int, int]:
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -174,9 +192,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         )
 
         if result:
-            return (int(result[0]["max"]), result[0]["count"])
+            return int(result[0]["max"]), result[0]["count"]
 
-        return (int(timestamp), 0)
+        return int(timestamp), 0
 
     def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
         """
@@ -187,7 +205,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         """
         timestamp = time.time()
         try:
-            updates: Dict[str, Any] = {
+            updates: Dict[str, Any] = {  # type: ignore
                 "$push": {"entries": {"$each": [], "$position": 0, "$slice": limit}}
             }
 

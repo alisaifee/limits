@@ -1,6 +1,6 @@
 import threading
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from limits.storage.registry import StorageRegistry
 from limits.util import LazyDependency
@@ -14,7 +14,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     STORAGE_SCHEME: Optional[List[str]]
     """The storage schemes to register against this implementation"""
 
-    def __init__(self, **options: str):
+    def __init__(self, **options: Union[float, str, bool]):
         self.lock = threading.RLock()
         super().__init__()
 

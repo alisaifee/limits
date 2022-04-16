@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Tuple, Union
 
 SCHEMES: Dict[str, StorageRegistry] = {}
 

@@ -1,3 +1,4 @@
 deprecated>=1.2
 setuptools
 packaging>=21,<22
+typing_extensions

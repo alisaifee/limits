@@ -1,10 +1,13 @@
 import urllib.parse
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from packaging.version import Version
 
 from ..errors import ConfigurationError
 from .redis import RedisStorage
+
+if TYPE_CHECKING:
+    import redis.sentinel
 
 
 class RedisSentinelStorage(RedisStorage):
@@ -17,7 +20,7 @@ class RedisSentinelStorage(RedisStorage):
     STORAGE_SCHEME = ["redis+sentinel"]
     """The storage scheme for redis accessed via a redis sentinel installation"""
 
-    DEFAULT_OPTIONS: Dict[str, Any] = {
+    DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
         "socket_timeout": 0.2,
     }
     "Default options passed to :class:`~redis.sentinel.Sentinel`"
@@ -27,10 +30,10 @@ class RedisSentinelStorage(RedisStorage):
     def __init__(
         self,
         uri: str,
-        service_name: str = None,
-        sentinel_kwargs: Optional[Dict[str, Any]] = None,
-        **options
-    ):
+        service_name: Optional[str] = None,
+        sentinel_kwargs: Optional[Dict[str, Union[float, str, bool]]] = None,
+        **options: Union[float, str, bool]
+    ) -> None:
         """
         :param uri: url of the form
          ``redis+sentinel://host:port,host:port/service_name``
@@ -50,7 +53,7 @@ class RedisSentinelStorage(RedisStorage):
         sentinel_configuration = []
         sentinel_options = sentinel_kwargs.copy() if sentinel_kwargs else {}
 
-        parsed_auth = {}
+        parsed_auth: Dict[str, Union[float, str, bool]] = {}
 
         if parsed.username:
             parsed_auth["username"] = parsed.username
@@ -69,7 +72,9 @@ class RedisSentinelStorage(RedisStorage):
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
 
-        self.sentinel = self.dependencies["redis.sentinel"].Sentinel(
+        sentinel_dep = self.dependencies["redis.sentinel"]
+        assert sentinel_dep
+        self.sentinel: "redis.sentinel.Sentinel" = sentinel_dep.Sentinel(
             sentinel_configuration,
             sentinel_kwargs={**parsed_auth, **sentinel_options},
             **{**self.DEFAULT_OPTIONS, **parsed_auth, **options}
