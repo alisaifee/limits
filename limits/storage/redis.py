@@ -132,7 +132,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     def __init__(
         self,
         uri: str,
-        connection_pool: Optional["redis.ConnectionPool"] = None,
+        connection_pool: Optional[redis.connection.ConnectionPool] = None,
         **options: Union[float, str, bool],
     ) -> None:
         """

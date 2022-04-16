@@ -14,7 +14,7 @@ from .redis import RedisStorage
     reason="""
 Cluster support was provided by the :pypi:`redis-py-cluster` library
 which has been absorbed into the official :pypi:`redis` client. By
-default the :class:`~redis.cluster.RedisCluster` client will be used
+default the :class:`redis.cluster.RedisCluster` client will be used
 however if the version of the package is lower than ``4.2.0`` the implementation
 will fallback to trying to use :class:`rediscluster.RedisCluster`.
 """,

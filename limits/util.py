@@ -80,6 +80,8 @@ class LazyDependency:
         Cached mapping of the modules this storage depends on.
         This is done so that the module is only imported lazily
         when the storage is instantiated.
+
+        :meta private:
         """
         if not getattr(self, "_dependencies", None):
             dependencies = DependencyDict()

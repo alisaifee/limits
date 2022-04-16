@@ -149,12 +149,16 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         **options: Union[float, str, bool],
     ) -> None:
         """
-        :param uri: uri of the form `async+redis://[:password]@host:port`,
-         `async+redis://[:password]@host:port/db`,
-         `async+rediss://[:password]@host:port`, `async+unix:///path/to/sock` etc.
-         This uri is passed directly to :func:`coredis.Redis.from_url` with
-         the initial `a` removed, except for the case of `redis+unix` where it
-         is replaced with `unix`.
+        :param uri: uri of the form:
+
+         - ``async+redis://[:password]@host:port``
+         - ``async+redis://[:password]@host:port/db``
+         - ``async+rediss://[:password]@host:port``
+         - ``async+unix:///path/to/sock`` etc...
+
+         This uri is passed directly to :meth:`coredis.Redis.from_url` with
+         the initial ``async`` removed, except for the case of ``async+redis+unix``
+         where it is replaced with ``unix``.
         :param connection_pool: if provided, the redis client is initialized with
          the connection pool and any other params passed as :paramref:`options`
         :param options: all remaining keyword arguments are passed
@@ -280,7 +284,7 @@ class RedisClusterStorage(RedisStorage):
     def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
         """
         :param uri: url of the form
-         `async+redis+cluster://[:password]@host:port,host:port`
+         ``async+redis+cluster://[:password]@host:port,host:port``
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`coredis.RedisCluster`
         :raise ConfigurationError: when the coredis library is not
@@ -345,7 +349,7 @@ class RedisSentinelStorage(RedisStorage):
     ):
         """
         :param uri: url of the form
-         `async+redis+sentinel://host:port,host:port/service_name`
+         ``async+redis+sentinel://host:port,host:port/service_name``
         :param service_name, optional: sentinel service name
          (if not provided in `uri`)
         :param sentinel_kwargs, optional: kwargs to pass as
