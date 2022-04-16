@@ -8,13 +8,12 @@ from packaging.version import Version
 from limits.errors import ConfigurationError
 from limits.util import get_package_data
 
+from ...typing import AsyncRedisClient
 from .base import MovingWindowSupport, Storage
 
 if TYPE_CHECKING:
     import coredis
     import coredis.commands.script
-
-RedisClient = Union["coredis.Redis", "coredis.RedisCluster"]
 
 
 class RedisInteractor:
@@ -34,7 +33,7 @@ class RedisInteractor:
         self,
         key: str,
         expiry: int,
-        connection: RedisClient,
+        connection: AsyncRedisClient,
         elastic_expiry: bool = False,
         amount: int = 1,
     ) -> int:
@@ -53,7 +52,7 @@ class RedisInteractor:
 
         return value
 
-    async def _get(self, key: str, connection: RedisClient) -> int:
+    async def _get(self, key: str, connection: AsyncRedisClient) -> int:
         """
         :param connection: Redis connection
         :param key: the key to get the counter value for
@@ -61,7 +60,7 @@ class RedisInteractor:
 
         return int(await connection.get(key) or 0)
 
-    async def _clear(self, key: str, connection: RedisClient) -> None:
+    async def _clear(self, key: str, connection: AsyncRedisClient) -> None:
         """
         :param key: the key to clear rate limits for
         :param connection: Redis connection
@@ -91,7 +90,7 @@ class RedisInteractor:
         key: str,
         limit: int,
         expiry: int,
-        connection: RedisClient,
+        connection: AsyncRedisClient,
         amount: int = 1,
     ) -> bool:
         """
@@ -107,7 +106,7 @@ class RedisInteractor:
 
         return bool(acquired)
 
-    async def _get_expiry(self, key: str, connection: RedisClient) -> int:
+    async def _get_expiry(self, key: str, connection: AsyncRedisClient) -> int:
         """
         :param key: the key to get the expiry for
         :param connection: Redis connection
@@ -115,7 +114,7 @@ class RedisInteractor:
 
         return int(max(await connection.ttl(key), 0) + time.time())
 
-    async def _check(self, connection: RedisClient) -> bool:
+    async def _check(self, connection: AsyncRedisClient) -> bool:
         """
         check if storage is healthy
 
@@ -167,8 +166,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         super().__init__()
 
-        self.dependency = self.dependencies["coredis"]
-        assert self.dependency
+        self.dependency = self.dependencies["coredis"].module
 
         if connection_pool:
             self.storage = self.dependency.Redis(
@@ -253,11 +251,9 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         This function calls a Lua Script to delete keys prefixed with 'LIMITER'
         in block of 5000.
 
-        .. warning::
-           This operation was designed to be fast, but was not tested
+        .. warning:: This operation was designed to be fast, but was not tested
            on a large production based system. Be careful with its usage as it
            could be slow on very large data sets.
-
         """
 
         return int(await self.lua_clear_keys.execute(["LIMITER*"]))
@@ -299,8 +295,7 @@ class RedisClusterStorage(RedisStorage):
 
         super(RedisStorage, self).__init__()
 
-        self.dependency = self.dependencies["coredis"]
-        assert self.dependency
+        self.dependency = self.dependencies["coredis"].module
 
         self.storage: "coredis.RedisCluster[str]" = self.dependency.RedisCluster(
             startup_nodes=cluster_hosts, **{**self.DEFAULT_OPTIONS, **options}
@@ -314,10 +309,10 @@ class RedisClusterStorage(RedisStorage):
         keys that are prefixed with 'LIMITER' and calls delete on them, one at
         a time.
 
-        .. warning::
-         This operation was not tested with extremely large data sets.
-         On a large production based system, care should be taken with its
-         usage as it could be slow on very large data sets"""
+        .. warning:: This operation was not tested with extremely large data sets.
+           On a large production based system, care should be taken with its
+           usage as it could be slow on very large data sets
+        """
 
         keys = await self.storage.keys("LIMITER*")
         return await self.storage.delete(keys)
@@ -389,8 +384,7 @@ class RedisSentinelStorage(RedisStorage):
 
         super(RedisStorage, self).__init__()
 
-        self.dependency = self.dependencies["coredis.sentinel"]
-        assert self.dependency
+        self.dependency = self.dependencies["coredis.sentinel"].module
 
         self.sentinel = self.dependency.Sentinel(
             sentinel_configuration,

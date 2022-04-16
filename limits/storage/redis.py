@@ -1,37 +1,16 @@
 from __future__ import annotations
 
 import time
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    List,
-    Optional,
-    Protocol,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from packaging.version import Version
 
+from ..typing import RedisClient, ScriptP
 from ..util import get_package_data
 from .base import MovingWindowSupport, Storage
 
 if TYPE_CHECKING:
-    try:
-        import redis
-    except ImportError:
-        pass
-
-RedisClient = Union["redis.Redis", "redis.cluster.RedisCluster"]
-Serializable = Union[int, str, float]
-R_co = TypeVar("R_co", covariant=True)
-
-
-class ScriptP(Protocol[R_co]):
-    def __call__(self, keys: List[Serializable], args: List[Serializable]) -> R_co:
-        ...
+    import redis
 
 
 class RedisInteractor:
@@ -169,9 +148,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         :raise ConfigurationError: when the :pypi:`redis` library is not available
         """
         super().__init__()
-        redis = self.dependencies["redis"]
-
-        assert redis
+        redis = self.dependencies["redis"].module
 
         uri = uri.replace("redis+unix", "unix")
 

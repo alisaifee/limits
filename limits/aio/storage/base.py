@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from deprecated.sphinx import versionadded
 
@@ -16,7 +16,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     STORAGE_SCHEME: Optional[List[str]]
     """The storage schemes to register against this implementation"""
 
-    def __init__(self, **options: str) -> None:
+    def __init__(self, **options: Union[float, str, bool]) -> None:
         super().__init__()
 
     @abstractmethod

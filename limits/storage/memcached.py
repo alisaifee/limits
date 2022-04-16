@@ -3,53 +3,12 @@ import threading
 import time
 import urllib.parse
 from types import ModuleType
-from typing import Callable, List, Optional, Protocol, Tuple, TypeVar, Union, cast
-
-from typing_extensions import ParamSpec
+from typing import Callable, List, Optional, Tuple, Union, cast
 
 from ..errors import ConfigurationError
+from ..typing import MemcachedClientP, P, R
 from ..util import get_dependency
 from .base import Storage
-
-P = ParamSpec("P")
-R = TypeVar("R")
-Serializable = Union[int, str, float]
-
-
-class MemcachedClientP(Protocol):
-    def add(
-        self,
-        key: str,
-        value: Serializable,
-        expire: Optional[int] = 0,
-        noreply: Optional[bool] = None,
-        flags: Optional[int] = None,
-    ) -> bool:
-        ...
-
-    def get(self, key: str, default: Optional[str] = None) -> bytes:
-        ...
-
-    def incr(self, key: str, value: int, noreply: Optional[bool] = False) -> int:
-        ...
-
-    def delete(self, key: str, noreply: Optional[bool] = None) -> Optional[bool]:
-        ...
-
-    def set(
-        self,
-        key: str,
-        value: Serializable,
-        expire: int = 0,
-        noreply: Optional[bool] = None,
-        flags: Optional[int] = None,
-    ) -> bool:
-        ...
-
-    def touch(
-        self, key: str, expire: Optional[int] = 0, noreply: Optional[bool] = None
-    ) -> bool:
-        ...
 
 
 class MemcachedStorage(Storage):

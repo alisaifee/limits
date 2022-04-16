@@ -1,5 +1,5 @@
 import urllib.parse
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Dict, Optional, Union
 
 from packaging.version import Version
 
@@ -72,8 +72,7 @@ class RedisSentinelStorage(RedisStorage):
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
 
-        sentinel_dep = self.dependencies["redis.sentinel"]
-        assert sentinel_dep
+        sentinel_dep = self.dependencies["redis.sentinel"].module
         self.sentinel: "redis.sentinel.Sentinel" = sentinel_dep.Sentinel(
             sentinel_configuration,
             sentinel_kwargs={**parsed_auth, **sentinel_options},

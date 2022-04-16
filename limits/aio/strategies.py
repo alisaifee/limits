@@ -4,7 +4,7 @@ Asynchronous rate limiting strategies
 
 import weakref
 from abc import ABC, abstractmethod
-from typing import Iterable, Tuple, cast
+from typing import Tuple, cast
 
 from ..limits import RateLimitItem
 from .storage import MovingWindowSupport, Storage

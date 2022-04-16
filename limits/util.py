@@ -1,8 +1,10 @@
 """
 
 """
+import dataclasses
 import re
 import sys
+from collections import UserDict
 from types import ModuleType
 from typing import Dict, List, Optional, Tuple, Type, Union
 
@@ -29,6 +31,32 @@ EXPR = re.compile(
 )
 
 
+@dataclasses.dataclass
+class Dependency:
+    name: str
+    version_required: Optional[Version]
+    version_found: Optional[Version]
+    module: ModuleType
+
+
+class DependencyDict(UserDict[str, Dependency]):
+    Missing = Dependency("Missing", None, None, ModuleType("Missing"))
+
+    def __getitem__(self, key: str) -> Dependency:
+        dependency = super().__getitem__(key)
+        if dependency == DependencyDict.Missing:
+            raise ConfigurationError(f"{key} prerequisite not available")
+        elif dependency.version_required and (
+            not dependency.version_found
+            or dependency.version_found < dependency.version_required
+        ):
+            raise ConfigurationError(
+                f"The minimum version of {dependency.version_required}"
+                " of {dependency.name} could not be found"
+            )
+        return dependency
+
+
 class LazyDependency:
     """
     Simple utility that provides an :attr:`dependency`
@@ -44,17 +72,17 @@ class LazyDependency:
     """
 
     def __init__(self) -> None:
-        self._dependencies: Dict[str, Optional[ModuleType]] = {}
+        self._dependencies: DependencyDict = DependencyDict()
 
     @property
-    def dependencies(self) -> Dict[str, Optional[ModuleType]]:
+    def dependencies(self) -> DependencyDict:
         """
         Cached mapping of the modules this storage depends on.
         This is done so that the module is only imported lazily
         when the storage is instantiated.
         """
-        if not getattr(self, "_dependencies", {}):
-            dependencies = {}
+        if not getattr(self, "_dependencies", None):
+            dependencies = DependencyDict()
             mapping: Dict[str, Optional[Version]]
 
             if isinstance(self.DEPENDENCIES, list):
@@ -64,19 +92,12 @@ class LazyDependency:
 
             for name, minimum_version in mapping.items():
                 dependency, version = get_dependency(name)
-
-                if self.FAIL_ON_MISSING_DEPENDENCY:
-                    if not dependency:
-                        raise ConfigurationError(
-                            f"{name} prerequisite not available"
-                        )  # pragma: no cover
-                    if minimum_version and version and version < minimum_version:
-                        raise ConfigurationError(
-                            f"The minimum version of {minimum_version} of {name} could not be found"
-                        )
-                if minimum_version and not (version and version >= minimum_version):
-                    dependency = None
-                dependencies[name] = dependency
+                if not dependency:
+                    dependencies[name] = DependencyDict.Missing
+                else:
+                    dependencies[name] = Dependency(
+                        name, minimum_version, version, dependency
+                    )
             self._dependencies = dependencies
         return self._dependencies
 

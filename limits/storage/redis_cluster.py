@@ -1,6 +1,6 @@
 import urllib
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
@@ -62,44 +62,42 @@ class RedisClusterStorage(RedisStorage):
     def __pick_storage(
         self, cluster_hosts: List[Tuple[str, int]], **options: Union[float, str, bool]
     ) -> None:
-        redis_py = self.dependencies["redis"]
-        if redis_py:
+        try:
+            redis_py = self.dependencies["redis"].module
             startup_nodes = [redis_py.cluster.ClusterNode(*c) for c in cluster_hosts]
             self.storage = redis_py.cluster.RedisCluster(
                 startup_nodes=startup_nodes, **options
             )
             self.using_redis_py = True
             return
-
-        self.__use_legacy_cluster_implementation(cluster_hosts, **options)
-
-        if not self.storage:
-            raise ConfigurationError(
-                (
-                    "Unable to find an implementation for redis cluster"
-                    " Cluster support requires either redis-py>=4.2 or"
-                    " redis-py-cluster"
-                )
-            )  # pragma: no cover
+        except ConfigurationError:
+            self.__use_legacy_cluster_implementation(cluster_hosts, **options)
+            if not self.storage:
+                raise ConfigurationError(
+                    (
+                        "Unable to find an implementation for redis cluster"
+                        " Cluster support requires either redis-py>=4.2 or"
+                        " redis-py-cluster"
+                    )
+                )  # pragma: no cover
 
     def __use_legacy_cluster_implementation(
         self, cluster_hosts: List[Tuple[str, int]], **options: Union[float, str, bool]
     ) -> None:
-        redis_cluster = self.dependencies["rediscluster"]
-        if redis_cluster:
-            warnings.warn(
-                (
-                    "Using redis-py-cluster is deprecated as the library has been"
-                    " absorbed by redis-py (>=4.2). The support will be eventually "
-                    " removed from the limits library and will no longer be tested "
-                    " against beyond limits version: 2.6. To get rid of this warning, "
-                    " uninstall redis-py-cluster and ensure redis-py>=4.2.0 is installed"
-                )
+        redis_cluster = self.dependencies["rediscluster"].module
+        warnings.warn(
+            (
+                "Using redis-py-cluster is deprecated as the library has been"
+                " absorbed by redis-py (>=4.2). The support will be eventually "
+                " removed from the limits library and will no longer be tested "
+                " against beyond limits version: 2.6. To get rid of this warning, "
+                " uninstall redis-py-cluster and ensure redis-py>=4.2.0 is installed"
             )
-            self.storage = redis_cluster.RedisCluster(
-                startup_nodes=[{"host": c[0], "port": c[1]} for c in cluster_hosts],
-                **options
-            )
+        )
+        self.storage = redis_cluster.RedisCluster(
+            startup_nodes=[{"host": c[0], "port": c[1]} for c in cluster_hosts],
+            **options
+        )
 
     def reset(self) -> Optional[int]:
         """

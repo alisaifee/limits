@@ -1,9 +1,10 @@
 import time
 import urllib.parse
-from typing import Optional
+from typing import Optional, Union
 
 from deprecated.sphinx import versionadded
 
+from ...typing import EmcacheClientP
 from .base import Storage
 
 
@@ -20,7 +21,7 @@ class MemcachedStorage(Storage):
 
     DEPENDENCIES = ["emcache"]
 
-    def __init__(self, uri: str, **options):
+    def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
         """
         :param uri: memcached location of the form
          ``async+memcached://host:port,host:port``
@@ -39,15 +40,15 @@ class MemcachedStorage(Storage):
         self._options = options
         self._storage = None
         super().__init__()
-        self.dependency = self.dependencies["emcache"]
+        self.dependency = self.dependencies["emcache"].module
 
-    async def get_storage(self):
+    async def get_storage(self) -> EmcacheClientP:
         if not self._storage:
             self._storage = await self.dependency.create_client(
                 [self.dependency.MemcachedHostAddress(h, p) for h, p in self.hosts],
                 **self._options,
             )
-
+        assert self._storage
         return self._storage
 
     async def get(self, key: str) -> int:
@@ -66,7 +67,7 @@ class MemcachedStorage(Storage):
         await (await self.get_storage()).delete(key.encode("utf-8"))
 
     async def incr(
-        self, key: str, expiry: int, elastic_expiry=False, amount: int = 1
+        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
     ) -> int:
         """
         increments the counter for a given rate limit key

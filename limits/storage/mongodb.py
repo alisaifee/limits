@@ -47,9 +47,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         super().__init__(**options)
 
-        pymongo_module = self.dependencies["pymongo"]
-        assert pymongo_module
-        self.lib = pymongo_module
+        self.lib = self.dependencies["pymongo"].module
 
         mongo_opts = options.copy()
         [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]

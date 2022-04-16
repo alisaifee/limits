@@ -1,23 +1,18 @@
+from __future__ import annotations
+
 import asyncio
 import calendar
 import datetime
-import functools
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple, TypeVar, Union
 
 from deprecated.sphinx import versionadded
+from typing_extensions import ParamSpec
 
 from .base import MovingWindowSupport, Storage
 
-
-def ensure_indices(func):
-    @functools.wraps(func)
-    async def wrapped(self, *args, **kwargs):
-        await self.create_indices()
-
-        return await func(self, *args, **kwargs)
-
-    return wrapped
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 @versionadded(version="2.1")
@@ -33,7 +28,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     The storage scheme for MongoDB for use in an async context
     """
 
-    DEFAULT_OPTIONS = {
+    DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
         "serverSelectionTimeoutMS": 1000,
         "socketTimeoutMS": 1000,
         "connectTimeoutMS": 1000,
@@ -42,7 +37,12 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
     DEPENDENCIES = ["motor.motor_asyncio", "pymongo"]
 
-    def __init__(self, uri: str, database_name: str = "limits", **options):
+    def __init__(
+        self,
+        uri: str,
+        database_name: str = "limits",
+        **options: Union[float, str, bool],
+    ) -> None:
         """
         :param uri: uri of the form ``async+mongodb://[user:password]@host:port?...``,
          This uri is passed directly to :class:`~motor.motor_asyncio.AsyncIOMotorClient`
@@ -59,12 +59,12 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]
         uri = uri.replace("async+mongodb", "mongodb", 1)
 
-        super().__init__(uri, **options)
+        super().__init__(**options)
 
         self.dependency = self.dependencies["motor.motor_asyncio"]
         self.proxy_dependency = self.dependencies["pymongo"]
 
-        self.storage = self.dependency.AsyncIOMotorClient(uri, **mongo_opts)
+        self.storage = self.dependency.module.AsyncIOMotorClient(uri, **mongo_opts)
         # TODO: Fix this hack. It was noticed when running a benchmark
         # with FastAPI - however - doesn't appear in unit tests or in an isolated
         # use. Reference: https://jira.mongodb.org/browse/MOTOR-822
@@ -74,10 +74,10 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self.__indices_created = False
 
     @property
-    def database(self):
+    def database(self):  # type: ignore
         return self.storage.get_database(self.__database_name)
 
-    async def create_indices(self):
+    async def create_indices(self) -> None:
         if not self.__indices_created:
             await asyncio.gather(
                 self.database.counters.create_index("expireAt", expireAfterSeconds=0),
@@ -101,7 +101,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         return num_keys
 
-    async def clear(self, key: str):
+    async def clear(self, key: str) -> None:
         """
         :param key: the key to clear rate limits for
         """
@@ -119,7 +119,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         return calendar.timegm(expiry.timetuple())
 
-    async def get(self, key: str):
+    async def get(self, key: str) -> int:
         """
         :param key: the key to get the counter value for
         """
@@ -130,9 +130,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         return counter and counter["count"] or 0
 
-    @ensure_indices
     async def incr(
-        self, key: str, expiry: int, elastic_expiry=False, amount: int = 1
+        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
     ) -> int:
         """
         increments the counter for a given rate limit key
@@ -143,6 +142,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
          window every hit.
         :param amount: the number to increment by
         """
+        await self.create_indices()
+
         expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
 
         response = await self.database.counters.find_one_and_update(
@@ -169,10 +170,10 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             ],
             upsert=True,
             projection=["count"],
-            return_document=self.proxy_dependency.ReturnDocument.AFTER,
+            return_document=self.proxy_dependency.module.ReturnDocument.AFTER,
         )
 
-        return response["count"]
+        return int(response["count"])
 
     async def check(self) -> bool:
         """
@@ -186,7 +187,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         except:  # noqa: E722
             return False
 
-    async def get_moving_window(self, key, limit, expiry):
+    async def get_moving_window(
+        self, key: str, limit: int, expiry: int
+    ) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -226,7 +229,6 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         return (int(timestamp), 0)
 
-    @ensure_indices
     async def acquire_entry(
         self, key: str, limit: int, expiry: int, amount: int = 1
     ) -> bool:
@@ -236,9 +238,11 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :param expiry: expiry of the entry
         :param amount: the number of entries to acquire
         """
+        await self.create_indices()
+
         timestamp = time.time()
         try:
-            updates: Dict[str, Any] = {
+            updates: Dict[str, Any] = {  # type: ignore
                 "$push": {"entries": {"$each": [], "$position": 0, "$slice": limit}}
             }
 
@@ -259,5 +263,5 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             )
 
             return True
-        except self.proxy_dependency.errors.DuplicateKeyError:
+        except self.proxy_dependency.module.errors.DuplicateKeyError:
             return False

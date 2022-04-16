@@ -4,7 +4,7 @@ Implementations of storage backends to be used with
 """
 
 import urllib
-from typing import Any, Union, cast
+from typing import Union, cast
 
 import limits
 
