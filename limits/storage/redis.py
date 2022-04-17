@@ -148,7 +148,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
          directly to the constructor of :class:`redis.Redis`
         :raise ConfigurationError: when the :pypi:`redis` library is not available
         """
-        super().__init__()
+        super().__init__(uri, **options)
         redis = self.dependencies["redis"].module
 
         uri = uri.replace("redis+unix", "unix")

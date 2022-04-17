@@ -48,7 +48,7 @@ class RedisSentinelStorage(RedisStorage):
          or if the redis master host cannot be pinged.
         """
 
-        super(RedisStorage, self).__init__()
+        super(RedisStorage, self).__init__(uri, **options)
 
         parsed = urllib.parse.urlparse(uri)
         sentinel_configuration = []

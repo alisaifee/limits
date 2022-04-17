@@ -16,7 +16,9 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     STORAGE_SCHEME: Optional[List[str]]
     """The storage schemes to register against this implementation"""
 
-    def __init__(self, **options: Union[float, str, bool]) -> None:
+    def __init__(
+        self, uri: Optional[str] = None, **options: Union[float, str, bool]
+    ) -> None:
         super().__init__()
 
     @abstractmethod

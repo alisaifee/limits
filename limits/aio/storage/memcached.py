@@ -38,7 +38,7 @@ class MemcachedStorage(Storage):
 
         self._options = options
         self._storage = None
-        super().__init__()
+        super().__init__(uri, **options)
         self.dependency = self.dependencies["emcache"].module
 
     async def get_storage(self) -> EmcacheClientP:

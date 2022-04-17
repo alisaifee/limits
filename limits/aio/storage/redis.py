@@ -167,7 +167,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         uri = uri.replace("async+redis", "redis", 1)
         uri = uri.replace("redis+unix", "unix")
 
-        super().__init__()
+        super().__init__(uri, **options)
 
         self.dependency = self.dependencies["coredis"].module
 
@@ -296,7 +296,7 @@ class RedisClusterStorage(RedisStorage):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})
 
-        super(RedisStorage, self).__init__()
+        super(RedisStorage, self).__init__(uri, **options)
 
         self.dependency = self.dependencies["coredis"].module
 

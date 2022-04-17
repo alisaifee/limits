@@ -47,7 +47,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :raise ConfigurationError: when the :pypi:`pymongo` library is not available
         """
 
-        super().__init__(**options)
+        super().__init__(uri, **options)
 
         self.lib = self.dependencies["pymongo"].module
 

@@ -26,13 +26,13 @@ class MemoryStorage(Storage, MovingWindowSupport):
 
     STORAGE_SCHEME = ["memory"]
 
-    def __init__(self, **_: str):
+    def __init__(self, uri: Optional[str] = None, **_: str):
         self.storage: limits.typing.Counter[str] = Counter()
         self.expirations: Dict[str, float] = {}
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
-        super().__init__()
+        super().__init__(uri, **_)
 
     def __expire_events(self) -> None:
         for key in list(self.events.keys()):

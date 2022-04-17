@@ -56,7 +56,7 @@ class RedisClusterStorage(RedisStorage):
         self.__pick_storage(cluster_hosts, **{**self.DEFAULT_OPTIONS, **options})
         assert self.storage
         self.initialize_storage(uri)
-        super(RedisStorage, self).__init__()
+        super(RedisStorage, self).__init__(uri, **options)
 
     def __pick_storage(
         self, cluster_hosts: List[Tuple[str, int]], **options: Union[float, str, bool]

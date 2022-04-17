@@ -32,12 +32,12 @@ class MemoryStorage(Storage, MovingWindowSupport):
     async context
     """
 
-    def __init__(self, **_: str) -> None:
+    def __init__(self, uri: Optional[str] = None, **_: str) -> None:
         self.storage: limits.typing.Counter[str] = Counter()
         self.expirations: Dict[str, float] = {}
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer: Optional[asyncio.Task[None]] = None
-        super().__init__()
+        super().__init__(uri, **_)
 
     async def __expire_events(self) -> None:
         for key in self.events.keys():
