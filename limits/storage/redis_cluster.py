@@ -35,7 +35,6 @@ class RedisClusterStorage(RedisStorage):
     "Default options passed to the :class:`~redis.cluster.RedisCluster`"
 
     DEPENDENCIES = {"redis": Version("4.2.0"), "rediscluster": Version("2.0.0")}
-    FAIL_ON_MISSING_DEPENDENCY = False
 
     def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
         """

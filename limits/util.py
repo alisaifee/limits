@@ -73,7 +73,6 @@ class LazyDependency:
     """
 
     DEPENDENCIES: Union[Dict[str, Optional[Version]], List[str]] = []
-    FAIL_ON_MISSING_DEPENDENCY: bool = True
     """
     The python modules this class has a dependency on.
     Used to lazily populate the :attr:`dependencies`
