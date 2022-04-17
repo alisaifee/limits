@@ -9,3 +9,7 @@ exclude_lines =
     pragma: no cover
     noqa
     raise NotImplementedError
+    @overload
+    @abstractmethod
+    if TYPE_CHECKING
+    if typing.TYPE_CHECKING
