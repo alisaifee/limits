@@ -1,10 +1,10 @@
 import threading
 import time
-import typing
 from collections import Counter
-from typing import Dict, List, Tuple
 
-from .base import MovingWindowSupport, Storage
+import limits.typing
+from limits.storage.base import MovingWindowSupport, Storage
+from limits.typing import Dict, List, Optional, Tuple
 
 
 class LockableEntry(threading._RLock):
@@ -27,7 +27,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
     STORAGE_SCHEME = ["memory"]
 
     def __init__(self, **_: str):
-        self.storage: typing.Counter[str] = Counter()
+        self.storage: limits.typing.Counter[str] = Counter()
         self.expirations: Dict[str, float] = {}
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer = threading.Timer(0.01, self.__expire_events)
@@ -159,7 +159,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
 
         return True
 
-    def reset(self) -> typing.Optional[int]:
+    def reset(self) -> Optional[int]:
         self.storage.clear()
         self.expirations.clear()
         self.events.clear()

@@ -3,9 +3,11 @@ from __future__ import annotations
 import calendar
 import datetime
 import time
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 from deprecated.sphinx import versionadded
+
+from limits.typing import Dict, Optional, Tuple, Union
 
 from .base import MovingWindowSupport, Storage
 

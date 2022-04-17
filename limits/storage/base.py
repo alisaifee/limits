@@ -1,8 +1,8 @@
 import threading
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
 
 from limits.storage.registry import StorageRegistry
+from limits.typing import List, Optional, Tuple, Union
 from limits.util import LazyDependency
 
 

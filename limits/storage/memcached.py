@@ -3,12 +3,12 @@ import threading
 import time
 import urllib.parse
 from types import ModuleType
-from typing import Callable, List, Optional, Tuple, Union, cast
+from typing import cast
 
-from ..errors import ConfigurationError
-from ..typing import MemcachedClientP, P, R
-from ..util import get_dependency
-from .base import Storage
+from limits.errors import ConfigurationError
+from limits.storage.base import Storage
+from limits.typing import Callable, List, MemcachedClientP, Optional, P, R, Tuple, Union
+from limits.util import get_dependency
 
 
 class MemcachedStorage(Storage):

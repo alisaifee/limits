@@ -1,15 +1,14 @@
 import time
 import urllib
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 from deprecated.sphinx import versionadded
 from packaging.version import Version
 
+from limits.aio.storage.base import MovingWindowSupport, Storage
 from limits.errors import ConfigurationError
+from limits.typing import AsyncRedisClient, Dict, Optional, Tuple, Union
 from limits.util import get_package_data
-
-from ...typing import AsyncRedisClient
-from .base import MovingWindowSupport, Storage
 
 if TYPE_CHECKING:
     import coredis

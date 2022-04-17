@@ -1,10 +1,11 @@
 import urllib.parse
-from typing import TYPE_CHECKING, Dict, Optional, Union
+from typing import TYPE_CHECKING
 
 from packaging.version import Version
 
-from ..errors import ConfigurationError
-from .redis import RedisStorage
+from limits.errors import ConfigurationError
+from limits.storage.redis import RedisStorage
+from limits.typing import Dict, Optional, Union
 
 if TYPE_CHECKING:
     import redis.sentinel

@@ -1,11 +1,12 @@
 import asyncio
 import time
 from collections import Counter
-from typing import Dict, List, Optional, Tuple
 
 from deprecated.sphinx import versionadded
 
-from .base import MovingWindowSupport, Storage
+import limits.typing
+from limits.aio.storage.base import MovingWindowSupport, Storage
+from limits.typing import Dict, List, Optional, Tuple
 
 
 class LockableEntry(asyncio.Lock):
@@ -32,7 +33,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
     """
 
     def __init__(self, **_: str) -> None:
-        self.storage: Counter[str] = Counter()
+        self.storage: limits.typing.Counter[str] = Counter()
         self.expirations: Dict[str, float] = {}
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer: Optional[asyncio.Task[None]] = None

@@ -1,11 +1,10 @@
 import time
 import urllib.parse
-from typing import Optional, Union
 
 from deprecated.sphinx import versionadded
 
-from ...typing import EmcacheClientP
-from .base import Storage
+from limits.aio.storage.base import Storage
+from limits.typing import EmcacheClientP, Optional, Union
 
 
 @versionadded(version="2.1")

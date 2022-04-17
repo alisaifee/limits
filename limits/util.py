@@ -6,10 +6,12 @@ import re
 import sys
 from collections import UserDict
 from types import ModuleType
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING
 
 import pkg_resources
 from packaging.version import Version
+
+from limits.typing import Dict, List, Optional, Tuple, Type, Union
 
 from .errors import ConfigurationError
 from .limits import GRANULARITIES, RateLimitItem
@@ -39,7 +41,13 @@ class Dependency:
     module: ModuleType
 
 
-class DependencyDict(UserDict[str, Dependency]):
+if TYPE_CHECKING:
+    _UserDict = UserDict[str, Dependency]
+else:
+    _UserDict = UserDict
+
+
+class DependencyDict(_UserDict):
     Missing = Dependency("Missing", None, None, ModuleType("Missing"))
 
     def __getitem__(self, key: str) -> Dependency:

@@ -1,12 +1,12 @@
 import urllib
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
 
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
-from ..errors import ConfigurationError
-from .redis import RedisStorage
+from limits.errors import ConfigurationError
+from limits.storage.redis import RedisStorage
+from limits.typing import Dict, List, Optional, Tuple, Union
 
 
 @versionchanged(

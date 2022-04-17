@@ -2,7 +2,7 @@ import time
 
 from deprecated.sphinx import deprecated
 
-from .memcached import MemcachedStorage
+from limits.storage.memcached import MemcachedStorage
 
 
 @deprecated(

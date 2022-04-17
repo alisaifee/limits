@@ -4,12 +4,12 @@ import asyncio
 import calendar
 import datetime
 import time
-from typing import Any, Dict, Optional, Tuple, TypeVar, Union
+from typing import Any
 
 from deprecated.sphinx import versionadded
-from typing_extensions import ParamSpec
 
-from .base import MovingWindowSupport, Storage
+from limits.aio.storage.base import MovingWindowSupport, Storage
+from limits.typing import Dict, Optional, ParamSpec, Tuple, TypeVar, Union
 
 P = ParamSpec("P")
 R = TypeVar("R")
