@@ -3,6 +3,16 @@
 Changelog
 =========
 
+v2.5.2
+------
+Release Date: 2022-04-17
+
+* Chore
+
+  * Increase strictness of type checking and annotations
+  * Ensure installations from source distributions are PEP-561
+    compliant
+
 v2.5.1
 ------
 Release Date: 2022-04-15
@@ -288,6 +298,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
