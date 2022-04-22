@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v2.5.3
+------
+Release Date: 2022-04-22
+
+* Chore
+
+  * Automate Github releases
+
 v2.5.2
 ------
 Release Date: 2022-04-17
@@ -298,6 +306,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
