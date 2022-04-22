@@ -149,5 +149,30 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
+  github_release:
+    needs: [upload_pypi_release]
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: dist
+      - name: Generate release notes
+        run: |
+          ./scripts/github_release_notes.sh > release_notes.md
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          bodyFile: release_notes.md
+          token: ${{ secrets.GITHUB_TOKEN }}
+
 
 
