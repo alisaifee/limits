@@ -61,7 +61,7 @@ jobs:
             legacy_cluster: True
             os: ubuntu-latest
           - python-version: "3.11.0-alpha.7"
-            marker: 'not integration'
+            marker: 'not integration and not ((mongodb or memcached) and asyncio)'
             legacy_cluster: False
             os: ubuntu-latest
     runs-on: "${{ matrix.os }}"
