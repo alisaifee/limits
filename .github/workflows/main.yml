@@ -60,7 +60,7 @@ jobs:
             marker: ''
             legacy_cluster: True
             os: ubuntu-latest
-          - python-version: "3.11.0a7"
+          - python-version: "3.11.0-alpha.7"
             marker: 'not integration'
             legacy_cluster: False
             os: ubuntu-latest
