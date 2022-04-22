@@ -60,6 +60,10 @@ jobs:
             marker: ''
             legacy_cluster: True
             os: ubuntu-latest
+          - python-version: "3.11.0a7"
+            marker: 'not integration'
+            legacy_cluster: False
+            os: ubuntu-latest
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v3
