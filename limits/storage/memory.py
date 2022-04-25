@@ -8,8 +8,6 @@ from limits.typing import Dict, List, Optional, Tuple
 
 
 class LockableEntry(threading._RLock):
-    __slots__ = ["atime", "expiry"]
-
     def __init__(self, expiry: float) -> None:
         self.atime = time.time()
         self.expiry = self.atime + expiry

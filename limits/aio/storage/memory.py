@@ -10,8 +10,6 @@ from limits.typing import Dict, List, Optional, Tuple
 
 
 class LockableEntry(asyncio.Lock):
-    __slots__ = ["atime", "expiry"]
-
     def __init__(self, expiry: int) -> None:
         self.atime = time.time()
         self.expiry = self.atime + expiry
