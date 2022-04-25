@@ -3,6 +3,19 @@
 Changelog
 =========
 
+v2.6.0
+------
+Release Date: 2022-04-25
+
+* Deprecation
+
+  * Removed tests for rediscluster using the :pypi:`redis-py-cluster` library
+
+* Bug Fix
+
+  * Fix incorrect ``__slots__`` declaration in :class:`limits.RateLimitItem`
+    and it's subclasses (`Issue #121 <https://github.com/alisaifee/limits/issues/121>`__)
+
 v2.5.3
 ------
 Release Date: 2022-04-22
@@ -306,6 +319,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
