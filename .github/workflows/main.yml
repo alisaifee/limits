@@ -45,7 +45,6 @@ jobs:
         python-version: [3.8]
         marker: [not integration]
         os: [ubuntu-latest]
-        legacy_cluster: [False]
         include:
           - python-version: 3.7
             marker: 'not (integration or asyncio)'
@@ -55,10 +54,6 @@ jobs:
             os: ubuntu-latest
           - python-version: "3.10"
             marker: ''
-            os: ubuntu-latest
-          - python-version: "3.10"
-            marker: ''
-            legacy_cluster: True
             os: ubuntu-latest
     runs-on: "${{ matrix.os }}"
     steps:
@@ -79,11 +74,6 @@ jobs:
         python -m pip install "pip<22"
         python -m pip install --upgrade setuptools wheel
         pip install -r requirements/ci.txt
-    - name: Setup redis-py-cluster
-      if: ${{ matrix.legacy_cluster }}
-      run: |
-        pip uninstall redis -y
-        pip install redis-py-cluster
     - name: Tests
       env:
         CI: "True"

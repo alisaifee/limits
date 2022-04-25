@@ -9,7 +9,6 @@ import pymongo
 import pytest
 import redis
 import redis.sentinel
-from packaging.version import Version
 
 
 def check_redis_cluster_ready(host, port):
@@ -115,12 +114,7 @@ def redis_cluster_client(docker_services):
     if os.environ.get("CI") == "True":
         time.sleep(10)
 
-    if Version(redis.__version__) > Version("4.2.0"):
-        return redis.cluster.RedisCluster("localhost", 7001)
-    else:
-        import rediscluster
-
-        return rediscluster.RedisCluster("localhost", 7001)
+    return redis.cluster.RedisCluster("localhost", 7001)
 
 
 @pytest.fixture(scope="session")

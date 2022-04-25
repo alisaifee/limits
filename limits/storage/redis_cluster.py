@@ -34,7 +34,10 @@ class RedisClusterStorage(RedisStorage):
     }
     "Default options passed to the :class:`~redis.cluster.RedisCluster`"
 
-    DEPENDENCIES = {"redis": Version("4.2.0"), "rediscluster": Version("2.0.0")}
+    DEPENDENCIES = {
+        "redis": Version("4.2.0"),
+        "rediscluster": Version("2.0.0"),  # Deprecated since 2.6.0
+    }
 
     def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
         """
@@ -69,7 +72,7 @@ class RedisClusterStorage(RedisStorage):
             )
             self.using_redis_py = True
             return
-        except ConfigurationError:
+        except ConfigurationError:  # pragma: no cover
             self.__use_legacy_cluster_implementation(cluster_hosts, **options)
             if not self.storage:
                 raise ConfigurationError(
@@ -78,18 +81,18 @@ class RedisClusterStorage(RedisStorage):
                         " Cluster support requires either redis-py>=4.2 or"
                         " redis-py-cluster"
                     )
-                )  # pragma: no cover
+                )
 
     def __use_legacy_cluster_implementation(
         self, cluster_hosts: List[Tuple[str, int]], **options: Union[float, str, bool]
-    ) -> None:
+    ) -> None:  # pragma: no cover
         redis_cluster = self.dependencies["rediscluster"].module
         warnings.warn(
             (
                 "Using redis-py-cluster is deprecated as the library has been"
                 " absorbed by redis-py (>=4.2). The support will be eventually "
-                " removed from the limits library and will no longer be tested "
-                " against beyond limits version: 2.6. To get rid of this warning, "
+                " removed from the limits library and is no longer tested "
+                " against since version: 2.6. To get rid of this warning, "
                 " uninstall redis-py-cluster and ensure redis-py>=4.2.0 is installed"
             )
         )
@@ -117,6 +120,6 @@ class RedisClusterStorage(RedisStorage):
                 keys = node.keys("LIMITER*")
                 count += sum([node.delete(k.decode("utf-8")) for k in keys])
             return count
-        else:
+        else:  # pragma: no cover
             keys = self.storage.keys("LIMITER*")
             return sum([self.storage.delete(k.decode("utf-8")) for k in keys])
