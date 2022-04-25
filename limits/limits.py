@@ -6,6 +6,8 @@ from __future__ import annotations
 from functools import total_ordering
 from typing import Dict, NamedTuple, Optional, Tuple, Type, Union, cast
 
+from limits.typing import ClassVar, List
+
 
 def safe_string(value: Union[bytes, str, int]) -> str:
     """
@@ -37,8 +39,13 @@ GRANULARITIES: Dict[str, Type[RateLimitItem]] = {}
 
 class RateLimitItemMeta(type):
     def __new__(
-        cls, name: str, parents: Tuple[type, ...], dct: Dict[str, Granularity]
+        cls,
+        name: str,
+        parents: Tuple[type, ...],
+        dct: Dict[str, Union[Granularity, List[str]]],
     ) -> RateLimitItemMeta:
+        if "__slots__" not in dct:
+            dct["__slots__"] = []
         granularity = super().__new__(cls, name, parents, dct)
 
         if "GRANULARITY" in dct:
@@ -62,9 +69,9 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
     :param namespace: category for the specific rate limit
     """
 
-    __slots__ = ["namespace", "amount", "multiples", "granularity"]
+    __slots__ = ["namespace", "amount", "multiples"]
 
-    GRANULARITY: Granularity
+    GRANULARITY: ClassVar[Granularity]
     """
     A tuple describing the granularity of this limit as
     (number of seconds, name)

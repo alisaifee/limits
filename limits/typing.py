@@ -10,7 +10,7 @@ from typing import (
     Union,
 )
 
-from typing_extensions import Counter, ParamSpec, Protocol
+from typing_extensions import ClassVar, Counter, ParamSpec, Protocol
 
 Serializable = Union[int, str, float]
 
@@ -120,6 +120,7 @@ class ScriptP(Protocol[R_co]):
 __all__ = [
     "AsyncRedisClient",
     "Callable",
+    "ClassVar",
     "Counter",
     "Dict",
     "EmcacheClientP",
