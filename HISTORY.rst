@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v2.5.4
+------
+Release Date: 2022-04-25
+
+* Bug Fix
+
+  * Fix typing regression with strategy constructors `Issue 88 <https://github.com/alisaifee/limits/issues/88>`_
+
 v2.5.3
 ------
 Release Date: 2022-04-22
@@ -306,6 +314,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
