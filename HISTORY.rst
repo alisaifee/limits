@@ -16,6 +16,14 @@ Release Date: 2022-04-25
   * Fix incorrect ``__slots__`` declaration in :class:`limits.RateLimitItem`
     and it's subclasses (`Issue #121 <https://github.com/alisaifee/limits/issues/121>`__)
 
+v2.5.4
+------
+Release Date: 2022-04-25
+
+* Bug Fix
+
+  * Fix typing regression with strategy constructors `Issue 88 <https://github.com/alisaifee/limits/issues/88>`_
+
 v2.5.3
 ------
 Release Date: 2022-04-22
