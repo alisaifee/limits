@@ -81,7 +81,6 @@ class RedisInteractor:
         window = await self.lua_moving_window.execute(
             [key], [int(timestamp - expiry), limit]
         )
-
         return window or (timestamp, 0)
 
     async def _acquire_entry(
@@ -356,7 +355,7 @@ class RedisSentinelStorage(RedisStorage):
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`coredis.sentinel.Sentinel`
         :raise ConfigurationError: when the coredis library is not available
-         or if the redis master host cannot be pinged.
+         or if the redis primary host cannot be pinged.
         """
 
         parsed = urllib.parse.urlparse(uri)
@@ -394,8 +393,8 @@ class RedisSentinelStorage(RedisStorage):
             sentinel_kwargs={**parsed_auth, **sentinel_options},
             **{**parsed_auth, **connection_options},
         )
-        self.storage = self.sentinel.master_for(self.service_name)
-        self.storage_slave = self.sentinel.slave_for(self.service_name)
+        self.storage = self.sentinel.primary_for(self.service_name)
+        self.storage_replica = self.sentinel.replica_for(self.service_name)
         self.initialize_storage(uri)
 
     async def get(self, key: str) -> int:
@@ -403,19 +402,19 @@ class RedisSentinelStorage(RedisStorage):
         :param key: the key to get the counter value for
         """
 
-        return await super()._get(key, self.storage_slave)
+        return await super()._get(key, self.storage_replica)
 
     async def get_expiry(self, key: str) -> int:
         """
         :param key: the key to get the expiry for
         """
 
-        return await super()._get_expiry(key, self.storage_slave)
+        return await super()._get_expiry(key, self.storage_replica)
 
     async def check(self) -> bool:
         """
         Check if storage is healthy by calling :meth:`coredis.StrictRedis.ping`
-        on the slave.
+        on the replica.
         """
 
-        return await super()._check(self.storage_slave)
+        return await super()._check(self.storage_replica)
