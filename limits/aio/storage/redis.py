@@ -319,7 +319,10 @@ class RedisClusterStorage(RedisStorage):
         """
 
         keys = await self.storage.keys("LIMITER*")
-        return await self.storage.delete(keys)
+        count = 0
+        for key in keys:
+            count += await self.storage.delete([key])
+        return count
 
 
 @versionadded(version="2.1")
