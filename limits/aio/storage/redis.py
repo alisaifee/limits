@@ -25,8 +25,8 @@ class RedisInteractor:
     SCRIPT_CLEAR_KEYS = get_package_data(f"{RES_DIR}/clear_keys.lua")
     SCRIPT_INCR_EXPIRE = get_package_data(f"{RES_DIR}/incr_expire.lua")
 
-    lua_moving_window: "coredis.commands.script.Script"
-    lua_acquire_window: "coredis.commands.script.Script"
+    lua_moving_window: "coredis.commands.script.Script"  # type: ignore
+    lua_acquire_window: "coredis.commands.script.Script"  # type: ignore
 
     async def _incr(
         self,
@@ -81,7 +81,9 @@ class RedisInteractor:
         window = await self.lua_moving_window.execute(
             [key], [int(timestamp - expiry), limit]
         )
-        return window or (timestamp, 0)
+        if window:
+            return tuple(window)  # type: ignore
+        return timestamp, 0
 
     async def _acquire_entry(
         self,
