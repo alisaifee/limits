@@ -3,6 +3,17 @@
 Changelog
 =========
 
+v2.6.2
+------
+Release Date: 2022-05-12
+
+* Compatibility Updates
+
+  * Update :pypi:`motor` requirements to include 3.x version
+  * Update async redis sentinel implementation to remove use of deprecated methods.
+  * Fix compatibility issue with asyncio redis ``reset`` method in cluster mode
+    when used with :pypi:`coredis` versions >= 3.5.0
+
 v2.6.1
 ------
 Release Date: 2022-04-25
@@ -336,6 +347,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
