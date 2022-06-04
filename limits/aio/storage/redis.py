@@ -1,6 +1,6 @@
 import time
 import urllib
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from deprecated.sphinx import versionadded
 from packaging.version import Version
@@ -12,7 +12,7 @@ from limits.util import get_package_data
 
 if TYPE_CHECKING:
     import coredis
-    import coredis.commands.script
+    import coredis.commands
 
 
 class RedisInteractor:
@@ -25,8 +25,10 @@ class RedisInteractor:
     SCRIPT_CLEAR_KEYS = get_package_data(f"{RES_DIR}/clear_keys.lua")
     SCRIPT_INCR_EXPIRE = get_package_data(f"{RES_DIR}/incr_expire.lua")
 
-    lua_moving_window: "coredis.commands.script.Script"  # type: ignore
-    lua_acquire_window: "coredis.commands.script.Script"  # type: ignore
+    lua_moving_window: "coredis.commands.Script[bytes]"
+    lua_acquire_window: "coredis.commands.Script[bytes]"
+    lua_clear_keys: "coredis.commands.Script[bytes]"
+    lua_incr_expire: "coredis.commands.Script[bytes]"
 
     async def _incr(
         self,
@@ -208,7 +210,9 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
                 key, expiry, self.storage, elastic_expiry, amount
             )
         else:
-            return int(await self.lua_incr_expire.execute([key], [expiry, amount]))
+            return cast(
+                int, await self.lua_incr_expire.execute([key], [expiry, amount])
+            )
 
     async def get(self, key: str) -> int:
         """
@@ -260,7 +264,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
            could be slow on very large data sets.
         """
 
-        return int(await self.lua_clear_keys.execute(["LIMITER*"]))
+        return cast(int, await self.lua_clear_keys.execute(["LIMITER*"]))
 
 
 @versionadded(version="2.1")
