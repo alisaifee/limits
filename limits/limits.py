@@ -124,11 +124,15 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, RateLimitItem):
-            return self.amount == other.amount and self.GRANULARITY == other.GRANULARITY
+            return (
+                self.amount == other.amount
+                and self.GRANULARITY == other.GRANULARITY
+                and self.multiples == other.multiples
+            )
         return False
 
     def __repr__(self) -> str:
-        return "%d per %d %s" % (self.amount, self.multiples, self.GRANULARITY.name)
+        return f"{self.amount} per {self.multiples} {self.GRANULARITY.name}"
 
     def __lt__(self, other: RateLimitItem) -> bool:
         return self.GRANULARITY.seconds < other.GRANULARITY.seconds

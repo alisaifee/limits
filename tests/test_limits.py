@@ -20,3 +20,10 @@ class TestLimits:
     def test_key_with_mixed_string_types_default_namespace(self):
         item = self.FakeLimit(1, 1)
         assert item.key_for(b"a", "b") == "LIMITER/a/b/1/1/fake"
+
+    def test_equality(self):
+        item = self.FakeLimit(1, 1)
+        assert item == self.FakeLimit(1, 1)
+        assert item != self.FakeLimit(1, 2)
+        assert item != self.FakeLimit(2, 1)
+        assert item != "someething else"
