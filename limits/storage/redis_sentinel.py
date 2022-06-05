@@ -32,6 +32,7 @@ class RedisSentinelStorage(RedisStorage):
         self,
         uri: str,
         service_name: Optional[str] = None,
+        use_replicas: bool = True,
         sentinel_kwargs: Optional[Dict[str, Union[float, str, bool]]] = None,
         **options: Union[float, str, bool]
     ) -> None:
@@ -40,6 +41,7 @@ class RedisSentinelStorage(RedisStorage):
          ``redis+sentinel://host:port,host:port/service_name``
         :param service_name: sentinel service name
          (if not provided in :attr:`uri`)
+        :param use_replicas: Whether to use replicas for read only operations
         :param sentinel_kwargs: kwargs to pass as
          :attr:`sentinel_kwargs` to :class:`redis.sentinel.Sentinel`
         :param options: all remaining keyword arguments are passed
@@ -81,6 +83,7 @@ class RedisSentinelStorage(RedisStorage):
         )
         self.storage = self.sentinel.master_for(self.service_name)
         self.storage_slave = self.sentinel.slave_for(self.service_name)
+        self.use_replicas = use_replicas
         self.initialize_storage(uri)
 
     def get(self, key: str) -> int:
@@ -88,14 +91,18 @@ class RedisSentinelStorage(RedisStorage):
         :param key: the key to get the counter value for
         """
 
-        return super()._get(key, self.storage_slave)
+        return super()._get(
+            key, self.storage_slave if self.use_replicas else self.storage
+        )
 
     def get_expiry(self, key: str) -> int:
         """
         :param key: the key to get the expiry for
         """
 
-        return super()._get_expiry(key, self.storage_slave)
+        return super()._get_expiry(
+            key, self.storage_slave if self.use_replicas else self.storage
+        )
 
     def check(self) -> bool:
         """
@@ -103,4 +110,4 @@ class RedisSentinelStorage(RedisStorage):
         on the slave.
         """
 
-        return super()._check(self.storage_slave)
+        return super()._check(self.storage_slave if self.use_replicas else self.storage)
