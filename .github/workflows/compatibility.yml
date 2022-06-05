@@ -40,6 +40,8 @@ jobs:
             marker: "mongodb"
           - service_version: "LIMITS_MONGODB_SERVER_VERSION=4.2.17"
             marker: "mongodb"
+          - service_version: "LIMITS_MEMCACHED_SERVER_VERSION=1.6.16"
+            marker: "memcached"
           - service_version: "LIMITS_MEMCACHED_SERVER_VERSION=1.6.6"
             marker: "memcached"
           - service_version: "LIMITS_MEMCACHED_SERVER_VERSION=1.5.16"
