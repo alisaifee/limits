@@ -56,7 +56,7 @@ jobs:
             marker: ''
             os: ubuntu-latest
           - python-version: "3.11.0-beta.3"
-            marker: 'not (asyncio and memcached)'
+            marker: 'not (asyncio and (memcached or mongodb))'
             os: ubuntu-latest
     runs-on: "${{ matrix.os }}"
     steps:
