@@ -3,6 +3,16 @@
 Changelog
 =========
 
+v2.6.3
+------
+Release Date: 2022-06-05
+
+* Chores
+
+  * Update development dependencies
+  * Add CI for python 3.11
+  * Increase test coverage for redis sentinel
+
 v2.6.2
 ------
 Release Date: 2022-05-12
@@ -347,6 +357,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
