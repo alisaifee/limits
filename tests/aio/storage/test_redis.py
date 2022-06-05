@@ -27,7 +27,7 @@ class AsyncSharedRedisTests:
         assert not await limiter.hit(per_second)
 
         while time.time() - start <= 1:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.2)
 
         for _ in range(10):
             assert await limiter.hit(per_second)
