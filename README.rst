@@ -49,11 +49,6 @@ Storage backends
 - `Redis <https://limits.readthedocs.io/en/latest/storage.html#redis>`_
 - `Memcached <https://limits.readthedocs.io/en/latest/storage.html#memcached>`_
 - `In-Memory <https://limits.readthedocs.io/en/latest/storage.html#in-memory>`_
-
-============
-Experimental
-============
-
 - `MongoDB <https://limits.readthedocs.io/en/latest/storage.html#mongodb>`_
 
 Dive right in

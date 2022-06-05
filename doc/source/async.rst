@@ -3,7 +3,6 @@ Async Support
 =============
 
 .. versionadded:: 2.1
-.. warning:: Experimental
 
 A new namespace ``limits.aio`` is available which mirrors the original
 ``limits.storage`` and ``limits.strategies`` packages.

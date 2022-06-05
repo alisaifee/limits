@@ -216,7 +216,6 @@ Async Storage
 =============
 
 .. versionadded:: 2.1
-.. warning:: Experimental
 
 When using limits in an async code base the same uri schema can be used
 to query for an async implementation of the storage by prefixing the
