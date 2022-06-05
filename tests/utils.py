@@ -77,6 +77,12 @@ all_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis_cluster,
         ),
         pytest.param(
+            "redis+sentinel://localhost:26379/localhost-redis-sentinel",
+            {},
+            pytest.lazy_fixture("redis_sentinel"),
+            marks=pytest.mark.redis_sentinel,
+        ),
+        pytest.param(
             "mongodb://localhost:37017/",
             {},
             pytest.lazy_fixture("mongodb"),
@@ -100,6 +106,12 @@ moving_window_storage = pytest.mark.parametrize(
             {},
             pytest.lazy_fixture("redis_cluster"),
             marks=pytest.mark.redis_cluster,
+        ),
+        pytest.param(
+            "redis+sentinel://localhost:26379/localhost-redis-sentinel",
+            {},
+            pytest.lazy_fixture("redis_sentinel"),
+            marks=pytest.mark.redis_sentinel,
         ),
         pytest.param(
             "mongodb://localhost:37017/",
@@ -139,6 +151,12 @@ async_all_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis_cluster,
         ),
         pytest.param(
+            "async+redis+sentinel://localhost:26379/localhost-redis-sentinel",
+            {},
+            pytest.lazy_fixture("redis_sentinel"),
+            marks=pytest.mark.redis_sentinel,
+        ),
+        pytest.param(
             "async+mongodb://localhost:37017/",
             {},
             pytest.lazy_fixture("mongodb"),
@@ -162,6 +180,12 @@ async_moving_window_storage = pytest.mark.parametrize(
             {},
             pytest.lazy_fixture("redis_cluster"),
             marks=pytest.mark.redis_cluster,
+        ),
+        pytest.param(
+            "async+redis+sentinel://localhost:26379/localhost-redis-sentinel",
+            {},
+            pytest.lazy_fixture("redis_sentinel"),
+            marks=pytest.mark.redis_sentinel,
         ),
         pytest.param(
             "async+mongodb://localhost:37017/",
