@@ -8,14 +8,14 @@ Initialize the strategy & storage
 Initialize the storage backend
 ------------------------------
 
-.. tabbed:: In Memory
+.. tab:: In Memory
 
     .. code::
 
         from limits import storage
         memory_storage = storage.MemoryStorage()
 
-.. tabbed:: Memcached
+.. tab:: Memcached
 
     .. code::
 
@@ -24,7 +24,7 @@ Initialize the storage backend
             "memcached://localhost:11211"
         )
 
-.. tabbed:: Redis
+.. tab:: Redis
 
     .. code::
 

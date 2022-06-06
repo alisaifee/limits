@@ -50,7 +50,7 @@ extensions = [
     "sphinxext.opengraph",
     "sphinxcontrib.programoutput",
     "sphinx_copybutton",
-    "sphinx_panels",
+    "sphinx_inline_tabs",
     "sphinx_paramlinks",
 ]
 

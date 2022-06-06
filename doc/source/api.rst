@@ -17,7 +17,7 @@ Strategies
 ==========
 
 
-.. tabbed:: Default
+.. tab:: Default
 
     The available built in rate limiting strategies which expect
     a single parameter: a subclass of :class:`~limits.storage.Storage`.
@@ -34,7 +34,7 @@ Strategies
 
     .. autoclass:: RateLimiter
 
-.. tabbed:: Async
+.. tab:: Async
 
 
     These variants should be used in for asyncio support. These strategies

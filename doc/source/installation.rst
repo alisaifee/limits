@@ -8,7 +8,7 @@ Install the package with pip:
 
    $ pip install limits
 
-.. tabbed:: Redis
+.. tab:: Redis
 
    .. code:: console
 
@@ -18,7 +18,7 @@ Install the package with pip:
 
    .. literalinclude:: ../../requirements/storage/redis.txt
 
-.. tabbed:: RedisCluster
+.. tab:: RedisCluster
 
    .. code:: console
 
@@ -28,7 +28,7 @@ Install the package with pip:
 
    .. literalinclude:: ../../requirements/storage/rediscluster.txt
 
-.. tabbed:: Memcached
+.. tab:: Memcached
 
    .. code:: console
 
@@ -38,7 +38,7 @@ Install the package with pip:
 
    .. literalinclude:: ../../requirements/storage/memcached.txt
 
-.. tabbed:: MongoDB
+.. tab:: MongoDB
 
    .. code:: console
 
@@ -59,7 +59,7 @@ If you are using an async code base you can install the storage dependencies
 along with the package using the following extras:
 
 
-.. tabbed:: Redis
+.. tab:: Redis
 
    .. code:: console
 
@@ -69,7 +69,7 @@ along with the package using the following extras:
 
    .. literalinclude:: ../../requirements/storage/async-redis.txt
 
-.. tabbed:: Memcached
+.. tab:: Memcached
 
    .. code:: console
 
@@ -79,7 +79,7 @@ along with the package using the following extras:
 
    .. literalinclude:: ../../requirements/storage/async-memcached.txt
 
-.. tabbed:: MongoDB
+.. tab:: MongoDB
 
    .. code:: console
 

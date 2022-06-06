@@ -23,7 +23,7 @@ dependency libraries and the associated storage versions.
 The CI tests against these versions on a nightly basis and you can see
 the results in `github <https://github.com/alisaifee/limits/actions/workflows/compatibility.yml>`_.
 
-.. tabbed:: Redis
+.. tab:: Redis
 
    Dependency versions:
 
@@ -45,7 +45,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
      .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SENTINEL_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
-.. tabbed:: Redis Cluster
+.. tab:: Redis Cluster
 
    Dependency versions:
 
@@ -59,7 +59,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
      .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
-.. tabbed:: Memcached
+.. tab:: Memcached
 
    Dependency versions:
 
@@ -73,7 +73,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
      .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MEMCACHED_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
-.. tabbed:: MongoDB
+.. tab:: MongoDB
 
    Dependency versions:
 
