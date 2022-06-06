@@ -9,7 +9,7 @@ Storage Backends
 .. _storage-scheme:
 
 Supported versions
-=================
+==================
 
 .. image:: https://img.shields.io/github/workflow/status/alisaifee/limits/Compatibility?label=Compatibility%20Tests&style=for-the-badge
    :alt: GitHub Workflow Status
