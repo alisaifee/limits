@@ -77,7 +77,7 @@ all_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis_cluster,
         ),
         pytest.param(
-            "redis+sentinel://localhost:26379/localhost-redis-sentinel",
+            "redis+sentinel://localhost:26379/mymaster",
             {"use_replicas": False},
             pytest.lazy_fixture("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
@@ -108,7 +108,7 @@ moving_window_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis_cluster,
         ),
         pytest.param(
-            "redis+sentinel://localhost:26379/localhost-redis-sentinel",
+            "redis+sentinel://localhost:26379/mymaster",
             {"use_replicas": False},
             pytest.lazy_fixture("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
@@ -151,7 +151,7 @@ async_all_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis_cluster,
         ),
         pytest.param(
-            "async+redis+sentinel://localhost:26379/localhost-redis-sentinel",
+            "async+redis+sentinel://localhost:26379/mymaster",
             {"use_replicas": False},
             pytest.lazy_fixture("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
@@ -182,7 +182,7 @@ async_moving_window_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis_cluster,
         ),
         pytest.param(
-            "async+redis+sentinel://localhost:26379/localhost-redis-sentinel",
+            "async+redis+sentinel://localhost:26379/mymaster",
             {"use_replicas": False},
             pytest.lazy_fixture("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,

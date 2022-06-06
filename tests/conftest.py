@@ -22,7 +22,7 @@ def check_sentinel_ready(host, port):
     try:
         return (
             redis.sentinel.Sentinel([(host, port)])
-            .master_for("localhost-redis-sentinel")
+            .master_for("mymaster")
             .ping()
         )
     except:  # noqa
@@ -37,7 +37,7 @@ def check_sentinel_auth_ready(host, port):
                 sentinel_kwargs={"password": "sekret"},
                 password="sekret",
             )
-            .master_for("localhost-redis-sentinel")
+            .master_for("mymaster")
             .ping()
         )
     except:  # noqa
@@ -229,14 +229,14 @@ def redis_cluster(redis_cluster_client):
 
 @pytest.fixture
 def redis_sentinel(redis_sentinel_client):
-    redis_sentinel_client.master_for("localhost-redis-sentinel").flushall()
+    redis_sentinel_client.master_for("mymaster").flushall()
 
     return redis_sentinel
 
 
 @pytest.fixture
 def redis_sentinel_auth(redis_sentinel_auth_client):
-    redis_sentinel_auth_client.master_for("localhost-redis-sentinel").flushall()
+    redis_sentinel_auth_client.master_for("mymaster").flushall()
 
     return redis_sentinel_auth_client
 

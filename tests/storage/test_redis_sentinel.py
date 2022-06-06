@@ -11,7 +11,7 @@ class TestRedisSentinelStorage(SharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_sentinel):
         self.storage_url = "redis+sentinel://localhost:26379"
-        self.service_name = "localhost-redis-sentinel"
+        self.service_name = "mymaster"
         self.storage = RedisSentinelStorage(
             self.storage_url, service_name=self.service_name
         )
@@ -59,7 +59,7 @@ class TestRedisSentinelStorage(SharedRedisTests):
         redis_sentinel_auth.master_for(self.service_name).flushall()
         storage_url = (
             f"redis+sentinel://{username}:{sentinel_password}@localhost:36379/"
-            "localhost-redis-sentinel"
+            "mymaster"
         )
         args = {}
         if password:

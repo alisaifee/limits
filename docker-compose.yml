@@ -46,7 +46,6 @@ services:
     image: 'bitnami/redis-sentinel:${LIMITS_REDIS_SENTINEL_SERVER_VERSION:-latest}'
     depends_on: [redis-sentinel-slave]
     environment:
-      - REDIS_MASTER_SET=localhost-redis-sentinel
       - REDIS_MASTER_HOST=${HOST_IP}
       - REDIS_MASTER_PORT_NUMBER=6380
     ports:
@@ -55,7 +54,6 @@ services:
     image: 'bitnami/redis-sentinel:${LIMITS_REDIS_SENTINEL_SERVER_VERSION:-latest}'
     depends_on: [redis-sentinel-slave-auth]
     environment:
-      - REDIS_MASTER_SET=localhost-redis-sentinel
       - REDIS_MASTER_HOST=${HOST_IP}
       - REDIS_MASTER_PASSWORD=sekret
       - REDIS_MASTER_PORT_NUMBER=6382

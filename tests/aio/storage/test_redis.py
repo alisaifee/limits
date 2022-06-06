@@ -152,7 +152,7 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
     @pytest.fixture(autouse=True)
     def setup(self, redis_sentinel):
         self.storage_url = "redis+sentinel://localhost:26379"
-        self.service_name = "localhost-redis-sentinel"
+        self.service_name = "mymaster"
         self.storage = RedisSentinelStorage(
             f"async+{self.storage_url}", service_name=self.service_name
         )
@@ -211,7 +211,7 @@ class TestAsyncRedisSentinelStorage(AsyncSharedRedisTests):
     ):
         storage_url = (
             f"async+redis+sentinel://{username}:{sentinel_password}@localhost:36379/"
-            "localhost-redis-sentinel"
+            "mymaster"
         )
         args = {}
         if password:
