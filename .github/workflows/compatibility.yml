@@ -16,6 +16,8 @@ jobs:
         service_version: ["ALL_LATEST=true"]
         marker: [not integration]
         include:
+          - service_version: "LIMITS_REDIS_SERVER_SSL_VERSION=7.0"
+            marker: "redis"
           - service_version: "LIMITS_REDIS_SERVER_SSL_VERSION=6.2.6"
             marker: "redis"
           - service_version: "LIMITS_REDIS_SERVER_SSL_VERSION=6.0.16"
@@ -26,13 +28,9 @@ jobs:
             marker: "redis"
           - service_version: "LIMITS_REDIS_SERVER_VERSION=6.0.16"
             marker: "redis"
-          - service_version: "LIMITS_REDIS_SERVER_VERSION=5.0.14"
-            marker: "redis"
           - service_version: "LIMITS_REDIS_SENTINEL_SERVER_VERSION=6.2.6"
             marker: "redis_sentinel"
           - service_version: "LIMITS_REDIS_SENTINEL_SERVER_VERSION=6.0.16"
-            marker: "redis_sentinel"
-          - service_version: "LIMITS_REDIS_SENTINEL_SERVER_VERSION=5.0.14"
             marker: "redis_sentinel"
           - service_version: "LIMITS_MONGODB_SERVER_VERSION=5.0.3"
             marker: "mongodb"
