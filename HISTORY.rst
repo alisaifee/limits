@@ -3,6 +3,17 @@
 Changelog
 =========
 
+v2.7.0
+------
+Release Date: 2022-07-16
+
+* Compatibility Updates
+
+  * Update :pypi:`coredis` requirements to include 4.x versions
+  * Remove CI / support for redis < 6.0
+  * Remove python 3.7 from CI
+  * Add redis 7.0 in CI
+
 v2.6.3
 ------
 Release Date: 2022-06-05
@@ -357,6 +368,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
