@@ -60,7 +60,7 @@ class DependencyDict(_UserDict):
         ):
             raise ConfigurationError(
                 f"The minimum version of {dependency.version_required}"
-                " of {dependency.name} could not be found"
+                f" of {dependency.name} could not be found"
             )
         return dependency
 

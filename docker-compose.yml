@@ -129,3 +129,9 @@ services:
     image: "mongo:${LIMITS_MONGODB_SERVER_VERSION:-latest}"
     ports:
       - '37017:27017'
+  dragonfly:
+    image: "docker.dragonflydb.io/dragonflydb/dragonfly:latest"
+    ports:
+      - '21379:6379'
+    ulimits:
+      memlock: -1
