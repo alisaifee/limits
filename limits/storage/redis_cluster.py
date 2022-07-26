@@ -1,5 +1,6 @@
 import urllib
 import warnings
+from typing import cast
 
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
@@ -122,4 +123,6 @@ class RedisClusterStorage(RedisStorage):
             return count
         else:  # pragma: no cover
             keys = self.storage.keys("LIMITER*")
-            return sum([self.storage.delete(k.decode("utf-8")) for k in keys])
+            return cast(
+                int, sum([self.storage.delete(k.decode("utf-8")) for k in keys])
+            )
