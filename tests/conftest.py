@@ -18,13 +18,25 @@ def check_redis_cluster_ready(host, port):
         return False
 
 
-def check_sentinel_ready(host, port):
+def check_redis_ssl_cluster_ready(host, port):
+
+    storage_url = (
+        "rediss://localhost:8301/?ssl_cert_reqs=required"
+        "&ssl_keyfile=./tests/tls/client.key"
+        "&ssl_certfile=./tests/tls/client.crt"
+        "&ssl_ca_certs=./tests/tls/ca.crt"
+    )
     try:
         return (
-            redis.sentinel.Sentinel([(host, port)])
-            .master_for("mymaster")
-            .ping()
+            redis.Redis.from_url(storage_url).cluster("info")["cluster_state"] == "ok"
         )
+    except Exception:
+        return False
+
+
+def check_sentinel_ready(host, port):
+    try:
+        return redis.sentinel.Sentinel([(host, port)]).master_for("mymaster").ping()
     except:  # noqa
         return False
 
@@ -115,6 +127,24 @@ def redis_cluster_client(docker_services):
         time.sleep(10)
 
     return redis.cluster.RedisCluster("localhost", 7001)
+
+
+@pytest.fixture(scope="session")
+def redis_ssl_cluster_client(docker_services):
+    docker_services.start("redis-ssl-cluster-init")
+    docker_services.wait_for_service(
+        "redis-ssl-cluster-6", 8306, check_redis_ssl_cluster_ready
+    )
+    if os.environ.get("CI") == "True":
+        time.sleep(10)
+
+    storage_url = (
+        "rediss://localhost:8301/?ssl_cert_reqs=required"
+        "&ssl_keyfile=./tests/tls/client.key"
+        "&ssl_certfile=./tests/tls/client.crt"
+        "&ssl_ca_certs=./tests/tls/ca.crt"
+    )
+    return redis.cluster.RedisCluster.from_url(storage_url)
 
 
 @pytest.fixture(scope="session")
@@ -217,14 +247,21 @@ def redis_auth(redis_auth_client):
 def redis_uds(redis_uds_client):
     redis_uds_client.flushall()
 
-    return redis_uds
+    return redis_uds_client
 
 
 @pytest.fixture
 def redis_cluster(redis_cluster_client):
     redis_cluster_client.flushall()
 
-    return redis_cluster
+    return redis_cluster_client
+
+
+@pytest.fixture
+def redis_ssl_cluster(redis_ssl_cluster_client):
+    redis_ssl_cluster_client.flushall()
+
+    return redis_ssl_cluster_client
 
 
 @pytest.fixture

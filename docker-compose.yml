@@ -101,6 +101,60 @@ services:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
     command: bash -c "echo yes | redis-cli --cluster create --cluster-replicas 1 ${HOST_IP}:7001 ${HOST_IP}:7002 ${HOST_IP}:7003 ${HOST_IP}:7004 ${HOST_IP}:7005 ${HOST_IP}:7006"
     depends_on: [redis-cluster-1, redis-cluster-2, redis-cluster-3, redis-cluster-4, redis-cluster-5, redis-cluster-6]
+  redis-ssl-cluster-1:
+    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
+    command: redis-server --port 0 --tls-port 8301 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    ports:
+      - '8301:8301'
+      - '18301:18301'
+    volumes:
+      - ./tests/tls:/tls
+  redis-ssl-cluster-2:
+    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
+    command: redis-server --port 0 --tls-port 8302 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    ports:
+      - '8302:8302'
+      - '18302:18302'
+    volumes:
+      - ./tests/tls:/tls
+  redis-ssl-cluster-3:
+    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
+    command: redis-server --port 0 --tls-port 8303 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    ports:
+      - '8303:8303'
+      - '18303:18303'
+    volumes:
+      - ./tests/tls:/tls
+  redis-ssl-cluster-4:
+    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
+    command: redis-server --port 0 --tls-port 8304 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    ports:
+      - '8304:8304'
+      - '18304:18304'
+    volumes:
+      - ./tests/tls:/tls
+  redis-ssl-cluster-5:
+    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
+    command: redis-server --port 0 --tls-port 8305 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    ports:
+      - '8305:8305'
+      - '18305:18305'
+    volumes:
+      - ./tests/tls:/tls
+  redis-ssl-cluster-6:
+    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
+    command: redis-server --port 0 --tls-port 8306 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    ports:
+      - '8306:8306'
+      - '18306:18306'
+    volumes:
+      - ./tests/tls:/tls
+  redis-ssl-cluster-init:
+    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
+    command: bash -c "echo yes | redis-cli --cluster create --cluster-replicas 1 ${HOST_IP}:8301 ${HOST_IP}:8302 ${HOST_IP}:8303 ${HOST_IP}:8304 ${HOST_IP}:8305 ${HOST_IP}:8306 --tls --cert /tls/redis.crt --key /tls/redis.key --cacert /tls/ca.crt "
+    depends_on: [redis-ssl-cluster-1, redis-ssl-cluster-2, redis-ssl-cluster-3, redis-ssl-cluster-4, redis-ssl-cluster-5, redis-ssl-cluster-6]
+    volumes:
+      - ./tests/tls:/tls
   redis-basic:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
     command: redis-server --port 7379

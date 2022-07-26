@@ -77,6 +77,18 @@ all_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis_cluster,
         ),
         pytest.param(
+            "redis+cluster://localhost:8301",
+            {
+                "ssl": True,
+                "ssl_cert_reqs": "required",
+                "ssl_keyfile": "./tests/tls/client.key",
+                "ssl_certfile": "./tests/tls/client.crt",
+                "ssl_ca_certs": "./tests/tls/ca.crt",
+            },
+            pytest.lazy_fixture("redis_ssl_cluster"),
+            marks=pytest.mark.redis_cluster,
+        ),
+        pytest.param(
             "redis+sentinel://localhost:26379/mymaster",
             {"use_replicas": False},
             pytest.lazy_fixture("redis_sentinel"),
@@ -105,6 +117,18 @@ moving_window_storage = pytest.mark.parametrize(
             "redis+cluster://localhost:7001/",
             {},
             pytest.lazy_fixture("redis_cluster"),
+            marks=pytest.mark.redis_cluster,
+        ),
+        pytest.param(
+            "redis+cluster://localhost:8301",
+            {
+                "ssl": True,
+                "ssl_cert_reqs": "required",
+                "ssl_keyfile": "./tests/tls/client.key",
+                "ssl_certfile": "./tests/tls/client.crt",
+                "ssl_ca_certs": "./tests/tls/ca.crt",
+            },
+            pytest.lazy_fixture("redis_ssl_cluster"),
             marks=pytest.mark.redis_cluster,
         ),
         pytest.param(
@@ -151,6 +175,18 @@ async_all_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis_cluster,
         ),
         pytest.param(
+            "async+redis+cluster://localhost:8301",
+            {
+                "ssl": True,
+                "ssl_cert_reqs": "required",
+                "ssl_keyfile": "./tests/tls/client.key",
+                "ssl_certfile": "./tests/tls/client.crt",
+                "ssl_ca_certs": "./tests/tls/ca.crt",
+            },
+            pytest.lazy_fixture("redis_ssl_cluster"),
+            marks=pytest.mark.redis_cluster,
+        ),
+        pytest.param(
             "async+redis+sentinel://localhost:26379/mymaster",
             {"use_replicas": False},
             pytest.lazy_fixture("redis_sentinel"),
@@ -179,6 +215,18 @@ async_moving_window_storage = pytest.mark.parametrize(
             "async+redis+cluster://localhost:7001/",
             {},
             pytest.lazy_fixture("redis_cluster"),
+            marks=pytest.mark.redis_cluster,
+        ),
+        pytest.param(
+            "async+redis+cluster://localhost:8301",
+            {
+                "ssl": True,
+                "ssl_cert_reqs": "required",
+                "ssl_keyfile": "./tests/tls/client.key",
+                "ssl_certfile": "./tests/tls/client.crt",
+                "ssl_ca_certs": "./tests/tls/ca.crt",
+            },
+            pytest.lazy_fixture("redis_ssl_cluster"),
             marks=pytest.mark.redis_cluster,
         ),
         pytest.param(
