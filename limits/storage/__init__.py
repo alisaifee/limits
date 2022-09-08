@@ -43,7 +43,7 @@ def storage_from_string(
 
         memory = storage_from_string("async+memory://")
         memcached = storage_from_string("async+memcached://localhost:11211")
-        redis = storage_from_string("asycn+redis://localhost:6379")
+        redis = storage_from_string("async+redis://localhost:6379")
 
     :param storage_string: a string of the form ``scheme://host:port``.
      More details about supported storage schemes can be found at
