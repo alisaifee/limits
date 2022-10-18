@@ -4,10 +4,9 @@ import asyncio
 import calendar
 import datetime
 import time
-from typing import Any, cast
+from typing import Any
 
 from deprecated.sphinx import versionadded
-
 from limits.aio.storage.base import MovingWindowSupport, Storage
 from limits.typing import Dict, Optional, ParamSpec, Tuple, TypeVar, Union
 
@@ -89,14 +88,11 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         """
         Delete all rate limit keys in the rate limit collections (counters, windows)
         """
-        num_keys = cast(
-            int,
-            sum(
-                await asyncio.gather(
-                    self.database.counters.count_documents({}),
-                    self.database.windows.count_documents({}),
-                )
-            ),
+        num_keys = sum(
+            await asyncio.gather(
+                self.database.counters.count_documents({}),
+                self.database.windows.count_documents({}),
+            )
         )
         await asyncio.gather(
             self.database.counters.drop(), self.database.windows.drop()
