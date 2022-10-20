@@ -3,6 +3,16 @@
 Changelog
 =========
 
+v2.7.1
+------
+Release Date: 2022-10-20
+
+* Compatibility Updates
+
+  * Increase pymemcached dependency range to in include 4.x
+  * Add python 3.11 rc2 to CI
+
+
 v2.7.0
 ------
 Release Date: 2022-07-16
@@ -368,6 +378,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
