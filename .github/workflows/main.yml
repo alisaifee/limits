@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9, "3.10", "3.11.0-rc.2"]
+        python-version: [3.8, 3.9, "3.10", "3.11"]
     steps:
     - uses: actions/checkout@v3
     - name: Cache dependencies
@@ -52,7 +52,7 @@ jobs:
           - python-version: "3.10"
             marker: ''
             os: ubuntu-latest
-          - python-version: "3.11.0-rc.2"
+          - python-version: "3.11"
             marker: 'not (asyncio and (memcached or mongodb))'
             os: ubuntu-latest
     runs-on: "${{ matrix.os }}"
