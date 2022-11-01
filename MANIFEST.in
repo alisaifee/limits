@@ -10,4 +10,5 @@ recursive-include doc/source *
 recursive-include doc *.py Make*
 include limits/_version.py
 include limits/py.typed
+recursive-include limits *.lua
 recursive-include limits/resources *
