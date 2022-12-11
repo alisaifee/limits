@@ -3,6 +3,17 @@
 Changelog
 =========
 
+v2.7.2
+------
+Release Date: 2022-12-11
+
+* Compatibility Updates
+
+  * Update documentation dependencies
+  * Relax version constraint for packaging dependency
+  * Bump CI to use python 3.11 final
+
+
 v2.7.1
 ------
 Release Date: 2022-10-20
@@ -378,6 +389,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
