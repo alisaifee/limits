@@ -6,7 +6,7 @@
    .. image:: https://img.shields.io/github/last-commit/alisaifee/limits?logo=github&style=for-the-badge&labelColor=#282828
       :target: https://github.com/alisaifee/limits
       :class: header-badge
-   .. image:: https://img.shields.io/github/workflow/status/alisaifee/limits/CI?logo=github&style=for-the-badge&labelColor=#282828
+   .. image:: https://img.shields.io/github/actions/workflow/status/alisaifee/limits/main.yml?logo=github&style=for-the-badge&labelColor=#282828
       :target: https://github.com/alisaifee/limits/actions/workflows/main.yml
    .. image:: https://img.shields.io/codecov/c/github/alisaifee/limits?logo=codecov&style=for-the-badge&labelColor=#282828
       :target: https://app.codecov.io/gh/alisaifee/limits
