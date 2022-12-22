@@ -1,7 +1,7 @@
 [run]
 omit =
-    /*/limits/_version*
-    /*/tests/*
+    /**/limits/_version*
+    /**/tests/*
     setup.py
     versioneer.py
 [report]
