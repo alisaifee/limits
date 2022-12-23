@@ -1,9 +1,14 @@
+from collections import defaultdict
+
 from limits import limits
 
 
 class TestLimits:
     class FakeLimit(limits.RateLimitItem):
         GRANULARITY = limits.Granularity(1, "fake")
+
+    class OtherFakeLimit(limits.RateLimitItem):
+        GRANULARITY = limits.Granularity(1, "otherfake")
 
     def test_key_all_strings_default_namespace(self):
         item = self.FakeLimit(1, 1)
@@ -27,3 +32,13 @@ class TestLimits:
         assert item != self.FakeLimit(1, 2)
         assert item != self.FakeLimit(2, 1)
         assert item != "someething else"
+
+    def test_hashabilty(self):
+        mapping = defaultdict(lambda: 1)
+        mapping[self.FakeLimit(1, 1)] += 1
+        mapping[self.FakeLimit(1, 1)] += 1
+        mapping[self.FakeLimit(1, 2)] += 1
+        mapping[self.FakeLimit(1, 2)] += 1
+        mapping[self.OtherFakeLimit(1, 2)] += 1
+
+        assert len(mapping) == 3
