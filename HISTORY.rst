@@ -3,6 +3,15 @@
 Changelog
 =========
 
+v2.8.0
+------
+Release Date: 2022-12-23
+
+* Chores
+
+  * Make rate limit items hashable
+  * Update test certificates
+
 v2.7.2
 ------
 Release Date: 2022-12-11
@@ -389,6 +398,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
