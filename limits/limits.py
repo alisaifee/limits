@@ -137,6 +137,9 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
     def __lt__(self, other: RateLimitItem) -> bool:
         return self.GRANULARITY.seconds < other.GRANULARITY.seconds
 
+    def __hash__(self) -> int:
+        return hash((self.namespace, self.amount, self.multiples, self.GRANULARITY))
+
 
 class RateLimitItemPerYear(RateLimitItem):
     """
