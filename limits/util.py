@@ -139,8 +139,12 @@ def parse_many(limit_string: str) -> List[RateLimitItem]:
 
     """
 
+    if not limit_string:
+        return []
+
     if not (isinstance(limit_string, str) and EXPR.match(limit_string)):
         raise ValueError("couldn't parse rate limit string '%s'" % limit_string)
+
     limits = []
 
     for limit in SEPARATORS.split(limit_string):
