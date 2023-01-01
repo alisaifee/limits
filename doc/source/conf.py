@@ -12,7 +12,7 @@ from theme_config import *
 
 project = "limits"
 description = "limits is a python library to perform rate limiting with commonly used storage backends"
-copyright = "2022, Ali-Akber Saifee"
+copyright = "2023, Ali-Akber Saifee"
 if ".post0.dev" in limits.__version__:
     version, ahead = limits.__version__.split(".post0.dev")
 else:
