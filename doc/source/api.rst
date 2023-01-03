@@ -1,3 +1,4 @@
+:tocdepth: 3
 
 =============
 API Reference
