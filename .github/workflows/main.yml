@@ -43,14 +43,14 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8]
-        marker: [not integration]
+        marker: [not (integration or etcd)]
         os: [ubuntu-latest]
         include:
           - python-version: 3.9
-            marker: ''
+            marker: 'not etcd'
             os: ubuntu-latest
           - python-version: "3.10"
-            marker: ''
+            marker: 'not etcd'
             os: ubuntu-latest
           - python-version: "3.11"
             marker: 'not (asyncio and memcached)'

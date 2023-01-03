@@ -4,6 +4,7 @@ import pytest
 
 from limits.errors import ConfigurationError
 from limits.storage import (
+    EtcdStorage,
     MemcachedStorage,
     MemoryStorage,
     MongoDBStorage,
@@ -98,6 +99,13 @@ class TestBaseStorage:
                 pytest.lazy_fixture("mongodb"),
                 marks=pytest.mark.mongodb,
             ),
+            pytest.param(
+                "etcd://localhost:2379",
+                {},
+                EtcdStorage,
+                pytest.lazy_fixture("etcd"),
+                marks=pytest.mark.etcd,
+            ),
         ],
     )
     def test_storage_string(self, uri, args, expected_instance, fixture):
@@ -179,6 +187,12 @@ class TestBaseStorage:
                 {},
                 pytest.lazy_fixture("mongodb"),
                 marks=pytest.mark.mongodb,
+            ),
+            pytest.param(
+                "etcd://localhost:2379",
+                {},
+                pytest.lazy_fixture("etcd"),
+                marks=pytest.mark.etcd,
             ),
         ],
     )

@@ -3,6 +3,7 @@ import platform
 import socket
 import time
 
+import etcd3
 import pymemcache
 import pymemcache.client
 import pymongo
@@ -81,6 +82,14 @@ def host_ip_env():
 @pytest.fixture(scope="session")
 def docker_services(host_ip_env, docker_services):
     return docker_services
+
+
+@pytest.fixture(scope="session")
+def etcd_client(docker_services):
+    docker_services.start("etcd")
+    docker_services.wait_for_service("etcd", 2379)
+
+    return etcd3.client()
 
 
 @pytest.fixture(scope="session")
@@ -284,6 +293,12 @@ def mongodb(mongodb_client):
     mongodb_client.limits.counters.drop()
 
     return mongodb_client
+
+
+@pytest.fixture
+def etcd(etcd_client):
+    etcd_client.delete_prefix("limits/")
+    return etcd_client
 
 
 @pytest.fixture(scope="session")

@@ -48,6 +48,12 @@ jobs:
             marker: "memcached"
           - service_version: "LIMITS_MEMCACHED_SERVER_VERSION=1.4.34"
             marker: "memcached"
+          - service_version: "LIMITS_ETCD_SERVER_VERSION=3.5"
+            marker: "etcd"
+          - service_version: "LIMITS_ETCD_SERVER_VERSION=3.4"
+            marker: "etcd"
+          - service_version: "LIMITS_ETCD_SERVER_VERSION=3.3"
+            marker: "etcd"
 
     steps:
     - uses: actions/checkout@v2
