@@ -1,5 +1,3 @@
-:tocdepth: 3
-
 =============
 API Reference
 =============
@@ -17,41 +15,41 @@ API Reference
 Strategies
 ==========
 
+Synchronous
+-----------
 
-.. tab:: Default
+The available built in rate limiting strategies which expect
+a single parameter: a subclass of :class:`~limits.storage.Storage`.
 
-    The available built in rate limiting strategies which expect
-    a single parameter: a subclass of :class:`~limits.storage.Storage`.
+.. currentmodule:: limits.strategies
 
-    .. currentmodule:: limits.strategies
+Provided by :mod:`limits.strategies`
 
-    Provided by :mod:`limits.strategies`
+.. autoclass:: FixedWindowRateLimiter
+.. autoclass:: FixedWindowElasticExpiryRateLimiter
+.. autoclass:: MovingWindowRateLimiter
 
-    .. autoclass:: FixedWindowRateLimiter
-    .. autoclass:: FixedWindowElasticExpiryRateLimiter
-    .. autoclass:: MovingWindowRateLimiter
+All strategies implement the same abstract base class:
 
-    All strategies implement the same abstract base class:
+.. autoclass:: RateLimiter
 
-    .. autoclass:: RateLimiter
+Async
+-----
 
-.. tab:: Async
+These variants should be used in for asyncio support. These strategies
+expose async variants and expect a subclass of :class:`limits.aio.storage.Storage`
 
+.. currentmodule:: limits.aio.strategies
 
-    These variants should be used in for asyncio support. These strategies
-    expose async variants and expect a subclass of :class:`limits.aio.storage.Storage`
+Provided by :mod:`limits.aio.strategies`
 
-    .. currentmodule:: limits.aio.strategies
+.. autoclass:: FixedWindowRateLimiter
+.. autoclass:: FixedWindowElasticExpiryRateLimiter
+.. autoclass:: MovingWindowRateLimiter
 
-    Provided by :mod:`limits.aio.strategies`
+All strategies implement the same abstract base class:
 
-    .. autoclass:: FixedWindowRateLimiter
-    .. autoclass:: FixedWindowElasticExpiryRateLimiter
-    .. autoclass:: MovingWindowRateLimiter
-
-    All strategies implement the same abstract base class:
-
-    .. autoclass:: RateLimiter
+.. autoclass:: RateLimiter
 
 Storage
 =======
@@ -185,5 +183,4 @@ declaring a :attr:`GRANULARITY`
 Exceptions
 ==========
 .. autoexception:: limits.errors.ConfigurationError
-
-
+   :no-inherited-members:
