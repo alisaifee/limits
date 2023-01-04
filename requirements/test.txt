@@ -12,6 +12,7 @@ coverage
 hiro>0.1.6
 flaky
 lovely-pytest-docker
+pymongo>4.1,<5
 pytest
 pytest-asyncio
 pytest-cov
