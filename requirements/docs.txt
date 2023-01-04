@@ -3,7 +3,7 @@ furo==2022.12.7
 Sphinx>=5
 sphinx-copybutton==0.5.1
 sphinx-autobuild==2021.3.14
-sphinxext-opengraph==0.7.4
+sphinxext-opengraph==0.7.5
 sphinx-inline-tabs==2022.1.2b11
 sphinx-paramlinks==0.5.4
 sphinxcontrib-programoutput==0.17
