@@ -48,6 +48,16 @@ Install the package with pip:
 
    .. literalinclude:: ../../requirements/storage/mongodb.txt
 
+.. tab:: Etcd
+
+   .. code:: console
+
+      $ pip install limits[etcd]
+
+   Includes:
+
+   .. literalinclude:: ../../requirements/storage/etcd.txt
+
 More details around the specifics of each storage backend can be
 found in :ref:`storage`
 
@@ -88,3 +98,13 @@ along with the package using the following extras:
    Includes:
 
    .. literalinclude:: ../../requirements/storage/async-mongodb.txt
+
+.. tab:: Etcd
+
+   .. code:: console
+
+      $ pip install limits[async-etcd]
+
+   Includes:
+
+   .. literalinclude:: ../../requirements/storage/async-etcd.txt
