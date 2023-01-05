@@ -3,6 +3,21 @@
 Changelog
 =========
 
+v3.0.0
+------
+Release Date: 2023-01-04
+
+* Features
+
+  * Added etcd storage support for fixed window strategies
+
+* Compatibility
+
+  * Removed deprecated GAE Memcached storage
+  * Updated minimum dependencies for mongodb
+  * Updated dependency for async memcached on python 3.11
+
+
 v2.8.0
 ------
 Release Date: 2022-12-23
@@ -398,6 +413,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
