@@ -30,9 +30,11 @@ EXTRA_REQUIREMENTS = {
     "rediscluster": get_requirements("storage/rediscluster.txt"),
     "memcached": get_requirements("storage/memcached.txt"),
     "mongodb": get_requirements("storage/mongodb.txt"),
+    "etcd": get_requirements("storage/etcd.txt"),
     "async-redis": get_requirements("storage/async-redis.txt"),
     "async-memcached": get_requirements("storage/async-memcached.txt"),
     "async-mongodb": get_requirements("storage/async-mongodb.txt"),
+    "async-etcd": get_requirements("storage/async-etcd.txt"),
 }
 EXTRA_REQUIREMENTS["all"] = list(itertools.chain(*EXTRA_REQUIREMENTS.values()))
 

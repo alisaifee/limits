@@ -99,6 +99,11 @@ MongoDB
 
 .. autoclass:: MongoDBStorage
 
+Etcd
+^^^^
+
+.. autoclass:: EtcdStorage
+
 
 Async Storage
 -------------
@@ -136,6 +141,11 @@ MongoDB
 ^^^^^^^
 
 .. autoclass:: MongoDBStorage
+
+Etcd
+^^^^
+
+.. autoclass:: EtcdStorage
 
 Abstract storage classes
 ------------------------
@@ -185,4 +195,6 @@ declaring a :attr:`GRANULARITY`
 Exceptions
 ==========
 .. autoexception:: limits.errors.ConfigurationError
+   :no-inherited-members:
+.. autoexception:: limits.errors.ConcurrentUpdateError
    :no-inherited-members:

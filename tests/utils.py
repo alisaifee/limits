@@ -100,6 +100,12 @@ all_storage = pytest.mark.parametrize(
             pytest.lazy_fixture("mongodb"),
             marks=pytest.mark.mongodb,
         ),
+        pytest.param(
+            "etcd://localhost:2379",
+            {},
+            pytest.lazy_fixture("etcd"),
+            marks=[pytest.mark.etcd, pytest.mark.flaky],
+        ),
     ],
 )
 
@@ -197,6 +203,12 @@ async_all_storage = pytest.mark.parametrize(
             {},
             pytest.lazy_fixture("mongodb"),
             marks=pytest.mark.mongodb,
+        ),
+        pytest.param(
+            "async+etcd://localhost:2379",
+            {},
+            pytest.lazy_fixture("etcd"),
+            marks=[pytest.mark.etcd, pytest.mark.flaky],
         ),
     ],
 )

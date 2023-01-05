@@ -10,6 +10,7 @@ import limits
 
 from ..errors import ConfigurationError
 from .base import MovingWindowSupport, Storage
+from .etcd import EtcdStorage
 from .gae_memcached import GAEMemcachedStorage
 from .memcached import MemcachedStorage
 from .memory import MemoryStorage
@@ -67,6 +68,7 @@ __all__ = [
     "storage_from_string",
     "Storage",
     "MovingWindowSupport",
+    "EtcdStorage",
     "MemoryStorage",
     "MongoDBStorage",
     "RedisStorage",
