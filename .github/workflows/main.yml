@@ -53,7 +53,7 @@ jobs:
             marker: 'not etcd'
             os: ubuntu-latest
           - python-version: "3.11"
-            marker: 'not (asyncio and memcached)'
+            marker: ''
             os: ubuntu-latest
     runs-on: "${{ matrix.os }}"
     steps:
