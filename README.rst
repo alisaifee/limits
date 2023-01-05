@@ -53,11 +53,11 @@ Supported Strategies
 Storage backends
 ================
 
-- `Redis <https://limits.readthedocs.io/en/latest/storage.html#redis>`_
-- `Memcached <https://limits.readthedocs.io/en/latest/storage.html#memcached>`_
-- `In-Memory <https://limits.readthedocs.io/en/latest/storage.html#in-memory>`_
-- `MongoDB <https://limits.readthedocs.io/en/latest/storage.html#mongodb>`_
-- `Etcd <https://limits.readthedocs.io/en/latest/storage.html#etcd>`_
+- `Redis <https://limits.readthedocs.io/en/latest/storage.html#redis-storage>`_
+- `Memcached <https://limits.readthedocs.io/en/latest/storage.html#memcached-storage>`_
+- `MongoDB <https://limits.readthedocs.io/en/latest/storage.html#mongodb-storage>`_
+- `Etcd <https://limits.readthedocs.io/en/latest/storage.html#etcd-storage>`_
+- `In-Memory <https://limits.readthedocs.io/en/latest/storage.html#in-memory-storage>`_
 
 Dive right in
 =============
