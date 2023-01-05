@@ -2,21 +2,18 @@
 -r storage/etcd.txt
 -r storage/redis.txt
 -r storage/rediscluster.txt
-#-r storage/mongodb.txt
+-r storage/mongodb.txt
 -r storage/memcached.txt
 -r storage/async-etcd.txt
 -r storage/async-memcached.txt
 -r storage/async-mongodb.txt
 -r storage/async-redis.txt
-# Explicitly pinned due to compatibility issues with etcd
-protobuf<=3.20.3
 
 # Test related packages
 coverage
 hiro>0.1.6
 flaky
 lovely-pytest-docker
-pymongo>4.1,<5
 pytest
 pytest-asyncio
 pytest-cov
