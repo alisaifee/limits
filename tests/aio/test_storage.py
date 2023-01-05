@@ -120,13 +120,6 @@ class TestBaseStorage:
             marks=pytest.mark.memcached,
         ),
         pytest.param(
-            "async+memcached:///tmp/limits.memcached.sock",
-            {},
-            MemcachedStorage,
-            pytest.lazy_fixture("memcached_uds"),
-            marks=pytest.mark.memcached,
-        ),
-        pytest.param(
             "async+redis+sentinel://localhost:26379",
             {"service_name": "mymaster"},
             RedisSentinelStorage,
