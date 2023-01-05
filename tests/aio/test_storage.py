@@ -3,7 +3,6 @@ import time
 import pytest
 
 from limits import RateLimitItemPerMinute
-from limits.errors import ConfigurationError
 from limits.aio.storage import (
     EtcdStorage,
     MemcachedStorage,
