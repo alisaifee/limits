@@ -6,8 +6,6 @@
 Storage Backends
 ================
 
-.. _storage-scheme:
-
 Supported versions
 ==================
 
@@ -129,12 +127,12 @@ the :ref:`api:storage` section for details.
 Examples
 ========
 
-In-Memory
----------
+In-Memory Storage
+-----------------
 The in-memory storage (:class:`~limits.storage.MemoryStorage`) takes no parameters so the only relevant value is :code:`memory://`
 
-Memcached
----------
+Memcached Storage
+-----------------
 
 Requires the location of the memcached server(s). As such
 the parameters is a comma separated list of :code:`{host}:{port}` locations such as
@@ -154,8 +152,8 @@ Requires that you are working in the GAE SDK and have those API libraries availa
 :code:`gaememcached://`
 
 
-Redis
------
+Redis Storage
+-------------
 
 Requires the location of the redis server and optionally the database number.
 :code:`redis://localhost:6379` or :code:`redis://localhost:6379/n` (for database `n`).
@@ -174,8 +172,8 @@ in :paramref:`~limits.storage.storage_from_string.options`, for example::
 
 Depends on: :pypi:`redis`
 
-Redis over SSL
---------------
+Redis+SSL Storage
+-----------------
 
 The official Redis client :pypi:`redis` supports redis connections over SSL with the scheme
 You can add ssl related parameters in the url itself, for example:
@@ -184,8 +182,8 @@ You can add ssl related parameters in the url itself, for example:
 
 Depends on: :pypi:`redis`
 
-Redis with Sentinel
--------------------
+Redis+Sentinel Storage
+----------------------
 
 Requires the location(s) of the redis sentinal instances and the `service-name`
 that is monitored by the sentinels.
@@ -203,8 +201,8 @@ arguments. More details can be found in the API documentation for :class:`~limit
 
 Depends on: :pypi:`redis`
 
-Redis Cluster
--------------
+Redis Cluster Storage
+---------------------
 
 Requires the location(s) of the redis cluster startup nodes (One is enough).
 :code:`redis+cluster://localhost:7000`
@@ -212,8 +210,8 @@ or :code:`redis+cluster://localhost:7000,localhost:7001`
 
 Depends on: :pypi:`redis`
 
-MongoDB
--------
+MongoDB Storage
+---------------
 
 Requires the location(s) of a mongodb installation using the uri schema
 described by the `Mongodb URI Specification <https://github.com/mongodb/specifications/blob/master/source/uri-options/uri-options.rst>`_
@@ -226,8 +224,8 @@ Examples:
 
 Depends on: :pypi:`pymongo`
 
-Etcd
-----
+Etcd Storage
+------------
 
 Requires the location of an etcd node
 

@@ -70,37 +70,37 @@ Provided by :mod:`limits.storage`
 
 .. currentmodule:: limits.storage
 
-In-Memory
-^^^^^^^^^
+In-Memory Storage
+^^^^^^^^^^^^^^^^^
 
 .. autoclass:: MemoryStorage
 
-Redis
-^^^^^
+Redis Storage
+^^^^^^^^^^^^^
 .. autoclass:: RedisStorage
 
-Redis Cluster
-^^^^^^^^^^^^^
+Redis Cluster Storage
+^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: RedisClusterStorage
 
-Redis Sentinel
-^^^^^^^^^^^^^^
+Redis Sentinel Storage
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: RedisSentinelStorage
 
-Memcached
-^^^^^^^^^
+Memcached Storage
+^^^^^^^^^^^^^^^^^
 
 .. autoclass:: MemcachedStorage
 
-MongoDB
-^^^^^^^
+MongoDB Storage
+^^^^^^^^^^^^^^^
 
 .. autoclass:: MongoDBStorage
 
-Etcd
-^^^^
+Etcd Storage
+^^^^^^^^^^^^
 
 .. autoclass:: EtcdStorage
 
@@ -112,38 +112,38 @@ Provided by :mod:`limits.aio.storage`
 .. currentmodule:: limits.aio.storage
 
 
-In-Memory
-^^^^^^^^^
+Async In-Memory Storage
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: MemoryStorage
 
-Redis
-^^^^^
+Async Redis Storage
+^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: RedisStorage
 
-Redis Cluster
-^^^^^^^^^^^^^
+Async Redis Cluster Storage
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: RedisClusterStorage
 
-Redis Sentinel
-^^^^^^^^^^^^^^
+Async Redis Sentinel Storage
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: RedisSentinelStorage
 
-Memcached
-^^^^^^^^^
+Async Memcached Storage
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: MemcachedStorage
 
-MongoDB
-^^^^^^^
+Async MongoDB Storage
+^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: MongoDBStorage
 
-Etcd
-^^^^
+Async Etcd Storage
+^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: EtcdStorage
 
