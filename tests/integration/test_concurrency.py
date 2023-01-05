@@ -1,58 +1,109 @@
+import asyncio
+import random
 import threading
 import time
 from uuid import uuid4
 
 import pytest
 
-from limits.limits import RateLimitItemPerSecond
-from limits.storage import MemoryStorage
-from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
+import limits.aio.strategies
+import limits.strategies
+from limits.limits import RateLimitItemPerMinute
+from limits.storage import storage_from_string
+from tests.utils import (
+    all_storage,
+    async_all_storage,
+    async_moving_window_storage,
+    moving_window_storage,
+)
 
 
 @pytest.mark.integration
-class TestMemoryConcurrency:
-    def test_memory_storage_fixed_window(self):
-        storage = MemoryStorage()
-        limiter = FixedWindowRateLimiter(storage)
-        per_second = RateLimitItemPerSecond(100)
+class TestConcurrency:
+    @all_storage
+    def test_fixed_window(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = limits.strategies.FixedWindowRateLimiter(storage)
+        limit = RateLimitItemPerMinute(5)
 
-        [limiter.hit(per_second, uuid4().hex) for _ in range(1000)]
-
-        key = uuid4().hex
-        hits = []
-
-        def hit():
-            if limiter.hit(per_second, key):
-                hits.append(None)
-
-        start = time.time()
-
-        threads = [threading.Thread(target=hit) for _ in range(1000)]
-        [t.start() for t in threads]
-        [t.join() for t in threads]
-
-        assert time.time() - start < 1
-        assert len(hits) == 100
-
-    def test_memory_storage_moving_window(self):
-        storage = MemoryStorage()
-        limiter = MovingWindowRateLimiter(storage)
-        per_second = RateLimitItemPerSecond(100)
-
-        [limiter.hit(per_second, uuid4().hex) for _ in range(100)]
+        [limiter.hit(limit, uuid4().hex) for _ in range(50)]
 
         key = uuid4().hex
         hits = []
 
         def hit():
-            if limiter.hit(per_second, key):
+            time.sleep(random.random())
+            if limiter.hit(limit, key):
                 hits.append(None)
 
-        start = time.time()
-
-        threads = [threading.Thread(target=hit) for _ in range(1000)]
+        threads = [threading.Thread(target=hit) for _ in range(50)]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
-        assert time.time() - start < 1
-        assert len(hits) == 100
+        assert len(hits) == 5
+
+    @moving_window_storage
+    def test_moving_window(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = limits.strategies.MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerMinute(5)
+
+        [limiter.hit(limit, uuid4().hex) for _ in range(50)]
+
+        key = uuid4().hex
+        hits = []
+
+        def hit():
+            time.sleep(random.random())
+            if limiter.hit(limit, key):
+                hits.append(None)
+
+        threads = [threading.Thread(target=hit) for _ in range(50)]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+
+        assert len(hits) == 5
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+class TestAsyncConcurrency:
+    @async_all_storage
+    async def test_fixed_window(self, event_loop, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = limits.aio.strategies.FixedWindowRateLimiter(storage)
+        limit = RateLimitItemPerMinute(5)
+
+        [await limiter.hit(limit, uuid4().hex) for _ in range(50)]
+
+        key = uuid4().hex
+        hits = []
+
+        async def hit():
+            await asyncio.sleep(random.random())
+            if await limiter.hit(limit, key):
+                hits.append(None)
+
+        await asyncio.gather(*[hit() for _ in range(50)])
+
+        assert len(hits) == 5
+
+    @async_moving_window_storage
+    async def test_moving_window(self, event_loop, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = limits.aio.strategies.MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerMinute(5)
+
+        [await limiter.hit(limit, uuid4().hex) for _ in range(50)]
+
+        key = uuid4().hex
+        hits = []
+
+        async def hit():
+            await asyncio.sleep(random.random())
+            if await limiter.hit(limit, key):
+                hits.append(None)
+
+        await asyncio.gather(*[hit() for _ in range(50)])
+
+        assert len(hits) == 5
