@@ -9,7 +9,7 @@ Storage Backends
 Supported versions
 ==================
 
-.. image:: https://img.shields.io/github/workflow/status/alisaifee/limits/Compatibility?label=Compatibility%20Tests&style=for-the-badge
+.. image:: https://img.shields.io/github/actions/workflow/status/alisaifee/limits/compatibility.yml?logo=github&style=for-the-badge&labelColor=#282828
    :alt: GitHub Workflow Status
    :target: https://github.com/alisaifee/limits/actions/workflows/compatibility.yml
 
