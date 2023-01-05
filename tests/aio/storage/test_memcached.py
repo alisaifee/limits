@@ -31,36 +31,36 @@ class TestAsyncMemcachedStorage:
     async def test_fixed_window(self):
         storage = MemcachedStorage("async+memcached://localhost:22122")
         limiter = FixedWindowRateLimiter(storage)
-        per_min = RateLimitItemPerSecond(10)
+        per_sec = RateLimitItemPerSecond(10)
         start = time.time()
         count = 0
 
         while time.time() - start < 0.5 and count < 10:
-            assert await limiter.hit(per_min)
+            assert await limiter.hit(per_sec)
             count += 1
-        assert not await limiter.hit(per_min)
+        assert not await limiter.hit(per_sec)
 
         while time.time() - start <= 1:
             await asyncio.sleep(0.1)
-        assert await limiter.hit(per_min)
+        assert await limiter.hit(per_sec)
 
     @fixed_start
     @pytest.mark.asyncio
     async def test_fixed_window_cluster(self):
         storage = MemcachedStorage("memcached://localhost:22122,localhost:22123")
         limiter = FixedWindowRateLimiter(storage)
-        per_min = RateLimitItemPerSecond(10)
+        per_sec = RateLimitItemPerSecond(10)
         start = time.time()
         count = 0
 
         while time.time() - start < 0.5 and count < 10:
-            assert await limiter.hit(per_min)
+            assert await limiter.hit(per_sec)
             count += 1
-        assert not await limiter.hit(per_min)
+        assert not await limiter.hit(per_sec)
 
         while time.time() - start <= 1:
             await asyncio.sleep(0.1)
-        assert await limiter.hit(per_min)
+        assert await limiter.hit(per_sec)
 
     @fixed_start
     @pytest.mark.asyncio
