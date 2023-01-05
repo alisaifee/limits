@@ -43,14 +43,14 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8]
-        marker: [not (integration or etcd)]
+        marker: [not integration]
         os: [ubuntu-latest]
         include:
           - python-version: 3.9
-            marker: 'not etcd'
+            marker: ''
             os: ubuntu-latest
           - python-version: "3.10"
-            marker: 'not etcd'
+            marker: ''
             os: ubuntu-latest
           - python-version: "3.11"
             marker: ''
