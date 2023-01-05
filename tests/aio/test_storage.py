@@ -13,8 +13,8 @@ from limits.aio.storage import (
     RedisStorage,
     Storage,
 )
-from limits.storage import storage_from_string
 from limits.aio.strategies import MovingWindowRateLimiter
+from limits.storage import storage_from_string
 
 
 @pytest.mark.asyncio
