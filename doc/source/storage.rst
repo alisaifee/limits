@@ -142,16 +142,6 @@ or a path to a unix domain socket such as :code:`memcached:///var/tmp/path/to/so
 
 Depends on: :pypi:`pymemcache`
 
-Memcached on Google App Engine
-------------------------------
-
-.. deprecated:: 2.0
-
-Requires that you are working in the GAE SDK and have those API libraries available.
-
-:code:`gaememcached://`
-
-
 Redis Storage
 -------------
 

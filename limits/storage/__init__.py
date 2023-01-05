@@ -11,7 +11,6 @@ import limits
 from ..errors import ConfigurationError
 from .base import MovingWindowSupport, Storage
 from .etcd import EtcdStorage
-from .gae_memcached import GAEMemcachedStorage
 from .memcached import MemcachedStorage
 from .memory import MemoryStorage
 from .mongodb import MongoDBStorage
@@ -75,5 +74,4 @@ __all__ = [
     "RedisClusterStorage",
     "RedisSentinelStorage",
     "MemcachedStorage",
-    "GAEMemcachedStorage",
 ]
