@@ -57,6 +57,7 @@ Storage backends
 - `Memcached <https://limits.readthedocs.io/en/latest/storage.html#memcached>`_
 - `In-Memory <https://limits.readthedocs.io/en/latest/storage.html#in-memory>`_
 - `MongoDB <https://limits.readthedocs.io/en/latest/storage.html#mongodb>`_
+- `Etcd <https://limits.readthedocs.io/en/latest/storage.html#etcd>`_
 
 Dive right in
 =============
