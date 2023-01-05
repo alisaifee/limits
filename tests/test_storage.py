@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from limits import RateLimitItemPerMinute
 from limits.errors import ConfigurationError
 from limits.storage import (
     EtcdStorage,
@@ -181,3 +182,16 @@ class TestConcreteStorages:
 
     def test_storage_check(self, uri, args, expected_instance, fixture):
         assert storage_from_string(uri, **args).check()
+
+    def test_storage_reset(self, uri, args, expected_instance, fixture):
+        if expected_instance == MemcachedStorage:
+            pytest.skip("Reset not supported for memcached")
+        storage_from_string(uri, **args).reset()
+
+    def test_storage_clear(self, uri, args, expected_instance, fixture):
+        limit = RateLimitItemPerMinute(10)
+        storage = storage_from_string(uri, **args)
+        storage.incr(limit.key_for(), limit.get_expiry())
+        assert 1 == storage.get(limit.key_for())
+        storage.clear(limit.key_for())
+        assert 0 == storage.get(limit.key_for())

@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from limits import RateLimitItemPerMinute
 from limits.errors import ConfigurationError
 from limits.aio.storage import (
     EtcdStorage,
@@ -176,3 +177,16 @@ class TestConcreteStorages:
 
     async def test_storage_check(self, uri, args, expected_instance, fixture):
         assert await (storage_from_string(uri, **args)).check()
+
+    async def test_storage_reset(self, uri, args, expected_instance, fixture):
+        if expected_instance == MemcachedStorage:
+            pytest.skip("Reset not supported for memcached")
+        await (storage_from_string(uri, **args)).reset()
+
+    async def test_storage_clear(self, uri, args, expected_instance, fixture):
+        limit = RateLimitItemPerMinute(10)
+        storage = storage_from_string(uri, **args)
+        await storage.incr(limit.key_for(), limit.get_expiry())
+        assert 1 == await storage.get(limit.key_for())
+        await storage.clear(limit.key_for())
+        assert 0 == await storage.get(limit.key_for())
