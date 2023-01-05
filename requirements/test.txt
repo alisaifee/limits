@@ -9,7 +9,7 @@
 -r storage/async-mongodb.txt
 -r storage/async-redis.txt
 # Explicitly pinned due to compatibility issues with etcd
-protobuf<=3.20.3
+protobuf<4.21.13
 
 # Test related packages
 coverage
