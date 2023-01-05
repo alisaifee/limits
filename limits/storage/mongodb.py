@@ -54,7 +54,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         mongo_opts = options.copy()
         [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]
 
-        self.storage: "pymongo.MongoClient" = self.lib.MongoClient(uri, **mongo_opts)
+        self.storage: "pymongo.MongoClient" = self.lib.MongoClient(  # type: ignore[type-arg]
+            uri, **mongo_opts
+        )
         self.counters = self.storage.get_database(database_name).counters
         self.windows = self.storage.get_database(database_name).windows
         self.__initialize_database()
