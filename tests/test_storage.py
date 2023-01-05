@@ -186,7 +186,11 @@ class TestConcreteStorages:
     def test_storage_reset(self, uri, args, expected_instance, fixture):
         if expected_instance == MemcachedStorage:
             pytest.skip("Reset not supported for memcached")
-        storage_from_string(uri, **args).reset()
+        limit = RateLimitItemPerMinute(10)
+        storage = storage_from_string(uri, **args)
+        for i in range(10):
+            storage.incr(limit.key_for(str(i)), limit.get_expiry())
+        assert storage.reset() == 10
 
     def test_storage_clear(self, uri, args, expected_instance, fixture):
         limit = RateLimitItemPerMinute(10)
