@@ -3,7 +3,7 @@ version: '3.2'
 services:
   # etcd
   etcd:
-    image: "bitnami/etcd:${LIMITS_ETCD_VERSION:-latest}"
+    image: "bitnami/etcd:${LIMITS_ETCD_SERVER_VERSION:-latest}"
     environment:
       - ALLOW_NONE_AUTHENTICATION=yes
       - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
