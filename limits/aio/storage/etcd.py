@@ -26,11 +26,14 @@ class EtcdStorage(Storage):
     def __init__(
         self,
         uri: str,
+        max_retries: int = MAX_RETRIES,
         **options: str,
     ) -> None:
         """
         :param uri: etcd location of the form
          ``etcd://host:port``,
+        :param max_retries: Maximum number of attempts to retry
+         in the case of concurrent updates to a rate limit key
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`aetcd.client.Client`
         :raise ConfigurationError: when :pypi:`aetcd` is not available
@@ -40,13 +43,14 @@ class EtcdStorage(Storage):
         self.storage: "aetcd.Client" = self.lib.Client(
             host=parsed.hostname, port=parsed.port, **options
         )
+        self.max_retries = max_retries
 
     async def incr(
         self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
     ) -> int:
         retries = 0
         etcd_key = f"{self.PREFIX}/{key}".encode()
-        while retries < self.MAX_RETRIES:
+        while retries < self.max_retries:
             now = time.time()
             lease = await self.storage.lease(expiry)
             window_end = now + expiry
@@ -93,7 +97,7 @@ class EtcdStorage(Storage):
                         )[0]:
                             return new
                 retries += 1
-        raise ConcurrentUpdateError()
+        raise ConcurrentUpdateError(key, retries)
 
     async def get(self, key: str) -> int:
         cur = await self.storage.get(f"{self.PREFIX}/{key}".encode())
