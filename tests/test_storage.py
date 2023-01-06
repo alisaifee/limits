@@ -17,6 +17,7 @@ from limits.storage import (
     storage_from_string,
 )
 from limits.strategies import MovingWindowRateLimiter
+from tests.utils import fixed_start
 
 
 class TestBaseStorage:
@@ -181,6 +182,7 @@ class TestConcreteStorages:
     def test_storage_string(self, uri, args, expected_instance, fixture):
         assert isinstance(storage_from_string(uri, **args), expected_instance)
 
+    @fixed_start
     def test_expiry_incr(self, uri, args, expected_instance, fixture):
         storage = storage_from_string(uri, **args)
         limit = RateLimitItemPerSecond(1)
@@ -188,6 +190,7 @@ class TestConcreteStorages:
         time.sleep(1.1)
         assert storage.get(limit.key_for()) == 0
 
+    @fixed_start
     def test_expiry_acquire_entry(self, uri, args, expected_instance, fixture):
         if not issubclass(expected_instance, MovingWindowSupport):
             pytest.skip("%s does not support acquire entry" % expected_instance)
