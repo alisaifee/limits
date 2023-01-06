@@ -98,7 +98,9 @@ class EtcdStorage(Storage):
     async def get(self, key: str) -> int:
         cur = await self.storage.get(f"{self.PREFIX}/{key}".encode())
         if cur:
-            return int(cur.value.split(b":")[0])
+            amount, expiry = cur.value.split(b":")
+            if float(expiry) > time.time():
+                return int(amount)
         return 0
 
     async def get_expiry(self, key: str) -> int:

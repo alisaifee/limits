@@ -2,13 +2,14 @@ import time
 
 import pytest
 
-from limits import RateLimitItemPerMinute
+from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.errors import ConfigurationError
 from limits.storage import (
     EtcdStorage,
     MemcachedStorage,
     MemoryStorage,
     MongoDBStorage,
+    MovingWindowSupport,
     RedisClusterStorage,
     RedisSentinelStorage,
     RedisStorage,
@@ -179,6 +180,22 @@ class TestBaseStorage:
 class TestConcreteStorages:
     def test_storage_string(self, uri, args, expected_instance, fixture):
         assert isinstance(storage_from_string(uri, **args), expected_instance)
+
+    def test_expiry_incr(self, uri, args, expected_instance, fixture):
+        storage = storage_from_string(uri, **args)
+        limit = RateLimitItemPerSecond(1)
+        storage.incr(limit.key_for(), limit.get_expiry())
+        time.sleep(1.1)
+        assert storage.get(limit.key_for()) == 0
+
+    def test_expiry_acquire_entry(self, uri, args, expected_instance, fixture):
+        if not issubclass(expected_instance, MovingWindowSupport):
+            pytest.skip("%s does not support acquire entry" % expected_instance)
+        storage = storage_from_string(uri, **args)
+        limit = RateLimitItemPerSecond(1)
+        assert storage.acquire_entry(limit.key_for(), limit.amount, limit.get_expiry())
+        time.sleep(1.1)
+        assert storage.get(limit.key_for()) == 0
 
     def test_storage_check(self, uri, args, expected_instance, fixture):
         assert storage_from_string(uri, **args).check()
