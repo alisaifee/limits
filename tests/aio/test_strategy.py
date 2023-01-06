@@ -22,7 +22,6 @@ from tests.utils import (
 )
 
 
-@pytest.mark.asynchronous
 @pytest.mark.asyncio
 class TestAsyncWindow:
     @async_all_storage

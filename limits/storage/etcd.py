@@ -88,7 +88,9 @@ class EtcdStorage(Storage):
     def get(self, key: str) -> int:
         value, meta = self.storage.get(f"{self.PREFIX}/{key}")
         if value:
-            return int(value.split(b":")[0])
+            amount, expiry = value.split(b":")
+            if float(expiry) > time.time():
+                return int(amount)
         return 0
 
     def get_expiry(self, key: str) -> int:

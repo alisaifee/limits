@@ -158,7 +158,8 @@ class MemoryStorage(Storage, MovingWindowSupport):
         return True
 
     def reset(self) -> Optional[int]:
+        num_items = max(len(self.storage), len(self.events))
         self.storage.clear()
         self.expirations.clear()
         self.events.clear()
-        return None
+        return num_items
