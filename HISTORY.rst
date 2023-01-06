@@ -3,6 +3,19 @@
 Changelog
 =========
 
+v3.1.0
+------
+Release Date: 2023-01-05
+
+* Compatibility
+
+  * Increase minimum version of pymongo to 4.1
+
+* Chores
+
+  * Refactor storage tests
+  * Improve test coverage across python versions in CI
+
 v3.0.0
 ------
 Release Date: 2023-01-04
@@ -413,6 +426,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
