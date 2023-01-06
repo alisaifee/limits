@@ -51,30 +51,34 @@ async def async_window(delay_end: float, delay: Optional[float] = None):
 all_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        ("memory://", {}, None),
+        pytest.param("memory://", {}, None, id="in-memory"),
         pytest.param(
             "redis://localhost:7379",
             {},
             pytest.lazy_fixture("redis_basic"),
             marks=pytest.mark.redis,
+            id="redis_basic",
         ),
         pytest.param(
             "memcached://localhost:22122",
             {},
             pytest.lazy_fixture("memcached"),
             marks=[pytest.mark.memcached, pytest.mark.flaky],
+            id="memcached",
         ),
         pytest.param(
             "memcached://localhost:22122,localhost:22123",
             {},
             pytest.lazy_fixture("memcached_cluster"),
             marks=[pytest.mark.memcached, pytest.mark.flaky],
+            id="memcached-cluster",
         ),
         pytest.param(
             "redis+cluster://localhost:7001/",
             {},
             pytest.lazy_fixture("redis_cluster"),
             marks=pytest.mark.redis_cluster,
+            id="redis-cluster",
         ),
         pytest.param(
             "redis+cluster://localhost:8301",
@@ -87,24 +91,28 @@ all_storage = pytest.mark.parametrize(
             },
             pytest.lazy_fixture("redis_ssl_cluster"),
             marks=pytest.mark.redis_cluster,
+            id="redis-ssl-cluster",
         ),
         pytest.param(
             "redis+sentinel://localhost:26379/mymaster",
             {"use_replicas": False},
             pytest.lazy_fixture("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
+            id="redis-sentinel",
         ),
         pytest.param(
             "mongodb://localhost:37017/",
             {},
             pytest.lazy_fixture("mongodb"),
             marks=pytest.mark.mongodb,
+            id="mongodb",
         ),
         pytest.param(
             "etcd://localhost:2379",
             {},
             pytest.lazy_fixture("etcd"),
             marks=[pytest.mark.etcd, pytest.mark.flaky],
+            id="etcd",
         ),
     ],
 )
@@ -112,18 +120,20 @@ all_storage = pytest.mark.parametrize(
 moving_window_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        ("memory://", {}, None),
+        pytest.param("memory://", {}, None, id="in-memory"),
         pytest.param(
             "redis://localhost:7379",
             {},
             pytest.lazy_fixture("redis_basic"),
             marks=pytest.mark.redis,
+            id="redis",
         ),
         pytest.param(
             "redis+cluster://localhost:7001/",
             {},
             pytest.lazy_fixture("redis_cluster"),
             marks=pytest.mark.redis_cluster,
+            id="redis-cluster",
         ),
         pytest.param(
             "redis+cluster://localhost:8301",
@@ -136,18 +146,21 @@ moving_window_storage = pytest.mark.parametrize(
             },
             pytest.lazy_fixture("redis_ssl_cluster"),
             marks=pytest.mark.redis_cluster,
+            id="redis-ssl-cluster",
         ),
         pytest.param(
             "redis+sentinel://localhost:26379/mymaster",
             {"use_replicas": False},
             pytest.lazy_fixture("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
+            id="redis-sentinel",
         ),
         pytest.param(
             "mongodb://localhost:37017/",
             {},
             pytest.lazy_fixture("mongodb"),
             marks=pytest.mark.mongodb,
+            id="mongodb",
         ),
     ],
 )
@@ -155,30 +168,34 @@ moving_window_storage = pytest.mark.parametrize(
 async_all_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        ("async+memory://", {}, None),
+        pytest.param("async+memory://", {}, None, id="in-memory"),
         pytest.param(
             "async+redis://localhost:7379",
             {},
             pytest.lazy_fixture("redis_basic"),
             marks=pytest.mark.redis,
+            id="redis",
         ),
         pytest.param(
             "async+memcached://localhost:22122",
             {},
             pytest.lazy_fixture("memcached"),
             marks=[pytest.mark.memcached, pytest.mark.flaky],
+            id="memcached",
         ),
         pytest.param(
             "async+memcached://localhost:22122,localhost:22123",
             {},
             pytest.lazy_fixture("memcached_cluster"),
             marks=[pytest.mark.memcached, pytest.mark.flaky],
+            id="memcached-cluster",
         ),
         pytest.param(
             "async+redis+cluster://localhost:7001/",
             {},
             pytest.lazy_fixture("redis_cluster"),
             marks=pytest.mark.redis_cluster,
+            id="redis-cluster",
         ),
         pytest.param(
             "async+redis+cluster://localhost:8301",
@@ -191,24 +208,28 @@ async_all_storage = pytest.mark.parametrize(
             },
             pytest.lazy_fixture("redis_ssl_cluster"),
             marks=pytest.mark.redis_cluster,
+            id="redis-ssl-cluster",
         ),
         pytest.param(
             "async+redis+sentinel://localhost:26379/mymaster",
             {"use_replicas": False},
             pytest.lazy_fixture("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
+            id="redis-sentinel",
         ),
         pytest.param(
             "async+mongodb://localhost:37017/",
             {},
             pytest.lazy_fixture("mongodb"),
             marks=pytest.mark.mongodb,
+            id="mongodb",
         ),
         pytest.param(
             "async+etcd://localhost:2379",
             {},
             pytest.lazy_fixture("etcd"),
             marks=[pytest.mark.etcd, pytest.mark.flaky],
+            id="etcd",
         ),
     ],
 )
@@ -216,18 +237,20 @@ async_all_storage = pytest.mark.parametrize(
 async_moving_window_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        ("async+memory://", {}, None),
+        pytest.param("async+memory://", {}, None, id="in-memory"),
         pytest.param(
             "async+redis://localhost:7379",
             {},
             pytest.lazy_fixture("redis_basic"),
             marks=pytest.mark.redis,
+            id="redis",
         ),
         pytest.param(
             "async+redis+cluster://localhost:7001/",
             {},
             pytest.lazy_fixture("redis_cluster"),
             marks=pytest.mark.redis_cluster,
+            id="redis-cluster",
         ),
         pytest.param(
             "async+redis+cluster://localhost:8301",
@@ -240,18 +263,21 @@ async_moving_window_storage = pytest.mark.parametrize(
             },
             pytest.lazy_fixture("redis_ssl_cluster"),
             marks=pytest.mark.redis_cluster,
+            id="redis-ssl-cluster",
         ),
         pytest.param(
             "async+redis+sentinel://localhost:26379/mymaster",
             {"use_replicas": False},
             pytest.lazy_fixture("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
+            id="redis-sentinel",
         ),
         pytest.param(
             "async+mongodb://localhost:37017/",
             {},
             pytest.lazy_fixture("mongodb"),
             marks=pytest.mark.mongodb,
+            id="mongodb",
         ),
     ],
 )
