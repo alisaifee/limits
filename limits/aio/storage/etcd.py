@@ -56,7 +56,7 @@ class EtcdStorage(Storage):
             window_end = now + expiry
             if (
                 await self.storage.transaction(
-                    compare=[self.storage.transactions.version(etcd_key) == 0],
+                    compare=[self.storage.transactions.create(etcd_key) == b"0"],
                     success=[
                         self.storage.transactions.put(
                             etcd_key, f"{amount}:{window_end}".encode(), lease=lease.id
