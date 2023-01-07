@@ -3,6 +3,16 @@
 Changelog
 =========
 
+v3.1.1
+------
+Release Date: 2023-01-06
+
+* Chores
+
+  * Fix compatibility tests for etcd in CI
+  * Improve visual identifiers of tests
+  * Add benchmark tests in CI
+
 v3.1.0
 ------
 Release Date: 2023-01-05
@@ -426,6 +436,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
