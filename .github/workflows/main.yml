@@ -114,7 +114,7 @@ jobs:
     - name: Upload benchmark results
       uses: actions/upload-artifact@v2
       with:
-        name: benchmark-results
+        name: benchmark
         path: .benchmarks/*
   build_wheels:
     needs: [lint]
@@ -192,8 +192,8 @@ jobs:
       - name: Download benchmark results
         uses: actions/download-artifact@v2
         with:
-          name: benchmark-results
-          path: benchmark
+          name: benchmark
+          path: .benchmarks
       - name: Generate release notes
         run: |
           ./scripts/github_release_notes.sh > release_notes.md
