@@ -96,6 +96,8 @@ def docker_services(host_ip_env, docker_services):
 def etcd_client(docker_services):
     docker_services.start("etcd")
     docker_services.wait_for_service("etcd", 2379, check_etcd_ready)
+    if os.environ.get("CI") == "True":
+        time.sleep(5)
 
     return etcd3.client()
 
