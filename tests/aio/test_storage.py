@@ -85,13 +85,14 @@ class TestBaseStorage:
 @pytest.mark.parametrize(
     "uri, args, expected_instance, fixture",
     [
-        ("async+memory://", {}, MemoryStorage, None),
+        pytest.param("async+memory://", {}, MemoryStorage, None, id="in-memory"),
         pytest.param(
             "async+redis://localhost:7379",
             {},
             RedisStorage,
             pytest.lazy_fixture("redis_basic"),
             marks=pytest.mark.redis,
+            id="redis",
         ),
         pytest.param(
             "async+redis+unix:///tmp/limits.redis.sock",
@@ -99,6 +100,7 @@ class TestBaseStorage:
             RedisStorage,
             pytest.lazy_fixture("redis_uds"),
             marks=pytest.mark.redis,
+            id="redis-uds",
         ),
         pytest.param(
             "async+redis+unix://:password/tmp/limits.redis.sock",
@@ -106,6 +108,7 @@ class TestBaseStorage:
             RedisStorage,
             pytest.lazy_fixture("redis_uds"),
             marks=pytest.mark.redis,
+            id="redis-uds-auth",
         ),
         pytest.param(
             "async+memcached://localhost:22122",
@@ -113,6 +116,7 @@ class TestBaseStorage:
             MemcachedStorage,
             pytest.lazy_fixture("memcached"),
             marks=pytest.mark.memcached,
+            id="memcached",
         ),
         pytest.param(
             "async+memcached://localhost:22122,localhost:22123",
@@ -120,6 +124,7 @@ class TestBaseStorage:
             MemcachedStorage,
             pytest.lazy_fixture("memcached_cluster"),
             marks=pytest.mark.memcached,
+            id="memcached-cluster",
         ),
         pytest.param(
             "async+redis+sentinel://localhost:26379",
@@ -127,6 +132,7 @@ class TestBaseStorage:
             RedisSentinelStorage,
             pytest.lazy_fixture("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
+            id="redis-sentinel",
         ),
         pytest.param(
             "async+redis+sentinel://localhost:26379/mymaster",
@@ -134,6 +140,7 @@ class TestBaseStorage:
             RedisSentinelStorage,
             pytest.lazy_fixture("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
+            id="redis-sentinel-service-name-url",
         ),
         pytest.param(
             "async+redis+sentinel://:sekret@localhost:36379/mymaster",
@@ -141,6 +148,7 @@ class TestBaseStorage:
             RedisSentinelStorage,
             pytest.lazy_fixture("redis_sentinel_auth"),
             marks=pytest.mark.redis_sentinel,
+            id="redis-sentinel-auth",
         ),
         pytest.param(
             "async+redis+cluster://localhost:7001/",
@@ -148,6 +156,7 @@ class TestBaseStorage:
             RedisClusterStorage,
             pytest.lazy_fixture("redis_cluster"),
             marks=pytest.mark.redis_cluster,
+            id="redis-cluster",
         ),
         pytest.param(
             "async+mongodb://localhost:37017/",
@@ -155,6 +164,7 @@ class TestBaseStorage:
             MongoDBStorage,
             pytest.lazy_fixture("mongodb"),
             marks=pytest.mark.mongodb,
+            id="mongodb",
         ),
         pytest.param(
             "async+etcd://localhost:2379",
@@ -162,6 +172,7 @@ class TestBaseStorage:
             EtcdStorage,
             pytest.lazy_fixture("etcd"),
             marks=pytest.mark.etcd,
+            id="etcd",
         ),
     ],
 )
