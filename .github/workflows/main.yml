@@ -154,13 +154,18 @@ jobs:
         with:
           name: artifact
           path: dist
+      - name: Download benchmark results
+        uses: actions/download-artifact@v2
+        with:
+          name: benchmark-results
+          path: benchmark
       - name: Generate release notes
         run: |
           ./scripts/github_release_notes.sh > release_notes.md
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "dist/*"
+          artifacts: "dist/*,.benchmarks/*"
           bodyFile: release_notes.md
           token: ${{ secrets.GITHUB_TOKEN }}
 

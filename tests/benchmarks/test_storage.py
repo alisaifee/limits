@@ -1,18 +1,18 @@
-import uuid
 import functools
+import uuid
 
 import pytest
 
+import limits.aio.strategies
 from limits import RateLimitItemPerMinute
 from limits.storage import storage_from_string
 from limits.strategies import FixedWindowRateLimiter, MovingWindowRateLimiter
 from tests.utils import (
     all_storage,
-    moving_window_storage,
     async_all_storage,
     async_moving_window_storage,
+    moving_window_storage,
 )
-import limits.aio.strategies
 
 
 def hit_window(strategy, storage):
