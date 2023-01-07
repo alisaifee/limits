@@ -16,6 +16,7 @@ flaky
 lovely-pytest-docker
 pytest
 pytest-asyncio
+pytest-benchmark[histogram]
 pytest-cov
 pytest-lazy-fixture
 pytest-mock
