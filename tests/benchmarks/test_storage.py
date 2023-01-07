@@ -1,5 +1,5 @@
 import functools
-import uuid
+import random
 
 import pytest
 
@@ -17,13 +17,13 @@ from tests.utils import (
 
 def hit_window(strategy, storage):
     limit = RateLimitItemPerMinute(500)
-    uid = uuid.uuid4().hex
+    uid = int(random.random() * 100)
     strategy(storage).hit(limit, uid)
 
 
 def hit_window_async(event_loop, strategy, storage):
     limit = RateLimitItemPerMinute(500)
-    uid = uuid.uuid4().hex
+    uid = int(random.random() * 100)
     event_loop.run_until_complete(strategy(storage).hit(limit, uid))
 
 
