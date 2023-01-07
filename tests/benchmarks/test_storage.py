@@ -28,7 +28,7 @@ def hit_window_async(event_loop, strategy, storage):
 
 
 @all_storage
-@pytest.mark.benchmark
+@pytest.mark.benchmark(group="fixed-window")
 def test_fixed_window(benchmark, uri, args, fixture):
     benchmark(
         functools.partial(
@@ -38,7 +38,7 @@ def test_fixed_window(benchmark, uri, args, fixture):
 
 
 @moving_window_storage
-@pytest.mark.benchmark
+@pytest.mark.benchmark(group="moving-window")
 def test_moving_window(benchmark, uri, args, fixture):
     benchmark(
         functools.partial(
@@ -48,8 +48,7 @@ def test_moving_window(benchmark, uri, args, fixture):
 
 
 @async_all_storage
-@pytest.mark.asyncio
-@pytest.mark.benchmark
+@pytest.mark.benchmark(group="async-fixed-window")
 def test_fixed_window_async(event_loop, benchmark, uri, args, fixture):
     benchmark(
         functools.partial(
@@ -62,8 +61,7 @@ def test_fixed_window_async(event_loop, benchmark, uri, args, fixture):
 
 
 @async_moving_window_storage
-@pytest.mark.asyncio
-@pytest.mark.benchmark
+@pytest.mark.benchmark(group="async-moving-window")
 def test_moving_window_async(event_loop, benchmark, uri, args, fixture):
     benchmark(
         functools.partial(

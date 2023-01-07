@@ -109,8 +109,7 @@ jobs:
       env:
         CI: "True"
       run: |
-        py.test -m "${{ matrix.marker }}" -m "benchmark and asyncio" --benchmark-min-rounds=1000 --benchmark-histogram=.benchmarks/async
-        py.test -m "${{ matrix.marker }}" -m "benchmark and not asyncio" --benchmark-min-rounds=1000 --benchmark-histogram=.benchmarks/sync
+        py.test -m "benchmark" --benchmark-min-rounds=1000 --benchmark-histogram=.benchmarks/benchmark
     - name: Upload benchmark results
       uses: actions/upload-artifact@v2
       with:
