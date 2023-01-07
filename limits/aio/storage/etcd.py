@@ -1,3 +1,4 @@
+import asyncio
 import time
 import urllib.parse
 from typing import TYPE_CHECKING, Optional
@@ -54,48 +55,47 @@ class EtcdStorage(Storage):
             now = time.time()
             lease = await self.storage.lease(expiry)
             window_end = now + expiry
-            if (
-                await self.storage.transaction(
-                    compare=[self.storage.transactions.create(etcd_key) == b"0"],
-                    success=[
-                        self.storage.transactions.put(
-                            etcd_key, f"{amount}:{window_end}".encode(), lease=lease.id
-                        )
-                    ],
-                    failure=[],
-                )
-            )[0]:
+            create_attempt = await self.storage.transaction(
+                compare=[self.storage.transactions.create(etcd_key) == b"0"],
+                success=[
+                    self.storage.transactions.put(
+                        etcd_key, f"{amount}:{window_end}".encode(), lease=lease.id
+                    )
+                ],
+                failure=[self.storage.transactions.get(etcd_key)],
+            )
+            if create_attempt[0]:
                 return amount
             else:
-                cur = await self.storage.get(etcd_key)
-                if cur:
-                    cur_value, window_end = cur.value.split(b":")
-                    window_end = float(window_end)
-                    if window_end <= now:
-                        await self.storage.revoke_lease(cur.lease)
-                        await self.storage.delete(etcd_key)
-                    else:
-                        if elastic_expiry:
-                            await self.storage.refresh_lease(cur.lease)
-                            window_end = now + expiry
-                        new = int(cur_value) + amount
-                        if (
-                            await self.storage.transaction(
-                                compare=[
-                                    self.storage.transactions.value(etcd_key)
-                                    == cur.value
-                                ],
-                                success=[
-                                    self.storage.transactions.put(
-                                        etcd_key,
-                                        f"{new}:{window_end}".encode(),
-                                        lease=cur.lease,
-                                    )
-                                ],
-                                failure=[],
-                            )
-                        )[0]:
-                            return new
+                cur = create_attempt[1][0][0][1]
+                cur_value, window_end = cur.value.split(b":")
+                window_end = float(window_end)
+                if window_end <= now:
+                    await asyncio.gather(
+                        self.storage.revoke_lease(cur.lease),
+                        self.storage.delete(etcd_key),
+                    )
+                else:
+                    if elastic_expiry:
+                        await self.storage.refresh_lease(cur.lease)
+                        window_end = now + expiry
+                    new = int(cur_value) + amount
+                    if (
+                        await self.storage.transaction(
+                            compare=[
+                                self.storage.transactions.value(etcd_key) == cur.value
+                            ],
+                            success=[
+                                self.storage.transactions.put(
+                                    etcd_key,
+                                    f"{new}:{window_end}".encode(),
+                                    lease=cur.lease,
+                                )
+                            ],
+                            failure=[],
+                        )
+                    )[0]:
+                        return new
                 retries += 1
         raise ConcurrentUpdateError(key, retries)
 

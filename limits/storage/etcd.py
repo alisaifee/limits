@@ -48,37 +48,42 @@ class EtcdStorage(Storage):
         self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
     ) -> int:
         retries = 0
+        etcd_key = f"{self.PREFIX}/{key}"
         while retries < self.max_retries:
             now = time.time()
             lease = self.storage.lease(expiry)
             window_end = now + expiry
-            if self.storage.put_if_not_exists(
-                f"{self.PREFIX}/{key}",
-                f"{amount}:{window_end}".encode(),
-                lease=lease.id,
-            ):
+            create_attempt = self.storage.transaction(
+                compare=[self.storage.transactions.create(etcd_key) == "0"],
+                success=[
+                    self.storage.transactions.put(
+                        etcd_key,
+                        f"{amount}:{window_end}".encode(),
+                        lease=lease.id,
+                    )
+                ],
+                failure=[self.storage.transactions.get(etcd_key)],
+            )
+            if create_attempt[0]:
                 return amount
             else:
-                cur, meta = self.storage.get(f"{self.PREFIX}/{key}")
+                cur, meta = create_attempt[1][0][0]
                 if cur:
                     cur_value, window_end = cur.split(b":")
                     window_end = float(window_end)
                     if window_end <= now:
                         self.storage.revoke_lease(meta.lease_id)
-                        self.storage.delete(f"{self.PREFIX}/{key}")
+                        self.storage.delete(etcd_key)
                     else:
                         if elastic_expiry:
                             self.storage.refresh_lease(meta.lease_id)
                             window_end = now + expiry
                         new = int(cur_value) + amount
                         if self.storage.transaction(
-                            compare=[
-                                self.storage.transactions.value(f"{self.PREFIX}/{key}")
-                                == cur
-                            ],
+                            compare=[self.storage.transactions.value(etcd_key) == cur],
                             success=[
                                 self.storage.transactions.put(
-                                    f"{self.PREFIX}/{key}",
+                                    etcd_key,
                                     f"{new}:{window_end}".encode(),
                                     lease=meta.lease_id,
                                 )
