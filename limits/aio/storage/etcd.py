@@ -46,11 +46,14 @@ class EtcdStorage(Storage):
         )
         self.max_retries = max_retries
 
+    def prefixed_key(self, key: str) -> bytes:
+        return f"{self.PREFIX}/{key}".encode()
+
     async def incr(
         self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
     ) -> int:
         retries = 0
-        etcd_key = f"{self.PREFIX}/{key}".encode()
+        etcd_key = self.prefixed_key(key)
         while retries < self.max_retries:
             now = time.time()
             lease = await self.storage.lease(expiry)
@@ -100,7 +103,7 @@ class EtcdStorage(Storage):
         raise ConcurrentUpdateError(key, retries)
 
     async def get(self, key: str) -> int:
-        cur = await self.storage.get(f"{self.PREFIX}/{key}".encode())
+        cur = await self.storage.get(self.prefixed_key(key))
         if cur:
             amount, expiry = cur.value.split(b":")
             if float(expiry) > time.time():
@@ -108,7 +111,7 @@ class EtcdStorage(Storage):
         return 0
 
     async def get_expiry(self, key: str) -> int:
-        cur = await self.storage.get(f"{self.PREFIX}/{key}".encode())
+        cur = await self.storage.get(self.prefixed_key(key))
         if cur:
             window_end = float(cur.value.split(b":")[1])
             return int(window_end)
@@ -125,4 +128,4 @@ class EtcdStorage(Storage):
         return (await self.storage.delete_prefix(f"{self.PREFIX}/".encode())).deleted
 
     async def clear(self, key: str) -> None:
-        await self.storage.delete(f"{self.PREFIX}/{key}".encode())
+        await self.storage.delete(self.prefixed_key(key))

@@ -44,11 +44,14 @@ class EtcdStorage(Storage):
         )
         self.max_retries = max_retries
 
+    def prefixed_key(self, key: str) -> bytes:
+        return f"{self.PREFIX}/{key}".encode()
+
     def incr(
         self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
     ) -> int:
         retries = 0
-        etcd_key = f"{self.PREFIX}/{key}"
+        etcd_key = self.prefixed_key(key)
         while retries < self.max_retries:
             now = time.time()
             lease = self.storage.lease(expiry)
@@ -68,34 +71,33 @@ class EtcdStorage(Storage):
                 return amount
             else:
                 cur, meta = create_attempt[1][0][0]
-                if cur:
-                    cur_value, window_end = cur.split(b":")
-                    window_end = float(window_end)
-                    if window_end <= now:
-                        self.storage.revoke_lease(meta.lease_id)
-                        self.storage.delete(etcd_key)
-                    else:
-                        if elastic_expiry:
-                            self.storage.refresh_lease(meta.lease_id)
-                            window_end = now + expiry
-                        new = int(cur_value) + amount
-                        if self.storage.transaction(
-                            compare=[self.storage.transactions.value(etcd_key) == cur],
-                            success=[
-                                self.storage.transactions.put(
-                                    etcd_key,
-                                    f"{new}:{window_end}".encode(),
-                                    lease=meta.lease_id,
-                                )
-                            ],
-                            failure=[],
-                        )[0]:
-                            return new
+                cur_value, window_end = cur.split(b":")
+                window_end = float(window_end)
+                if window_end <= now:
+                    self.storage.revoke_lease(meta.lease_id)
+                    self.storage.delete(etcd_key)
+                else:
+                    if elastic_expiry:
+                        self.storage.refresh_lease(meta.lease_id)
+                        window_end = now + expiry
+                    new = int(cur_value) + amount
+                    if self.storage.transaction(
+                        compare=[self.storage.transactions.value(etcd_key) == cur],
+                        success=[
+                            self.storage.transactions.put(
+                                etcd_key,
+                                f"{new}:{window_end}".encode(),
+                                lease=meta.lease_id,
+                            )
+                        ],
+                        failure=[],
+                    )[0]:
+                        return new
                 retries += 1
         raise ConcurrentUpdateError(key, retries)
 
     def get(self, key: str) -> int:
-        value, meta = self.storage.get(f"{self.PREFIX}/{key}")
+        value, meta = self.storage.get(self.prefixed_key(key))
         if value:
             amount, expiry = value.split(b":")
             if float(expiry) > time.time():
@@ -103,7 +105,7 @@ class EtcdStorage(Storage):
         return 0
 
     def get_expiry(self, key: str) -> int:
-        value, _ = self.storage.get(f"{self.PREFIX}/{key}")
+        value, _ = self.storage.get(self.prefixed_key(key))
         if value:
             window_end = float(value.split(b":")[1])
             return int(window_end)
@@ -120,4 +122,4 @@ class EtcdStorage(Storage):
         return self.storage.delete_prefix(f"{self.PREFIX}/").deleted
 
     def clear(self, key: str) -> None:
-        self.storage.delete(f"{self.PREFIX}/{key}")
+        self.storage.delete(self.prefixed_key(key))
