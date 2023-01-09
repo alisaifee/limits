@@ -14,7 +14,7 @@ class EtcdStorage(Storage):
     """
     Rate limit storage with etcd as backend.
 
-    Depends on :pypi:`etcd3`.
+    Depends on :pypi:`aetcd`.
     """
 
     STORAGE_SCHEME = ["async+etcd"]
