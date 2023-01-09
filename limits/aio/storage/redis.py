@@ -429,7 +429,7 @@ class RedisSentinelStorage(RedisStorage):
 
     async def check(self) -> bool:
         """
-        Check if storage is healthy by calling :meth:`coredis.StrictRedis.ping`
+        Check if storage is healthy by calling :meth:`coredis.Redis.ping`
         on the replica.
         """
 
