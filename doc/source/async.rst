@@ -9,11 +9,11 @@ A new namespace ``limits.aio`` is available which mirrors the original
 
 The following async storage backends are implemented:
 
- - In-Memory
- - Redis (via `coredis <https://coredis.readthedocs.org>`_)
- - Memcached (via `emcache <https://emcache.readthedocs.org>`_)
- - MongoDB (via `motor <https://motor.readthedocs.org>`_)
- - Etcd (via `aetcd <https://aetcd.readthedocs.org>`_)
+- In-Memory
+- Redis (via `coredis <https://coredis.readthedocs.org>`_)
+- Memcached (via `emcache <https://emcache.readthedocs.org>`_)
+- MongoDB (via `motor <https://motor.readthedocs.org>`_)
+- Etcd (via `aetcd <https://aetcd.readthedocs.org>`_)
 
 Quick start
 ===========
