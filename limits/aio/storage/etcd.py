@@ -32,7 +32,7 @@ class EtcdStorage(Storage):
     ) -> None:
         """
         :param uri: etcd location of the form
-         ``etcd://host:port``,
+         ``async+etcd://host:port``,
         :param max_retries: Maximum number of attempts to retry
          in the case of concurrent updates to a rate limit key
         :param options: all remaining keyword arguments are passed
