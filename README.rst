@@ -16,7 +16,7 @@ limits
 |docs| |ci| |codecov| |pypi| |pypi-versions| |license|
 
 
-**limits** is a python library to perform rate limiting with commonly used storage backends (Redis, Memcached & MongoDB).
+**limits** is a python library to perform rate limiting with commonly used storage backends (Redis, Memcached, MongoDB & Etcd).
 
 ----
 
