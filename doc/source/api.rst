@@ -17,8 +17,8 @@ API Reference
 Strategies
 ==========
 
-Synchronous
------------
+Synchronous Strategies
+----------------------
 
 The available built in rate limiting strategies which expect
 a single parameter: a subclass of :class:`~limits.storage.Storage`.
@@ -35,8 +35,8 @@ All strategies implement the same abstract base class:
 
 .. autoclass:: RateLimiter
 
-Async
------
+Async Strategies
+----------------
 
 These variants should be used in for asyncio support. These strategies
 expose async variants and expect a subclass of :class:`limits.aio.storage.Storage`

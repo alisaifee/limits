@@ -36,6 +36,5 @@ This example demonstrates the subtle differences in the ``limits.aio`` namespace
 
 
 Refer to :ref:`api:async storage` for more implementation details of the async
-storage backends, and :ref:`api:strategies` (Async) for the async rate limit
-strategies API.
+storage backends, and :ref:`api:async strategies` for the async rate limit strategies API.
 
