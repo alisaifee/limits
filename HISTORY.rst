@@ -3,6 +3,23 @@
 Changelog
 =========
 
+v3.1.5
+------
+Release Date: 2023-01-12
+
+* Performance
+
+  * Reduce rpc calls to etcd for counter increment
+
+* Compatibility
+
+  * Relax version requirements for packaging dependency
+
+* Chores
+
+  * Improve benchmark outputs
+  * Improve documentation for etcd
+
 v3.1.4
 ------
 Release Date: 2023-01-06
@@ -460,6 +477,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
