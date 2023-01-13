@@ -4,10 +4,11 @@ Rate limiting strategies
 
 import weakref
 from abc import ABCMeta, abstractmethod
-from typing import Dict, Tuple, Type, Union, cast
+from typing import Dict, Type, Union, cast
 
 from .limits import RateLimitItem
 from .storage import MovingWindowSupport, Storage, StorageTypes
+from .util import WindowStats
 
 
 class RateLimiter(metaclass=ABCMeta):
@@ -39,9 +40,7 @@ class RateLimiter(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_window_stats(
-        self, item: RateLimitItem, *identifiers: str
-    ) -> Tuple[int, int]:
+    def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
         """
         Query the reset time and remaining amount for the limit
 
@@ -104,9 +103,7 @@ class MovingWindowRateLimiter(RateLimiter):
             < item.amount
         )
 
-    def get_window_stats(
-        self, item: RateLimitItem, *identifiers: str
-    ) -> Tuple[int, int]:
+    def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
         """
         returns the number of requests remaining within this limit.
 
@@ -120,7 +117,7 @@ class MovingWindowRateLimiter(RateLimiter):
         ).get_moving_window(item.key_for(*identifiers), item.amount, item.get_expiry())
         reset = window_start + item.get_expiry()
 
-        return (reset, item.amount - window_items)
+        return WindowStats(reset, item.amount - window_items)
 
 
 class FixedWindowRateLimiter(RateLimiter):
@@ -159,9 +156,7 @@ class FixedWindowRateLimiter(RateLimiter):
 
         return self.storage.get(item.key_for(*identifiers)) < item.amount
 
-    def get_window_stats(
-        self, item: RateLimitItem, *identifiers: str
-    ) -> Tuple[int, int]:
+    def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
         """
         Query the reset time and remaining amount for the limit
 
@@ -173,7 +168,7 @@ class FixedWindowRateLimiter(RateLimiter):
         remaining = max(0, item.amount - self.storage.get(item.key_for(*identifiers)))
         reset = self.storage.get_expiry(item.key_for(*identifiers))
 
-        return (reset, remaining)
+        return WindowStats(reset, remaining)
 
 
 class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):

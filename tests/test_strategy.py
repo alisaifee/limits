@@ -27,8 +27,8 @@ class TestWindow:
         with window(1) as (start, end):
             assert all([limiter.hit(limit) for _ in range(0, 10)])
         assert not limiter.hit(limit)
-        assert limiter.get_window_stats(limit)[1] == 0
-        assert limiter.get_window_stats(limit)[0] == math.floor(start + 2)
+        assert limiter.get_window_stats(limit).remaining == 0
+        assert limiter.get_window_stats(limit).reset_time == math.floor(start + 2)
 
     @all_storage
     @fixed_start
@@ -36,8 +36,8 @@ class TestWindow:
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
-        assert limiter.get_window_stats(limit)[1] == 10
-        assert limiter.get_window_stats(limit)[0] == int(time.time())
+        assert limiter.get_window_stats(limit).remaining == 10
+        assert limiter.get_window_stats(limit).reset_time == int(time.time())
 
     @all_storage
     @fixed_start
@@ -46,7 +46,7 @@ class TestWindow:
         limiter = FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerMinute(10, 2)
         assert limiter.hit(limit, cost=5)
-        assert limiter.get_window_stats(limit)[1] == 5
+        assert limiter.get_window_stats(limit).remaining == 5
 
     @all_storage
     @fixed_start
@@ -57,13 +57,13 @@ class TestWindow:
         with window(1) as (start, end):
             assert all([limiter.hit(limit) for _ in range(0, 10)])
             assert not limiter.hit(limit)
-        assert limiter.get_window_stats(limit)[1] == 0
-        assert limiter.get_window_stats(limit)[0] == start + 2
+        assert limiter.get_window_stats(limit).remaining == 0
+        assert limiter.get_window_stats(limit).reset_time == start + 2
         with window(3) as (start, end):
             assert not limiter.hit(limit)
         assert limiter.hit(limit)
-        assert limiter.get_window_stats(limit)[1] == 9
-        assert limiter.get_window_stats(limit)[0] == end + 2
+        assert limiter.get_window_stats(limit).remaining == 9
+        assert limiter.get_window_stats(limit).reset_time == end + 2
 
     @all_storage
     @fixed_start
@@ -73,16 +73,16 @@ class TestWindow:
         limit = RateLimitItemPerSecond(10, 2)
         with window(0) as (start, end):
             assert limiter.hit(limit, cost=5)
-        assert limiter.get_window_stats(limit)[1] == 5
-        assert limiter.get_window_stats(limit)[0] == end + 2
+        assert limiter.get_window_stats(limit).remaining == 5
+        assert limiter.get_window_stats(limit).reset_time == end + 2
 
     @moving_window_storage
     def test_moving_window_empty_stats(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
-        assert limiter.get_window_stats(limit)[1] == 10
-        assert limiter.get_window_stats(limit)[0] == int(time.time() + 2)
+        assert limiter.get_window_stats(limit).remaining == 10
+        assert limiter.get_window_stats(limit).reset_time == int(time.time() + 2)
 
     @moving_window_storage
     def test_moving_window(self, uri, args, fixture):

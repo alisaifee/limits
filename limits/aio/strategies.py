@@ -4,10 +4,11 @@ Asynchronous rate limiting strategies
 
 import weakref
 from abc import ABC, abstractmethod
-from typing import Tuple, cast
+from typing import cast
 
 from ..limits import RateLimitItem
 from ..storage import StorageTypes
+from ..util import WindowStats
 from .storage import MovingWindowSupport, Storage
 
 
@@ -42,7 +43,7 @@ class RateLimiter(ABC):
     @abstractmethod
     async def get_window_stats(
         self, item: RateLimitItem, *identifiers: str
-    ) -> Tuple[int, int]:
+    ) -> WindowStats:
         """
         Query the reset time and remaining amount for the limit
 
@@ -105,7 +106,7 @@ class MovingWindowRateLimiter(RateLimiter):
 
     async def get_window_stats(
         self, item: RateLimitItem, *identifiers: str
-    ) -> Tuple[int, int]:
+    ) -> WindowStats:
         """
         returns the number of requests remaining within this limit.
 
@@ -119,7 +120,7 @@ class MovingWindowRateLimiter(RateLimiter):
         ).get_moving_window(item.key_for(*identifiers), item.amount, item.get_expiry())
         reset = window_start + item.get_expiry()
 
-        return reset, item.amount - window_items
+        return WindowStats(reset, item.amount - window_items)
 
 
 class FixedWindowRateLimiter(RateLimiter):
@@ -160,7 +161,7 @@ class FixedWindowRateLimiter(RateLimiter):
 
     async def get_window_stats(
         self, item: RateLimitItem, *identifiers: str
-    ) -> Tuple[int, int]:
+    ) -> WindowStats:
         """
         Query the reset time and remaining amount for the limit
 
@@ -175,7 +176,7 @@ class FixedWindowRateLimiter(RateLimiter):
         )
         reset = await self.storage.get_expiry(item.key_for(*identifiers))
 
-        return reset, remaining
+        return WindowStats(reset, remaining)
 
 
 class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):

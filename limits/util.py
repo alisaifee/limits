@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pkg_resources
 from packaging.version import Version
 
-from limits.typing import Dict, List, Optional, Tuple, Type, Union
+from limits.typing import Dict, List, NamedTuple, Optional, Tuple, Type, Union
 
 from .errors import ConfigurationError
 from .limits import GRANULARITIES, RateLimitItem
@@ -33,6 +33,17 @@ EXPR = re.compile(
 )
 
 
+class WindowStats(NamedTuple):
+    """
+    Tuple to describe a rate limited window
+    """
+
+    #: Time as seconds since the Epoch when this window will be reset
+    reset_time: int
+    #: Quantity remaining in this window
+    remaining: int
+
+
 @dataclasses.dataclass
 class Dependency:
     name: str
@@ -52,6 +63,7 @@ class DependencyDict(_UserDict):
 
     def __getitem__(self, key: str) -> Dependency:
         dependency = super().__getitem__(key)
+
         if dependency == DependencyDict.Missing:
             raise ConfigurationError(f"{key} prerequisite not available")
         elif dependency.version_required and (
@@ -62,6 +74,7 @@ class DependencyDict(_UserDict):
                 f"The minimum version of {dependency.version_required}"
                 f" of {dependency.name} could not be found"
             )
+
         return dependency
 
 
@@ -90,6 +103,7 @@ class LazyDependency:
 
         :meta private:
         """
+
         if not getattr(self, "_dependencies", None):
             dependencies = DependencyDict()
             mapping: Dict[str, Optional[Version]]
@@ -101,6 +115,7 @@ class LazyDependency:
 
             for name, minimum_version in mapping.items():
                 dependency, version = get_dependency(name)
+
                 if not dependency:
                     dependencies[name] = DependencyDict.Missing
                 else:
@@ -108,6 +123,7 @@ class LazyDependency:
                         name, minimum_version, version, dependency
                     )
             self._dependencies = dependencies
+
         return self._dependencies
 
 
@@ -120,6 +136,7 @@ def get_dependency(module_path: str) -> Tuple[Optional[ModuleType], Optional[Ver
             __import__(module_path)
         root = module_path.split(".")[0]
         version = getattr(sys.modules[root], "__version__", "0.0.0")
+
         return sys.modules[module_path], Version(version)
     except ImportError:  # pragma: no cover
         return None, None

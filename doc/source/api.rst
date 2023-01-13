@@ -191,6 +191,11 @@ declaring a :attr:`GRANULARITY`
 .. autoclass:: RateLimitItemPerYear
 
 
+Structures
+==========
+.. autoclass:: limits.WindowStats
+   :no-inherited-members:
+
 
 Exceptions
 ==========

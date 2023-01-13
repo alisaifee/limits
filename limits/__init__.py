@@ -12,7 +12,7 @@ from .limits import (
     RateLimitItemPerSecond,
     RateLimitItemPerYear,
 )
-from .util import parse, parse_many
+from .util import WindowStats, parse, parse_many
 
 __all__ = [
     "RateLimitItem",
@@ -27,6 +27,7 @@ __all__ = [
     "strategies",
     "parse",
     "parse_many",
+    "WindowStats",
 ]
 
 __version__ = _version.get_versions()["version"]  # type: ignore
