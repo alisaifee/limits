@@ -45,8 +45,10 @@ class TestWindow:
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerMinute(10, 2)
-        assert limiter.hit(limit, cost=5)
-        assert limiter.get_window_stats(limit).remaining == 5
+        assert not limiter.hit(limit, "k1", cost=11)
+        assert limiter.hit(limit, "k2", cost=5)
+        assert limiter.get_window_stats(limit, "k2").remaining == 5
+        assert not limiter.hit(limit, "k2", cost=6)
 
     @all_storage
     @fixed_start
@@ -71,10 +73,12 @@ class TestWindow:
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
+        assert not limiter.hit(limit, "k1", cost=11)
         with window(0) as (start, end):
-            assert limiter.hit(limit, cost=5)
-        assert limiter.get_window_stats(limit).remaining == 5
-        assert limiter.get_window_stats(limit).reset_time == end + 2
+            assert limiter.hit(limit, "k2", cost=5)
+        assert limiter.get_window_stats(limit, "k2").remaining == 5
+        assert limiter.get_window_stats(limit, "k2").reset_time == end + 2
+        assert not limiter.hit(limit, "k2", cost=6)
 
     @moving_window_storage
     def test_moving_window_empty_stats(self, uri, args, fixture):
@@ -105,18 +109,20 @@ class TestWindow:
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
 
+        assert not limiter.hit(limit, "k1", cost=11)
         # 5 hits in the first 100ms
         with window(0.1):
-            limiter.hit(limit, cost=5)
+            limiter.hit(limit, "k2", cost=5)
         # 5 hits in the last 100ms
         with window(2, delay=1.8):
-            assert all(limiter.hit(limit) for i in range(5))
+            assert all(limiter.hit(limit, "k2") for i in range(5))
             # 11th fails
-            assert not limiter.hit(limit)
+            assert not limiter.hit(limit, "k2")
 
         # 5 more succeed since there were only 5 in the last 2 seconds
-        assert all([limiter.hit(limit) for i in range(5)])
-        assert limiter.get_window_stats(limit)[1] == 0
+        assert all([limiter.hit(limit, "k2") for i in range(5)])
+        assert limiter.get_window_stats(limit, "k2")[1] == 0
+        assert not limiter.hit(limit, "k2", cost=2)
 
     @moving_window_storage
     def test_moving_window_varying_cost(self, uri, args, fixture):

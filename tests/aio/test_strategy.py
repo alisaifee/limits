@@ -51,8 +51,10 @@ class TestAsyncWindow:
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerMinute(10, 2)
-        assert await limiter.hit(limit, cost=5)
-        assert (await limiter.get_window_stats(limit)).remaining == 5
+        assert not await limiter.hit(limit, "k1", cost=11)
+        assert await limiter.hit(limit, "k2", cost=5)
+        assert (await limiter.get_window_stats(limit, "k2")).remaining == 5
+        assert not await limiter.hit(limit, "k2", cost=6)
 
     @async_all_storage
     @fixed_start
@@ -79,10 +81,12 @@ class TestAsyncWindow:
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
+        assert not await limiter.hit(limit, "k1", cost=11)
         async with async_window(0) as (start, end):
-            assert await limiter.hit(limit, cost=5)
-        assert (await limiter.get_window_stats(limit)).remaining == 5
-        assert (await limiter.get_window_stats(limit)).reset_time == end + 2
+            assert await limiter.hit(limit, "k2", cost=5)
+        assert (await limiter.get_window_stats(limit, "k2")).remaining == 5
+        assert (await limiter.get_window_stats(limit, "k2")).reset_time == end + 2
+        assert not await limiter.hit(limit, "k2", cost=6)
 
     @async_moving_window_storage
     async def test_moving_window(self, uri, args, fixture):
@@ -121,16 +125,18 @@ class TestAsyncWindow:
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
 
+        assert not await limiter.hit(limit, "k1", cost=11)
         # 5 hits in the first 100ms
         async with async_window(0.1):
-            assert await limiter.hit(limit, cost=5)
+            assert await limiter.hit(limit, "k2", cost=5)
         # 5 hits in the last 100ms
         async with async_window(2, delay=1.8):
-            assert all([await limiter.hit(limit) for i in range(5)])
+            assert all([await limiter.hit(limit, "k2") for i in range(5)])
             # 11th fails
-            assert not await limiter.hit(limit)
-        assert all([await limiter.hit(limit) for i in range(5)])
-        assert (await limiter.get_window_stats(limit)).remaining == 0
+            assert not await limiter.hit(limit, "k2")
+        assert all([await limiter.hit(limit, "k2") for i in range(5)])
+        assert (await limiter.get_window_stats(limit, "k2")).remaining == 0
+        assert not await limiter.hit(limit, "k2", cost=2)
 
     @async_moving_window_storage
     async def test_moving_window_varying_cost(self, uri, args, fixture):

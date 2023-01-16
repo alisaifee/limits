@@ -205,6 +205,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :param expiry: expiry of the entry
         :param amount: the number of entries to acquire
         """
+        if amount > limit:
+            return False
+
         timestamp = time.time()
         try:
             updates: Dict[str, Any] = {  # type: ignore

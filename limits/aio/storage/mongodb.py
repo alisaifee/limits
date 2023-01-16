@@ -240,6 +240,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         """
         await self.create_indices()
 
+        if amount > limit:
+            return False
+
         timestamp = time.time()
         try:
             updates: Dict[str, Any] = {  # type: ignore
