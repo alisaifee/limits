@@ -102,6 +102,9 @@ class MemoryStorage(Storage, MovingWindowSupport):
         :param expiry: expiry of the entry
         :param amount: the number of entries to acquire
         """
+        if amount > limit:
+            return False
+
         self.events.setdefault(key, [])
         await self.__schedule_expiry()
         timestamp = time.time()

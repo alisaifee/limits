@@ -200,6 +200,29 @@ class TestConcreteStorages:
         time.sleep(1.1)
         assert await storage.get(limit.key_for()) == 0
 
+    async def test_incr_custom_amount(self, uri, args, expected_instance, fixture):
+        storage = storage_from_string(uri, **args)
+        limit = RateLimitItemPerMinute(1)
+        assert 1 == await storage.incr(limit.key_for(), limit.get_expiry(), amount=1)
+        assert 11 == await storage.incr(limit.key_for(), limit.get_expiry(), amount=10)
+
+    async def test_acquire_entry_custom_amount(
+        self, uri, args, expected_instance, fixture
+    ):
+        if not issubclass(expected_instance, MovingWindowSupport):
+            pytest.skip("%s does not support acquire entry" % expected_instance)
+        storage = storage_from_string(uri, **args)
+        limit = RateLimitItemPerMinute(10)
+        assert not await storage.acquire_entry(
+            limit.key_for(), limit.amount, limit.get_expiry(), amount=11
+        )
+        assert await storage.acquire_entry(
+            limit.key_for(), limit.amount, limit.get_expiry(), amount=1
+        )
+        assert not await storage.acquire_entry(
+            limit.key_for(), limit.amount, limit.get_expiry(), amount=10
+        )
+
     async def test_storage_check(self, uri, args, expected_instance, fixture):
         assert await (storage_from_string(uri, **args)).check()
 
