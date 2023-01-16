@@ -3,6 +3,18 @@
 Changelog
 =========
 
+v3.1.6
+------
+Release Date: 2023-01-16
+
+* Bug Fix
+
+  * Disallow acquiring amounts > limit in moving window
+
+* Usability
+
+  * Use a named tuple for the response from `RateLimiter.get_window_stats`
+
 v3.1.5
 ------
 Release Date: 2023-01-12
@@ -477,6 +489,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
