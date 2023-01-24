@@ -198,6 +198,9 @@ Requires the location(s) of the redis cluster startup nodes (One is enough).
 :code:`redis+cluster://localhost:7000`
 or :code:`redis+cluster://localhost:7000,localhost:7001`
 
+If the cluster is password protected the username and/or password can be provided in the url,
+for example  :code:`redis+cluster://:sekret@localhost:7000,localhost:7001`
+
 Depends on: :pypi:`redis`
 
 MongoDB Storage
