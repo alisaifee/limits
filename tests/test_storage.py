@@ -173,6 +173,14 @@ class TestBaseStorage:
             id="redis-cluster",
         ),
         pytest.param(
+            "redis+cluster://:sekret@localhost:8400/",
+            {},
+            RedisClusterStorage,
+            pytest.lazy_fixture("redis_auth_cluster"),
+            marks=pytest.mark.redis_cluster,
+            id="redis-cluster-auth",
+        ),
+        pytest.param(
             "mongodb://localhost:37017/",
             {},
             MongoDBStorage,

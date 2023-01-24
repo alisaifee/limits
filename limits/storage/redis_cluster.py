@@ -50,14 +50,24 @@ class RedisClusterStorage(RedisStorage):
          available or if the redis cluster cannot be reached.
         """
         parsed = urllib.parse.urlparse(uri)
+        parsed_auth: Dict[str, Union[float, str, bool]] = {}
+
+        if parsed.username:
+            parsed_auth["username"] = parsed.username
+        if parsed.password:
+            parsed_auth["password"] = parsed.password
+
+        sep = parsed.netloc.find("@") + 1
         cluster_hosts = []
-        for loc in parsed.netloc.split(","):
+        for loc in parsed.netloc[sep:].split(","):
             host, port = loc.split(":")
             cluster_hosts.append((host, int(port)))
 
         self.storage = None
         self.using_redis_py = False
-        self.__pick_storage(cluster_hosts, **{**self.DEFAULT_OPTIONS, **options})
+        self.__pick_storage(
+            cluster_hosts, **{**self.DEFAULT_OPTIONS, **parsed_auth, **options}
+        )
         assert self.storage
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__(uri, **options)
@@ -99,7 +109,7 @@ class RedisClusterStorage(RedisStorage):
         )
         self.storage = redis_cluster.RedisCluster(
             startup_nodes=[{"host": c[0], "port": c[1]} for c in cluster_hosts],
-            **options
+            **options,
         )
 
     def reset(self) -> Optional[int]:

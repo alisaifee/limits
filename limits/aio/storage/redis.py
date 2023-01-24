@@ -295,9 +295,17 @@ class RedisClusterStorage(RedisStorage):
          available or if the redis host cannot be pinged.
         """
         parsed = urllib.parse.urlparse(uri)
+        parsed_auth: Dict[str, Union[float, str, bool]] = {}
+
+        if parsed.username:
+            parsed_auth["username"] = parsed.username
+        if parsed.password:
+            parsed_auth["password"] = parsed.password
+
+        sep = parsed.netloc.find("@") + 1
         cluster_hosts = []
 
-        for loc in parsed.netloc.split(","):
+        for loc in parsed.netloc[sep:].split(","):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})
 
@@ -306,7 +314,8 @@ class RedisClusterStorage(RedisStorage):
         self.dependency = self.dependencies["coredis"].module
 
         self.storage: "coredis.RedisCluster[str]" = self.dependency.RedisCluster(
-            startup_nodes=cluster_hosts, **{**self.DEFAULT_OPTIONS, **options}
+            startup_nodes=cluster_hosts,
+            **{**self.DEFAULT_OPTIONS, **parsed_auth, **options},
         )
         self.initialize_storage(uri)
 
