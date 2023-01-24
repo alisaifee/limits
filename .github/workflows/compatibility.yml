@@ -34,6 +34,8 @@ jobs:
             marker: "redis_sentinel"
           - service_version: "LIMITS_REDIS_SENTINEL_SERVER_VERSION=7.0"
             marker: "redis_sentinel"
+          - service_version: "LIMITS_MONGODB_SERVER_VERSION=6.0.3"
+            marker: "mongodb"
           - service_version: "LIMITS_MONGODB_SERVER_VERSION=5.0.3"
             marker: "mongodb"
           - service_version: "LIMITS_MONGODB_SERVER_VERSION=4.4.9"
