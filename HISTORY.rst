@@ -3,6 +3,18 @@
 Changelog
 =========
 
+v3.2.0
+------
+Release Date: 2023-01-24
+
+* Bug Fix
+
+  * Fix handling of authentication details in storage url of redis cluster
+
+* Chores
+
+  * Add test coverage for redis cluster with auth required
+
 v3.1.6
 ------
 Release Date: 2023-01-16
@@ -489,6 +501,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
