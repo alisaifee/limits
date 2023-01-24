@@ -19,6 +19,16 @@ def check_redis_cluster_ready(host, port):
         return False
 
 
+def check_redis_auth_cluster_ready(host, port):
+    try:
+        return (
+            redis.Redis(host, port, password="sekret").cluster("info")["cluster_state"]
+            == "ok"
+        )
+    except Exception:
+        return False
+
+
 def check_redis_ssl_cluster_ready(host, port):
 
     storage_url = (
@@ -149,6 +159,18 @@ def redis_cluster_client(docker_services):
 
 
 @pytest.fixture(scope="session")
+def redis_auth_cluster_client(docker_services):
+    docker_services.start("redis-cluster-auth-init")
+    docker_services.wait_for_service(
+        "redis-cluster-auth-3", 8402, check_redis_auth_cluster_ready
+    )
+    if os.environ.get("CI") == "True":
+        time.sleep(10)
+
+    return redis.cluster.RedisCluster("localhost", 8400, password="sekret")
+
+
+@pytest.fixture(scope="session")
 def redis_ssl_cluster_client(docker_services):
     docker_services.start("redis-ssl-cluster-init")
     docker_services.wait_for_service(
@@ -274,6 +296,13 @@ def redis_cluster(redis_cluster_client):
     redis_cluster_client.flushall()
 
     return redis_cluster_client
+
+
+@pytest.fixture
+def redis_auth_cluster(redis_auth_cluster_client):
+    redis_auth_cluster_client.flushall()
+
+    return redis_auth_cluster_client
 
 
 @pytest.fixture
