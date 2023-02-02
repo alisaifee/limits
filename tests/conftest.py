@@ -30,7 +30,6 @@ def check_redis_auth_cluster_ready(host, port):
 
 
 def check_redis_ssl_cluster_ready(host, port):
-
     storage_url = (
         "rediss://localhost:8301/?ssl_cert_reqs=required"
         "&ssl_keyfile=./tests/tls/client.key"

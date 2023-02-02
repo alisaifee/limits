@@ -232,7 +232,7 @@ class TestConcreteStorages:
         )
 
     async def test_storage_check(self, uri, args, expected_instance, fixture):
-        assert await (storage_from_string(uri, **args)).check()
+        assert await storage_from_string(uri, **args).check()
 
     async def test_storage_reset(self, uri, args, expected_instance, fixture):
         if expected_instance == MemcachedStorage:
