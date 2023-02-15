@@ -72,8 +72,9 @@ Initialize the storage backend
    memcached_storage = storage.MemcachedStorage("memcached://localhost:11211")
    # or redis
    redis_storage = storage.RedisStorage("redis://localhost:6379")
-   # or leave it to fate
-   some_storage = storage.storage.from_string(fate)
+   # or use the factory
+   storage_uri = "memcached://localhost:11211"
+   some_storage = storage.storage_from_string(storage_uri)
 
 Initialize a rate limiter with the Moving Window Strategy
 
