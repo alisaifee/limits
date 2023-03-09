@@ -26,9 +26,10 @@ jobs:
         python -m pip install "pip<22"
         python -m pip install --upgrade setuptools wheel
         pip install --no-binary protobuf -r requirements/ci.txt
-    - name: Lint with ruff
+    - name: Lint with flake8
       run: |
-        ruff limits tests
+        flake8 . --count --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10
     - name: Lint with black
       run: |
         black limits tests --check

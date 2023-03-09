@@ -30,7 +30,7 @@ class TestAsyncWindow:
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
-        async with async_window(1) as (start, _):
+        async with async_window(1) as (start, end):
             assert all([await limiter.hit(limit) for _ in range(0, 10)])
         assert not await limiter.hit(limit)
         assert (await limiter.get_window_stats(limit)).remaining == 0
@@ -82,7 +82,7 @@ class TestAsyncWindow:
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         assert not await limiter.hit(limit, "k1", cost=11)
-        async with async_window(0) as (_, end):
+        async with async_window(0) as (start, end):
             assert await limiter.hit(limit, "k2", cost=5)
         assert (await limiter.get_window_stats(limit, "k2")).remaining == 5
         assert (await limiter.get_window_stats(limit, "k2")).reset_time == end + 2

@@ -1,10 +1,10 @@
 lint:
 	black --check limits tests
-	ruff limits tests
+	flake8 limits tests
 	mypy limits
 
 lint-fix:
 	black tests limits
 	isort -r --profile=black tests limits
-	ruff --fix limits tests 
+	autoflake8 -i -r tests limits
 	mypy limits
