@@ -6,9 +6,9 @@ import re
 import sys
 from collections import UserDict
 from types import ModuleType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-import pkg_resources
+import importlib_resources
 from packaging.version import Version
 
 from limits.typing import Dict, List, NamedTuple, Optional, Tuple, Type, Union
@@ -143,7 +143,7 @@ def get_dependency(module_path: str) -> Tuple[Optional[ModuleType], Optional[Ver
 
 
 def get_package_data(path: str) -> bytes:
-    return pkg_resources.resource_string(__name__, path)
+    return cast(bytes, importlib_resources.files("limits").joinpath(path).read_bytes())
 
 
 def parse_many(limit_string: str) -> List[RateLimitItem]:
