@@ -3,6 +3,20 @@
 Changelog
 =========
 
+v3.3.0
+------
+Release Date: 2023-03-20
+
+* Compatibility
+
+  * Remove deprecated use of `pkg_resources` and switch
+    to `importlib_resource`
+
+* Chores
+
+  * Update documentation dependencies
+  * Update github actions versions
+
 v3.2.0
 ------
 Release Date: 2023-01-24
@@ -501,6 +515,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
