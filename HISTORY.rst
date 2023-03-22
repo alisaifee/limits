@@ -3,6 +3,18 @@
 Changelog
 =========
 
+v3.3.1
+------
+Release Date: 2023-03-22
+
+* Compatibility
+
+  * Block incompatible versions of redis-py
+
+* Chores
+
+  * Force error on warnings in tests
+
 v3.3.0
 ------
 Release Date: 2023-03-20
@@ -515,6 +527,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
