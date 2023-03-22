@@ -108,7 +108,7 @@ jobs:
       env:
         CI: "True"
       run: |
-        py.test -m "benchmark" --benchmark-min-rounds=1000 --benchmark-histogram=.benchmarks/benchmark
+        py.test -W ignore -m "benchmark" --benchmark-min-rounds=1000 --benchmark-histogram=.benchmarks/benchmark
     - name: Upload benchmark results
       uses: actions/upload-artifact@v2
       with:
