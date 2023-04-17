@@ -3,6 +3,21 @@
 Changelog
 =========
 
+v3.4.0
+------
+Release Date: 2023-04-17
+
+* Bug Fix
+
+  * Remove use of weakreferences to storages in strategy
+    classes as this was not documented or required and
+    led to usability issues.
+
+* Chores
+
+  * Update documentation dependencies
+  * Remove unused gcra lua script
+
 v3.3.1
 ------
 Release Date: 2023-03-22
@@ -527,6 +542,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
