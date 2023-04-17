@@ -7,7 +7,7 @@ from limits.storage.base import MovingWindowSupport, Storage
 from limits.typing import Dict, List, Optional, Tuple
 
 
-class LockableEntry(threading._RLock):
+class LockableEntry(threading._RLock):  # type: ignore
     def __init__(self, expiry: float) -> None:
         self.atime = time.time()
         self.expiry = self.atime + expiry

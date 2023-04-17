@@ -2,7 +2,6 @@
 Asynchronous rate limiting strategies
 """
 
-import weakref
 from abc import ABC, abstractmethod
 from typing import cast
 
@@ -15,7 +14,7 @@ from .storage import MovingWindowSupport, Storage
 class RateLimiter(ABC):
     def __init__(self, storage: StorageTypes):
         assert isinstance(storage, Storage)
-        self.storage: Storage = weakref.proxy(storage)
+        self.storage: Storage = storage
 
     @abstractmethod
     async def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:

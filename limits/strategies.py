@@ -2,7 +2,6 @@
 Rate limiting strategies
 """
 
-import weakref
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Type, Union, cast
 
@@ -14,7 +13,7 @@ from .util import WindowStats
 class RateLimiter(metaclass=ABCMeta):
     def __init__(self, storage: StorageTypes):
         assert isinstance(storage, Storage)
-        self.storage: Storage = weakref.proxy(storage)
+        self.storage: Storage = storage
 
     @abstractmethod
     def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
