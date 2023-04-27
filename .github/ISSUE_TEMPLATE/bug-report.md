@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Submit a bug report
-labels: ''
+labels: 'bug'
 
 ---
 
@@ -11,11 +11,11 @@ labels: ''
 
 <!--- What should happen -->
 
-## Current Behavior
+## Current Behaviour
 
-<!--- What happens instead of the expected behavior -->
+<!--- What happens instead of the expected behaviour -->
 
-## Steps to Reproduce 
+## Steps to Reproduce
 
 <!---
 Provide a link to an example, or an unambiguous set of steps to
