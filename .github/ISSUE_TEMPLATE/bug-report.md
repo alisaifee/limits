@@ -1,9 +1,7 @@
 ---
 name: Bug Report
-about: Bug Report Template
-title: ''
+about: Submit a bug report
 labels: ''
-assignees: ''
 
 ---
 
@@ -32,4 +30,10 @@ reproduce this bug. Include code to reproduce, if relevant
 
 <!--- Include as many relevant details about the environment you experienced the bug in -->
 
-- library version:
+- limits version:
+- Operating system:
+
+<!--
+You can freely edit this text. Remove any lines you believe are unnecessary.
+-->
+
