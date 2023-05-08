@@ -79,7 +79,7 @@ jobs:
       run: |
         py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch --max-runs=3
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
   benchmark:
     needs: [test]
     runs-on: ubuntu-latest
