@@ -148,6 +148,16 @@ class TestAsyncWindow:
         await limiter.clear(five_per_min)
         assert await limiter.hit(five_per_min)
 
+    @async_moving_window_storage
+    async def test_moving_window_huge_cost_async(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = MovingWindowRateLimiter(storage)
+        many_per_min = RateLimitItemPerMinute(1_000_000)
+        await limiter.hit(many_per_min, cost=999_999)
+        assert not await limiter.hit(many_per_min, cost=2)
+        await limiter.clear(many_per_min)
+        assert await limiter.hit(many_per_min)
+
     @pytest.mark.memcached
     async def test_moving_window_memcached(self, memcached):
         storage = MemcachedStorage("memcached://localhost:22122")
