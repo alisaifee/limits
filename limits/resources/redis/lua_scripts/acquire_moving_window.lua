@@ -17,7 +17,10 @@ local entries= {}
 for i=1, amount do
     entries[i] = timestamp
 end
-redis.call('lpush', KEYS[1], unpack(entries))
+
+for i, entry in ipairs(entries) do
+    redis.call('lpush', KEYS[1], entry)
+end
 redis.call('ltrim', KEYS[1], 0, limit - 1)
 redis.call('expire', KEYS[1], expiry)
 
