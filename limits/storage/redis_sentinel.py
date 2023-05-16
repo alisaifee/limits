@@ -21,11 +21,6 @@ class RedisSentinelStorage(RedisStorage):
     STORAGE_SCHEME = ["redis+sentinel"]
     """The storage scheme for redis accessed via a redis sentinel installation"""
 
-    DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
-        "socket_timeout": 0.2,
-    }
-    "Default options passed to :class:`~redis.sentinel.Sentinel`"
-
     DEPENDENCIES = {"redis.sentinel": Version("3.0")}
 
     def __init__(
@@ -79,7 +74,7 @@ class RedisSentinelStorage(RedisStorage):
         self.sentinel: "redis.sentinel.Sentinel" = sentinel_dep.Sentinel(
             sentinel_configuration,
             sentinel_kwargs={**parsed_auth, **sentinel_options},
-            **{**self.DEFAULT_OPTIONS, **parsed_auth, **options}
+            **{**parsed_auth, **options}
         )
         self.storage = self.sentinel.master_for(self.service_name)
         self.storage_slave = self.sentinel.slave_for(self.service_name)

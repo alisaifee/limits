@@ -349,11 +349,6 @@ class RedisSentinelStorage(RedisStorage):
     STORAGE_SCHEME = ["async+redis+sentinel"]
     """The storage scheme for redis accessed via a redis sentinel installation"""
 
-    DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
-        "stream_timeout": 0.2,
-    }
-    "Default options passed to :class:`~coredis.sentinel.Sentinel`"
-
     DEPENDENCIES = {"coredis.sentinel": Version("3.4.0")}
 
     def __init__(
@@ -401,8 +396,6 @@ class RedisSentinelStorage(RedisStorage):
 
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
-
-        connection_options.setdefault("stream_timeout", 0.2)
 
         super(RedisStorage, self).__init__()
 
