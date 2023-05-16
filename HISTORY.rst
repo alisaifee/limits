@@ -3,6 +3,15 @@
 Changelog
 =========
 
+v3.5.0
+------
+Release Date: 2023-05-16
+
+* Bug Fix
+
+  * Handle ``cost`` > 8000 when using redis
+  * Remove arbitrary default timeout for redis+sentinel
+
 v3.4.0
 ------
 Release Date: 2023-04-17
@@ -542,6 +551,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
