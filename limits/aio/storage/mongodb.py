@@ -30,7 +30,6 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
     DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
         "serverSelectionTimeoutMS": 1000,
-        "socketTimeoutMS": 1000,
         "connectTimeoutMS": 1000,
     }
     "Default options passed to :class:`~motor.motor_asyncio.AsyncIOMotorClient`"

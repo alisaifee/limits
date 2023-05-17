@@ -26,7 +26,6 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     STORAGE_SCHEME = ["mongodb", "mongodb+srv"]
     DEFAULT_OPTIONS: Dict[str, Union[int, str, bool]] = {
         "serverSelectionTimeoutMS": 1000,
-        "socketTimeoutMS": 1000,
         "connectTimeoutMS": 1000,
     }
     "Default options passed to :class:`~pymongo.mongo_client.MongoClient`"
