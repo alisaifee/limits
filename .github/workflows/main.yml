@@ -76,6 +76,7 @@ jobs:
     - name: Tests
       env:
         CI: "True"
+        PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
       run: |
         py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch --max-runs=3
     - name: Upload coverage to Codecov
