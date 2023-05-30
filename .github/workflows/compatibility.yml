@@ -78,7 +78,6 @@ jobs:
     - name: Tests
       env:
         CI: "True"
-        PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
       run: |
         eval "export ${{ matrix.service_version }}"
         py.test -m "${{ matrix.marker }} and not benchmark" --cov-report=xml --cov-branch --max-runs=3
