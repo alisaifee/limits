@@ -9,6 +9,9 @@
 -r storage/async-mongodb.txt
 -r storage/async-redis.txt
 
+# Pin to < 4 for aetcd compatibility
+protobuf>3.6.1,<4
+
 # Test related packages
 coverage
 hiro>0.1.6
