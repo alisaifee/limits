@@ -223,9 +223,9 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         return super()._check(self.storage)
 
-    def reset(self) -> Optional[int]:
+    def reset(self, namespace: str = "LIMITER") -> Optional[int]:
         """
-        This function calls a Lua Script to delete keys prefixed with 'LIMITER'
+        This function calls a Lua Script to delete keys prefixed with `namespace`
         in block of 5000.
 
         .. warning::
@@ -235,4 +235,4 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         """
 
-        return int(self.lua_clear_keys(["LIMITER*"]))
+        return int(self.lua_clear_keys([f"{namespace}*"]))

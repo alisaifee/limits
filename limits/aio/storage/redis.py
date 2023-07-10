@@ -254,9 +254,9 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         return await super()._check(self.storage)
 
-    async def reset(self) -> Optional[int]:
+    async def reset(self, namespace: str = "LIMITER") -> Optional[int]:
         """
-        This function calls a Lua Script to delete keys prefixed with 'LIMITER'
+        This function calls a Lua Script to delete keys prefixed with `namespace`
         in block of 5000.
 
         .. warning:: This operation was designed to be fast, but was not tested
@@ -264,7 +264,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
            could be slow on very large data sets.
         """
 
-        return cast(int, await self.lua_clear_keys.execute(["LIMITER*"]))
+        return cast(int, await self.lua_clear_keys.execute([f"{namespace}*"]))
 
 
 @versionadded(version="2.1")
@@ -319,11 +319,11 @@ class RedisClusterStorage(RedisStorage):
         )
         self.initialize_storage(uri)
 
-    async def reset(self) -> Optional[int]:
+    async def reset(self, namespace: str = "LIMITER") -> Optional[int]:
         """
         Redis Clusters are sharded and deleting across shards
         can't be done atomically. Because of this, this reset loops over all
-        keys that are prefixed with 'LIMITER' and calls delete on them, one at
+        keys that are prefixed with `namespace` and calls delete on them, one at
         a time.
 
         .. warning:: This operation was not tested with extremely large data sets.
@@ -331,7 +331,7 @@ class RedisClusterStorage(RedisStorage):
            usage as it could be slow on very large data sets
         """
 
-        keys = await self.storage.keys("LIMITER*")
+        keys = await self.storage.keys(f"{namespace}*")
         count = 0
         for key in keys:
             count += await self.storage.delete([key])

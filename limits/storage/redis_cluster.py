@@ -112,11 +112,11 @@ class RedisClusterStorage(RedisStorage):
             **options,
         )
 
-    def reset(self) -> Optional[int]:
+    def reset(self, namespace: str = "LIMITER") -> Optional[int]:
         """
         Redis Clusters are sharded and deleting across shards
         can't be done atomically. Because of this, this reset loops over all
-        keys that are prefixed with 'LIMITER' and calls delete on them, one at
+        keys that are prefixed with `namespace` and calls delete on them, one at
         a time.
 
         .. warning::
@@ -128,11 +128,11 @@ class RedisClusterStorage(RedisStorage):
             count = 0
             for primary in self.storage.get_primaries():
                 node = self.storage.get_redis_connection(primary)
-                keys = node.keys("LIMITER*")
+                keys = node.keys(f"{namespace}*")
                 count += sum([node.delete(k.decode("utf-8")) for k in keys])
             return count
         else:  # pragma: no cover
-            keys = self.storage.keys("LIMITER*")
+            keys = self.storage.keys(f"{namespace}*")
             return cast(
                 int, sum([self.storage.delete(k.decode("utf-8")) for k in keys])
             )
