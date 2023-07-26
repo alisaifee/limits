@@ -1,5 +1,5 @@
 -r main.txt
-furo==2023.5.20
+furo==2023.7.26
 Sphinx>=4,<8
 sphinx-copybutton==0.5.2
 sphinx-autobuild==2021.3.14
