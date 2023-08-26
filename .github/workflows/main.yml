@@ -40,6 +40,7 @@ jobs:
         mypy limits
   test:
     strategy:
+      fail-fast: false
       matrix:
         python-version: [3.8]
         marker: [not (integration or benchmark)]
