@@ -3,6 +3,22 @@
 Changelog
 =========
 
+v3.6.0
+------
+Release Date: 2023-08-31
+
+* Bug Fix
+
+  * Remove default socket timeout from mongo storage
+  * Ensure _version.py has stable content when generated
+    using `git archive` from a tag regardless of when it is
+    run.
+
+* Compatibility
+
+  * Remove references to python 3.7
+  * Remove unnecessary setuptools dependency
+
 v3.5.0
 ------
 Release Date: 2023-05-16
@@ -551,6 +567,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
