@@ -8,7 +8,10 @@ from collections import UserDict
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-import importlib_resources
+try:
+    import importlib_resources
+except ModuleNotFoundError:
+    from importlib import resources as importlib_resources
 from packaging.version import Version
 
 from limits.typing import Dict, List, NamedTuple, Optional, Tuple, Type, Union
