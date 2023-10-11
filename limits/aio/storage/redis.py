@@ -30,6 +30,11 @@ class RedisInteractor:
     lua_clear_keys: "coredis.commands.Script[bytes]"
     lua_incr_expire: "coredis.commands.Script[bytes]"
 
+    PREFIX = "LIMITS"
+
+    def prefixed_key(self, key: str) -> str:
+        return f"{self.PREFIX}:{key}"
+
     async def _incr(
         self,
         key: str,
@@ -46,6 +51,7 @@ class RedisInteractor:
         :param expiry: amount in seconds for the key to expire in
         :param amount: the number to increment by
         """
+        key = self.prefixed_key(key)
         value = await connection.incrby(key, amount)
 
         if elastic_expiry or value == amount:
@@ -59,6 +65,7 @@ class RedisInteractor:
         :param key: the key to get the counter value for
         """
 
+        key = self.prefixed_key(key)
         return int(await connection.get(key) or 0)
 
     async def _clear(self, key: str, connection: AsyncRedisClient) -> None:
@@ -66,6 +73,7 @@ class RedisInteractor:
         :param key: the key to clear rate limits for
         :param connection: Redis connection
         """
+        key = self.prefixed_key(key)
         await connection.delete([key])
 
     async def get_moving_window(
@@ -79,6 +87,7 @@ class RedisInteractor:
         :param expiry: expiry of entry
         :return: (start of window, number of acquired entries)
         """
+        key = self.prefixed_key(key)
         timestamp = int(time.time())
         window = await self.lua_moving_window.execute(
             [key], [int(timestamp - expiry), limit]
@@ -101,6 +110,7 @@ class RedisInteractor:
         :param expiry: expiry of the entry
         :param connection: Redis connection
         """
+        key = self.prefixed_key(key)
         timestamp = time.time()
         acquired = await self.lua_acquire_window.execute(
             [key], [timestamp, limit, expiry, amount]
@@ -114,6 +124,7 @@ class RedisInteractor:
         :param connection: Redis connection
         """
 
+        key = self.prefixed_key(key)
         return int(max(await connection.ttl(key), 0) + time.time())
 
     async def _check(self, connection: AsyncRedisClient) -> bool:
@@ -210,6 +221,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
                 key, expiry, self.storage, elastic_expiry, amount
             )
         else:
+            key = self.prefixed_key(key)
             return cast(
                 int, await self.lua_incr_expire.execute([key], [expiry, amount])
             )
@@ -256,7 +268,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
     async def reset(self) -> Optional[int]:
         """
-        This function calls a Lua Script to delete keys prefixed with 'LIMITER'
+        This function calls a Lua Script to delete keys prefixed with `self.PREFIX`
         in block of 5000.
 
         .. warning:: This operation was designed to be fast, but was not tested
@@ -264,7 +276,8 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
            could be slow on very large data sets.
         """
 
-        return cast(int, await self.lua_clear_keys.execute(["LIMITER*"]))
+        prefix = self.prefixed_key("*")
+        return cast(int, await self.lua_clear_keys.execute([prefix]))
 
 
 @versionadded(version="2.1")
@@ -323,15 +336,16 @@ class RedisClusterStorage(RedisStorage):
         """
         Redis Clusters are sharded and deleting across shards
         can't be done atomically. Because of this, this reset loops over all
-        keys that are prefixed with 'LIMITER' and calls delete on them, one at
-        a time.
+        keys that are prefixed with `self.PREFIX` and calls delete on them,
+        one at a time.
 
         .. warning:: This operation was not tested with extremely large data sets.
            On a large production based system, care should be taken with its
            usage as it could be slow on very large data sets
         """
 
-        keys = await self.storage.keys("LIMITER*")
+        prefix = self.prefixed_key("*")
+        keys = await self.storage.keys(prefix)
         count = 0
         for key in keys:
             count += await self.storage.delete([key])

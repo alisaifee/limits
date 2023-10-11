@@ -27,6 +27,11 @@ class RedisInteractor:
     lua_moving_window: ScriptP[Tuple[int, int]]
     lua_acquire_window: ScriptP[bool]
 
+    PREFIX = "LIMITS"
+
+    def prefixed_key(self, key: str) -> str:
+        return f"{self.PREFIX}:{key}"
+
     def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving
@@ -36,6 +41,7 @@ class RedisInteractor:
         :param expiry: expiry of entry
         :return: (start of window, number of acquired entries)
         """
+        key = self.prefixed_key(key)
         timestamp = time.time()
         window = self.lua_moving_window([key], [int(timestamp - expiry), limit])
 
@@ -57,6 +63,7 @@ class RedisInteractor:
         :param expiry: amount in seconds for the key to expire in
         :param amount: the number to increment by
         """
+        key = self.prefixed_key(key)
         value = connection.incrby(key, amount)
 
         if elastic_expiry or value == amount:
@@ -70,6 +77,7 @@ class RedisInteractor:
         :param key: the key to get the counter value for
         """
 
+        key = self.prefixed_key(key)
         return int(connection.get(key) or 0)
 
     def _clear(self, key: str, connection: RedisClient) -> None:
@@ -77,6 +85,7 @@ class RedisInteractor:
         :param key: the key to clear rate limits for
         :param connection: Redis connection
         """
+        key = self.prefixed_key(key)
         connection.delete(key)
 
     def _acquire_entry(
@@ -94,6 +103,7 @@ class RedisInteractor:
         :param connection: Redis connection
         :param amount: the number of entries to acquire
         """
+        key = self.prefixed_key(key)
         timestamp = time.time()
         acquired = self.lua_acquire_window([key], [timestamp, limit, expiry, amount])
 
@@ -105,6 +115,7 @@ class RedisInteractor:
         :param connection: Redis connection
         """
 
+        key = self.prefixed_key(key)
         return int(max(connection.ttl(key), 0) + time.time())
 
     def _check(self, connection: RedisClient) -> bool:
@@ -183,6 +194,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         if elastic_expiry:
             return super()._incr(key, expiry, self.storage, elastic_expiry, amount)
         else:
+            key = self.prefixed_key(key)
             return int(self.lua_incr_expire([key], [expiry, amount]))
 
     def get(self, key: str) -> int:
@@ -225,7 +237,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
     def reset(self) -> Optional[int]:
         """
-        This function calls a Lua Script to delete keys prefixed with 'LIMITER'
+        This function calls a Lua Script to delete keys prefixed with `self.PREFIX`
         in block of 5000.
 
         .. warning::
@@ -235,4 +247,5 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         """
 
-        return int(self.lua_clear_keys(["LIMITER*"]))
+        prefix = self.prefixed_key("*")
+        return int(self.lua_clear_keys([prefix]))
