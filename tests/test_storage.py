@@ -253,7 +253,7 @@ class TestConcreteStorages:
         for i in range(10):
             storage.incr(limit1.key_for(str(i)), limit1.get_expiry())
             storage.incr(limit2.key_for(str(i)), limit2.get_expiry())
-        assert await storage.reset() == 20
+        assert storage.reset() == 20
 
     def test_storage_clear(self, uri, args, expected_instance, fixture):
         limit = RateLimitItemPerMinute(10)
