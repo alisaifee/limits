@@ -110,7 +110,7 @@ class MemcachedClientP(Protocol):
 
 
 AsyncRedisClient = Union["coredis.Redis[bytes]", "coredis.RedisCluster[bytes]"]
-RedisClient = Union["redis.Redis", "redis.cluster.RedisCluster"]
+RedisClient = Union["redis.Redis[bytes]", "redis.cluster.RedisCluster[bytes]"]
 
 
 class ScriptP(Protocol[R_co]):
