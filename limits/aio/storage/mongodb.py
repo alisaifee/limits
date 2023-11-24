@@ -4,7 +4,7 @@ import asyncio
 import calendar
 import datetime
 import time
-from typing import Any
+from typing import Any, cast
 
 from deprecated.sphinx import versionadded
 
@@ -98,7 +98,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             self.database.counters.drop(), self.database.windows.drop()
         )
 
-        return num_keys
+        return cast(int, num_keys)
 
     async def clear(self, key: str) -> None:
         """
