@@ -5,12 +5,7 @@ import dataclasses
 import re
 import sys
 from collections import UserDict
-
-try:
-    from importlib.resources import files  # type: ignore
-except ImportError:
-    from importlib_resources import files
-
+from importlib import resources
 from types import ModuleType
 from typing import TYPE_CHECKING
 
@@ -148,7 +143,7 @@ def get_dependency(module_path: str) -> Tuple[Optional[ModuleType], Optional[Ver
 
 
 def get_package_data(path: str) -> bytes:
-    return files("limits").joinpath(path).read_bytes()  # type: ignore
+    return resources.files("limits").joinpath(path).read_bytes()
 
 
 def parse_many(limit_string: str) -> List[RateLimitItem]:
