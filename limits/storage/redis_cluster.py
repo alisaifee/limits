@@ -116,23 +116,24 @@ class RedisClusterStorage(RedisStorage):
         """
         Redis Clusters are sharded and deleting across shards
         can't be done atomically. Because of this, this reset loops over all
-        keys that are prefixed with 'LIMITER' and calls delete on them, one at
-        a time.
+        keys that are prefixed with `self.PREFIX` and calls delete on them,
+        one at a time.
 
         .. warning::
          This operation was not tested with extremely large data sets.
          On a large production based system, care should be taken with its
          usage as it could be slow on very large data sets"""
 
+        prefix = self.prefixed_key("*")
         if self.using_redis_py:
             count = 0
             for primary in self.storage.get_primaries():
                 node = self.storage.get_redis_connection(primary)
-                keys = node.keys("LIMITER*")
+                keys = node.keys(prefix)
                 count += sum([node.delete(k.decode("utf-8")) for k in keys])
             return count
         else:  # pragma: no cover
-            keys = self.storage.keys("LIMITER*")
+            keys = self.storage.keys(prefix)
             return cast(
                 int, sum([self.storage.delete(k.decode("utf-8")) for k in keys])
             )
