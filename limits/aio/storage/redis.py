@@ -167,7 +167,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
          - ``async+redis://[:password]@host:port``
          - ``async+redis://[:password]@host:port/db``
          - ``async+rediss://[:password]@host:port``
-         - ``async+unix:///path/to/sock`` etc...
+         - ``async+redis+unix:///path/to/sock?db=0`` etc...
 
          This uri is passed directly to :meth:`coredis.Redis.from_url` with
          the initial ``async`` removed, except for the case of ``async+redis+unix``
