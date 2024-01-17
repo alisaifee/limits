@@ -1,8 +1,9 @@
 import threading
 from abc import ABC, abstractmethod
 
+from limits import errors
 from limits.storage.registry import StorageRegistry
-from limits.typing import List, Optional, Tuple, Union
+from limits.typing import List, Optional, Tuple, Type, Union
 from limits.util import LazyDependency
 
 
@@ -17,6 +18,17 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     def __init__(self, uri: Optional[str] = None, **options: Union[float, str, bool]):
         self.lock = threading.RLock()
         super().__init__()
+
+    @property
+    @abstractmethod
+    def base_exception(self) -> Type[Exception]:
+        raise NotImplementedError
+
+    def get_storage_error(self, storage_error: Exception) -> errors.StorageError:
+        """
+        Returns a limits StorageError or subclass when a storage error is found
+        """
+        return errors.StorageError(storage_error)
 
     @abstractmethod
     def incr(

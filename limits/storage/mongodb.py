@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING, Any
 
 from deprecated.sphinx import versionadded
 
-from limits.typing import Dict, Optional, Tuple, Union
+from limits.typing import Dict, Optional, Tuple, Type, Union
 
+from ..util import get_dependency
 from .base import MovingWindowSupport, Storage
 
 if TYPE_CHECKING:
@@ -49,6 +50,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         super().__init__(uri, **options)
 
         self.lib = self.dependencies["pymongo"].module
+        self.lib_errors, _ = get_dependency("pymongo.errors")
 
         mongo_opts = options.copy()
         [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]
@@ -59,6 +61,10 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self.counters = self.storage.get_database(database_name).counters
         self.windows = self.storage.get_database(database_name).windows
         self.__initialize_database()
+
+    @property
+    def base_exception(self) -> Type[Exception]:
+        return self.lib_errors.PyMongoError  # type: ignore
 
     def __initialize_database(self) -> None:
         self.counters.create_index("expireAt", expireAfterSeconds=0)

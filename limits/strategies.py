@@ -51,7 +51,10 @@ class RateLimiter(metaclass=ABCMeta):
         raise NotImplementedError
 
     def clear(self, item: RateLimitItem, *identifiers: str) -> None:
-        return self.storage.clear(item.key_for(*identifiers))
+        try:
+            return self.storage.clear(item.key_for(*identifiers))
+        except self.storage.base_exception as exc:
+            raise self.storage.get_storage_error(exc) from exc
 
 
 class MovingWindowRateLimiter(RateLimiter):
@@ -80,9 +83,12 @@ class MovingWindowRateLimiter(RateLimiter):
         :return: (reset time, remaining)
         """
 
-        return cast(MovingWindowSupport, self.storage).acquire_entry(
-            item.key_for(*identifiers), item.amount, item.get_expiry(), amount=cost
-        )
+        try:
+            return cast(MovingWindowSupport, self.storage).acquire_entry(
+                item.key_for(*identifiers), item.amount, item.get_expiry(), amount=cost
+            )
+        except self.storage.base_exception as exc:
+            raise self.storage.get_storage_error(exc) from exc
 
     def test(self, item: RateLimitItem, *identifiers: str) -> bool:
         """
@@ -93,14 +99,17 @@ class MovingWindowRateLimiter(RateLimiter):
          instance of the limit
         """
 
-        return (
-            cast(MovingWindowSupport, self.storage).get_moving_window(
-                item.key_for(*identifiers),
-                item.amount,
-                item.get_expiry(),
-            )[1]
-            < item.amount
-        )
+        try:
+            return (
+                cast(MovingWindowSupport, self.storage).get_moving_window(
+                    item.key_for(*identifiers),
+                    item.amount,
+                    item.get_expiry(),
+                )[1]
+                < item.amount
+            )
+        except self.storage.base_exception as exc:
+            raise self.storage.get_storage_error(exc) from exc
 
     def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
         """
@@ -111,10 +120,15 @@ class MovingWindowRateLimiter(RateLimiter):
          instance of the limit
         :return: tuple (reset time, remaining)
         """
-        window_start, window_items = cast(
-            MovingWindowSupport, self.storage
-        ).get_moving_window(item.key_for(*identifiers), item.amount, item.get_expiry())
-        reset = window_start + item.get_expiry()
+        try:
+            window_start, window_items = cast(
+                MovingWindowSupport, self.storage
+            ).get_moving_window(
+                item.key_for(*identifiers), item.amount, item.get_expiry()
+            )
+            reset = window_start + item.get_expiry()
+        except self.storage.base_exception as exc:
+            raise self.storage.get_storage_error(exc) from exc
 
         return WindowStats(reset, item.amount - window_items)
 
@@ -134,15 +148,18 @@ class FixedWindowRateLimiter(RateLimiter):
         :param cost: The cost of this hit, default 1
         """
 
-        return (
-            self.storage.incr(
-                item.key_for(*identifiers),
-                item.get_expiry(),
-                elastic_expiry=False,
-                amount=cost,
+        try:
+            return (
+                self.storage.incr(
+                    item.key_for(*identifiers),
+                    item.get_expiry(),
+                    elastic_expiry=False,
+                    amount=cost,
+                )
+                <= item.amount
             )
-            <= item.amount
-        )
+        except self.storage.base_exception as exc:
+            raise self.storage.get_storage_error(exc) from exc
 
     def test(self, item: RateLimitItem, *identifiers: str) -> bool:
         """
@@ -153,7 +170,10 @@ class FixedWindowRateLimiter(RateLimiter):
          instance of the limit
         """
 
-        return self.storage.get(item.key_for(*identifiers)) < item.amount
+        try:
+            return self.storage.get(item.key_for(*identifiers)) < item.amount
+        except self.storage.base_exception as exc:
+            raise self.storage.get_storage_error(exc) from exc
 
     def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
         """
@@ -164,8 +184,13 @@ class FixedWindowRateLimiter(RateLimiter):
          instance of the limit
         :return: (reset time, remaining)
         """
-        remaining = max(0, item.amount - self.storage.get(item.key_for(*identifiers)))
-        reset = self.storage.get_expiry(item.key_for(*identifiers))
+        try:
+            remaining = max(
+                0, item.amount - self.storage.get(item.key_for(*identifiers))
+            )
+            reset = self.storage.get_expiry(item.key_for(*identifiers))
+        except self.storage.base_exception as exc:
+            raise self.storage.get_storage_error(exc) from exc
 
         return WindowStats(reset, remaining)
 
@@ -185,15 +210,18 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
         :param cost: The cost of this hit, default 1
         """
 
-        return (
-            self.storage.incr(
-                item.key_for(*identifiers),
-                item.get_expiry(),
-                elastic_expiry=True,
-                amount=cost,
+        try:
+            return (
+                self.storage.incr(
+                    item.key_for(*identifiers),
+                    item.get_expiry(),
+                    elastic_expiry=True,
+                    amount=cost,
+                )
+                <= item.amount
             )
-            <= item.amount
-        )
+        except self.storage.base_exception as exc:
+            raise self.storage.get_storage_error(exc) from exc
 
 
 KnownStrategy = Union[
