@@ -7,7 +7,7 @@ from packaging.version import Version
 
 from limits.aio.storage.base import MovingWindowSupport, Storage
 from limits.errors import ConfigurationError
-from limits.typing import AsyncRedisClient, Dict, Optional, Tuple, Union
+from limits.typing import AsyncRedisClient, Dict, Optional, Tuple, Type, Union
 from limits.util import get_package_data
 
 if TYPE_CHECKING:
@@ -193,6 +193,10 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
             self.storage = self.dependency.Redis.from_url(uri, **options)
 
         self.initialize_storage(uri)
+
+    @property
+    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+        return self.dependency.RedisError  # type: ignore[no-any-return]
 
     def initialize_storage(self, _uri: str) -> None:
         # all these methods are coroutines, so must be called with await

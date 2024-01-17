@@ -63,7 +63,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self.__initialize_database()
 
     @property
-    def base_exception(self) -> Type[Exception]:
+    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
         return self.lib_errors.PyMongoError  # type: ignore
 
     def __initialize_database(self) -> None:

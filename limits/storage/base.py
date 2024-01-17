@@ -21,7 +21,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
 
     @property
     @abstractmethod
-    def base_exception(self) -> Type[Exception]:
+    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
         raise NotImplementedError
 
     def get_storage_error(self, storage_error: Exception) -> errors.StorageError:

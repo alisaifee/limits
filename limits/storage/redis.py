@@ -173,7 +173,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         self.initialize_storage(uri)
 
     @property
-    def base_exception(self) -> Type[Exception]:
+    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
         return self.dependency.RedisError  # type: ignore[no-any-return]
 
     def initialize_storage(self, _uri: str) -> None:

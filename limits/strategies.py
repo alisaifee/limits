@@ -53,7 +53,7 @@ class RateLimiter(metaclass=ABCMeta):
     def clear(self, item: RateLimitItem, *identifiers: str) -> None:
         try:
             return self.storage.clear(item.key_for(*identifiers))
-        except self.storage.base_exception as exc:
+        except self.storage.base_exceptions as exc:
             raise self.storage.get_storage_error(exc) from exc
 
 
@@ -87,7 +87,7 @@ class MovingWindowRateLimiter(RateLimiter):
             return cast(MovingWindowSupport, self.storage).acquire_entry(
                 item.key_for(*identifiers), item.amount, item.get_expiry(), amount=cost
             )
-        except self.storage.base_exception as exc:
+        except self.storage.base_exceptions as exc:
             raise self.storage.get_storage_error(exc) from exc
 
     def test(self, item: RateLimitItem, *identifiers: str) -> bool:
@@ -108,7 +108,7 @@ class MovingWindowRateLimiter(RateLimiter):
                 )[1]
                 < item.amount
             )
-        except self.storage.base_exception as exc:
+        except self.storage.base_exceptions as exc:
             raise self.storage.get_storage_error(exc) from exc
 
     def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
@@ -127,7 +127,7 @@ class MovingWindowRateLimiter(RateLimiter):
                 item.key_for(*identifiers), item.amount, item.get_expiry()
             )
             reset = window_start + item.get_expiry()
-        except self.storage.base_exception as exc:
+        except self.storage.base_exceptions as exc:
             raise self.storage.get_storage_error(exc) from exc
 
         return WindowStats(reset, item.amount - window_items)
@@ -158,7 +158,7 @@ class FixedWindowRateLimiter(RateLimiter):
                 )
                 <= item.amount
             )
-        except self.storage.base_exception as exc:
+        except self.storage.base_exceptions as exc:
             raise self.storage.get_storage_error(exc) from exc
 
     def test(self, item: RateLimitItem, *identifiers: str) -> bool:
@@ -172,7 +172,7 @@ class FixedWindowRateLimiter(RateLimiter):
 
         try:
             return self.storage.get(item.key_for(*identifiers)) < item.amount
-        except self.storage.base_exception as exc:
+        except self.storage.base_exceptions as exc:
             raise self.storage.get_storage_error(exc) from exc
 
     def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
@@ -189,7 +189,7 @@ class FixedWindowRateLimiter(RateLimiter):
                 0, item.amount - self.storage.get(item.key_for(*identifiers))
             )
             reset = self.storage.get_expiry(item.key_for(*identifiers))
-        except self.storage.base_exception as exc:
+        except self.storage.base_exceptions as exc:
             raise self.storage.get_storage_error(exc) from exc
 
         return WindowStats(reset, remaining)
@@ -220,7 +220,7 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
                 )
                 <= item.amount
             )
-        except self.storage.base_exception as exc:
+        except self.storage.base_exceptions as exc:
             raise self.storage.get_storage_error(exc) from exc
 
 
