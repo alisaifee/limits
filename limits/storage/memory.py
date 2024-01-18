@@ -4,7 +4,7 @@ from collections import Counter
 
 import limits.typing
 from limits.storage.base import MovingWindowSupport, Storage
-from limits.typing import Dict, List, Optional, Tuple
+from limits.typing import Dict, List, Optional, Tuple, Type, Union
 
 
 class LockableEntry(threading._RLock):  # type: ignore
@@ -31,6 +31,10 @@ class MemoryStorage(Storage, MovingWindowSupport):
         self.timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
         super().__init__(uri, **_)
+
+    @property
+    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+        return ValueError
 
     def __expire_events(self) -> None:
         for key in list(self.events.keys()):

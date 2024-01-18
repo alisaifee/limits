@@ -6,7 +6,7 @@ from deprecated.sphinx import versionadded
 
 import limits.typing
 from limits.aio.storage.base import MovingWindowSupport, Storage
-from limits.typing import Dict, List, Optional, Tuple
+from limits.typing import Dict, List, Optional, Tuple, Type, Union
 
 
 class LockableEntry(asyncio.Lock):
@@ -36,6 +36,10 @@ class MemoryStorage(Storage, MovingWindowSupport):
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer: Optional[asyncio.Task[None]] = None
         super().__init__(uri, **_)
+
+    @property
+    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+        return ValueError
 
     async def __expire_events(self) -> None:
         for key in self.events.keys():
