@@ -18,7 +18,7 @@ hiro>0.1.6
 flaky
 lovely-pytest-docker
 pytest
-pytest-asyncio
+pytest-asyncio==0.21.1
 pytest-benchmark[histogram]
 pytest-cov
 pytest-lazy-fixture
