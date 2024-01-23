@@ -25,6 +25,10 @@ class TestBaseStorage:
         class MyStorage(Storage):
             STORAGE_SCHEME = ["async+mystorage"]
 
+            @property
+            def base_exceptions(self):
+                return ValueError
+
             async def incr(self, key, expiry, elastic_expiry=False):
                 return
 
@@ -51,6 +55,10 @@ class TestBaseStorage:
     async def test_pluggable_storage_moving_window(self):
         class MyStorage(Storage):
             STORAGE_SCHEME = ["async+mystorage"]
+
+            @property
+            def base_exceptions(self):
+                return ValueError
 
             async def incr(self, key, expiry, elastic_expiry=False):
                 return

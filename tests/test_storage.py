@@ -32,6 +32,10 @@ class TestBaseStorage:
         class MyStorage(Storage):
             STORAGE_SCHEME = ["mystorage"]
 
+            @property
+            def base_exceptions(self):
+                return ValueError
+
             def incr(self, key, expiry, elastic_expiry=False):
                 return
 
@@ -58,6 +62,10 @@ class TestBaseStorage:
     def test_pluggable_storage_moving_window(self):
         class MyStorage(Storage):
             STORAGE_SCHEME = ["mystorage"]
+
+            @property
+            def base_exceptions(self):
+                return ValueError
 
             def incr(self, key, expiry, elastic_expiry=False):
                 return
