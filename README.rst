@@ -18,12 +18,6 @@ limits
 
 **limits** is a python library to perform rate limiting with commonly used storage backends (Redis, Memcached, MongoDB & Etcd).
 
-----
-
-Sponsored by Zuplo - fully-managed, programmable API Management platform.
-Add rate limiting and more to your public API in minutes, try it at `zuplo.com <https://zuplo.link/3DZM9Ej>`_
-
-----
 
 Supported Strategies
 ====================
