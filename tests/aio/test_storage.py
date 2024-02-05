@@ -345,12 +345,16 @@ class TestStorageErrors:
 
     async def test_acquire_entry_exception(self, wrap_exceptions):
         with pytest.raises(Exception) as exc:
-            await self.MyStorage(wrap_exceptions=wrap_exceptions).acquire_entry("", 1, 1)
+            await self.MyStorage(wrap_exceptions=wrap_exceptions).acquire_entry(
+                "", 1, 1
+            )
 
         self.assert_exception(exc.value, wrap_exceptions)
 
     async def test_get_moving_window_exception(self, wrap_exceptions):
         with pytest.raises(Exception) as exc:
-            await self.MyStorage(wrap_exceptions=wrap_exceptions).get_moving_window("", 1, 1)
+            await self.MyStorage(wrap_exceptions=wrap_exceptions).get_moving_window(
+                "", 1, 1
+            )
 
         self.assert_exception(exc.value, wrap_exceptions)
