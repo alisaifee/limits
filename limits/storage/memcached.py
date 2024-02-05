@@ -95,9 +95,11 @@ class MemcachedStorage(Storage):
         """
         return cast(
             MemcachedClientP,
-            module.HashClient(hosts, **kwargs)
-            if len(hosts) > 1
-            else module.PooledClient(*hosts, **kwargs),
+            (
+                module.HashClient(hosts, **kwargs)
+                if len(hosts) > 1
+                else module.PooledClient(*hosts, **kwargs)
+            ),
         )
 
     def call_memcached_func(
