@@ -34,7 +34,11 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     DEPENDENCIES = ["pymongo"]
 
     def __init__(
-        self, uri: str, database_name: str = "limits", **options: Union[int, str, bool]
+        self,
+        uri: str,
+        database_name: str = "limits",
+        wrap_exceptions: bool = False,
+        **options: Union[int, str, bool],
     ) -> None:
         """
         :param uri: uri of the form ``mongodb://[user:password]@host:port?...``,
@@ -47,7 +51,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :raise ConfigurationError: when the :pypi:`pymongo` library is not available
         """
 
-        super().__init__(uri, **options)
+        super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
 
         self.lib = self.dependencies["pymongo"].module
         self.lib_errors, _ = get_dependency("pymongo.errors")

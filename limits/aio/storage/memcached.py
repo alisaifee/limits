@@ -20,7 +20,12 @@ class MemcachedStorage(Storage):
 
     DEPENDENCIES = ["emcache"]
 
-    def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
+    def __init__(
+        self,
+        uri: str,
+        wrap_exceptions: bool = False,
+        **options: Union[float, str, bool],
+    ) -> None:
         """
         :param uri: memcached location of the form
          ``async+memcached://host:port,host:port``
@@ -38,7 +43,7 @@ class MemcachedStorage(Storage):
 
         self._options = options
         self._storage = None
-        super().__init__(uri, **options)
+        super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
         self.dependency = self.dependencies["emcache"].module
 
     @property

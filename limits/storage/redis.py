@@ -145,6 +145,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         self,
         uri: str,
         connection_pool: Optional[redis.connection.ConnectionPool] = None,
+        wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
         """
@@ -159,7 +160,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
          directly to the constructor of :class:`redis.Redis`
         :raise ConfigurationError: when the :pypi:`redis` library is not available
         """
-        super().__init__(uri, **options)
+        super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
         self.dependency = self.dependencies["redis"].module
 
         uri = uri.replace("redis+unix", "unix")

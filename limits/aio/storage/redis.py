@@ -159,6 +159,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         self,
         uri: str,
         connection_pool: Optional["coredis.ConnectionPool"] = None,
+        wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
         """
@@ -181,7 +182,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         uri = uri.replace("async+redis", "redis", 1)
         uri = uri.replace("redis+unix", "unix")
 
-        super().__init__(uri, **options)
+        super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
 
         self.dependency = self.dependencies["coredis"].module
 
@@ -302,7 +303,12 @@ class RedisClusterStorage(RedisStorage):
     }
     "Default options passed to :class:`coredis.RedisCluster`"
 
-    def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
+    def __init__(
+        self,
+        uri: str,
+        wrap_exceptions: bool = False,
+        **options: Union[float, str, bool],
+    ) -> None:
         """
         :param uri: url of the form
          ``async+redis+cluster://[:password]@host:port,host:port``
@@ -326,7 +332,9 @@ class RedisClusterStorage(RedisStorage):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})
 
-        super(RedisStorage, self).__init__(uri, **options)
+        super(RedisStorage, self).__init__(
+            uri, wrap_exceptions=wrap_exceptions, **options
+        )
 
         self.dependency = self.dependencies["coredis"].module
 

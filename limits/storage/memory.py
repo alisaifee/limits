@@ -24,13 +24,15 @@ class MemoryStorage(Storage, MovingWindowSupport):
 
     STORAGE_SCHEME = ["memory"]
 
-    def __init__(self, uri: Optional[str] = None, **_: str):
+    def __init__(
+        self, uri: Optional[str] = None, wrap_exceptions: bool = False, **_: str
+    ):
         self.storage: limits.typing.Counter[str] = Counter()
         self.expirations: Dict[str, float] = {}
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
-        super().__init__(uri, **_)
+        super().__init__(uri, wrap_exceptions=wrap_exceptions, **_)
 
     @property
     def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
