@@ -47,7 +47,9 @@ class MemcachedStorage(Storage):
         self.dependency = self.dependencies["emcache"].module
 
     @property
-    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
         return (
             self.dependency.ClusterNoAvailableNodes,
             self.dependency.CommandError,

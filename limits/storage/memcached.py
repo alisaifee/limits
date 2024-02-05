@@ -81,7 +81,9 @@ class MemcachedStorage(Storage):
         self.local_storage.storage = None
 
     @property
-    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.dependency.MemcacheError  # type: ignore[no-any-return]
 
     def get_client(

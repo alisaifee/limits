@@ -47,7 +47,9 @@ class EtcdStorage(Storage):
         self.max_retries = max_retries
 
     @property
-    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.lib.ClientError  # type: ignore[no-any-return]
 
     def prefixed_key(self, key: str) -> bytes:

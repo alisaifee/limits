@@ -40,7 +40,9 @@ class MemoryStorage(Storage, MovingWindowSupport):
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **_)
 
     @property
-    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
         return ValueError
 
     async def __expire_events(self) -> None:

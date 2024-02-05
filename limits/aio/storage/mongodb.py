@@ -76,7 +76,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self.__indices_created = False
 
     @property
-    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.lib_errors.PyMongoError  # type: ignore
 
     @property
