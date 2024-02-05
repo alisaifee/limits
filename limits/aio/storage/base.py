@@ -38,7 +38,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     """The storage schemes to register against this implementation"""
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Storage:  # type: ignore[misc]
-        inst = super().__new__(cls, *args, **kwargs)
+        inst = super().__new__(cls)
         for method in {
             "incr",
             "get",
@@ -130,7 +130,7 @@ class MovingWindowSupport(ABC):
     """
 
     def __new__(cls, *args: Any, **kwargs: Any) -> MovingWindowSupport:  # type: ignore[misc]
-        inst = super().__new__(cls, *args, **kwargs)
+        inst = super().__new__(cls)
         for method in {
             "acquire_entry",
             "get_moving_window",
