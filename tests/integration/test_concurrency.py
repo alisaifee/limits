@@ -69,7 +69,7 @@ class TestConcurrency:
 @pytest.mark.integration
 class TestAsyncConcurrency:
     @async_all_storage
-    async def test_fixed_window(self, event_loop, uri, args, fixture):
+    async def test_fixed_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = limits.aio.strategies.FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerMinute(5)
@@ -89,7 +89,7 @@ class TestAsyncConcurrency:
         assert len(hits) == 5
 
     @async_moving_window_storage
-    async def test_moving_window(self, event_loop, uri, args, fixture):
+    async def test_moving_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = limits.aio.strategies.MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerMinute(5)
