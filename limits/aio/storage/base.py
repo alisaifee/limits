@@ -22,7 +22,7 @@ def _wrap_errors(  # type: ignore[misc]
             return await fn(*args, **kwargs)
         except storage.base_exceptions as exc:
             if storage.wrap_exceptions:
-                raise errors.StorageError(exc) from exc
+                raise storage.get_storage_error(exc) from exc
             raise
 
     return inner
