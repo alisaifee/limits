@@ -281,13 +281,13 @@ https://img.shields.io/travis/com/python-versioneer/python-versioneer.svg
 
 import configparser
 import errno
+import functools
 import json
 import os
 import re
 import subprocess
 import sys
 from typing import Callable, Dict
-import functools
 
 
 class VersioneerConfig:

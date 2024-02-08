@@ -30,7 +30,7 @@ class RedisSentinelStorage(RedisStorage):
         use_replicas: bool = True,
         sentinel_kwargs: Optional[Dict[str, Union[float, str, bool]]] = None,
         wrap_exceptions: bool = False,
-        **options: Union[float, str, bool]
+        **options: Union[float, str, bool],
     ) -> None:
         """
         :param uri: url of the form
@@ -77,7 +77,7 @@ class RedisSentinelStorage(RedisStorage):
         self.sentinel: "redis.sentinel.Sentinel" = sentinel_dep.Sentinel(
             sentinel_configuration,
             sentinel_kwargs={**parsed_auth, **sentinel_options},
-            **{**parsed_auth, **options}
+            **{**parsed_auth, **options},
         )
         self.storage = self.sentinel.master_for(self.service_name)
         self.storage_slave = self.sentinel.slave_for(self.service_name)

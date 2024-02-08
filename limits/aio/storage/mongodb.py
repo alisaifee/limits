@@ -266,8 +266,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             await self.database.windows.update_one(
                 {
                     "_id": key,
-                    "entries.%d"
-                    % (limit - amount): {"$not": {"$gte": timestamp - expiry}},
+                    "entries.%d" % (limit - amount): {
+                        "$not": {"$gte": timestamp - expiry}
+                    },
                 },
                 updates,
                 upsert=True,

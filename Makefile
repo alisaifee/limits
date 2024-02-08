@@ -1,10 +1,11 @@
 lint:
-	black --check limits tests
+	ruff check --select I
+	ruff format --check limits tests
 	ruff limits tests
 	mypy limits
 
 lint-fix:
-	black tests limits
-	isort -r --profile=black tests limits
+	ruff check --select I --fix
+	ruff format limits tests
 	ruff --fix limits tests 
 	mypy limits

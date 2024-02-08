@@ -28,13 +28,9 @@ jobs:
         pip install --no-binary protobuf -r requirements/ci.txt
     - name: Lint with ruff
       run: |
+        ruff check --select I
+        ruff format --check limits tests
         ruff limits tests
-    - name: Lint with black
-      run: |
-        black limits tests --check
-    - name: Check imports
-      run: |
-        isort -c --profile=black limits tests
     - name: Check types
       run: |
         mypy limits

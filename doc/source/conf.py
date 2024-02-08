@@ -6,9 +6,9 @@ import sys
 sys.path.insert(0, os.path.abspath("../../"))
 sys.path.insert(0, os.path.abspath("./"))
 
-import limits
-
 from theme_config import *
+
+import limits
 
 project = "limits"
 description = "limits is a python library to perform rate limiting with commonly used storage backends"

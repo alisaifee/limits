@@ -10,7 +10,9 @@ __copyright__ = "Copyright 2023, Ali-Akber Saifee"
 
 import itertools
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
+
 import versioneer
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
