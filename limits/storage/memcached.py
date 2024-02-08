@@ -7,7 +7,17 @@ from typing import cast
 
 from limits.errors import ConfigurationError
 from limits.storage.base import Storage
-from limits.typing import Callable, List, MemcachedClientP, Optional, P, R, Tuple, Union
+from limits.typing import (
+    Callable,
+    List,
+    MemcachedClientP,
+    Optional,
+    P,
+    R,
+    Tuple,
+    Type,
+    Union,
+)
 from limits.util import get_dependency
 
 
@@ -20,6 +30,7 @@ class MemcachedStorage(Storage):
 
     STORAGE_SCHEME = ["memcached"]
     """The storage scheme for memcached"""
+    DEPENDENCIES = ["pymemcache"]
 
     def __init__(
         self,
@@ -50,6 +61,7 @@ class MemcachedStorage(Storage):
             if parsed.path and not parsed.netloc and not parsed.port:
                 self.hosts = [parsed.path]  # type: ignore
 
+        self.dependency = self.dependencies["pymemcache"].module
         self.library = str(options.pop("library", "pymemcache.client"))
         self.cluster_library = str(
             options.pop("cluster_library", "pymemcache.client.hash")
@@ -67,6 +79,12 @@ class MemcachedStorage(Storage):
             )  # pragma: no cover
         self.local_storage = threading.local()
         self.local_storage.storage = None
+
+    @property
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+        return self.dependency.MemcacheError  # type: ignore[no-any-return]
 
     def get_client(
         self, module: ModuleType, hosts: List[Tuple[str, int]], **kwargs: str

@@ -9,7 +9,8 @@ from typing import Any, cast
 from deprecated.sphinx import versionadded
 
 from limits.aio.storage.base import MovingWindowSupport, Storage
-from limits.typing import Dict, Optional, ParamSpec, Tuple, TypeVar, Union
+from limits.typing import Dict, Optional, ParamSpec, Tuple, Type, TypeVar, Union
+from limits.util import get_dependency
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -40,6 +41,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self,
         uri: str,
         database_name: str = "limits",
+        wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
         """
@@ -58,10 +60,11 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]
         uri = uri.replace("async+mongodb", "mongodb", 1)
 
-        super().__init__(uri, **options)
+        super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
 
         self.dependency = self.dependencies["motor.motor_asyncio"]
         self.proxy_dependency = self.dependencies["pymongo"]
+        self.lib_errors, _ = get_dependency("pymongo.errors")
 
         self.storage = self.dependency.module.AsyncIOMotorClient(uri, **mongo_opts)
         # TODO: Fix this hack. It was noticed when running a benchmark
@@ -71,6 +74,12 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         self.__database_name = database_name
         self.__indices_created = False
+
+    @property
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+        return self.lib_errors.PyMongoError  # type: ignore
 
     @property
     def database(self):  # type: ignore

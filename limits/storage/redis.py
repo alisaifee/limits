@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from packaging.version import Version
 
-from limits.typing import Optional, RedisClient, ScriptP, Tuple, Union
+from limits.typing import Optional, RedisClient, ScriptP, Tuple, Type, Union
 
 from ..util import get_package_data
 from .base import MovingWindowSupport, Storage
@@ -145,6 +145,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         self,
         uri: str,
         connection_pool: Optional[redis.connection.ConnectionPool] = None,
+        wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
         """
@@ -159,16 +160,24 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
          directly to the constructor of :class:`redis.Redis`
         :raise ConfigurationError: when the :pypi:`redis` library is not available
         """
-        super().__init__(uri, **options)
-        redis = self.dependencies["redis"].module
+        super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
+        self.dependency = self.dependencies["redis"].module
 
         uri = uri.replace("redis+unix", "unix")
 
         if not connection_pool:
-            self.storage = redis.from_url(uri, **options)
+            self.storage = self.dependency.from_url(uri, **options)
         else:
-            self.storage = redis.Redis(connection_pool=connection_pool, **options)
+            self.storage = self.dependency.Redis(
+                connection_pool=connection_pool, **options
+            )
         self.initialize_storage(uri)
+
+    @property
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+        return self.dependency.RedisError  # type: ignore[no-any-return]
 
     def initialize_storage(self, _uri: str) -> None:
         self.lua_moving_window = self.storage.register_script(self.SCRIPT_MOVING_WINDOW)

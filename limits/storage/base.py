@@ -1,9 +1,30 @@
+from __future__ import annotations
+
+import functools
 import threading
 from abc import ABC, abstractmethod
+from typing import Any, cast
 
+from limits import errors
 from limits.storage.registry import StorageRegistry
-from limits.typing import List, Optional, Tuple, Union
+from limits.typing import Callable, List, Optional, Tuple, Type, Union
 from limits.util import LazyDependency
+
+
+def _wrap_errors(  # type: ignore[misc]
+    storage: Storage,
+    fn: Callable[..., Any],
+) -> Callable[..., Any]:
+    @functools.wraps(fn)
+    def inner(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
+        try:
+            return fn(*args, **kwargs)
+        except storage.base_exceptions as exc:
+            if storage.wrap_exceptions:
+                raise storage.get_storage_error(exc) from exc
+            raise
+
+    return inner
 
 
 class Storage(LazyDependency, metaclass=StorageRegistry):
@@ -14,9 +35,39 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     STORAGE_SCHEME: Optional[List[str]]
     """The storage schemes to register against this implementation"""
 
-    def __init__(self, uri: Optional[str] = None, **options: Union[float, str, bool]):
+    def __new__(cls, *args: Any, **kwargs: Any) -> Storage:  # type: ignore[misc]
+        inst = super().__new__(cls)
+        for method in {
+            "incr",
+            "get",
+            "get_expiry",
+            "check",
+            "reset",
+            "clear",
+        }:
+            setattr(inst, method, _wrap_errors(inst, getattr(inst, method)))
+        return inst
+
+    def __init__(
+        self,
+        uri: Optional[str] = None,
+        wrap_exceptions: bool = False,
+        **options: Union[float, str, bool],
+    ):
         self.lock = threading.RLock()
         super().__init__()
+        self.wrap_exceptions = wrap_exceptions
+
+    @property
+    @abstractmethod
+    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+        raise NotImplementedError
+
+    def get_storage_error(self, storage_error: Exception) -> errors.StorageError:
+        """
+        Returns a limits StorageError or subclass when a storage error is found
+        """
+        return errors.StorageError(storage_error)
 
     @abstractmethod
     def incr(
@@ -77,6 +128,20 @@ class MovingWindowSupport(ABC):
     the moving window strategy
     """
 
+    def __new__(cls, *args: Any, **kwargs: Any) -> MovingWindowSupport:  # type: ignore[misc]
+        inst = super().__new__(cls)
+        for method in {
+            "acquire_entry",
+            "get_moving_window",
+        }:
+            setattr(
+                inst,
+                method,
+                _wrap_errors(cast(Storage, inst), getattr(inst, method)),
+            )
+        return inst
+
+    @abstractmethod
     def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
         """
         :param key: rate limit key to acquire an entry in
@@ -86,6 +151,7 @@ class MovingWindowSupport(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[int, int]:
         """
         returns the starting point and the number of entries in the moving

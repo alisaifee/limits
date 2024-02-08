@@ -4,7 +4,7 @@ import urllib.parse
 from deprecated.sphinx import versionadded
 
 from limits.aio.storage.base import Storage
-from limits.typing import EmcacheClientP, Optional, Union
+from limits.typing import EmcacheClientP, Optional, Tuple, Type, Union
 
 
 @versionadded(version="2.1")
@@ -20,7 +20,12 @@ class MemcachedStorage(Storage):
 
     DEPENDENCIES = ["emcache"]
 
-    def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
+    def __init__(
+        self,
+        uri: str,
+        wrap_exceptions: bool = False,
+        **options: Union[float, str, bool],
+    ) -> None:
         """
         :param uri: memcached location of the form
          ``async+memcached://host:port,host:port``
@@ -38,8 +43,17 @@ class MemcachedStorage(Storage):
 
         self._options = options
         self._storage = None
-        super().__init__(uri, **options)
+        super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
         self.dependency = self.dependencies["emcache"].module
+
+    @property
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+        return (
+            self.dependency.ClusterNoAvailableNodes,
+            self.dependency.CommandError,
+        )
 
     async def get_storage(self) -> EmcacheClientP:
         if not self._storage:

@@ -3,7 +3,7 @@ import time
 import pytest
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
-from limits.errors import ConfigurationError
+from limits.errors import ConfigurationError, StorageError
 from limits.storage import (
     EtcdStorage,
     MemcachedStorage,
@@ -32,6 +32,10 @@ class TestBaseStorage:
         class MyStorage(Storage):
             STORAGE_SCHEME = ["mystorage"]
 
+            @property
+            def base_exceptions(self):
+                return ValueError
+
             def incr(self, key, expiry, elastic_expiry=False):
                 return
 
@@ -58,6 +62,10 @@ class TestBaseStorage:
     def test_pluggable_storage_moving_window(self):
         class MyStorage(Storage):
             STORAGE_SCHEME = ["mystorage"]
+
+            @property
+            def base_exceptions(self):
+                return ValueError
 
             def incr(self, key, expiry, elastic_expiry=False):
                 return
@@ -262,3 +270,95 @@ class TestConcreteStorages:
         assert 1 == storage.get(limit.key_for())
         storage.clear(limit.key_for())
         assert 0 == storage.get(limit.key_for())
+
+
+@pytest.mark.parametrize("wrap_exceptions", (True, False))
+class TestStorageErrors:
+    class MyStorage(Storage, MovingWindowSupport):
+        STORAGE_SCHEME = ["mystorage"]
+
+        class MyError(Exception):
+            pass
+
+        @property
+        def base_exceptions(self):
+            return self.MyError
+
+        def incr(self, key, expiry, elastic_expiry=False, amount=1):
+            raise self.MyError()
+
+        def get(self, key):
+            raise self.MyError()
+
+        def get_expiry(self, key):
+            raise self.MyError()
+
+        def reset(self):
+            raise self.MyError()
+
+        def check(self):
+            raise self.MyError()
+
+        def clear(self, key):
+            raise self.MyError()
+
+        def acquire_entry(self, key, limit, expiry, amount=1):
+            raise self.MyError()
+
+        def get_moving_window(self, key, limit, expiry):
+            raise self.MyError()
+
+    def assert_exception(self, exc, wrap_exceptions):
+        if wrap_exceptions:
+            assert isinstance(exc, StorageError)
+            assert isinstance(exc.storage_error, self.MyStorage.MyError)
+        else:
+            assert isinstance(exc, self.MyStorage.MyError)
+
+    def test_incr_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            self.MyStorage(wrap_exceptions=wrap_exceptions).incr("", 1)
+
+        self.assert_exception(exc.value, wrap_exceptions)
+
+    def test_get_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            self.MyStorage(wrap_exceptions=wrap_exceptions).get("")
+
+        self.assert_exception(exc.value, wrap_exceptions)
+
+    def test_get_expiry_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            self.MyStorage(wrap_exceptions=wrap_exceptions).get_expiry("")
+
+        self.assert_exception(exc.value, wrap_exceptions)
+
+    def test_reset_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            self.MyStorage(wrap_exceptions=wrap_exceptions).reset()
+
+        self.assert_exception(exc.value, wrap_exceptions)
+
+    def test_check_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            self.MyStorage(wrap_exceptions=wrap_exceptions).check()
+
+        self.assert_exception(exc.value, wrap_exceptions)
+
+    def test_clear_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            self.MyStorage(wrap_exceptions=wrap_exceptions).clear("")
+
+        self.assert_exception(exc.value, wrap_exceptions)
+
+    def test_acquire_entry_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            self.MyStorage(wrap_exceptions=wrap_exceptions).acquire_entry("", 1, 1)
+
+        self.assert_exception(exc.value, wrap_exceptions)
+
+    def test_get_moving_window_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            self.MyStorage(wrap_exceptions=wrap_exceptions).get_moving_window("", 1, 1)
+
+        self.assert_exception(exc.value, wrap_exceptions)

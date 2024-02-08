@@ -29,6 +29,7 @@ class RedisSentinelStorage(RedisStorage):
         service_name: Optional[str] = None,
         use_replicas: bool = True,
         sentinel_kwargs: Optional[Dict[str, Union[float, str, bool]]] = None,
+        wrap_exceptions: bool = False,
         **options: Union[float, str, bool]
     ) -> None:
         """
@@ -45,7 +46,9 @@ class RedisSentinelStorage(RedisStorage):
          or if the redis master host cannot be pinged.
         """
 
-        super(RedisStorage, self).__init__(uri, **options)
+        super(RedisStorage, self).__init__(
+            uri, wrap_exceptions=wrap_exceptions, **options
+        )
 
         parsed = urllib.parse.urlparse(uri)
         sentinel_configuration = []

@@ -7,7 +7,7 @@ from packaging.version import Version
 
 from limits.aio.storage.base import MovingWindowSupport, Storage
 from limits.errors import ConfigurationError
-from limits.typing import AsyncRedisClient, Dict, Optional, Tuple, Union
+from limits.typing import AsyncRedisClient, Dict, Optional, Tuple, Type, Union
 from limits.util import get_package_data
 
 if TYPE_CHECKING:
@@ -159,6 +159,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         self,
         uri: str,
         connection_pool: Optional["coredis.ConnectionPool"] = None,
+        wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
         """
@@ -181,7 +182,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         uri = uri.replace("async+redis", "redis", 1)
         uri = uri.replace("redis+unix", "unix")
 
-        super().__init__(uri, **options)
+        super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
 
         self.dependency = self.dependencies["coredis"].module
 
@@ -193,6 +194,12 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
             self.storage = self.dependency.Redis.from_url(uri, **options)
 
         self.initialize_storage(uri)
+
+    @property
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+        return self.dependency.RedisError  # type: ignore[no-any-return]
 
     def initialize_storage(self, _uri: str) -> None:
         # all these methods are coroutines, so must be called with await
@@ -298,7 +305,12 @@ class RedisClusterStorage(RedisStorage):
     }
     "Default options passed to :class:`coredis.RedisCluster`"
 
-    def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
+    def __init__(
+        self,
+        uri: str,
+        wrap_exceptions: bool = False,
+        **options: Union[float, str, bool],
+    ) -> None:
         """
         :param uri: url of the form
          ``async+redis+cluster://[:password]@host:port,host:port``
@@ -322,7 +334,9 @@ class RedisClusterStorage(RedisStorage):
             host, port = loc.split(":")
             cluster_hosts.append({"host": host, "port": int(port)})
 
-        super(RedisStorage, self).__init__(uri, **options)
+        super(RedisStorage, self).__init__(
+            uri, wrap_exceptions=wrap_exceptions, **options
+        )
 
         self.dependency = self.dependencies["coredis"].module
 
