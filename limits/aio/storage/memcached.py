@@ -29,6 +29,8 @@ class MemcachedStorage(Storage):
         """
         :param uri: memcached location of the form
          ``async+memcached://host:port,host:port``
+        :param wrap_exceptions: Whether to wrap storage exceptions in
+         :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`emcache.Client`
         :raise ConfigurationError: when :pypi:`emcache` is not available

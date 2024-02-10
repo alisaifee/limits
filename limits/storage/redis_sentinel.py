@@ -40,6 +40,8 @@ class RedisSentinelStorage(RedisStorage):
         :param use_replicas: Whether to use replicas for read only operations
         :param sentinel_kwargs: kwargs to pass as
          :attr:`sentinel_kwargs` to :class:`redis.sentinel.Sentinel`
+        :param wrap_exceptions: Whether to wrap storage exceptions in
+         :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.sentinel.Sentinel`
         :raise ConfigurationError: when the redis library is not available

@@ -49,6 +49,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
          This uri is passed directly to :class:`~motor.motor_asyncio.AsyncIOMotorClient`
         :param database_name: The database to use for storing the rate limit
          collections.
+        :param wrap_exceptions: Whether to wrap storage exceptions in
+         :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are merged with
          :data:`DEFAULT_OPTIONS` and passed to the constructor of
          :class:`~motor.motor_asyncio.AsyncIOMotorClient`

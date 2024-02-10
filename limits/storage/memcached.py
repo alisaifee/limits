@@ -35,12 +35,15 @@ class MemcachedStorage(Storage):
     def __init__(
         self,
         uri: str,
+        wrap_exceptions: bool = False,
         **options: Union[str, Callable[[], MemcachedClientP]],
     ) -> None:
         """
         :param uri: memcached location of the form
          ``memcached://host:port,host:port``,
          ``memcached:///var/tmp/path/to/sock``
+        :param wrap_exceptions: Whether to wrap storage exceptions in
+         :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`pymemcache.client.base.PooledClient`
          or :class:`pymemcache.client.hash.HashClient` (if there are more than
@@ -79,6 +82,7 @@ class MemcachedStorage(Storage):
             )  # pragma: no cover
         self.local_storage = threading.local()
         self.local_storage.storage = None
+        super().__init__(uri, wrap_exceptions=wrap_exceptions)
 
     @property
     def base_exceptions(
@@ -95,6 +99,7 @@ class MemcachedStorage(Storage):
         :param module: the memcached module
         :param hosts: list of memcached hosts
         """
+
         return cast(
             MemcachedClientP,
             (
@@ -109,6 +114,7 @@ class MemcachedStorage(Storage):
     ) -> R:
         if "noreply" in kwargs:
             argspec = inspect.getfullargspec(func)
+
             if not ("noreply" in argspec.args or argspec.varkw):
                 kwargs.pop("noreply")
 
@@ -124,6 +130,7 @@ class MemcachedStorage(Storage):
             dependency = get_dependency(
                 self.cluster_library if len(self.hosts) > 1 else self.library
             )[0]
+
             if not dependency:
                 raise ConfigurationError(f"Unable to import {self.cluster_library}")
             self.local_storage.storage = self.client_getter(

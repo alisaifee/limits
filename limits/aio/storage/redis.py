@@ -175,6 +175,8 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
          where it is replaced with ``unix``.
         :param connection_pool: if provided, the redis client is initialized with
          the connection pool and any other params passed as :paramref:`options`
+        :param wrap_exceptions: Whether to wrap storage exceptions in
+         :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`coredis.Redis`
         :raise ConfigurationError: when the redis library is not available

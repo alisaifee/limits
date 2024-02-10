@@ -56,6 +56,10 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
         wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
+        """
+        :param wrap_exceptions: Whether to wrap storage exceptions in
+         :exc:`limits.errors.StorageError` before raising it.
+        """
         super().__init__()
         self.wrap_exceptions = wrap_exceptions
 
