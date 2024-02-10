@@ -21,7 +21,7 @@ def _wrap_errors(  # type: ignore[misc]
             return fn(*args, **kwargs)
         except storage.base_exceptions as exc:
             if storage.wrap_exceptions:
-                raise storage.get_storage_error(exc) from exc
+                raise errors.StorageError(exc) from exc
             raise
 
     return inner
@@ -37,6 +37,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Storage:  # type: ignore[misc]
         inst = super().__new__(cls)
+
         for method in {
             "incr",
             "get",
@@ -46,6 +47,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
             "clear",
         }:
             setattr(inst, method, _wrap_errors(inst, getattr(inst, method)))
+
         return inst
 
     def __init__(
@@ -62,12 +64,6 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     @abstractmethod
     def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
         raise NotImplementedError
-
-    def get_storage_error(self, storage_error: Exception) -> errors.StorageError:
-        """
-        Returns a limits StorageError or subclass when a storage error is found
-        """
-        return errors.StorageError(storage_error)
 
     @abstractmethod
     def incr(
@@ -130,6 +126,7 @@ class MovingWindowSupport(ABC):
 
     def __new__(cls, *args: Any, **kwargs: Any) -> MovingWindowSupport:  # type: ignore[misc]
         inst = super().__new__(cls)
+
         for method in {
             "acquire_entry",
             "get_moving_window",
@@ -139,6 +136,7 @@ class MovingWindowSupport(ABC):
                 method,
                 _wrap_errors(cast(Storage, inst), getattr(inst, method)),
             )
+
         return inst
 
     @abstractmethod

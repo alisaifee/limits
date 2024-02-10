@@ -22,7 +22,7 @@ def _wrap_errors(  # type: ignore[misc]
             return await fn(*args, **kwargs)
         except storage.base_exceptions as exc:
             if storage.wrap_exceptions:
-                raise storage.get_storage_error(exc) from exc
+                raise errors.StorageError(exc) from exc
             raise
 
     return inner
@@ -63,12 +63,6 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     @abstractmethod
     def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
         raise NotImplementedError
-
-    def get_storage_error(self, storage_error: Exception) -> errors.StorageError:
-        """
-        Returns a limits StorageError or subclass when a storage error is found
-        """
-        return errors.StorageError(storage_error)
 
     @abstractmethod
     async def incr(
