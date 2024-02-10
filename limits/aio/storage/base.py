@@ -8,16 +8,26 @@ from deprecated.sphinx import versionadded
 
 from limits import errors
 from limits.storage.registry import StorageRegistry
-from limits.typing import Callable, List, Optional, Tuple, Type, Union
+from limits.typing import (
+    Awaitable,
+    Callable,
+    List,
+    Optional,
+    P,
+    R,
+    Tuple,
+    Type,
+    Union,
+)
 from limits.util import LazyDependency
 
 
-def _wrap_errors(  # type: ignore[misc]
+def _wrap_errors(
     storage: Storage,
-    fn: Callable[..., Any],
-) -> Callable[..., Any]:
+    fn: Callable[P, Awaitable[R]],
+) -> Callable[P, Awaitable[R]]:
     @functools.wraps(fn)
-    async def inner(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
+    async def inner(*args: P.args, **kwargs: P.kwargs) -> R:
         try:
             return await fn(*args, **kwargs)
         except storage.base_exceptions as exc:
@@ -39,6 +49,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Storage:  # type: ignore[misc]
         inst = super().__new__(cls)
+
         for method in {
             "incr",
             "get",
@@ -48,6 +59,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
             "clear",
         }:
             setattr(inst, method, _wrap_errors(inst, getattr(inst, method)))
+
         return inst
 
     def __init__(
@@ -129,6 +141,7 @@ class MovingWindowSupport(ABC):
 
     def __new__(cls, *args: Any, **kwargs: Any) -> MovingWindowSupport:  # type: ignore[misc]
         inst = super().__new__(cls)
+
         for method in {
             "acquire_entry",
             "get_moving_window",
@@ -138,6 +151,7 @@ class MovingWindowSupport(ABC):
                 method,
                 _wrap_errors(cast(Storage, inst), getattr(inst, method)),
             )
+
         return inst
 
     @abstractmethod

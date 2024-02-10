@@ -1,5 +1,6 @@
 from typing import (
     TYPE_CHECKING,
+    Awaitable,
     Callable,
     Dict,
     List,
@@ -120,6 +121,7 @@ class ScriptP(Protocol[R_co]):
 
 __all__ = [
     "AsyncRedisClient",
+    "Awaitable",
     "Callable",
     "ClassVar",
     "Counter",

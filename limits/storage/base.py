@@ -7,16 +7,22 @@ from typing import Any, cast
 
 from limits import errors
 from limits.storage.registry import StorageRegistry
-from limits.typing import Callable, List, Optional, Tuple, Type, Union
+from limits.typing import (
+    Callable,
+    List,
+    Optional,
+    P,
+    R,
+    Tuple,
+    Type,
+    Union,
+)
 from limits.util import LazyDependency
 
 
-def _wrap_errors(  # type: ignore[misc]
-    storage: Storage,
-    fn: Callable[..., Any],
-) -> Callable[..., Any]:
+def _wrap_errors(storage: Storage, fn: Callable[P, R]) -> Callable[P, R]:
     @functools.wraps(fn)
-    def inner(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
+    def inner(*args: P.args, **kwargs: P.kwargs) -> R:
         try:
             return fn(*args, **kwargs)
         except storage.base_exceptions as exc:
