@@ -277,8 +277,8 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
     async def reset(self) -> Optional[int]:
         """
-        This function calls a Lua Script to delete keys prefixed with `self.PREFIX`
-        in block of 5000.
+        This function calls a Lua Script to delete keys prefixed with
+        ``self.PREFIX`` in blocks of 5000.
 
         .. warning:: This operation was designed to be fast, but was not tested
            on a large production based system. Be careful with its usage as it
@@ -352,7 +352,7 @@ class RedisClusterStorage(RedisStorage):
         """
         Redis Clusters are sharded and deleting across shards
         can't be done atomically. Because of this, this reset loops over all
-        keys that are prefixed with `self.PREFIX` and calls delete on them,
+        keys that are prefixed with ``self.PREFIX`` and calls delete on them,
         one at a time.
 
         .. warning:: This operation was not tested with extremely large data sets.

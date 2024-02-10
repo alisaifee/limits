@@ -116,7 +116,7 @@ class RedisClusterStorage(RedisStorage):
         """
         Redis Clusters are sharded and deleting across shards
         can't be done atomically. Because of this, this reset loops over all
-        keys that are prefixed with `self.PREFIX` and calls delete on them,
+        keys that are prefixed with ``self.PREFIX`` and calls delete on them,
         one at a time.
 
         .. warning::
