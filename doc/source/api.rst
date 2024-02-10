@@ -203,3 +203,5 @@ Exceptions
    :no-inherited-members:
 .. autoexception:: limits.errors.ConcurrentUpdateError
    :no-inherited-members:
+.. autoexception:: limits.errors.StorageError
+   :no-inherited-members:
