@@ -248,8 +248,8 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
     def reset(self) -> Optional[int]:
         """
-        This function calls a Lua Script to delete keys prefixed with `self.PREFIX`
-        in block of 5000.
+        This function calls a Lua Script to delete keys prefixed with
+        ``self.PREFIX`` in blocks of 5000.
 
         .. warning::
            This operation was designed to be fast, but was not tested
