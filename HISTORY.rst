@@ -3,6 +3,16 @@
 Changelog
 =========
 
+v3.8.0
+------
+Release Date: 2024-02-14
+
+* Features
+
+  * Add option to wrap storage errors with a ``StorageError``
+    exception
+
+
 v3.7.0
 ------
 Release Date: 2023-11-24
@@ -578,6 +588,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
