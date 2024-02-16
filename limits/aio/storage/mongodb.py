@@ -227,7 +227,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                 {
                     "$group": {
                         "_id": "$_id",
-                        "max": {"$max": "$entries"},
+                        "min": {"$min": "$entries"},
                         "count": {"$sum": 1},
                     }
                 },
@@ -235,7 +235,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         ).to_list(length=1)
 
         if result:
-            return (int(result[0]["max"]), result[0]["count"])
+            return (int(result[0]["min"]), result[0]["count"])
 
         return (int(timestamp), 0)
 

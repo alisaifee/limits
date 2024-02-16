@@ -121,7 +121,7 @@ class TestAsyncWindow:
         assert all([await limiter.hit(limit) for i in range(5)])
         assert (await limiter.get_window_stats(limit)).remaining == 0
         assert (await limiter.get_window_stats(limit)).reset_time == int(
-            time.time() + 1
+            time.time() + 2
         )
 
     @async_moving_window_storage
