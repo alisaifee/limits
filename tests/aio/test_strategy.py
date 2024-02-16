@@ -45,6 +45,21 @@ class TestAsyncWindow:
         assert (await limiter.get_window_stats(limit)).remaining == 10
         assert (await limiter.get_window_stats(limit)).reset_time == int(time.time())
 
+    @async_moving_window_storage
+    async def test_moving_window_stats(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerMinute(2)
+        assert await limiter.hit(limit, "key")
+        time.sleep(1)
+        assert await limiter.hit(limit, "key")
+        time.sleep(1)
+        assert not await limiter.hit(limit, "key")
+        assert (await limiter.get_window_stats(limit, "key")).remaining == 0
+        assert (await limiter.get_window_stats(limit, "key")).reset_time - int(
+            time.time()
+        ) == 58
+
     @async_all_storage
     @fixed_start
     async def test_fixed_window_multiple_cost(self, uri, args, fixture):
@@ -106,7 +121,7 @@ class TestAsyncWindow:
         assert all([await limiter.hit(limit) for i in range(5)])
         assert (await limiter.get_window_stats(limit)).remaining == 0
         assert (await limiter.get_window_stats(limit)).reset_time == int(
-            time.time() + 2
+            time.time() + 1
         )
 
     @async_moving_window_storage
