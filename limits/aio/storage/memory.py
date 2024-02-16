@@ -165,7 +165,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
         timestamp = time.time()
         acquired = await self.get_num_acquired(key, expiry)
 
-        for item in self.events.get(key, []):
+        for item in self.events.get(key, [])[::-1]:
             if item.atime >= timestamp - expiry:
                 return int(item.atime), acquired
 

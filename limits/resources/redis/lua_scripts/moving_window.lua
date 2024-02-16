@@ -7,8 +7,9 @@ for idx=1,#items do
     if tonumber(items[idx]) >= expiry then
         a = a + 1
 
-        if oldest == nil then
-            oldest = tonumber(items[idx])
+        local value = tonumber(items[idx])
+        if oldest == nil or value < oldest then
+            oldest = value
         end
     else
         break
