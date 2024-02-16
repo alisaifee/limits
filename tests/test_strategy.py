@@ -89,6 +89,21 @@ class TestWindow:
         assert limiter.get_window_stats(limit).reset_time == int(time.time() + 2)
 
     @moving_window_storage
+    def test_moving_window_stats(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = MovingWindowRateLimiter(storage)
+        limit = RateLimitItemPerMinute(2)
+        assert limiter.hit(limit, "key")
+        time.sleep(1)
+        assert limiter.hit(limit, "key")
+        time.sleep(1)
+        assert not limiter.hit(limit, "key")
+        assert limiter.get_window_stats(limit, "key").remaining == 0
+        assert (
+            limiter.get_window_stats(limit, "key").reset_time - int(time.time()) == 58
+        )
+
+    @moving_window_storage
     def test_moving_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
