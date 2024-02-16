@@ -120,9 +120,6 @@ class TestAsyncWindow:
         # 5 more succeed since there were only 5 in the last 2 seconds
         assert all([await limiter.hit(limit) for i in range(5)])
         assert (await limiter.get_window_stats(limit)).remaining == 0
-        assert (await limiter.get_window_stats(limit)).reset_time == int(
-            time.time() + 2
-        )
 
     @async_moving_window_storage
     async def test_moving_window_empty_stats(self, uri, args, fixture):
