@@ -25,11 +25,6 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     """
 
     STORAGE_SCHEME = ["mongodb", "mongodb+srv"]
-    DEFAULT_OPTIONS: Dict[str, Union[int, str, bool]] = {
-        "serverSelectionTimeoutMS": 1000,
-        "connectTimeoutMS": 1000,
-    }
-    "Default options passed to :class:`~pymongo.mongo_client.MongoClient`"
 
     DEPENDENCIES = ["pymongo"]
 
@@ -47,9 +42,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
          collections.
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
-        :param options: all remaining keyword arguments are merged with
-         :data:`DEFAULT_OPTIONS` and passed to the constructor of
-         :class:`~pymongo.mongo_client.MongoClient`
+        :param options: all remaining keyword arguments are passed to the
+         constructor of :class:`~pymongo.mongo_client.MongoClient`
         :raise ConfigurationError: when the :pypi:`pymongo` library is not available
         """
 
@@ -58,11 +52,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self.lib = self.dependencies["pymongo"].module
         self.lib_errors, _ = get_dependency("pymongo.errors")
 
-        mongo_opts = options.copy()
-        [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]
-
         self.storage: "pymongo.MongoClient" = self.lib.MongoClient(  # type: ignore[type-arg]
-            uri, **mongo_opts
+            uri, **options
         )
         self.counters = self.storage.get_database(database_name).counters
         self.windows = self.storage.get_database(database_name).windows
