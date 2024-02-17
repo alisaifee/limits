@@ -29,12 +29,6 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     The storage scheme for MongoDB for use in an async context
     """
 
-    DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
-        "serverSelectionTimeoutMS": 1000,
-        "connectTimeoutMS": 1000,
-    }
-    "Default options passed to :class:`~motor.motor_asyncio.AsyncIOMotorClient`"
-
     DEPENDENCIES = ["motor.motor_asyncio", "pymongo"]
 
     def __init__(
@@ -51,15 +45,12 @@ class MongoDBStorage(Storage, MovingWindowSupport):
          collections.
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
-        :param options: all remaining keyword arguments are merged with
-         :data:`DEFAULT_OPTIONS` and passed to the constructor of
-         :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+        :param options: all remaining keyword arguments are passed
+         to the constructor of :class:`~motor.motor_asyncio.AsyncIOMotorClient`
         :raise ConfigurationError: when the :pypi:`motor` or :pypi:`pymongo` are
          not available
         """
 
-        mongo_opts = options.copy()
-        [mongo_opts.setdefault(k, v) for k, v in self.DEFAULT_OPTIONS.items()]
         uri = uri.replace("async+mongodb", "mongodb", 1)
 
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
@@ -68,7 +59,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self.proxy_dependency = self.dependencies["pymongo"]
         self.lib_errors, _ = get_dependency("pymongo.errors")
 
-        self.storage = self.dependency.module.AsyncIOMotorClient(uri, **mongo_opts)
+        self.storage = self.dependency.module.AsyncIOMotorClient(uri, **options)
         # TODO: Fix this hack. It was noticed when running a benchmark
         # with FastAPI - however - doesn't appear in unit tests or in an isolated
         # use. Reference: https://jira.mongodb.org/browse/MOTOR-822
