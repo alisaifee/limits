@@ -3,6 +3,16 @@
 Changelog
 =========
 
+v3.9.0
+------
+Release Date: 2024-02-17
+
+* Bug Fix
+
+  * Remove excessively low defaults for mongodb storage and instead
+    delegate to the underlying dependency (pymongo, motor)
+
+
 v3.8.0
 ------
 Release Date: 2024-02-14
@@ -588,6 +598,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
