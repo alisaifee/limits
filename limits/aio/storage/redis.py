@@ -201,7 +201,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
     def base_exceptions(
         self,
     ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
-        return self.dependency.RedisError  # type: ignore[no-any-return]
+        return self.dependency.exceptions.RedisError  # type: ignore[no-any-return]
 
     def initialize_storage(self, _uri: str) -> None:
         # all these methods are coroutines, so must be called with await
