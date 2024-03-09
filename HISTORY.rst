@@ -3,6 +3,15 @@
 Changelog
 =========
 
+v3.10.0
+-------
+Release Date: 2024-03-08
+
+* Bug Fix
+
+  * Fix incorrect mapping of coredis exceptions
+  * Fix calculation of reset_time
+
 v3.9.0
 ------
 Release Date: 2024-02-17
@@ -598,6 +607,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
