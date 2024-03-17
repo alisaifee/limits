@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v3.10.1
+-------
+Release Date: 2024-03-17
+
+* Compatibility
+
+  * Relax dependency constraint on packaging
+
 v3.10.0
 -------
 Release Date: 2024-03-08
@@ -607,6 +615,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
