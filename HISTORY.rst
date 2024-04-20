@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v3.11.0
+-------
+Release Date: 2024-04-20
+
+* Compatibility
+
+  * Add support for python 3.12
+
 v3.10.1
 -------
 Release Date: 2024-03-17
@@ -615,6 +623,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
