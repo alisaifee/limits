@@ -91,7 +91,11 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :param key: the key to get the expiry for
         """
         counter = self.counters.find_one({"_id": key})
-        expiry = counter["expireAt"] if counter else datetime.datetime.utcnow()
+        expiry = (
+            counter["expireAt"]
+            if counter
+            else datetime.datetime.now(datetime.timezone.utc)
+        )
 
         return calendar.timegm(expiry.timetuple())
 
@@ -100,7 +104,10 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :param key: the key to get the counter value for
         """
         counter = self.counters.find_one(
-            {"_id": key, "expireAt": {"$gte": datetime.datetime.utcnow()}},
+            {
+                "_id": key,
+                "expireAt": {"$gte": datetime.datetime.now(datetime.timezone.utc)},
+            },
             projection=["count"],
         )
 
@@ -116,7 +123,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :param expiry: amount in seconds for the key to expire in
         :param amount: the number to increment by
         """
-        expiration = datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
+        expiration = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            seconds=expiry
+        )
 
         return int(
             self.counters.find_one_and_update(
@@ -220,7 +229,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
             updates["$set"] = {
                 "expireAt": (
-                    datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)
+                    datetime.datetime.now(datetime.timezone.utc)
+                    + datetime.timedelta(seconds=expiry)
                 )
             }
             updates["$push"]["entries"]["$each"] = [timestamp] * amount
