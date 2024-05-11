@@ -27,7 +27,7 @@ def _wrap_errors(
     fn: Callable[P, Awaitable[R]],
 ) -> Callable[P, Awaitable[R]]:
     @functools.wraps(fn)
-    async def inner(*args: P.args, **kwargs: P.kwargs) -> R:
+    async def inner(*args: P.args, **kwargs: P.kwargs) -> R:  # type: ignore[misc]
         try:
             return await fn(*args, **kwargs)
         except storage.base_exceptions as exc:
