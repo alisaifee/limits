@@ -3,6 +3,24 @@
 Changelog
 =========
 
+v3.12.0
+-------
+Release Date: 2024-05-12
+
+* Enhancements
+
+  * Lazily initialize pymongo client
+
+* Documentation
+
+  * Add django-ratelimiter in docs
+
+* Chores
+
+  * Update development dependencies
+  * Update github actions to latest
+
+
 v3.11.0
 -------
 Release Date: 2024-04-20
@@ -623,6 +641,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
