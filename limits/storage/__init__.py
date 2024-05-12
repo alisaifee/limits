@@ -13,7 +13,7 @@ from .base import MovingWindowSupport, Storage
 from .etcd import EtcdStorage
 from .memcached import MemcachedStorage
 from .memory import MemoryStorage
-from .mongodb import MongoDBStorage
+from .mongodb import MongoDBStorage, MongoDBStorageBase
 from .redis import RedisStorage
 from .redis_cluster import RedisClusterStorage
 from .redis_sentinel import RedisSentinelStorage
@@ -68,6 +68,7 @@ __all__ = [
     "Storage",
     "MovingWindowSupport",
     "EtcdStorage",
+    "MongoDBStorageBase",
     "MemoryStorage",
     "MongoDBStorage",
     "RedisStorage",

@@ -1,8 +1,11 @@
+# mypy: disable-error-code="no-untyped-def, misc, type-arg"
+
 from __future__ import annotations
 
 import calendar
 import datetime
 import time
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
 from deprecated.sphinx import versionadded
@@ -16,15 +19,12 @@ if TYPE_CHECKING:
     import pymongo
 
 
-@versionadded(version="2.1")
-class MongoDBStorage(Storage, MovingWindowSupport):
+class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
     """
     Rate limit storage with MongoDB as backend.
 
     Depends on :pypi:`pymongo`.
     """
-
-    STORAGE_SCHEME = ["mongodb", "mongodb+srv"]
 
     DEPENDENCIES = ["pymongo"]
 
@@ -48,16 +48,37 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         """
 
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
-
+        self._database_name = database_name
         self.lib = self.dependencies["pymongo"].module
         self.lib_errors, _ = get_dependency("pymongo.errors")
+        self._storage_uri = uri
+        self._storage_options = options
+        self._storage: Optional[Any] = None
 
-        self.storage: "pymongo.MongoClient" = self.lib.MongoClient(  # type: ignore[type-arg]
-            uri, **options
-        )
-        self.counters = self.storage.get_database(database_name).counters
-        self.windows = self.storage.get_database(database_name).windows
-        self.__initialize_database()
+    @property
+    def storage(self):
+        if self._storage is None:
+            self._storage = self._init_mongo_client(
+                self._storage_uri, **self._storage_options
+            )
+            self.__initialize_database()
+        return self._storage
+
+    @property
+    def _database(self):
+        return self.storage[self._database_name]
+
+    @property
+    def counters(self):
+        return self._database["counters"]
+
+    @property
+    def windows(self):
+        return self._database["windows"]
+
+    @abstractmethod
+    def _init_mongo_client(self, uri: Optional[str], **options: Union[int, str, bool]):
+        raise NotImplementedError()
 
     @property
     def base_exceptions(
@@ -248,3 +269,12 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             return True
         except self.lib.errors.DuplicateKeyError:
             return False
+
+
+@versionadded(version="2.1")
+class MongoDBStorage(MongoDBStorageBase):
+    STORAGE_SCHEME = ["mongodb", "mongodb+srv"]
+
+    def _init_mongo_client(self, uri: Optional[str], **options: Union[int, str, bool]):
+        client: "pymongo.MongoClient" = self.lib.MongoClient(uri, **options)
+        return client
