@@ -9,12 +9,11 @@ from typing import (
     Optional,
     Tuple,
     Type,
-    TypeAlias,
     TypeVar,
     Union,
 )
 
-from typing_extensions import ClassVar, Counter, ParamSpec, Protocol
+from typing_extensions import ClassVar, Counter, ParamSpec, Protocol, TypeAlias
 
 Serializable = Union[int, str, float]
 
