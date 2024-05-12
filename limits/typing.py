@@ -1,5 +1,6 @@
 from typing import (
     TYPE_CHECKING,
+    Any,
     Awaitable,
     Callable,
     Dict,
@@ -8,6 +9,7 @@ from typing import (
     Optional,
     Tuple,
     Type,
+    TypeAlias,
     TypeVar,
     Union,
 )
@@ -24,6 +26,7 @@ P = ParamSpec("P")
 if TYPE_CHECKING:
     import coredis
     import coredis.commands.script
+    import pymongo
     import redis
 
 
@@ -107,6 +110,10 @@ class ScriptP(Protocol[R_co]):
     def __call__(self, keys: List[Serializable], args: List[Serializable]) -> R_co: ...
 
 
+MongoClient: TypeAlias = "pymongo.MongoClient[Dict[str, Any]]"  # type:ignore[misc]
+MongoDatabase: TypeAlias = "pymongo.database.Database[Dict[str, Any]]"  # type:ignore[misc]
+MongoCollection: TypeAlias = "pymongo.collection.Collection[Dict[str, Any]]"  # type:ignore[misc]
+
 __all__ = [
     "AsyncRedisClient",
     "Awaitable",
@@ -118,6 +125,9 @@ __all__ = [
     "ItemP",
     "List",
     "MemcachedClientP",
+    "MongoClient",
+    "MongoCollection",
+    "MongoDatabase",
     "NamedTuple",
     "Optional",
     "P",

@@ -1,22 +1,26 @@
-# mypy: disable-error-code="no-untyped-def, misc, type-arg"
-
 from __future__ import annotations
 
 import calendar
 import datetime
 import time
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import Any, cast
 
 from deprecated.sphinx import versionadded
 
-from limits.typing import Dict, Optional, Tuple, Type, Union
+from limits.typing import (
+    Dict,
+    MongoClient,
+    MongoCollection,
+    MongoDatabase,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from ..util import get_dependency
 from .base import MovingWindowSupport, Storage
-
-if TYPE_CHECKING:
-    import pymongo
 
 
 class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
@@ -53,10 +57,10 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
         self.lib_errors, _ = get_dependency("pymongo.errors")
         self._storage_uri = uri
         self._storage_options = options
-        self._storage: Optional[Any] = None
+        self._storage: Optional[MongoClient] = None
 
     @property
-    def storage(self):
+    def storage(self) -> MongoClient:
         if self._storage is None:
             self._storage = self._init_mongo_client(
                 self._storage_uri, **self._storage_options
@@ -65,19 +69,21 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
         return self._storage
 
     @property
-    def _database(self):
+    def _database(self) -> MongoDatabase:
         return self.storage[self._database_name]
 
     @property
-    def counters(self):
+    def counters(self) -> MongoCollection:
         return self._database["counters"]
 
     @property
-    def windows(self):
+    def windows(self) -> MongoCollection:
         return self._database["windows"]
 
     @abstractmethod
-    def _init_mongo_client(self, uri: Optional[str], **options: Union[int, str, bool]):
+    def _init_mongo_client(
+        self, uri: Optional[str], **options: Union[int, str, bool]
+    ) -> MongoClient:
         raise NotImplementedError()
 
     @property
@@ -275,6 +281,7 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
 class MongoDBStorage(MongoDBStorageBase):
     STORAGE_SCHEME = ["mongodb", "mongodb+srv"]
 
-    def _init_mongo_client(self, uri: Optional[str], **options: Union[int, str, bool]):
-        client: "pymongo.MongoClient" = self.lib.MongoClient(uri, **options)
-        return client
+    def _init_mongo_client(
+        self, uri: Optional[str], **options: Union[int, str, bool]
+    ) -> MongoClient:
+        return cast(MongoClient, self.lib.MongoClient(uri, **options))
