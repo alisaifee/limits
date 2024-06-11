@@ -48,6 +48,7 @@ class TestWindow:
         assert not limiter.hit(limit, "k1", cost=11)
         assert limiter.hit(limit, "k2", cost=5)
         assert limiter.get_window_stats(limit, "k2").remaining == 5
+        assert not limiter.test(limit, "k2", cost=6)
         assert not limiter.hit(limit, "k2", cost=6)
 
     @all_storage
@@ -130,9 +131,10 @@ class TestWindow:
             limiter.hit(limit, "k2", cost=5)
         # 5 hits in the last 100ms
         with window(2, delay=1.8):
-            assert all(limiter.hit(limit, "k2") for i in range(5))
-            # 11th fails
-            assert not limiter.hit(limit, "k2")
+            assert all(limiter.hit(limit, "k2") for i in range(4))
+            assert not limiter.test(limit, "k2", cost=2)
+            assert not limiter.hit(limit, "k2", cost=2)
+            assert limiter.hit(limit, "k2")
 
         # 5 more succeed since there were only 5 in the last 2 seconds
         assert all([limiter.hit(limit, "k2") for i in range(5)])

@@ -69,6 +69,7 @@ class TestAsyncWindow:
         assert not await limiter.hit(limit, "k1", cost=11)
         assert await limiter.hit(limit, "k2", cost=5)
         assert (await limiter.get_window_stats(limit, "k2")).remaining == 5
+        assert not await limiter.test(limit, "k2", cost=6)
         assert not await limiter.hit(limit, "k2", cost=6)
 
     @async_all_storage
@@ -143,9 +144,10 @@ class TestAsyncWindow:
             assert await limiter.hit(limit, "k2", cost=5)
         # 5 hits in the last 100ms
         async with async_window(2, delay=1.8):
-            assert all([await limiter.hit(limit, "k2") for i in range(5)])
-            # 11th fails
-            assert not await limiter.hit(limit, "k2")
+            assert all([await limiter.hit(limit, "k2") for i in range(4)])
+            assert not await limiter.test(limit, "k2", cost=2)
+            assert not await limiter.hit(limit, "k2", cost=2)
+            assert await limiter.hit(limit, "k2")
         assert all([await limiter.hit(limit, "k2") for i in range(5)])
         assert (await limiter.get_window_stats(limit, "k2")).remaining == 0
         assert not await limiter.hit(limit, "k2", cost=2)
