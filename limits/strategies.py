@@ -28,7 +28,7 @@ class RateLimiter(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def test(self, item: RateLimitItem, *identifiers: str) -> bool:
+    def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Check the rate limit without consuming from it.
 
@@ -84,7 +84,7 @@ class MovingWindowRateLimiter(RateLimiter):
             item.key_for(*identifiers), item.amount, item.get_expiry(), amount=cost
         )
 
-    def test(self, item: RateLimitItem, *identifiers: str) -> bool:
+    def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Check if the rate limit can be consumed
 
@@ -99,7 +99,7 @@ class MovingWindowRateLimiter(RateLimiter):
                 item.amount,
                 item.get_expiry(),
             )[1]
-            < item.amount
+            <= item.amount - cost
         )
 
     def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
@@ -144,7 +144,7 @@ class FixedWindowRateLimiter(RateLimiter):
             <= item.amount
         )
 
-    def test(self, item: RateLimitItem, *identifiers: str) -> bool:
+    def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Check if the rate limit can be consumed
 
@@ -153,7 +153,7 @@ class FixedWindowRateLimiter(RateLimiter):
          instance of the limit
         """
 
-        return self.storage.get(item.key_for(*identifiers)) < item.amount
+        return self.storage.get(item.key_for(*identifiers)) < item.amount - cost + 1
 
     def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
         """
