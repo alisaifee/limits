@@ -35,6 +35,7 @@ class RateLimiter(metaclass=ABCMeta):
         :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify this
           instance of the limit
+        :param cost: The expected cost to be consumed, default 1
         """
         raise NotImplementedError
 
@@ -91,6 +92,7 @@ class MovingWindowRateLimiter(RateLimiter):
         :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
+        :param cost: The expected cost to be consumed, default 1
         """
 
         return (
@@ -151,6 +153,7 @@ class FixedWindowRateLimiter(RateLimiter):
         :param item: The rate limit item
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
+        :param cost: The expected cost to be consumed, default 1
         """
 
         return self.storage.get(item.key_for(*identifiers)) < item.amount - cost + 1
