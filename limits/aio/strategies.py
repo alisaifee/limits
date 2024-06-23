@@ -29,13 +29,14 @@ class RateLimiter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def test(self, item: RateLimitItem, *identifiers: str) -> bool:
+    async def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Check if the rate limit can be consumed
 
         :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
+        :param cost: The expected cost to be consumed, default 1
         """
         raise NotImplementedError
 
@@ -86,13 +87,14 @@ class MovingWindowRateLimiter(RateLimiter):
             item.key_for(*identifiers), item.amount, item.get_expiry(), amount=cost
         )
 
-    async def test(self, item: RateLimitItem, *identifiers: str) -> bool:
+    async def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Check if the rate limit can be consumed
 
         :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
+        :param cost: The expected cost to be consumed, default 1
         """
         res = await cast(MovingWindowSupport, self.storage).get_moving_window(
             item.key_for(*identifiers),
@@ -101,7 +103,7 @@ class MovingWindowRateLimiter(RateLimiter):
         )
         amount = res[1]
 
-        return amount < item.amount
+        return amount <= item.amount - cost
 
     async def get_window_stats(
         self, item: RateLimitItem, *identifiers: str
@@ -147,16 +149,19 @@ class FixedWindowRateLimiter(RateLimiter):
             <= item.amount
         )
 
-    async def test(self, item: RateLimitItem, *identifiers: str) -> bool:
+    async def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
         Check if the rate limit can be consumed
 
         :param item: the rate limit item
         :param identifiers: variable list of strings to uniquely identify the
          limit
+        :param cost: The expected cost to be consumed, default 1
         """
 
-        return await self.storage.get(item.key_for(*identifiers)) < item.amount
+        return (
+            await self.storage.get(item.key_for(*identifiers)) < item.amount - cost + 1
+        )
 
     async def get_window_stats(
         self, item: RateLimitItem, *identifiers: str
