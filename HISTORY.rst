@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v3.13.0
+-------
+Release Date: 2024-06-22
+
+* Feature
+
+  * Add ``cost`` parameter to ``test`` methods in strategies.
+
 v3.12.0
 -------
 Release Date: 2024-05-12
@@ -641,6 +649,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
