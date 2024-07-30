@@ -17,7 +17,7 @@ coverage
 hiro>0.1.6
 flaky
 lovely-pytest-docker
-pytest<8
+pytest<9
 pytest-asyncio==0.21.2
 pytest-benchmark[histogram]
 pytest-cov
