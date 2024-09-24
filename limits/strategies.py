@@ -198,15 +198,100 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
             <= item.amount
         )
 
+class ConcurrencyLimitRateLimiter(RateLimiter):
+    """
+    Reference: :ref:`strategies:concurrency limit`
+    """
+
+    def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
+        """
+        Attempt to consume tokens if the concurrency limit has not been reached.
+        
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :param cost: The cost of this hit, default 1
+        :return: True if the request is allowed (tokens consumed), False otherwise
+        """
+        key = item.key_for(*identifiers)
+        current_concurrency = self._get_concurrency(key)
+
+        # If current concurrency is less than the allowed limit, proceed
+        if current_concurrency + cost <= item.amount:
+            # Increment the concurrency count
+            self.storage.incr(key, item.get_expiry(), amount=cost)
+            return True
+        else:
+            # Limit reached, reject the request
+            return False
+
+    def release(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> None:
+        """
+        Release tokens (i.e., reduce concurrency) when a task/request is finished.
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :param cost: The cost to release, default 1
+        """
+        key = item.key_for(*identifiers)
+        current_concurrency = self._get_concurrency(key)
+
+        # Decrement the concurrency count
+        new_concurrency = max(0, current_concurrency - cost)
+        self.storage.set(key, new_concurrency, item.get_expiry())
+
+    def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
+        """
+        Check if there is room for more concurrent tasks without consuming tokens.
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :param cost: The expected cost to be consumed, default 1
+        :return: True if there is room for more concurrent tasks, False otherwise
+        """
+        key = item.key_for(*identifiers)
+        current_concurrency = self._get_concurrency(key)
+
+        return current_concurrency + cost <= item.amount
+
+    def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
+        """
+        Returns the current concurrency level and remaining capacity.
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :return: tuple (reset time, remaining capacity)
+        """
+        key = item.key_for(*identifiers)
+        current_concurrency = self._get_concurrency(key)
+
+        remaining_capacity = max(0, item.amount - current_concurrency)
+        reset_time = self.storage.get_expiry(key)
+
+        return WindowStats(reset_time, remaining_capacity)
+
+    def _get_concurrency(self, key: str) -> int:
+        """
+        Helper function to retrieve the current number of concurrent tasks.
+
+        :param key: The key representing the concurrency state
+        :return: The current concurrency level
+        """
+        return self.storage.get(key) or 0
 
 KnownStrategy = Union[
     Type[FixedWindowRateLimiter],
     Type[FixedWindowElasticExpiryRateLimiter],
     Type[MovingWindowRateLimiter],
+    Type[ConcurrencyLimitRateLimiter],
 ]
 
 STRATEGIES: Dict[str, KnownStrategy] = {
     "fixed-window": FixedWindowRateLimiter,
     "fixed-window-elastic-expiry": FixedWindowElasticExpiryRateLimiter,
     "moving-window": MovingWindowRateLimiter,
+    "concurrency-limit": ConcurrencyLimitRateLimiter,
 }

@@ -44,6 +44,18 @@ Supported Strategies
    - Allow another request that arrives at ``00:01:00``
    - Reject the request that arrives at ``00:01:01``
 
+`Concurrency limit`
+
+   Limits the number of simultaneous or concurrent executions (or tokens in use)
+   without focusing on the rate of requests over time. It enforces a maximum
+   limit of tasks allowed to run in parallel.
+
+   For example, with a concurrency limit of 5:
+
+   - Allow up to 5 tasks or requests to be processed concurrently
+   - Reject any further requests until one of the 5 tasks completes and releases a slot
+   - Once a task finishes, the limit is reduced, allowing new tasks to be executed   
+
 Storage backends
 ================
 

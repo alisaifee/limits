@@ -42,3 +42,15 @@ rate limit as the window for each limit is not fixed at the start and end of eac
 (i.e. N/second for a moving window means N in the last 1000 milliseconds). There is
 however a higher memory cost associated with this strategy as it requires ``N`` items to
 be maintained in memory per resource and rate limit.
+
+`Concurrency limit`
+
+Limits the number of simultaneous or concurrent executions (or tokens in use)
+without focusing on the rate of requests over time. It enforces a maximum
+limit of tasks allowed to run in parallel.
+
+For example, with a concurrency limit of 5:
+
+- Allow up to 5 tasks or requests to be processed concurrently
+- Reject any further requests until one of the 5 tasks completes and releases a slot
+- Once a task finishes, the limit is reduced, allowing new tasks to be executed   
