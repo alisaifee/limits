@@ -30,7 +30,7 @@ jobs:
       run: |
         ruff check --select I
         ruff format --check limits tests
-        ruff limits tests
+        ruff check limits tests
     - name: Check types
       run: |
         mypy limits
