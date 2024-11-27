@@ -101,20 +101,23 @@ def docker_services(host_ip_env, docker_services):
     return docker_services
 
 
+def ci_delay():
+    if os.environ.get("CI") == "True":
+        time.sleep(10)
+
+
 @pytest.fixture(scope="session")
 def etcd_client(docker_services):
     docker_services.start("etcd")
     docker_services.wait_for_service("etcd", 2379, check_etcd_ready)
-    if os.environ.get("CI") == "True":
-        time.sleep(5)
-
+    ci_delay()
     return etcd3.client()
 
 
 @pytest.fixture(scope="session")
 def redis_basic_client(docker_services):
     docker_services.start("redis-basic")
-
+    ci_delay()
     return redis.StrictRedis("localhost", 7379)
 
 
@@ -123,6 +126,7 @@ def redis_uds_client(docker_services):
     if platform.system().lower() == "darwin":
         pytest.skip("Fixture not supported on OSX")
     docker_services.start("redis-uds")
+    ci_delay()
 
     return redis.from_url("unix:///tmp/limits.redis.sock")
 
@@ -130,6 +134,7 @@ def redis_uds_client(docker_services):
 @pytest.fixture(scope="session")
 def redis_auth_client(docker_services):
     docker_services.start("redis-auth")
+    ci_delay()
 
     return redis.from_url("redis://:sekret@localhost:7389")
 
@@ -143,6 +148,7 @@ def redis_ssl_client(docker_services):
         "&ssl_certfile=./tests/tls/client.crt"
         "&ssl_ca_certs=./tests/tls/ca.crt"
     )
+    ci_delay()
 
     return redis.from_url(storage_url)
 
@@ -151,9 +157,7 @@ def redis_ssl_client(docker_services):
 def redis_cluster_client(docker_services):
     docker_services.start("redis-cluster-init")
     docker_services.wait_for_service("redis-cluster-6", 7006, check_redis_cluster_ready)
-    if os.environ.get("CI") == "True":
-        time.sleep(10)
-
+    ci_delay()
     return redis.cluster.RedisCluster("localhost", 7001)
 
 
@@ -163,9 +167,7 @@ def redis_auth_cluster_client(docker_services):
     docker_services.wait_for_service(
         "redis-cluster-auth-3", 8402, check_redis_auth_cluster_ready
     )
-    if os.environ.get("CI") == "True":
-        time.sleep(10)
-
+    ci_delay()
     return redis.cluster.RedisCluster("localhost", 8400, password="sekret")
 
 
@@ -175,15 +177,13 @@ def redis_ssl_cluster_client(docker_services):
     docker_services.wait_for_service(
         "redis-ssl-cluster-6", 8306, check_redis_ssl_cluster_ready
     )
-    if os.environ.get("CI") == "True":
-        time.sleep(10)
-
     storage_url = (
         "rediss://localhost:8301/?ssl_cert_reqs=required"
         "&ssl_keyfile=./tests/tls/client.key"
         "&ssl_certfile=./tests/tls/client.crt"
         "&ssl_ca_certs=./tests/tls/ca.crt"
     )
+    ci_delay()
     return redis.cluster.RedisCluster.from_url(storage_url)
 
 
@@ -192,6 +192,7 @@ def redis_sentinel_client(docker_services):
     docker_services.start("redis-sentinel")
     docker_services.wait_for_service("redis-sentinel", 26379, check_sentinel_ready)
 
+    ci_delay()
     return redis.sentinel.Sentinel([("localhost", 26379)])
 
 
@@ -201,7 +202,7 @@ def redis_sentinel_auth_client(docker_services):
     docker_services.wait_for_service(
         "redis-sentinel-auth", 26379, check_sentinel_auth_ready
     )
-
+    ci_delay()
     return redis.sentinel.Sentinel(
         [("localhost", 36379)],
         sentinel_kwargs={"password": "sekret"},
@@ -212,7 +213,7 @@ def redis_sentinel_auth_client(docker_services):
 @pytest.fixture(scope="session")
 def memcached_client(docker_services):
     docker_services.start("memcached-1")
-
+    ci_delay()
     return pymemcache.Client(("localhost", 22122))
 
 
@@ -220,7 +221,7 @@ def memcached_client(docker_services):
 def memcached_cluster_client(docker_services):
     docker_services.start("memcached-1")
     docker_services.start("memcached-2")
-
+    ci_delay()
     return pymemcache.client.HashClient([("localhost", 22122), ("localhost", 22123)])
 
 
@@ -229,7 +230,7 @@ def memcached_uds_client(docker_services):
     if platform.system().lower() == "darwin":
         pytest.skip("Fixture not supported on OSX")
     docker_services.start("memcached-uds")
-
+    ci_delay()
     return pymemcache.Client("/tmp/limits.memcached.sock")
 
 
@@ -237,7 +238,7 @@ def memcached_uds_client(docker_services):
 def mongodb_client(docker_services):
     docker_services.start("mongodb")
     docker_services.wait_for_service("mongodb", 27017, check_mongo_ready)
-
+    ci_delay()
     return pymongo.MongoClient("mongodb://localhost:37017")
 
 
