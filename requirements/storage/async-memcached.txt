@@ -1,2 +1,2 @@
 emcache>=0.6.1;python_version<"3.11"
-emcache>=1;python_version>="3.11"
+emcache>=1;python_version>="3.11" and python_version<"3.13.0"
