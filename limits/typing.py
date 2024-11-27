@@ -110,8 +110,8 @@ class ScriptP(Protocol[R_co]):
 
 
 MongoClient: TypeAlias = "pymongo.MongoClient[Dict[str, Any]]"  # type:ignore[misc]
-MongoDatabase: TypeAlias = "pymongo.database.Database[Dict[str, Any]]"  # type:ignore[misc]
-MongoCollection: TypeAlias = "pymongo.collection.Collection[Dict[str, Any]]"  # type:ignore[misc]
+MongoDatabase: TypeAlias = "pymongo.database.Database[Dict[str, Any]]"  # type:ignore
+MongoCollection: TypeAlias = "pymongo.collection.Collection[Dict[str, Any]]"  # type:ignore
 
 __all__ = [
     "AsyncRedisClient",
