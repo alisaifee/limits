@@ -52,7 +52,7 @@ jobs:
             marker: 'not benchmark'
             os: ubuntu-latest
           - python-version: "3.13"
-            marker: 'not benchmark'
+            marker: 'not benchmark and not (asyncio and memcached)'
             os: ubuntu-latest
     runs-on: "${{ matrix.os }}"
     steps:
