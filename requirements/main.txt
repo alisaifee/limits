@@ -1,4 +1,3 @@
 deprecated>=1.2
-importlib_resources>=1.3
 packaging>=21,<25
 typing_extensions
