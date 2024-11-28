@@ -5,7 +5,7 @@ from packaging.version import Version
 
 from limits.errors import ConfigurationError
 from limits.storage.redis import RedisStorage
-from limits.typing import Dict, Optional, Union
+from limits.typing import Dict, Optional, Tuple, Type, Union
 
 if TYPE_CHECKING:
     import redis.sentinel
@@ -85,6 +85,12 @@ class RedisSentinelStorage(RedisStorage):
         self.storage_slave = self.sentinel.slave_for(self.service_name)
         self.use_replicas = use_replicas
         self.initialize_storage(uri)
+
+    @property
+    def base_exceptions(
+        self,
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+        return self.dependencies["redis"].RedisError  # type: ignore[no-any-return, attr-defined]
 
     def get(self, key: str) -> int:
         """
