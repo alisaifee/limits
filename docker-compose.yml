@@ -113,7 +113,7 @@ services:
     depends_on: [redis-cluster-1, redis-cluster-2, redis-cluster-3, redis-cluster-4, redis-cluster-5, redis-cluster-6]
   redis-ssl-cluster-1:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 0 --tls-port 8301 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    command: redis-server --port 0 --tls-port 8301 --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
     ports:
       - '8301:8301'
       - '18301:18301'
@@ -121,7 +121,7 @@ services:
       - ./tests/tls:/tls
   redis-ssl-cluster-2:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 0 --tls-port 8302 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    command: redis-server --port 0 --tls-port 8302 --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
     ports:
       - '8302:8302'
       - '18302:18302'
@@ -129,7 +129,7 @@ services:
       - ./tests/tls:/tls
   redis-ssl-cluster-3:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 0 --tls-port 8303 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    command: redis-server --port 0 --tls-port 8303 --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
     ports:
       - '8303:8303'
       - '18303:18303'
@@ -137,7 +137,7 @@ services:
       - ./tests/tls:/tls
   redis-ssl-cluster-4:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 0 --tls-port 8304 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    command: redis-server --port 0 --tls-port 8304 --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
     ports:
       - '8304:8304'
       - '18304:18304'
@@ -145,7 +145,7 @@ services:
       - ./tests/tls:/tls
   redis-ssl-cluster-5:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 0 --tls-port 8305 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    command: redis-server --port 0 --tls-port 8305 --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
     ports:
       - '8305:8305'
       - '18305:18305'
@@ -153,7 +153,7 @@ services:
       - ./tests/tls:/tls
   redis-ssl-cluster-6:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 0 --tls-port 8306 ${DEFAULT_ARGS---enable-debug-command yes} --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
+    command: redis-server --port 0 --tls-port 8306 --tls-replication yes --tls-cluster yes --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --tls-cert-file /tls/redis.crt --tls-key-file /tls/redis.key --tls-ca-cert-file /tls/ca.crt
     ports:
       - '8306:8306'
       - '18306:18306'
@@ -167,19 +167,19 @@ services:
       - ./tests/tls:/tls
   redis-cluster-auth-1:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 8400 ${DEFAULT_ARGS---enable-debug-command yes} --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --requirepass sekret
+    command: redis-server --port 8400 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --requirepass sekret
     ports:
       - '8400:8400'
       - '18400:18400'
   redis-cluster-auth-2:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 8401 ${DEFAULT_ARGS---enable-debug-command yes} --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --requirepass sekret
+    command: redis-server --port 8401 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --requirepass sekret
     ports:
       - '8401:8401'
       - '18401:18401'
   redis-cluster-auth-3:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
-    command: redis-server --port 8402 ${DEFAULT_ARGS---enable-debug-command yes} --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --requirepass sekret
+    command: redis-server --port 8402 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP} --requirepass sekret
     ports:
       - '8402:8402'
       - '18402:18402'
