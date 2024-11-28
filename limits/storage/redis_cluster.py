@@ -1,15 +1,19 @@
 import urllib
-import warnings
-from typing import cast
 
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
-from limits.errors import ConfigurationError
 from limits.storage.redis import RedisStorage
-from limits.typing import Dict, List, Optional, Tuple, Union
+from limits.typing import Dict, Optional, Union
 
 
+@versionchanged(
+    version="3.14.0",
+    reason="""
+Dropped support for the :pypi:`redis-py-cluster` library
+which has been abandoned/deprecated.
+""",
+)
 @versionchanged(
     version="2.5.0",
     reason="""
@@ -37,13 +41,19 @@ class RedisClusterStorage(RedisStorage):
 
     DEPENDENCIES = {
         "redis": Version("4.2.0"),
-        "rediscluster": Version("2.0.0"),  # Deprecated since 2.6.0
     }
 
-    def __init__(self, uri: str, **options: Union[float, str, bool]) -> None:
+    def __init__(
+        self,
+        uri: str,
+        wrap_exceptions: bool = False,
+        **options: Union[float, str, bool],
+    ) -> None:
         """
         :param uri: url of the form
          ``redis+cluster://[:password]@host:port,host:port``
+        :param wrap_exceptions: Whether to wrap storage exceptions in
+         :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`redis.cluster.RedisCluster`
         :raise ConfigurationError: when the :pypi:`redis` library is not
@@ -64,53 +74,15 @@ class RedisClusterStorage(RedisStorage):
             cluster_hosts.append((host, int(port)))
 
         self.storage = None
-        self.using_redis_py = False
-        self.__pick_storage(
-            cluster_hosts, **{**self.DEFAULT_OPTIONS, **parsed_auth, **options}
+        merged_options = {**self.DEFAULT_OPTIONS, **parsed_auth, **options}
+        self.dependency = self.dependencies["redis"].module
+        startup_nodes = [self.dependency.cluster.ClusterNode(*c) for c in cluster_hosts]
+        self.storage = self.dependency.cluster.RedisCluster(
+            startup_nodes=startup_nodes, **merged_options
         )
         assert self.storage
         self.initialize_storage(uri)
-        super(RedisStorage, self).__init__(uri, **options)
-
-    def __pick_storage(
-        self, cluster_hosts: List[Tuple[str, int]], **options: Union[float, str, bool]
-    ) -> None:
-        try:
-            redis_py = self.dependencies["redis"].module
-            startup_nodes = [redis_py.cluster.ClusterNode(*c) for c in cluster_hosts]
-            self.storage = redis_py.cluster.RedisCluster(
-                startup_nodes=startup_nodes, **options
-            )
-            self.using_redis_py = True
-            return
-        except ConfigurationError:  # pragma: no cover
-            self.__use_legacy_cluster_implementation(cluster_hosts, **options)
-            if not self.storage:
-                raise ConfigurationError(
-                    (
-                        "Unable to find an implementation for redis cluster"
-                        " Cluster support requires either redis-py>=4.2 or"
-                        " redis-py-cluster"
-                    )
-                )
-
-    def __use_legacy_cluster_implementation(
-        self, cluster_hosts: List[Tuple[str, int]], **options: Union[float, str, bool]
-    ) -> None:  # pragma: no cover
-        redis_cluster = self.dependencies["rediscluster"].module
-        warnings.warn(
-            (
-                "Using redis-py-cluster is deprecated as the library has been"
-                " absorbed by redis-py (>=4.2). The support will be eventually "
-                " removed from the limits library and is no longer tested "
-                " against since version: 2.6. To get rid of this warning, "
-                " uninstall redis-py-cluster and ensure redis-py>=4.2.0 is installed"
-            )
-        )
-        self.storage = redis_cluster.RedisCluster(
-            startup_nodes=[{"host": c[0], "port": c[1]} for c in cluster_hosts],
-            **options,
-        )
+        super(RedisStorage, self).__init__(uri, wrap_exceptions, **options)
 
     def reset(self) -> Optional[int]:
         """
@@ -125,15 +97,9 @@ class RedisClusterStorage(RedisStorage):
          usage as it could be slow on very large data sets"""
 
         prefix = self.prefixed_key("*")
-        if self.using_redis_py:
-            count = 0
-            for primary in self.storage.get_primaries():
-                node = self.storage.get_redis_connection(primary)
-                keys = node.keys(prefix)
-                count += sum([node.delete(k.decode("utf-8")) for k in keys])
-            return count
-        else:  # pragma: no cover
-            keys = self.storage.keys(prefix)
-            return cast(
-                int, sum([self.storage.delete(k.decode("utf-8")) for k in keys])
-            )
+        count = 0
+        for primary in self.storage.get_primaries():
+            node = self.storage.get_redis_connection(primary)
+            keys = node.keys(prefix)
+            count += sum([node.delete(k.decode("utf-8")) for k in keys])
+        return count
