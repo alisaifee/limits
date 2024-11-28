@@ -152,11 +152,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: wheels
           path: dist
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: src_dist
           path: dist
@@ -171,11 +171,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: wheels
           path: dist
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: src_dist
           path: dist
@@ -194,17 +194,17 @@ jobs:
         with:
           fetch-depth: 0
       - name: Download wheel artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: wheels
           path: dist
       - name: Download source artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: src_dist
           path: dist
       - name: Download benchmark results
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: benchmark
           path: .benchmarks
