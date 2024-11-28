@@ -92,7 +92,7 @@ all_storage = pytest.mark.parametrize(
             "redis+cluster://localhost:8301",
             {
                 "ssl": True,
-                "ssl_cert_reqs": "optional",
+                "ssl_cert_reqs": "required",
                 "ssl_keyfile": "./tests/tls/client.key",
                 "ssl_certfile": "./tests/tls/client.crt",
                 "ssl_ca_certs": "./tests/tls/ca.crt",
@@ -154,7 +154,7 @@ moving_window_storage = pytest.mark.parametrize(
             "redis+cluster://localhost:8301",
             {
                 "ssl": True,
-                "ssl_cert_reqs": "optional",
+                "ssl_cert_reqs": "required",
                 "ssl_keyfile": "./tests/tls/client.key",
                 "ssl_certfile": "./tests/tls/client.crt",
                 "ssl_ca_certs": "./tests/tls/ca.crt",
@@ -223,7 +223,7 @@ async_all_storage = pytest.mark.parametrize(
             "async+redis+cluster://localhost:8301",
             {
                 "ssl": True,
-                "ssl_cert_reqs": "optional",
+                "ssl_cert_reqs": "required",
                 "ssl_keyfile": "./tests/tls/client.key",
                 "ssl_certfile": "./tests/tls/client.crt",
                 "ssl_ca_certs": "./tests/tls/ca.crt",
@@ -285,7 +285,7 @@ async_moving_window_storage = pytest.mark.parametrize(
             "async+redis+cluster://localhost:8301",
             {
                 "ssl": True,
-                "ssl_cert_reqs": "optional",
+                "ssl_cert_reqs": "required",
                 "ssl_keyfile": "./tests/tls/client.key",
                 "ssl_certfile": "./tests/tls/client.crt",
                 "ssl_ca_certs": "./tests/tls/ca.crt",
