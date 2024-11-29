@@ -6,7 +6,7 @@ import datetime
 import time
 from typing import Any, cast
 
-from deprecated.sphinx import versionadded
+from deprecated.sphinx import versionadded, versionchanged
 
 from limits.aio.storage.base import MovingWindowSupport, Storage
 from limits.typing import Dict, Optional, ParamSpec, Tuple, Type, TypeVar, Union
@@ -17,6 +17,10 @@ R = TypeVar("R")
 
 
 @versionadded(version="2.1")
+@versionchanged(
+    version="3.14.0",
+    reason="Added option to select custom collection names for windows & counters",
+)
 class MongoDBStorage(Storage, MovingWindowSupport):
     """
     Rate limit storage with MongoDB as backend.
@@ -35,6 +39,8 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self,
         uri: str,
         database_name: str = "limits",
+        counter_collection_name: str = "counters",
+        window_collection_name: str = "windows",
         wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
@@ -43,6 +49,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
          This uri is passed directly to :class:`~motor.motor_asyncio.AsyncIOMotorClient`
         :param database_name: The database to use for storing the rate limit
          collections.
+        :param counter_collection_name: The collection name to use for individual counters
+         used in fixed window strategies
+        :param window_collection_name: The collection name to use for moving window storage
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
@@ -66,6 +75,10 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         self.storage.get_io_loop = asyncio.get_running_loop
 
         self.__database_name = database_name
+        self.__collection_mapping = {
+            "counters": counter_collection_name,
+            "windows": window_collection_name,
+        }
         self.__indices_created = False
 
     @property
@@ -81,8 +94,12 @@ class MongoDBStorage(Storage, MovingWindowSupport):
     async def create_indices(self) -> None:
         if not self.__indices_created:
             await asyncio.gather(
-                self.database.counters.create_index("expireAt", expireAfterSeconds=0),
-                self.database.windows.create_index("expireAt", expireAfterSeconds=0),
+                self.database[self.__collection_mapping["counters"]].create_index(
+                    "expireAt", expireAfterSeconds=0
+                ),
+                self.database[self.__collection_mapping["windows"]].create_index(
+                    "expireAt", expireAfterSeconds=0
+                ),
             )
         self.__indices_created = True
 
@@ -92,12 +109,15 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         """
         num_keys = sum(
             await asyncio.gather(
-                self.database.counters.count_documents({}),
-                self.database.windows.count_documents({}),
+                self.database[self.__collection_mapping["counters"]].count_documents(
+                    {}
+                ),
+                self.database[self.__collection_mapping["windows"]].count_documents({}),
             )
         )
         await asyncio.gather(
-            self.database.counters.drop(), self.database.windows.drop()
+            self.database[self.__collection_mapping["counters"]].drop(),
+            self.database[self.__collection_mapping["windows"]].drop(),
         )
 
         return cast(int, num_keys)
@@ -107,15 +127,21 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :param key: the key to clear rate limits for
         """
         await asyncio.gather(
-            self.database.counters.find_one_and_delete({"_id": key}),
-            self.database.windows.find_one_and_delete({"_id": key}),
+            self.database[self.__collection_mapping["counters"]].find_one_and_delete(
+                {"_id": key}
+            ),
+            self.database[self.__collection_mapping["windows"]].find_one_and_delete(
+                {"_id": key}
+            ),
         )
 
     async def get_expiry(self, key: str) -> int:
         """
         :param key: the key to get the expiry for
         """
-        counter = await self.database.counters.find_one({"_id": key})
+        counter = await self.database[self.__collection_mapping["counters"]].find_one(
+            {"_id": key}
+        )
         expiry = (
             counter["expireAt"]
             if counter
@@ -128,7 +154,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         """
         :param key: the key to get the counter value for
         """
-        counter = await self.database.counters.find_one(
+        counter = await self.database[self.__collection_mapping["counters"]].find_one(
             {
                 "_id": key,
                 "expireAt": {"$gte": datetime.datetime.now(datetime.timezone.utc)},
@@ -156,7 +182,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             seconds=expiry
         )
 
-        response = await self.database.counters.find_one_and_update(
+        response = await self.database[
+            self.__collection_mapping["counters"]
+        ].find_one_and_update(
             {"_id": key},
             [
                 {
@@ -209,30 +237,34 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
-        result = await self.database.windows.aggregate(
-            [
-                {"$match": {"_id": key}},
-                {
-                    "$project": {
-                        "entries": {
-                            "$filter": {
-                                "input": "$entries",
-                                "as": "entry",
-                                "cond": {"$gte": ["$$entry", timestamp - expiry]},
+        result = (
+            await self.database[self.__collection_mapping["windows"]]
+            .aggregate(
+                [
+                    {"$match": {"_id": key}},
+                    {
+                        "$project": {
+                            "entries": {
+                                "$filter": {
+                                    "input": "$entries",
+                                    "as": "entry",
+                                    "cond": {"$gte": ["$$entry", timestamp - expiry]},
+                                }
                             }
                         }
-                    }
-                },
-                {"$unwind": "$entries"},
-                {
-                    "$group": {
-                        "_id": "$_id",
-                        "min": {"$min": "$entries"},
-                        "count": {"$sum": 1},
-                    }
-                },
-            ]
-        ).to_list(length=1)
+                    },
+                    {"$unwind": "$entries"},
+                    {
+                        "$group": {
+                            "_id": "$_id",
+                            "min": {"$min": "$entries"},
+                            "count": {"$sum": 1},
+                        }
+                    },
+                ]
+            )
+            .to_list(length=1)
+        )
 
         if result:
             return (int(result[0]["min"]), result[0]["count"])
@@ -266,7 +298,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                 )
             }
             updates["$push"]["entries"]["$each"] = [timestamp] * amount
-            await self.database.windows.update_one(
+            await self.database[self.__collection_mapping["windows"]].update_one(
                 {
                     "_id": key,
                     "entries.%d" % (limit - amount): {

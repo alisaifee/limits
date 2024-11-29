@@ -6,7 +6,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import Any, cast
 
-from deprecated.sphinx import versionadded
+from deprecated.sphinx import versionadded, versionchanged
 
 from limits.typing import (
     Dict,
@@ -36,6 +36,8 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
         self,
         uri: str,
         database_name: str = "limits",
+        counter_collection_name: str = "counters",
+        window_collection_name: str = "windows",
         wrap_exceptions: bool = False,
         **options: Union[int, str, bool],
     ) -> None:
@@ -44,6 +46,9 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
          This uri is passed directly to :class:`~pymongo.mongo_client.MongoClient`
         :param database_name: The database to use for storing the rate limit
          collections.
+        :param counter_collection_name: The collection name to use for individual counters
+         used in fixed window strategies
+        :param window_collection_name: The collection name to use for moving window storage
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed to the
@@ -53,6 +58,10 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
 
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
         self._database_name = database_name
+        self._collection_mapping = {
+            "counters": counter_collection_name,
+            "windows": window_collection_name,
+        }
         self.lib = self.dependencies["pymongo"].module
         self.lib_errors, _ = get_dependency("pymongo.errors")
         self._storage_uri = uri
@@ -74,11 +83,11 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
 
     @property
     def counters(self) -> MongoCollection:
-        return self._database["counters"]
+        return self._database[self._collection_mapping["counters"]]
 
     @property
     def windows(self) -> MongoCollection:
-        return self._database["windows"]
+        return self._database[self._collection_mapping["windows"]]
 
     @abstractmethod
     def _init_mongo_client(
@@ -278,6 +287,10 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
 
 
 @versionadded(version="2.1")
+@versionchanged(
+    version="3.14.0",
+    reason="Added option to select custom collection names for windows & counters",
+)
 class MongoDBStorage(MongoDBStorageBase):
     STORAGE_SCHEME = ["mongodb", "mongodb+srv"]
 
