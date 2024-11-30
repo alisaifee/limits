@@ -3,6 +3,23 @@
 Changelog
 =========
 
+v3.14.0
+-------
+Release Date: 2024-11-29
+
+* Feature
+
+  * Allow custom collection names in mongodb storage
+
+* Compatibility
+
+  * Add support for python 3.13
+  * Drop support for python 3.8
+
+* Deprecations
+
+  * Remove fallback support to use redis-py-cluster
+
 v3.13.0
 -------
 Release Date: 2024-06-22
@@ -649,6 +666,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
