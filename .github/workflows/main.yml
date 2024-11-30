@@ -110,12 +110,12 @@ jobs:
       env:
         CI: "True"
       run: |
-        py.test -W ignore -m "benchmark" --benchmark-min-rounds=1000 --benchmark-histogram=.benchmarks/benchmark
+        py.test -W ignore -m "benchmark" --benchmark-min-rounds=1000 --benchmark-histogram=benchmarks/benchmark
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
       with:
         name: benchmark
-        path: .benchmarks/*
+        path: benchmarks/*
   build_wheels:
     needs: [lint]
     name: Build wheel
@@ -207,14 +207,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: benchmark
-          path: .benchmarks
+          path: benchmarks
       - name: Generate release notes
         run: |
           ./scripts/github_release_notes.sh > release_notes.md
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "dist/*,.benchmarks/*"
+          artifacts: "dist/*,benchmarks/*"
           bodyFile: release_notes.md
           token: ${{ secrets.GITHUB_TOKEN }}
 
