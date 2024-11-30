@@ -3,6 +3,15 @@
 Changelog
 =========
 
+v3.14.1
+-------
+Release Date: 2024-11-30
+
+* Chore
+
+  * Fix benchmark artifact upload/download issue during release
+    creation
+
 v3.14.0
 -------
 Release Date: 2024-11-29
@@ -666,6 +675,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
