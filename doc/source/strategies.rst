@@ -42,3 +42,15 @@ rate limit as the window for each limit is not fixed at the start and end of eac
 (i.e. N/second for a moving window means N in the last 1000 milliseconds). There is
 however a higher memory cost associated with this strategy as it requires ``N`` items to
 be maintained in memory per resource and rate limit.
+
+Token Bucket
+=============
+
+The token bucket strategy allows bursts of traffic up to a fixed capacity,
+while refilling the bucket at a steady rate over time.
+
+For example, with a rate limit of 10 tokens with 1 token per second refill:
+
+- Allow 10 requests at once if the bucket is full
+- Refill the bucket with 1 token every second
+- If the bucket is empty, further requests will be rejected until more tokens are available

@@ -44,6 +44,17 @@ Supported Strategies
    - Allow another request that arrives at ``00:01:00``
    - Reject the request that arrives at ``00:01:01``
 
+`Token Bucket <https://limits.readthedocs.io/en/latest/strategies.html#token-bucket>`_
+
+   The token bucket strategy allows bursts of traffic up to a fixed capacity,
+   while refilling the bucket at a steady rate over time.
+   
+   For example, with a rate limit of 10 tokens with 1 token per second refill:
+
+   - Allow 10 requests at once if the bucket is full
+   - Refill the bucket with 1 token every second
+   - If the bucket is empty, further requests will be rejected until more tokens are available
+
 Storage backends
 ================
 
