@@ -7,17 +7,8 @@ from typing import cast
 
 from limits.errors import ConfigurationError
 from limits.storage.base import Storage
-from limits.typing import (
-    Callable,
-    List,
-    MemcachedClientP,
-    Optional,
-    P,
-    R,
-    Tuple,
-    Type,
-    Union,
-)
+from limits.typing import (Callable, List, MemcachedClientP, Optional, P, R,
+                           Tuple, Type, Union)
 from limits.util import get_dependency
 
 
