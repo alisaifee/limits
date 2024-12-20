@@ -32,7 +32,7 @@ class RedisInteractor:
     def prefixed_key(self, key: str) -> str:
         return f"{self.PREFIX}:{key}"
 
-    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[int, int]:
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -43,9 +43,10 @@ class RedisInteractor:
         """
         key = self.prefixed_key(key)
         timestamp = time.time()
-        window = self.lua_moving_window([key], [int(timestamp - expiry), limit])
+        if window := self.lua_moving_window([key], [timestamp - expiry, limit]):
+            return float(window[0]), window[1]
 
-        return window or (int(timestamp), 0)
+        return timestamp, 0
 
     def _incr(
         self,
@@ -109,14 +110,14 @@ class RedisInteractor:
 
         return bool(acquired)
 
-    def _get_expiry(self, key: str, connection: RedisClient) -> int:
+    def _get_expiry(self, key: str, connection: RedisClient) -> float:
         """
         :param key: the key to get the expiry for
         :param connection: Redis connection
         """
 
         key = self.prefixed_key(key)
-        return int(max(connection.ttl(key), 0) + time.time())
+        return max(connection.ttl(key), 0) + time.time()
 
     def _check(self, connection: RedisClient) -> bool:
         """
@@ -232,7 +233,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         return super()._acquire_entry(key, limit, expiry, self.storage, amount)
 
-    def get_expiry(self, key: str) -> int:
+    def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """

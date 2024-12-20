@@ -126,14 +126,14 @@ class MemcachedStorage(Storage):
 
         return amount
 
-    async def get_expiry(self, key: str) -> int:
+    async def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """
         storage = await self.get_storage()
         item = await storage.get(f"{key}/expires".encode())
 
-        return int(item and float(item.value) or time.time())
+        return item and float(item.value) or time.time()
 
     async def check(self) -> bool:
         """

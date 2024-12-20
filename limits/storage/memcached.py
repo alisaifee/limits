@@ -192,12 +192,12 @@ class MemcachedStorage(Storage):
 
         return amount
 
-    def get_expiry(self, key: str) -> int:
+    def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """
 
-        return int(float(self.storage.get(key + "/expires") or time.time()))
+        return float(self.storage.get(key + "/expires") or time.time())
 
     def check(self) -> bool:
         """

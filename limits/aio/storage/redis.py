@@ -78,7 +78,7 @@ class RedisInteractor:
 
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
-    ) -> Tuple[int, int]:
+    ) -> Tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -88,12 +88,12 @@ class RedisInteractor:
         :return: (start of window, number of acquired entries)
         """
         key = self.prefixed_key(key)
-        timestamp = int(time.time())
+        timestamp = time.time()
         window = await self.lua_moving_window.execute(
-            [key], [int(timestamp - expiry), limit]
+            [key], [timestamp - expiry, limit]
         )
         if window:
-            return tuple(window)  # type: ignore
+            return float(window[0]), window[1]  # type: ignore
         return timestamp, 0
 
     async def _acquire_entry(
@@ -118,14 +118,14 @@ class RedisInteractor:
 
         return bool(acquired)
 
-    async def _get_expiry(self, key: str, connection: AsyncRedisClient) -> int:
+    async def _get_expiry(self, key: str, connection: AsyncRedisClient) -> float:
         """
         :param key: the key to get the expiry for
         :param connection: Redis connection
         """
 
         key = self.prefixed_key(key)
-        return int(max(await connection.ttl(key), 0) + time.time())
+        return max(await connection.ttl(key), 0) + time.time()
 
     async def _check(self, connection: AsyncRedisClient) -> bool:
         """
@@ -261,7 +261,7 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
         return await super()._acquire_entry(key, limit, expiry, self.storage, amount)
 
-    async def get_expiry(self, key: str) -> int:
+    async def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """
@@ -450,7 +450,7 @@ class RedisSentinelStorage(RedisStorage):
             key, self.storage_replica if self.use_replicas else self.storage
         )
 
-    async def get_expiry(self, key: str) -> int:
+    async def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """

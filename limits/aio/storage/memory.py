@@ -128,12 +128,12 @@ class MemoryStorage(Storage, MovingWindowSupport):
 
             return True
 
-    async def get_expiry(self, key: str) -> int:
+    async def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """
 
-        return int(self.expirations.get(key, time.time()))
+        return self.expirations.get(key, time.time())
 
     async def get_num_acquired(self, key: str, expiry: int) -> int:
         """
@@ -153,7 +153,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
     # FIXME: arg limit is not used
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
-    ) -> Tuple[int, int]:
+    ) -> Tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -167,9 +167,9 @@ class MemoryStorage(Storage, MovingWindowSupport):
 
         for item in self.events.get(key, [])[::-1]:
             if item.atime >= timestamp - expiry:
-                return int(item.atime), acquired
+                return item.atime, acquired
 
-        return int(timestamp), acquired
+        return timestamp, acquired
 
     async def check(self) -> bool:
         """

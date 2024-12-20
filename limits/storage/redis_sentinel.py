@@ -101,7 +101,7 @@ class RedisSentinelStorage(RedisStorage):
             key, self.storage_slave if self.use_replicas else self.storage
         )
 
-    def get_expiry(self, key: str) -> int:
+    def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """

@@ -1,4 +1,3 @@
-import math
 import time
 
 import pytest
@@ -28,7 +27,9 @@ class TestWindow:
             assert all([limiter.hit(limit) for _ in range(0, 10)])
         assert not limiter.hit(limit)
         assert limiter.get_window_stats(limit).remaining == 0
-        assert limiter.get_window_stats(limit).reset_time == math.floor(start + 2)
+        assert limiter.get_window_stats(limit).reset_time == pytest.approx(
+            start + 2, 1e-2
+        )
 
     @all_storage
     @fixed_start
@@ -37,7 +38,9 @@ class TestWindow:
         limiter = FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         assert limiter.get_window_stats(limit).remaining == 10
-        assert limiter.get_window_stats(limit).reset_time == int(time.time())
+        assert limiter.get_window_stats(limit).reset_time == pytest.approx(
+            time.time(), 1e-2
+        )
 
     @all_storage
     @fixed_start
@@ -61,12 +64,16 @@ class TestWindow:
             assert all([limiter.hit(limit) for _ in range(0, 10)])
             assert not limiter.hit(limit)
         assert limiter.get_window_stats(limit).remaining == 0
-        assert limiter.get_window_stats(limit).reset_time == start + 2
+        assert limiter.get_window_stats(limit).reset_time == pytest.approx(
+            start + 2, 1e-2
+        )
         with window(3) as (start, end):
             assert not limiter.hit(limit)
         assert limiter.hit(limit)
         assert limiter.get_window_stats(limit).remaining == 9
-        assert limiter.get_window_stats(limit).reset_time == end + 2
+        assert limiter.get_window_stats(limit).reset_time == pytest.approx(
+            end + 2, 1e-2
+        )
 
     @all_storage
     @fixed_start
@@ -78,7 +85,9 @@ class TestWindow:
         with window(0) as (start, end):
             assert limiter.hit(limit, "k2", cost=5)
         assert limiter.get_window_stats(limit, "k2").remaining == 5
-        assert limiter.get_window_stats(limit, "k2").reset_time == end + 2
+        assert limiter.get_window_stats(limit, "k2").reset_time == pytest.approx(
+            end + 2, 1e-2
+        )
         assert not limiter.hit(limit, "k2", cost=6)
 
     @moving_window_storage
@@ -87,7 +96,9 @@ class TestWindow:
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         assert limiter.get_window_stats(limit).remaining == 10
-        assert limiter.get_window_stats(limit).reset_time == int(time.time() + 2)
+        assert limiter.get_window_stats(limit).reset_time == pytest.approx(
+            time.time() + 2, 1e-2
+        )
 
     @moving_window_storage
     def test_moving_window_stats(self, uri, args, fixture):
@@ -100,9 +111,9 @@ class TestWindow:
         time.sleep(1)
         assert not limiter.hit(limit, "key")
         assert limiter.get_window_stats(limit, "key").remaining == 0
-        assert (
-            limiter.get_window_stats(limit, "key").reset_time - int(time.time()) == 58
-        )
+        assert limiter.get_window_stats(
+            limit, "key"
+        ).reset_time - time.time() == pytest.approx(58, 1e-2)
 
     @moving_window_storage
     def test_moving_window(self, uri, args, fixture):

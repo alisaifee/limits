@@ -29,7 +29,7 @@ def window(delay_end: float, delay: Optional[float] = None):
     if delay is not None:
         while time.time() - start < delay:
             time.sleep(0.001)
-    yield (int(start), int(start + delay_end))
+    yield (start, start + delay_end)
 
     while time.time() - start < delay_end:
         time.sleep(0.001)
@@ -43,7 +43,7 @@ async def async_window(delay_end: float, delay: Optional[float] = None):
         while time.time() - start < delay:
             await asyncio.sleep(0.001)
 
-    yield (int(start), int(start + delay_end))
+    yield (start, start + delay_end)
 
     while time.time() - start < delay_end:
         await asyncio.sleep(0.001)

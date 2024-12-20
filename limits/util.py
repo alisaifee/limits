@@ -38,7 +38,7 @@ class WindowStats(NamedTuple):
     """
 
     #: Time as seconds since the Epoch when this window will be reset
-    reset_time: int
+    reset_time: float
     #: Quantity remaining in this window
     remaining: int
 

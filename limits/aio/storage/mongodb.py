@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import calendar
 import datetime
 import time
 from typing import Any, cast
@@ -135,20 +134,18 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             ),
         )
 
-    async def get_expiry(self, key: str) -> int:
+    async def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """
         counter = await self.database[self.__collection_mapping["counters"]].find_one(
             {"_id": key}
         )
-        expiry = (
-            counter["expireAt"]
-            if counter
-            else datetime.datetime.now(datetime.timezone.utc)
+        return (
+            (counter["expireAt"] if counter else datetime.datetime.now())
+            .replace(tzinfo=datetime.timezone.utc)
+            .timestamp()
         )
-
-        return calendar.timegm(expiry.timetuple())
 
     async def get(self, key: str) -> int:
         """
@@ -227,7 +224,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
-    ) -> Tuple[int, int]:
+    ) -> Tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -237,7 +234,7 @@ class MongoDBStorage(Storage, MovingWindowSupport):
         :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
-        result = (
+        if result := (
             await self.database[self.__collection_mapping["windows"]]
             .aggregate(
                 [
@@ -264,12 +261,9 @@ class MongoDBStorage(Storage, MovingWindowSupport):
                 ]
             )
             .to_list(length=1)
-        )
-
-        if result:
-            return (int(result[0]["min"]), result[0]["count"])
-
-        return (int(timestamp), 0)
+        ):
+            return result[0]["min"], result[0]["count"]
+        return timestamp, 0
 
     async def acquire_entry(
         self, key: str, limit: int, expiry: int, amount: int = 1
