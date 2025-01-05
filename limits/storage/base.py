@@ -99,7 +99,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
         raise NotImplementedError
 
     @abstractmethod
-    def get_expiry(self, key: str) -> int:
+    def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """
@@ -161,7 +161,7 @@ class MovingWindowSupport(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[int, int]:
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window

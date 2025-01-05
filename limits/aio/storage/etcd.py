@@ -116,12 +116,12 @@ class EtcdStorage(Storage):
                 return int(amount)
         return 0
 
-    async def get_expiry(self, key: str) -> int:
+    async def get_expiry(self, key: str) -> float:
         cur = await self.storage.get(self.prefixed_key(key))
         if cur:
             window_end = float(cur.value.split(b":")[1])
-            return int(window_end)
-        return int(time.time())
+            return window_end
+        return time.time()
 
     async def check(self) -> bool:
         try:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import calendar
 import datetime
 import time
 from abc import ABC, abstractmethod
@@ -122,18 +121,16 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
         self.counters.find_one_and_delete({"_id": key})
         self.windows.find_one_and_delete({"_id": key})
 
-    def get_expiry(self, key: str) -> int:
+    def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """
         counter = self.counters.find_one({"_id": key})
-        expiry = (
-            counter["expireAt"]
-            if counter
-            else datetime.datetime.now(datetime.timezone.utc)
+        return (
+            (counter["expireAt"] if counter else datetime.datetime.now())
+            .replace(tzinfo=datetime.timezone.utc)
+            .timestamp()
         )
-
-        return calendar.timegm(expiry.timetuple())
 
     def get(self, key: str) -> int:
         """
@@ -205,7 +202,7 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
         except:  # noqa: E722
             return False
 
-    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[int, int]:
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -243,9 +240,9 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
         )
 
         if result:
-            return int(result[0]["min"]), result[0]["count"]
+            return result[0]["min"], result[0]["count"]
 
-        return int(timestamp), 0
+        return timestamp, 0
 
     def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
         """

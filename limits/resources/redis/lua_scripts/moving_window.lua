@@ -16,4 +16,6 @@ for idx=1,#items do
     end
 end
 
-return {oldest, a}
+if oldest then
+    return {tostring(oldest), a}
+end
