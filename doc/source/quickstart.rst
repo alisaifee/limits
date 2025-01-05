@@ -13,14 +13,14 @@ Initialize the storage backend
     .. code::
 
         from limits import storage
-        memory_storage = storage.MemoryStorage()
+        limits_storage = storage.MemoryStorage()
 
 .. tab:: Memcached
 
     .. code::
 
         from limits import storage
-        memory_storage = storage.MemcachedStorage(
+        limits_storage = storage.MemcachedStorage(
             "memcached://localhost:11211"
         )
 
@@ -29,7 +29,7 @@ Initialize the storage backend
     .. code::
 
         from limits import storage
-        memory_storage = storage.RedisStorage("redis://localhost:6379/1")
+        limits_storage = storage.RedisStorage("redis://localhost:6379/1")
 
 Initialize a rate limiter with the :ref:`Moving Window<strategies:moving window>` Strategy
 ------------------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ Initialize a rate limiter with the :ref:`Moving Window<strategies:moving window>
 .. code::
 
     from limits import strategies
-    moving_window = strategies.MovingWindowRateLimiter(memory_storage)
+    moving_window = strategies.MovingWindowRateLimiter(limits_storage)
 
 
 Describe the rate limit
