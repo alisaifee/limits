@@ -3,6 +3,17 @@
 Changelog
 =========
 
+v4.0.0
+------
+Release Date: 2025-01-05
+
+* Breaking change
+
+  * Change definition of ``reset_time`` in ``get_window_stats``
+    to use a precise floating point value instead of truncating
+    to the previous second.
+
+
 v3.14.1
 -------
 Release Date: 2024-11-30
@@ -675,6 +686,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
