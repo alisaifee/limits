@@ -114,6 +114,18 @@ Check specific limits without hitting them
         time.sleep(0.01)
     assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
 
+Query available capacity and reset time for a limit
+
+.. code-block:: python
+
+   assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
+   window = moving_window.get_window_stats(one_per_minute, "test_namespace", "foo")
+   assert window.remaining == 0
+   assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
+   time.sleep(window.reset_time - time.time())
+   assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
+
+
 Links
 =====
 
