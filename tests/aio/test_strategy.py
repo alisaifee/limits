@@ -16,16 +16,16 @@ from limits.limits import (
 from limits.storage import storage_from_string
 from tests.utils import (
     async_all_storage,
+    async_fixed_start,
     async_moving_window_storage,
     async_window,
-    fixed_start,
 )
 
 
 @pytest.mark.asyncio
 class TestAsyncWindow:
     @async_all_storage
-    @fixed_start
+    @async_fixed_start
     async def test_fixed_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
@@ -39,7 +39,7 @@ class TestAsyncWindow:
         )
 
     @async_all_storage
-    @fixed_start
+    @async_fixed_start
     async def test_fixed_window_empty_stats(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
@@ -65,7 +65,7 @@ class TestAsyncWindow:
         ).reset_time - time.time() == pytest.approx(58, 1e-2)
 
     @async_all_storage
-    @fixed_start
+    @async_fixed_start
     async def test_fixed_window_multiple_cost(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
@@ -77,7 +77,7 @@ class TestAsyncWindow:
         assert not await limiter.hit(limit, "k2", cost=6)
 
     @async_all_storage
-    @fixed_start
+    @async_fixed_start
     async def test_fixed_window_with_elastic_expiry(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowElasticExpiryRateLimiter(storage)
@@ -98,7 +98,7 @@ class TestAsyncWindow:
         )
 
     @async_all_storage
-    @fixed_start
+    @async_fixed_start
     async def test_fixed_window_with_elastic_expiry_multiple_cost(
         self, uri, args, fixture
     ):
@@ -189,7 +189,7 @@ class TestAsyncWindow:
             MovingWindowRateLimiter(storage)
 
     @async_all_storage
-    @fixed_start
+    @async_fixed_start
     @pytest.mark.flaky
     async def test_test_fixed_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)

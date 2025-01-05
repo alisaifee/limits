@@ -18,7 +18,7 @@ from limits.aio.storage import (
 from limits.aio.strategies import MovingWindowRateLimiter
 from limits.errors import StorageError
 from limits.storage import storage_from_string
-from tests.utils import fixed_start
+from tests.utils import async_fixed_start
 
 
 @pytest.mark.asyncio
@@ -198,7 +198,7 @@ class TestConcreteStorages:
     async def test_storage_string(self, uri, args, expected_instance, fixture):
         assert isinstance(storage_from_string(uri, **args), expected_instance)
 
-    @fixed_start
+    @async_fixed_start
     async def test_expiry_incr(self, uri, args, expected_instance, fixture):
         storage = storage_from_string(uri, **args)
         limit = RateLimitItemPerSecond(1)
@@ -206,7 +206,7 @@ class TestConcreteStorages:
         time.sleep(1.1)
         assert await storage.get(limit.key_for()) == 0
 
-    @fixed_start
+    @async_fixed_start
     async def test_expiry_acquire_entry(self, uri, args, expected_instance, fixture):
         if not issubclass(expected_instance, MovingWindowSupport):
             pytest.skip("%s does not support acquire entry" % expected_instance)
