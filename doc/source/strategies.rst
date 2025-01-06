@@ -42,3 +42,39 @@ rate limit as the window for each limit is not fixed at the start and end of eac
 (i.e. N/second for a moving window means N in the last 1000 milliseconds). There is
 however a higher memory cost associated with this strategy as it requires ``N`` items to
 be maintained in memory per resource and rate limit.
+
+
+Sliding Window Counter
+======================
+
+This strategy approximates the moving window strategy, with less memory use.
+It approximates the behavior of a moving window by maintaining counters for two adjacent
+fixed windows: the current and the previous windows.
+
+The current window counter increases at the first hit, and the sampling period begins. Then,
+at the end of the sampling period, the window counter and expiration are moved to the
+previous window, and new requests will still increase the current window counter.
+
+To determine if a request should be allowed, we assume the requests in the previous window
+were distributed evenly over its duration (eg: if it received 5 requests in 10 seconds,
+we consider it has received one request every two seconds).
+
+Depending on how much time has elapsed since the current window was moved, a weight is applied:
+
+weighted_count =  previous_count * (expiration_period - time_elapsed_since_shift) / expiration_period + current_count
+
+For example, for a sampling period of 10 seconds and if the window has shifted 2 seconds ago,
+the weighted count will be computed as follows:
+
+weighted_count = previous_count * (10 - 2) / 10 + current_count
+
+Contrary to the moving window strategy, at most two counters per rate limiter are needed,
+which dramatically reduces memory usage.
+
+Limitations: with some storage implementations, the sampling period doesn't start at the first hit,
+but at a fixed interval like the fixed window, thus allowing an 'attacker' to bypass the limits,
+especially if the counter is very low. This burst is observed only at the first sampling period.
+Eg: with "1 / day", the attacker can send one request at 23:59:59 and another at 00:00:00.
+However, the subsequent requests will be rate-limited once a day, since the previous window is full.
+
+The following storage implementations are affected: memcached and in-memory.
