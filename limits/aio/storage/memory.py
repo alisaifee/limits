@@ -1,11 +1,17 @@
 import asyncio
 import time
 from collections import Counter
+from math import floor
 
 from deprecated.sphinx import versionadded
 
 import limits.typing
-from limits.aio.storage.base import MovingWindowSupport, Storage
+from limits.aio.storage.base import (
+    MovingWindowSupport,
+    SlidingWindowCounterSupport,
+    Storage,
+)
+from limits.storage.base import TimestampedSlidingWindow
 from limits.typing import Dict, List, Optional, Tuple, Type, Union
 
 
@@ -17,7 +23,9 @@ class LockableEntry(asyncio.Lock):
 
 
 @versionadded(version="2.1")
-class MemoryStorage(Storage, MovingWindowSupport):
+class MemoryStorage(
+    Storage, MovingWindowSupport, SlidingWindowCounterSupport, TimestampedSlidingWindow
+):
     """
     rate limit storage using :class:`collections.Counter`
     as an in memory storage for fixed and elastic window strategies,
@@ -62,7 +70,7 @@ class MemoryStorage(Storage, MovingWindowSupport):
             self.timer = asyncio.create_task(self.__expire_events())
 
     async def incr(
-        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
+        self, key: str, expiry: float, elastic_expiry: bool = False, amount: int = 1
     ) -> int:
         """
         increments the counter for a given rate limit key
@@ -82,11 +90,22 @@ class MemoryStorage(Storage, MovingWindowSupport):
 
         return self.storage.get(key, amount)
 
+    async def decr(self, key: str, amount: int = 1) -> int:
+        """
+        decrements the counter for a given rate limit key. 0 is the minimum allowed value.
+
+        :param amount: the number to increment by
+        """
+        await self.get(key)
+        await self.__schedule_expiry()
+        self.storage[key] = max(self.storage[key] - amount, 0)
+
+        return self.storage.get(key, amount)
+
     async def get(self, key: str) -> int:
         """
         :param key: the key to get the counter value for
         """
-
         if self.expirations.get(key, 0) <= time.time():
             self.storage.pop(key, None)
             self.expirations.pop(key, None)
@@ -170,6 +189,78 @@ class MemoryStorage(Storage, MovingWindowSupport):
                 return item.atime, acquired
 
         return timestamp, acquired
+
+    async def acquire_sliding_window_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+    ) -> bool:
+        if amount > limit:
+            return False
+        now = time.time()
+        previous_key, current_key = self.sliding_window_keys(key, expiry, now)
+        (
+            previous_count,
+            previous_ttl,
+            current_count,
+            _,
+        ) = await self._get_sliding_window_info(previous_key, current_key, expiry, now)
+        weighted_count = previous_count * previous_ttl / expiry + current_count
+        if floor(weighted_count) + amount > limit:
+            return False
+        else:
+            # Hit, increase the current counter.
+            # If the counter doesn't exist yet, set twice the theorical expiry.
+            current_count = await self.incr(current_key, 2 * expiry, amount=amount)
+            weighted_count = previous_count * previous_ttl / expiry + current_count
+            if floor(weighted_count) > limit:
+                # Another hit won the race condition: revert the incrementation and refuse this hit
+                # Limitation: during high concurrency at the end of the window,
+                # the counter is shifted and cannot be decremented, so less requests than expected are allowed.
+                await self.decr(current_key, amount)
+                # print("Concurrent call, reverting the counter increase")
+                return False
+            return True
+
+    async def get_sliding_window(
+        self, key: str, expiry: int
+    ) -> Tuple[int, float, int, float]:
+        """
+        returns the starting point and the number of entries in the moving
+        window
+
+        :param key: rate limit key
+        :param expiry: expiry of entry
+        :return: (start of window, number of acquired entries)
+        """
+        now = time.time()
+        previous_key, current_key = self.sliding_window_keys(key, expiry, now)
+        return await self._get_sliding_window_info(
+            previous_key, current_key, expiry, now
+        )
+
+    async def _get_sliding_window_info(
+        self,
+        previous_key: str,
+        current_key: str,
+        expiry: Optional[int] = None,
+        now: Optional[float] = None,
+    ) -> tuple[int, float, int, float]:
+        if expiry is None:
+            raise ValueError("the expiry value is needed for this storage.")
+        if now is None:
+            now = time.time()
+
+        previous_count = await self.get(previous_key)
+        current_count = await self.get(current_key)
+        if previous_count == 0:
+            previous_ttl = float(0)
+        else:
+            previous_ttl = (1 - (((now - expiry) / expiry) % 1)) * expiry
+        current_ttl = (1 - ((now / expiry) % 1)) * expiry + expiry
+        return previous_count, previous_ttl, current_count, current_ttl
 
     async def check(self) -> bool:
         """

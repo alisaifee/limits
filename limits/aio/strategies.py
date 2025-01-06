@@ -2,8 +2,12 @@
 Asynchronous rate limiting strategies
 """
 
+import time
 from abc import ABC, abstractmethod
+from math import floor
 from typing import cast
+
+from limits.aio.storage.base import SlidingWindowCounterSupport
 
 from ..limits import RateLimitItem
 from ..storage import StorageTypes
@@ -183,6 +187,118 @@ class FixedWindowRateLimiter(RateLimiter):
         return WindowStats(reset, remaining)
 
 
+class SlidingWindowCounterRateLimiter(RateLimiter):
+    """
+    Reference: :ref:`strategies:sliding window counter`
+    """
+
+    def __init__(self, storage: StorageTypes):
+        if not hasattr(storage, "get_sliding_window") or not hasattr(
+            storage, "acquire_sliding_window_entry"
+        ):
+            raise NotImplementedError(
+                "SlidingWindowCounterRateLimiting is not implemented for storage "
+                "of type %s" % storage.__class__
+            )
+        super().__init__(storage)
+
+    def _weighted_count(
+        self,
+        item: RateLimitItem,
+        previous_count: int,
+        previous_expires_in: float,
+        current_count: int,
+    ) -> float:
+        """
+        Return the approximated by weighting the previous window count and adding the current window count.
+        """
+        return previous_count * previous_expires_in / item.get_expiry() + current_count
+
+    async def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
+        """
+        Consume the rate limit
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :param cost: The cost of this hit, default 1
+        """
+        return await cast(
+            SlidingWindowCounterSupport, self.storage
+        ).acquire_sliding_window_entry(
+            item.key_for(*identifiers),
+            item.amount,
+            item.get_expiry(),
+            cost,
+        )
+
+    async def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
+        """
+        Check if the rate limit can be consumed
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :param cost: The expected cost to be consumed, default 1
+        """
+
+        previous_count, previous_expires_in, current_count, _ = await cast(
+            SlidingWindowCounterSupport, self.storage
+        ).get_sliding_window(item.key_for(*identifiers), item.get_expiry())
+
+        return (
+            self._weighted_count(
+                item, previous_count, previous_expires_in, current_count
+            )
+            < item.amount - cost + 1
+        )
+
+    async def get_window_stats(
+        self, item: RateLimitItem, *identifiers: str
+    ) -> WindowStats:
+        """
+        Query the reset time and remaining amount for the limit.
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :return: (reset time, remaining)
+        """
+
+        (
+            previous_count,
+            previous_expires_in,
+            current_count,
+            current_expires_in,
+        ) = await cast(SlidingWindowCounterSupport, self.storage).get_sliding_window(
+            item.key_for(*identifiers), item.get_expiry()
+        )
+        remaining = max(
+            0,
+            item.amount
+            - floor(
+                self._weighted_count(
+                    item, previous_count, previous_expires_in, current_count
+                )
+            ),
+        )
+        now = time.time()
+        if previous_count >= 1 and current_count == 0:
+            previous_window_reset_period = item.get_expiry() / previous_count
+            reset = previous_expires_in % previous_window_reset_period + now
+        elif previous_count >= 1 and current_count >= 1:
+            previous_window_reset_period = item.get_expiry() / previous_count
+            previous_reset = previous_expires_in % previous_window_reset_period + now
+            current_reset = current_expires_in % item.get_expiry() + now
+            reset = min(previous_reset, current_reset)
+        elif previous_count == 0 and current_count >= 1:
+            reset = current_expires_in % item.get_expiry() + now
+        else:
+            reset = now
+
+        return WindowStats(reset, remaining)
+
+
 class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
     """
     Reference: :ref:`strategies:fixed window with elastic expiry`
@@ -208,6 +324,7 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
 
 
 STRATEGIES = {
+    "sliding-window-counter": SlidingWindowCounterRateLimiter,
     "fixed-window": FixedWindowRateLimiter,
     "fixed-window-elastic-expiry": FixedWindowElasticExpiryRateLimiter,
     "moving-window": MovingWindowRateLimiter,
