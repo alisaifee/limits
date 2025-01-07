@@ -65,7 +65,7 @@ async def async_window(delay_end: float, delay: Optional[float] = None):
 all_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        pytest.param("memory://", {}, None, id="in-memory"),
+        pytest.param("memory://", {}, None, marks=pytest.mark.memory, id="in-memory"),
         pytest.param(
             "redis://localhost:7379",
             {},
@@ -141,7 +141,7 @@ all_storage = pytest.mark.parametrize(
 moving_window_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        pytest.param("memory://", {}, None, id="in-memory"),
+        pytest.param("memory://", {}, None, marks=pytest.mark.memory, id="in-memory"),
         pytest.param(
             "redis://localhost:7379",
             {},
