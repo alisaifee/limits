@@ -35,7 +35,7 @@ Moving Window
 =============
 
 .. warning:: The moving window strategy is not implemented for the ``memcached``
-    storage backend.
+    and ``etcd`` storage backends.
 
 This strategy is the most effective for preventing bursts from by-passing the
 rate limit as the window for each limit is not fixed at the start and end of each time unit
