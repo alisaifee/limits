@@ -3,12 +3,13 @@ from __future__ import annotations
 import datetime
 import time
 from abc import ABC, abstractmethod
-from typing import Any, cast
+from typing import cast
 
 from deprecated.sphinx import versionadded, versionchanged
 
 from limits.typing import (
     Dict,
+    List,
     MongoClient,
     MongoCollection,
     MongoDatabase,
@@ -256,23 +257,29 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
 
         timestamp = time.time()
         try:
-            updates: Dict[str, Any] = {  # type: ignore
-                "$push": {"entries": {"$each": [], "$position": 0, "$slice": limit}}
+            updates: Dict[
+                str,
+                Dict[str, Union[datetime.datetime, Dict[str, Union[List[float], int]]]],
+            ] = {
+                "$push": {
+                    "entries": {
+                        "$each": [timestamp] * amount,
+                        "$position": 0,
+                        "$slice": limit,
+                    }
+                },
+                "$set": {
+                    "expireAt": (
+                        datetime.datetime.now(datetime.timezone.utc)
+                        + datetime.timedelta(seconds=expiry)
+                    )
+                },
             }
 
-            updates["$set"] = {
-                "expireAt": (
-                    datetime.datetime.now(datetime.timezone.utc)
-                    + datetime.timedelta(seconds=expiry)
-                )
-            }
-            updates["$push"]["entries"]["$each"] = [timestamp] * amount
             self.windows.update_one(
                 {
                     "_id": key,
-                    "entries.%d" % (limit - amount): {
-                        "$not": {"$gte": timestamp - expiry}
-                    },
+                    f"entries.{limit-amount}": {"$not": {"$gte": timestamp - expiry}},
                 },
                 updates,
                 upsert=True,

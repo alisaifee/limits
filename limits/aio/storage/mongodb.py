@@ -3,12 +3,12 @@ from __future__ import annotations
 import asyncio
 import datetime
 import time
-from typing import Any, cast
+from typing import cast
 
 from deprecated.sphinx import versionadded, versionchanged
 
 from limits.aio.storage.base import MovingWindowSupport, Storage
-from limits.typing import Dict, Optional, ParamSpec, Tuple, Type, TypeVar, Union
+from limits.typing import Dict, List, Optional, ParamSpec, Tuple, Type, TypeVar, Union
 from limits.util import get_dependency
 
 P = ParamSpec("P")
@@ -281,23 +281,29 @@ class MongoDBStorage(Storage, MovingWindowSupport):
 
         timestamp = time.time()
         try:
-            updates: Dict[str, Any] = {  # type: ignore
-                "$push": {"entries": {"$each": [], "$position": 0, "$slice": limit}}
+            updates: Dict[
+                str,
+                Dict[str, Union[datetime.datetime, Dict[str, Union[List[float], int]]]],
+            ] = {
+                "$push": {
+                    "entries": {
+                        "$each": [timestamp] * amount,
+                        "$position": 0,
+                        "$slice": limit,
+                    }
+                },
+                "$set": {
+                    "expireAt": (
+                        datetime.datetime.now(datetime.timezone.utc)
+                        + datetime.timedelta(seconds=expiry)
+                    )
+                },
             }
 
-            updates["$set"] = {
-                "expireAt": (
-                    datetime.datetime.now(datetime.timezone.utc)
-                    + datetime.timedelta(seconds=expiry)
-                )
-            }
-            updates["$push"]["entries"]["$each"] = [timestamp] * amount
             await self.database[self.__collection_mapping["windows"]].update_one(
                 {
                     "_id": key,
-                    "entries.%d" % (limit - amount): {
-                        "$not": {"$gte": timestamp - expiry}
-                    },
+                    f"entries.{limit-amount}": {"$not": {"$gte": timestamp - expiry}},
                 },
                 updates,
                 upsert=True,
