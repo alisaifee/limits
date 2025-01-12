@@ -279,7 +279,7 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
             self.windows.update_one(
                 {
                     "_id": key,
-                    f"entries.{limit-amount}": {"$not": {"$gte": timestamp - expiry}},
+                    f"entries.{limit - amount}": {"$not": {"$gte": timestamp - expiry}},
                 },
                 updates,
                 upsert=True,

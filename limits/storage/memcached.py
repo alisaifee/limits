@@ -77,8 +77,7 @@ class MemcachedStorage(Storage):
 
         if not get_dependency(self.library):
             raise ConfigurationError(
-                "memcached prerequisite not available."
-                " please install %s" % self.library
+                "memcached prerequisite not available. please install %s" % self.library
             )  # pragma: no cover
         self.local_storage = threading.local()
         self.local_storage.storage = None
