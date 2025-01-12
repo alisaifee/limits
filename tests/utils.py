@@ -196,7 +196,9 @@ moving_window_storage = pytest.mark.parametrize(
 async_all_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        pytest.param("async+memory://", {}, None, id="in-memory"),
+        pytest.param(
+            "async+memory://", {}, None, marks=pytest.mark.memory, id="in-memory"
+        ),
         pytest.param(
             "async+redis://localhost:7379",
             {},
@@ -272,7 +274,9 @@ async_all_storage = pytest.mark.parametrize(
 async_moving_window_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        pytest.param("async+memory://", {}, None, id="in-memory"),
+        pytest.param(
+            "async+memory://", {}, None, marks=pytest.mark.memory, id="in-memory"
+        ),
         pytest.param(
             "async+redis://localhost:7379",
             {},
