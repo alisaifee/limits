@@ -7,7 +7,11 @@ from typing import cast
 
 from deprecated.sphinx import versionadded, versionchanged
 
-from limits.aio.storage.base import MovingWindowSupport, Storage
+from limits.aio.storage.base import (
+    MovingWindowSupport,
+    SlidingWindowCounterSupport,
+    Storage,
+)
 from limits.typing import Dict, List, Optional, ParamSpec, Tuple, Type, TypeVar, Union
 from limits.util import get_dependency
 
@@ -20,7 +24,7 @@ R = TypeVar("R")
     version="3.14.0",
     reason="Added option to select custom collection names for windows & counters",
 )
-class MongoDBStorage(Storage, MovingWindowSupport):
+class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     """
     Rate limit storage with MongoDB as backend.
 
@@ -312,3 +316,118 @@ class MongoDBStorage(Storage, MovingWindowSupport):
             return True
         except self.proxy_dependency.module.errors.DuplicateKeyError:
             return False
+
+    async def acquire_sliding_window_entry(
+        self, key: str, limit: int, expiry: int, amount: int = 1
+    ) -> bool:
+        result = await self.database[
+            self.__collection_mapping["windows"]
+        ].find_one_and_update(
+            {"_id": key},
+            [
+                {
+                    "$set": {
+                        "previousCount": {
+                            "$cond": {
+                                "if": {"$lte": ["$expiresAt", "$$NOW"]},
+                                "then": {"$ifNull": ["$currentCount", 0]},
+                                "else": {"$ifNull": ["$previousCount", 0]},
+                            }
+                        },
+                        "currentCount": {
+                            "$cond": {
+                                "if": {"$lte": ["$expiresAt", "$$NOW"]},
+                                "then": 0,
+                                "else": {"$ifNull": ["$currentCount", 0]},
+                            }
+                        },
+                        "expiresAt": {
+                            "$cond": {
+                                "if": {"$lte": ["$expiresAt", "$$NOW"]},
+                                "then": {"$add": ["$$NOW", 2 * expiry * 1000]},
+                                "else": "$expiresAt",
+                            }
+                        },
+                    }
+                },
+                {
+                    "$set": {
+                        "curWeightedCount": {
+                            "$add": [
+                                {
+                                    "$multiply": [
+                                        "$previousCount",
+                                        {
+                                            "$divide": [
+                                                {"$subtract": ["$expiresAt", "$$NOW"]},
+                                                expiry * 1000,
+                                            ]
+                                        },
+                                    ]
+                                },
+                                "$currentCount",
+                            ]
+                        }
+                    }
+                },
+                {
+                    "$set": {
+                        "_acquired": {
+                            "$lte": [{"$add": ["$curWeightedCount", amount]}, limit]
+                        }
+                    }
+                },
+                {"$unset": ["curWeightedCount"]},
+                {
+                    "$set": {
+                        "currentCount": {
+                            "$cond": {
+                                "if": {"_acquired": True},
+                                "then": {"$add": ["$currentCount", amount]},
+                                "else": "$currentCount",
+                            }
+                        }
+                    }
+                },
+            ],
+            return_document=self.proxy_dependency.module.ReturnDocument.AFTER,
+            upsert=True,
+        )
+
+        return cast(bool, result["_acquired"])
+
+    async def get_sliding_window(
+        self, key: str, expiry: Optional[int] = None
+    ) -> tuple[int, float, int, float]:
+        if result := list(
+            await self.database[self.__collection_mapping["windows"]]
+            .aggregate(
+                [
+                    {"$match": {"_id": key}},
+                    {
+                        "$project": {
+                            # Retrieve previous window count
+                            "currentCount": "$currentCount",
+                            "previousCount": "$previousCount",
+                            # Calculate current TTL
+                            "currentTTL": {
+                                "$cond": {
+                                    "if": {"$lte": ["$expiresAt", "$$NOW"]},
+                                    "then": 0,
+                                    "else": {"$subtract": ["$expiresAt", "$$NOW"]},
+                                }
+                            },
+                        }
+                    },
+                ]
+            )
+            .to_list(length=1)
+        ):
+            window = result[0]
+            return (
+                window["previousCount"],
+                max(0.0, window["currentTTL"] / 1000 - expiry),
+                window["currentCount"],
+                max(0.0, window["currentTTL"] / 1000),
+            )
+        return 0, 0, 0, 0

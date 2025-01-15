@@ -20,10 +20,12 @@ from limits.typing import (
 )
 
 from ..util import get_dependency
-from .base import MovingWindowSupport, Storage
+from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
 
 
-class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
+class MongoDBStorageBase(
+    Storage, MovingWindowSupport, SlidingWindowCounterSupport, ABC
+):
     """
     Rate limit storage with MongoDB as backend.
 
@@ -288,6 +290,117 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
             return True
         except self.lib.errors.DuplicateKeyError:
             return False
+
+    def get_sliding_window(
+        self, key: str, expiry: Optional[int] = None
+    ) -> tuple[int, float, int, float]:
+        if result := list(
+            self.windows.aggregate(
+                [
+                    {"$match": {"_id": key}},
+                    {
+                        "$project": {
+                            # Retrieve previous window count
+                            "currentCount": "$currentCount",
+                            "previousCount": "$previousCount",
+                            # Calculate current TTL
+                            "currentTTL": {
+                                "$cond": {
+                                    "if": {"$lte": ["$expiresAt", "$$NOW"]},
+                                    "then": 0,
+                                    "else": {"$subtract": ["$expiresAt", "$$NOW"]},
+                                }
+                            },
+                        }
+                    },
+                ]
+            )
+        ):
+            window = result[0]
+            return (
+                window["previousCount"],
+                max(0.0, window["currentTTL"] / 1000 - expiry),
+                window["currentCount"],
+                window["currentTTL"] / 1000,
+            )
+        return 0, 0, 0, 0
+
+    def acquire_sliding_window_entry(
+        self, key: str, limit: int, expiry: int, amount: int = 1
+    ) -> bool:
+        result = self.windows.find_one_and_update(
+            {"_id": key},
+            [
+                {
+                    "$set": {
+                        "previousCount": {
+                            "$cond": {
+                                "if": {"$lte": ["$expiresAt", "$$NOW"]},
+                                "then": {"$ifNull": ["$currentCount", 0]},
+                                "else": {"$ifNull": ["$previousCount", 0]},
+                            }
+                        },
+                        "currentCount": {
+                            "$cond": {
+                                "if": {"$lte": ["$expiresAt", "$$NOW"]},
+                                "then": 0,
+                                "else": {"$ifNull": ["$currentCount", 0]},
+                            }
+                        },
+                        "expiresAt": {
+                            "$cond": {
+                                "if": {"$lte": ["$expiresAt", "$$NOW"]},
+                                "then": {"$add": ["$$NOW", 2 * expiry * 1000]},
+                                "else": "$expiresAt",
+                            }
+                        },
+                    }
+                },
+                {
+                    "$set": {
+                        "curWeightedCount": {
+                            "$add": [
+                                {
+                                    "$multiply": [
+                                        "$previousCount",
+                                        {
+                                            "$divide": [
+                                                {"$subtract": ["$expiresAt", "$$NOW"]},
+                                                expiry * 1000,
+                                            ]
+                                        },
+                                    ]
+                                },
+                                "$currentCount",
+                            ]
+                        }
+                    }
+                },
+                {
+                    "$set": {
+                        "_acquired": {
+                            "$lte": [{"$add": ["$curWeightedCount", amount]}, limit]
+                        }
+                    }
+                },
+                {"$unset": ["curWeightedCount"]},
+                {
+                    "$set": {
+                        "currentCount": {
+                            "$cond": {
+                                "if": {"_acquired": True},
+                                "then": {"$add": ["$currentCount", amount]},
+                                "else": "$currentCount",
+                            }
+                        }
+                    }
+                },
+            ],
+            return_document=self.lib.ReturnDocument.AFTER,
+            upsert=True,
+        )
+
+        return cast(bool, result["_acquired"])
 
 
 @versionadded(version="2.1")
