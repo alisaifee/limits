@@ -32,9 +32,9 @@ def storage_from_string(
 
         from limits.storage import storage_from_string
 
-        memory = from_string("memory://")
-        memcached = from_string("memcached://localhost:11211")
-        redis = from_string("redis://localhost:6379")
+        memory = storage_from_string("memory://")
+        memcached = storage_from_string("memcached://localhost:11211")
+        redis = storage_from_string("redis://localhost:6379")
 
     The same function can be used to construct the :ref:`storage:async storage`
     variants, for example::
