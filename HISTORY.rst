@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v4.0.1
+------
+Release Date: 2025-01-16
+
+Security
+
+  * Change pypi release to use trusted publishing
+
 v4.0.0
 ------
 Release Date: 2025-01-05
@@ -686,6 +694,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
