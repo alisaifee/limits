@@ -497,5 +497,12 @@ async_sliding_window_counter_storage = pytest.mark.parametrize(
             marks=pytest.mark.mongodb,
             id="mongodb",
         ),
+        pytest.param(
+            "async+etcd://localhost:2379",
+            {},
+            lf("etcd"),
+            marks=[pytest.mark.etcd, pytest.mark.flaky],
+            id="etcd",
+        ),
     ],
 )
