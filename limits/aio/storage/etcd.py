@@ -3,14 +3,14 @@ import time
 import urllib.parse
 from typing import TYPE_CHECKING, Optional, Tuple, Type, Union
 
-from limits.aio.storage.base import Storage
+from limits.aio.storage.base import SlidingWindowCounterSupport, Storage
 from limits.errors import ConcurrentUpdateError
 
 if TYPE_CHECKING:
     import aetcd
 
 
-class EtcdStorage(Storage):
+class EtcdStorage(Storage, SlidingWindowCounterSupport):
     """
     Rate limit storage with etcd as backend.
 
@@ -19,6 +19,7 @@ class EtcdStorage(Storage):
 
     STORAGE_SCHEME = ["async+etcd"]
     """The async storage scheme for etcd"""
+
     DEPENDENCIES = ["aetcd"]
 
     PREFIX = "limits"
@@ -54,6 +55,13 @@ class EtcdStorage(Storage):
 
     def prefixed_key(self, key: str) -> bytes:
         return f"{self.PREFIX}/{key}".encode()
+
+    @staticmethod
+    def window_stat(value: bytes) -> Tuple[int, float]:
+        if b":" in value:
+            count, timestamp = value.split(b":")
+            return int(count), float(timestamp)
+        return 0, 0
 
     async def incr(
         self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
@@ -135,3 +143,68 @@ class EtcdStorage(Storage):
 
     async def clear(self, key: str) -> None:
         await self.storage.delete(self.prefixed_key(key))
+
+    def _current_window_key(
+        self, key: str, expiry: int, now: Optional[float] = None
+    ) -> str:
+        if now is None:
+            now = time.time()
+        return f"{key}/{int(now / expiry)}"
+
+    def _previous_window_key(
+        self, key: str, expiry: int, now: Optional[float] = None
+    ) -> str:
+        if now is None:
+            now = time.time()
+        return f"{key}/{int((now - expiry) / expiry)}"
+
+    async def acquire_sliding_window_entry(
+        self, key: str, limit: int, expiry: int, amount: int = 1
+    ) -> bool:
+        now = time.time()
+        previous, previous_ttl, current, current_ttl = await self._fetch_sliding_window(
+            key, now, expiry
+        )
+        weighted_count = current + previous * (previous_ttl / expiry)
+        if weighted_count + amount > limit or (
+            await self.incr(
+                self._current_window_key(key, expiry, now), expiry * 2, amount=amount
+            )
+            > limit
+        ):
+            return False
+        return True
+
+    async def get_sliding_window(
+        self, key: str, expiry: Optional[int] = None
+    ) -> tuple[int, float, int, float]:
+        return await self._fetch_sliding_window(key, time.time(), expiry)
+
+    async def _fetch_sliding_window(
+        self, key: str, now: float, expiry: Optional[int] = None
+    ) -> tuple[int, float, int, float]:
+        result = await self.storage.transaction(
+            compare=[],
+            success=[
+                self.storage.transactions.get(
+                    self.prefixed_key(self._previous_window_key(key, expiry, now))
+                ),
+                self.storage.transactions.get(
+                    self.prefixed_key(self._current_window_key(key, expiry, now))
+                ),
+            ],
+            failure=[],
+        )
+        current, previous, current_ttl, previous_ttl = 0, 0, 0, 0
+        if result[0]:
+            previous_window = result[1][0]
+            current_window = result[1][1]
+            if previous_window:
+                previous, previous_expiry = EtcdStorage.window_stat(
+                    previous_window[0][0]
+                )
+                previous_ttl = previous_expiry - now
+            if current_window:
+                current, current_expiry = EtcdStorage.window_stat(current_window[0][0])
+                current_ttl = current_expiry - now
+        return previous, previous_ttl, current, current_ttl

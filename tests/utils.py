@@ -302,6 +302,13 @@ sliding_window_counter_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis_sentinel,
             id="redis-sentinel",
         ),
+        pytest.param(
+            "etcd://localhost:2379",
+            {},
+            lf("etcd"),
+            marks=[pytest.mark.etcd, pytest.mark.flaky],
+            id="etcd",
+        ),
     ],
 )
 
@@ -498,6 +505,13 @@ async_sliding_window_counter_storage = pytest.mark.parametrize(
             lf("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
             id="redis-sentinel",
+        ),
+        pytest.param(
+            "async+etcd://localhost:2379",
+            {},
+            lf("etcd"),
+            marks=[pytest.mark.etcd, pytest.mark.flaky],
+            id="etcd",
         ),
     ],
 )
