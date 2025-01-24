@@ -426,8 +426,8 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             window = result[0]
             return (
                 window["previousCount"],
-                max(0.0, window["currentTTL"] / 1000 - expiry),
+                window["currentTTL"] / 1000 - expiry,
                 window["currentCount"],
-                max(0.0, window["currentTTL"] / 1000),
+                window["currentTTL"] / 1000,
             )
         return 0, 0, 0, 0

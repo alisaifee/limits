@@ -319,7 +319,7 @@ class MongoDBStorageBase(
             window = result[0]
             return (
                 window["previousCount"],
-                max(0.0, window["currentTTL"] / 1000 - expiry),
+                window["currentTTL"] / 1000 - expiry,
                 window["currentCount"],
                 window["currentTTL"] / 1000,
             )
