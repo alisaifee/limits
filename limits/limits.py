@@ -8,9 +8,9 @@ from typing import Dict, NamedTuple, Optional, Tuple, Type, Union, cast
 from limits.typing import ClassVar, List
 
 
-def safe_string(value: Union[bytes, str, int]) -> str:
+def safe_string(value: Union[bytes, str, int, float]) -> str:
     """
-    converts a byte/str or int to a str
+    normalize a byte/str/int or float to a str
     """
 
     if isinstance(value, bytes):
@@ -101,14 +101,14 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
 
         return self.GRANULARITY.seconds * self.multiples
 
-    def key_for(self, *identifiers: str) -> str:
+    def key_for(self, *identifiers: Union[bytes, str, int, float]) -> str:
         """
         Constructs a key for the current limit and any additional
         identifiers provided.
 
         :param identifiers: a list of strings to append to the key
         :return: a string key identifying this resource with
-         each identifier appended with a '/' delimiter.
+         each identifier separated with a '/' delimiter.
         """
         remainder = "/".join(
             [safe_string(k) for k in identifiers]
