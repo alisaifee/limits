@@ -1,4 +1,4 @@
-.. |ci| image:: https://github.com/alisaifee/limits/workflows/CI/badge.svg?branch=master
+.. |ci| image:: https://github.com/alisaifee/limits/actions/workflows/main.yml/badge.svg?branch=master
     :target: https://github.com/alisaifee/limits/actions?query=branch%3Amaster+workflow%3ACI
 .. |codecov| image:: https://codecov.io/gh/alisaifee/limits/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/alisaifee/limits
