@@ -1,6 +1,6 @@
 import threading
 import time
-from collections import Counter
+from collections import Counter, defaultdict
 from math import floor
 
 import limits.typing
@@ -61,6 +61,7 @@ class MemoryStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         self, uri: Optional[str] = None, wrap_exceptions: bool = False, **_: str
     ):
         self.storage: limits.typing.Counter[str] = Counter()
+        self.locks: defaultdict[str, threading.RLock] = defaultdict(threading.RLock)
         self.expirations: Dict[str, float] = {}
         self.events: Dict[str, List[LockableEntry]] = {}
         self.timer = threading.Timer(0.01, self.__expire_events)
@@ -84,6 +85,7 @@ class MemoryStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             if self.expirations[key] <= time.time():
                 self.storage.pop(key, None)
                 self.expirations.pop(key, None)
+                self.locks.pop(key, None)
 
     def __schedule_expiry(self) -> None:
         if not self.timer.is_alive():
@@ -104,10 +106,11 @@ class MemoryStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         """
         self.get(key)
         self.__schedule_expiry()
-        self.storage[key] += amount
+        with self.locks[key]:
+            self.storage[key] += amount
 
-        if elastic_expiry or self.storage[key] == amount:
-            self.expirations[key] = time.time() + expiry
+            if elastic_expiry or self.storage[key] == amount:
+                self.expirations[key] = time.time() + expiry
 
         return self.storage.get(key, 0)
 
@@ -120,7 +123,8 @@ class MemoryStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         """
         self.get(key)
         self.__schedule_expiry()
-        self.storage[key] = max(self.storage[key] - amount, 0)
+        with self.locks[key]:
+            self.storage[key] = max(self.storage[key] - amount, 0)
 
         return self.storage.get(key, 0)
 
@@ -132,6 +136,7 @@ class MemoryStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         if self.expirations.get(key, 0) <= time.time():
             self.storage.pop(key, None)
             self.expirations.pop(key, None)
+            self.locks.pop(key, None)
 
         return self.storage.get(key, 0)
 
@@ -142,6 +147,7 @@ class MemoryStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         self.storage.pop(key, None)
         self.expirations.pop(key, None)
         self.events.pop(key, None)
+        self.locks.pop(key, None)
 
     def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
         """
@@ -293,4 +299,5 @@ class MemoryStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         self.storage.clear()
         self.expirations.clear()
         self.events.clear()
+        self.locks.clear()
         return num_items
