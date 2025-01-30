@@ -34,6 +34,8 @@ class EtcdStorage(Storage):
          ``etcd://host:port``,
         :param max_retries: Maximum number of attempts to retry
          in the case of concurrent updates to a rate limit key
+        :param wrap_exceptions: Whether to wrap storage exceptions in
+         :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`etcd3.Etcd3Client`
         :raise ConfigurationError: when :pypi:`etcd3` is not available
