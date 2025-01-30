@@ -28,6 +28,7 @@ class EtcdStorage(Storage):
         self,
         uri: str,
         max_retries: int = MAX_RETRIES,
+        wrap_exceptions: bool = False,
         **options: str,
     ) -> None:
         """
@@ -45,6 +46,7 @@ class EtcdStorage(Storage):
             host=parsed.hostname, port=parsed.port, **options
         )
         self.max_retries = max_retries
+        super().__init__(uri, wrap_exceptions=wrap_exceptions)
 
     @property
     def base_exceptions(
