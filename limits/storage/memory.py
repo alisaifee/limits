@@ -241,14 +241,6 @@ class MemoryStorage(
     def get_sliding_window(
         self, key: str, expiry: int
     ) -> Tuple[int, float, int, float]:
-        """
-        returns the starting point and the number of entries in the moving
-        window
-
-        :param key: rate limit key
-        :param expiry: expiry of entry
-        :return: (start of window, number of acquired entries)
-        """
         now = time.time()
         previous_key, current_key = self.sliding_window_keys(key, expiry, now)
         return self._get_sliding_window_info(previous_key, current_key, expiry, now)
