@@ -301,20 +301,11 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
     ) -> tuple[int, float, int, float]:
         now = time.time()
         previous_key, current_key = self.sliding_window_keys(key, expiry, now)
-        return self._get_sliding_window_info(previous_key, current_key, expiry)
+        return self._get_sliding_window_info(previous_key, current_key, expiry, now)
 
     def _get_sliding_window_info(
-        self,
-        previous_key: str,
-        current_key: str,
-        expiry: Optional[int] = None,
-        now: Optional[float] = None,
+        self, previous_key: str, current_key: str, expiry: int, now: float
     ) -> tuple[int, float, int, float]:
-        if expiry is None:
-            raise ValueError("the expiry value is needed for this storage.")
-        if now is None:
-            now = time.time()
-
         result = self.get_many([previous_key, current_key])
         previous_count, current_count = (
             int(result.get(previous_key, 0)),
