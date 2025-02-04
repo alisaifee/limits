@@ -7,6 +7,8 @@ from abc import ABC, abstractmethod
 from math import floor
 from typing import cast
 
+from deprecated.sphinx import versionadded
+
 from limits.aio.storage.base import SlidingWindowCounterSupport
 
 from ..limits import RateLimitItem
@@ -187,6 +189,7 @@ class FixedWindowRateLimiter(RateLimiter):
         return WindowStats(reset, remaining)
 
 
+@versionadded(version="4.1")
 class SlidingWindowCounterRateLimiter(RateLimiter):
     """
     Reference: :ref:`strategies:sliding window counter`
