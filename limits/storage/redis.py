@@ -8,7 +8,7 @@ from packaging.version import Version
 from limits.typing import Optional, RedisClient, ScriptP, Tuple, Type, Union
 
 from ..util import get_package_data
-from .base import MovingWindowSupport, Storage
+from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
 
 if TYPE_CHECKING:
     import redis
@@ -24,8 +24,15 @@ class RedisInteractor:
     SCRIPT_CLEAR_KEYS = get_package_data(f"{RES_DIR}/clear_keys.lua")
     SCRIPT_INCR_EXPIRE = get_package_data(f"{RES_DIR}/incr_expire.lua")
 
+    SCRIPT_SLIDING_WINDOW = get_package_data(f"{RES_DIR}/sliding_window.lua")
+    SCRIPT_ACQUIRE_SLIDING_WINDOW = get_package_data(
+        f"{RES_DIR}/acquire_sliding_window.lua"
+    )
+
     lua_moving_window: ScriptP[Tuple[int, int]]
-    lua_acquire_window: ScriptP[bool]
+    lua_acquire_moving_window: ScriptP[bool]
+    lua_sliding_window: ScriptP[Tuple[int, float, int, float]]
+    lua_acquire_sliding_window: ScriptP[bool]
 
     PREFIX = "LIMITS"
 
@@ -47,6 +54,27 @@ class RedisInteractor:
             return float(window[0]), window[1]
 
         return timestamp, 0
+
+    def get_sliding_window(
+        self, key: str, expiry: int
+    ) -> Tuple[int, float, int, float]:
+        """
+        returns the sliding window statistics (previous and current windows)
+
+        :param key: rate limit key
+        :param expiry: expiry of entry
+        :return: (previous count, previous TTL, current count, current TTL)
+        """
+        previous_key = self.prefixed_key(self._previous_window_key(key))
+        current_key = self.prefixed_key(self._current_window_key(key))
+        if window := self.lua_sliding_window([previous_key, current_key], [expiry]):
+            return (
+                int(window[0] or 0),
+                max(0, float(window[1] or 0)) / 1000,
+                int(window[2] or 0),
+                max(0, float(window[3] or 0)) / 1000,
+            )
+        return 0, float(0), 0, float(0)
 
     def _incr(
         self,
@@ -106,8 +134,32 @@ class RedisInteractor:
         """
         key = self.prefixed_key(key)
         timestamp = time.time()
-        acquired = self.lua_acquire_window([key], [timestamp, limit, expiry, amount])
+        acquired = self.lua_acquire_moving_window(
+            [key], [timestamp, limit, expiry, amount]
+        )
 
+        return bool(acquired)
+
+    def _acquire_sliding_window_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+    ) -> bool:
+        """
+        Acquire an entry. Shift the current window to the previous window if it expired.
+        :param current_window_key: current window key
+        :param previous_window_key: previous window key
+        :param limit: amount of entries allowed
+        :param expiry: expiry of the entry
+        :param amount: the number of entries to acquire
+        """
+        previous_key = self.prefixed_key(self._previous_window_key(key))
+        current_key = self.prefixed_key(self._current_window_key(key))
+        acquired = self.lua_acquire_sliding_window(
+            [previous_key, current_key], [limit, expiry, amount]
+        )
         return bool(acquired)
 
     def _get_expiry(self, key: str, connection: RedisClient) -> float:
@@ -129,8 +181,34 @@ class RedisInteractor:
         except:  # noqa
             return False
 
+    def _current_window_key(self, key: str) -> str:
+        """
+        Return the current window's storage key (Sliding window strategy)
 
-class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
+        Contrary to other strategies that have one key per rate limit item,
+        this strategy has two keys per rate limit item than must be on the same machine.
+        To keep the current key and the previous key on the same Redis cluster node,
+        curly braces are added.
+
+        Eg: "{constructed_key}"
+        """
+        return f"{{{key}}}"
+
+    def _previous_window_key(self, key: str) -> str:
+        """
+        Return the previous window's storage key (Sliding window strategy).
+
+        Curvy braces are added on the common pattern with the current window's key,
+        so the current and the previous key are stored on the same Redis cluster node.
+
+        Eg: "{constructed_key}/-1"
+        """
+        return f"{self._current_window_key(key)}/-1"
+
+
+class RedisStorage(
+    RedisInteractor, Storage, MovingWindowSupport, SlidingWindowCounterSupport
+):
     """
     Rate limit storage with redis as backend.
 
@@ -184,12 +262,16 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
 
     def initialize_storage(self, _uri: str) -> None:
         self.lua_moving_window = self.storage.register_script(self.SCRIPT_MOVING_WINDOW)
-        self.lua_acquire_window = self.storage.register_script(
+        self.lua_acquire_moving_window = self.storage.register_script(
             self.SCRIPT_ACQUIRE_MOVING_WINDOW
         )
         self.lua_clear_keys = self.storage.register_script(self.SCRIPT_CLEAR_KEYS)
-        self.lua_incr_expire = self.storage.register_script(
-            RedisStorage.SCRIPT_INCR_EXPIRE
+        self.lua_incr_expire = self.storage.register_script(self.SCRIPT_INCR_EXPIRE)
+        self.lua_sliding_window = self.storage.register_script(
+            self.SCRIPT_SLIDING_WINDOW
+        )
+        self.lua_acquire_sliding_window = self.storage.register_script(
+            self.SCRIPT_ACQUIRE_SLIDING_WINDOW
         )
 
     def incr(
@@ -232,6 +314,23 @@ class RedisStorage(RedisInteractor, Storage, MovingWindowSupport):
         """
 
         return super()._acquire_entry(key, limit, expiry, self.storage, amount)
+
+    def acquire_sliding_window_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+    ) -> bool:
+        """
+        Acquire an entry. Shift the current window to the previous window if it expired.
+        :param key: rate limit key to acquire an entry in
+        :param previous_window_key: previous window key
+        :param limit: amount of entries allowed
+        :param expiry: expiry of the entry
+        :param amount: the number of entries to acquire
+        """
+        return super()._acquire_sliding_window_entry(key, limit, expiry, amount)
 
     def get_expiry(self, key: str) -> float:
         """

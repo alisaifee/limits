@@ -179,3 +179,57 @@ class MovingWindowSupport(ABC):
         :return: (start of window, number of acquired entries)
         """
         raise NotImplementedError
+
+
+class SlidingWindowCounterSupport(ABC):
+    """
+    Abstract base for storages that intend to support
+    the sliding window counter strategy
+    """
+
+    def __new__(cls, *args: Any, **kwargs: Any) -> SlidingWindowCounterSupport:  # type: ignore[misc]
+        inst = super().__new__(cls)
+
+        for method in {"acquire_sliding_window_entry", "get_sliding_window"}:
+            setattr(
+                inst,
+                method,
+                _wrap_errors(cast(Storage, inst), getattr(inst, method)),
+            )
+
+        return inst
+
+    @abstractmethod
+    async def acquire_sliding_window_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+    ) -> bool:
+        """
+        Acquire an entry. Shift the current window to the previous window if it expired.
+        :param current_window_key: current window key
+        :param previous_window_key: previous window key
+        :param limit: amount of entries allowed
+        :param expiry: expiry of the entry
+        :param amount: the number of entries to acquire
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_sliding_window(
+        self, key: str, expiry: int
+    ) -> tuple[int, float, int, float]:
+        """
+        Return the previous and current window information.
+        Return a tuple[int, float, int_ float] with the following information:
+        - previous window counter (int)
+        - previous window TTL (float)
+        - current window counter (int)
+        - current window TTL (float)
+
+        :param key: the rate limit key
+        :param expiry: the rate limit expiry, needed to compute the key in some implementations
+        """
+        raise NotImplementedError
