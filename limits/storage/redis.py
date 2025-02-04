@@ -67,7 +67,7 @@ class RedisInteractor:
                 int(window[2] or 0),
                 max(0, float(window[3] or 0)) / 1000,
             )
-        return 0, float(0), 0, float(0)
+        return 0, 0.0, 0, 0.0
 
     def _incr(
         self,

@@ -112,17 +112,16 @@ class RedisInteractor:
         previous_key = self.prefixed_key(self._previous_window_key(key))
         current_key = self.prefixed_key(self._current_window_key(key))
 
-        window = await self.lua_sliding_window.execute(
+        if window := await self.lua_sliding_window.execute(
             [previous_key, current_key], [expiry]
-        )
-        if window:
+        ):
             return (
                 int(window[0] or 0),  # type: ignore
                 max(0, float(window[1] or 0)) / 1000,  # type: ignore
                 int(window[2] or 0),  # type: ignore
                 max(0, float(window[3] or 0)) / 1000,  # type: ignore
             )
-        return 0, float(0), 0, float(0)
+        return 0, 0.0, 0, 0.0
 
     async def _acquire_entry(
         self,
