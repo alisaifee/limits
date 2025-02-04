@@ -209,6 +209,7 @@ class SlidingWindowCounterSupport(ABC):
     ) -> bool:
         """
         Acquire an entry. Shift the current window to the previous window if it expired.
+
         :param current_window_key: current window key
         :param previous_window_key: previous window key
         :param limit: amount of entries allowed
@@ -223,13 +224,13 @@ class SlidingWindowCounterSupport(ABC):
     ) -> tuple[int, float, int, float]:
         """
         Return the previous and current window information.
-        Return a tuple[int, float, int_ float] with the following information:
-        - previous window counter (int)
-        - previous window TTL (float)
-        - current window counter (int)
-        - current window TTL (float)
 
         :param key: the rate limit key
         :param expiry: the rate limit expiry, needed to compute the key in some implementations
+        :return: a tuple of (int, float, int, float) with the following information:
+          - previous window counter
+          - previous window TTL
+          - current window counter
+          - current window TTL
         """
         raise NotImplementedError

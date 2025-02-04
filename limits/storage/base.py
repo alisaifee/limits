@@ -197,6 +197,7 @@ class SlidingWindowCounterSupport(ABC):
     ) -> bool:
         """
         Acquire an entry. Shift the current window to the previous window if it expired.
+
         :param current_window_key: current window key
         :param previous_window_key: previous window key
         :param limit: amount of entries allowed
@@ -211,12 +212,14 @@ class SlidingWindowCounterSupport(ABC):
     ) -> tuple[int, float, int, float]:
         """
         Return the previous and current window information.
-        This method should be implemented by the inherited classes if a more performant solution is available.
-        Return a tuple[int, float, int_ float] with the following information:
-        - previous window counter (int)
-        - previous window TTL (float)
-        - current window counter (int)
-        - current window TTL (float)
+
+        :param key: the rate limit key
+        :param expiry: the rate limit expiry, needed to compute the key in some implementations
+        :return: a tuple of (int, float, int, float) with the following information:
+          - previous window counter
+          - previous window TTL
+          - current window counter
+          - current window TTL
         """
         raise NotImplementedError
 
@@ -231,13 +234,15 @@ class TimestampedSlidingWindow:
 
         :param key: the key to get the window's keys from
         :param expiry: the expiry of the limit item, in seconds
-        :param at: tthe timestamp to get the keys from. Default to now, ie time.time()
+        :param at: the timestamp to get the keys from. Default to now, ie ``time.time()``
 
         Returns a tuple with the previous and the current key: (previous, current).
+
         Example:
-            - key = "mykey"
-            - expiry = 60
-            - at = 1738576292.6631825
-        The return value will be the tuple ("mykey/28976271", "mykey/28976270").
+          - key = "mykey"
+          - expiry = 60
+          - at = 1738576292.6631825
+
+        The return value will be the tuple ``("mykey/28976271", "mykey/28976270")``.
         """
         return f"{key}/{int((at - expiry) / expiry)}", f"{key}/{int(at / expiry)}"

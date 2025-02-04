@@ -58,13 +58,6 @@ class RedisInteractor:
     def get_sliding_window(
         self, key: str, expiry: int
     ) -> Tuple[int, float, int, float]:
-        """
-        returns the sliding window statistics (previous and current windows)
-
-        :param key: rate limit key
-        :param expiry: expiry of entry
-        :return: (previous count, previous TTL, current count, current TTL)
-        """
         previous_key = self.prefixed_key(self._previous_window_key(key))
         current_key = self.prefixed_key(self._current_window_key(key))
         if window := self.lua_sliding_window([previous_key, current_key], [expiry]):
@@ -322,14 +315,6 @@ class RedisStorage(
         expiry: int,
         amount: int = 1,
     ) -> bool:
-        """
-        Acquire an entry. Shift the current window to the previous window if it expired.
-        :param key: rate limit key to acquire an entry in
-        :param previous_window_key: previous window key
-        :param limit: amount of entries allowed
-        :param expiry: expiry of the entry
-        :param amount: the number of entries to acquire
-        """
         return super()._acquire_sliding_window_entry(key, limit, expiry, amount)
 
     def get_expiry(self, key: str) -> float:

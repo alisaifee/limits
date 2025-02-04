@@ -30,6 +30,7 @@ Provided by :mod:`limits.strategies`
 .. autoclass:: FixedWindowRateLimiter
 .. autoclass:: FixedWindowElasticExpiryRateLimiter
 .. autoclass:: MovingWindowRateLimiter
+.. autoclass:: SlidingWindowCounterRateLimiter
 
 All strategies implement the same abstract base class:
 
@@ -48,6 +49,7 @@ Provided by :mod:`limits.aio.strategies`
 .. autoclass:: FixedWindowRateLimiter
 .. autoclass:: FixedWindowElasticExpiryRateLimiter
 .. autoclass:: MovingWindowRateLimiter
+.. autoclass:: SlidingWindowCounterRateLimiter
 
 All strategies implement the same abstract base class:
 

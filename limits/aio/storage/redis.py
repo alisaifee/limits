@@ -109,13 +109,6 @@ class RedisInteractor:
     async def get_sliding_window(
         self, key: str, expiry: int
     ) -> Tuple[int, float, int, float]:
-        """
-        returns the sliding window statistics (previous and current windows)
-
-        :param key: rate limit key
-        :param expiry: expiry of entry
-        :return: (previous count, previous TTL, current count, current TTL)
-        """
         previous_key = self.prefixed_key(self._previous_window_key(key))
         current_key = self.prefixed_key(self._current_window_key(key))
 
