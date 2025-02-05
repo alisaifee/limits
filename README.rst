@@ -35,7 +35,7 @@ Supported Strategies
    result in a lock-out for two minutes.
 
 `Moving Window <https://limits.readthedocs.io/en/latest/strategies.html#moving-window>`_
-   Sliding window strategy enforces a rate limit of N/(m time units)
+   Moving window strategy enforces a rate limit of N/(m time units)
    on the **last m** time units at the second granularity.
 
    For example, with a rate limit of ``10/minute``:
@@ -43,6 +43,16 @@ Supported Strategies
    - Allow 9 requests that arrive at ``00:00:59``
    - Allow another request that arrives at ``00:01:00``
    - Reject the request that arrives at ``00:01:01``
+
+`Sliding Window Counter <https://limits.readthedocs.io/en/latest/strategies.html#sliding-window-counter>`_
+   The sliding window counter strategy enforces a rate limit of N/(m time units)
+   by approximating the moving window strategy, with less memory use. It approximates the behavior
+   of a moving window by maintaining counters for two adjacent fixed windows: the current and the previous windows.
+
+   To determine if a request should be allowed, we assume the requests in the previous window were distributed evenly
+   over its duration and use a weighted sum of the previous and current window counts to calculate the effective
+   current capacity.
+
 
 Storage backends
 ================
