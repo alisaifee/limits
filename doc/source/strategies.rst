@@ -55,26 +55,41 @@ The current window counter increases at the first hit, and the sampling period b
 at the end of the sampling period, the window counter and expiration are moved to the
 previous window, and new requests will still increase the current window counter.
 
-To determine if a request should be allowed, we assume the requests in the previous window
+**To determine if a request should be allowed, we assume the requests in the previous window
 were distributed evenly over its duration (eg: if it received 5 requests in 10 seconds,
-we consider it has received one request every two seconds).
+we consider it has received one request every two seconds).**
 
 Depending on how much time has elapsed since the current window was moved, a weight is applied:
 
-weighted_count =  previous_count * (expiration_period - time_elapsed_since_shift) / expiration_period + current_count
+.. math::
+
+    \begin{aligned}
+        C_{\text{weighted}} &= \frac{C_{\text{prev}} \times (T_{\text{exp}} - T_{\text{elapsed}})}{T_{\text{exp}}} + C_{\text{current}} \\[10pt]
+        \text{where} \quad
+        C_{\text{weighted}} &\quad \text{is the weighted count}, \\
+        C_{\text{prev}} &\quad \text{is the previous count}, \\
+        C_{\text{current}} &\quad \text{is the current count}, \\
+        T_{\text{exp}} &\quad \text{is the expiration period}, \\
+        T_{\text{elapsed}} &\quad \text{is the time elapsed since shift}.
+    \end{aligned}
+
 
 For example, for a sampling period of 10 seconds and if the window has shifted 2 seconds ago,
 the weighted count will be computed as follows:
 
-weighted_count = previous_count * (10 - 2) / 10 + current_count
+.. math::
+
+   C_{\text{weighted}} &= \frac{C_{\text{prev}} \times (10 - 2)}{10} + C_{\text{current}} \\[10pt]
 
 Contrary to the moving window strategy, at most two counters per rate limiter are needed,
 which dramatically reduces memory usage.
 
-Limitations: with some storage implementations, the sampling period doesn't start at the first hit,
-but at a fixed interval like the fixed window, thus allowing an 'attacker' to bypass the limits,
-especially if the counter is very low. This burst is observed only at the first sampling period.
-Eg: with "1 / day", the attacker can send one request at 23:59:59 and another at 00:00:00.
-However, the subsequent requests will be rate-limited once a day, since the previous window is full.
+.. warning::
 
-The following storage implementations are affected: memcached and in-memory.
+   With some storage implementations, the sampling period doesn't start at the first hit,
+   but at a fixed interval like the fixed window, thus allowing an 'attacker' to bypass the limits,
+   especially if the counter is very low. This burst is observed only at the first sampling period.
+   Eg: with "1 / day", the attacker can send one request at 23:59:59 and another at 00:00:00.
+   However, the subsequent requests will be rate-limited once a day, since the previous window is full.
+
+   The following storage implementations are affected: ``memcached`` and ``in-memory``.
