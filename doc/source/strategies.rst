@@ -47,6 +47,9 @@ be maintained in memory per resource and rate limit.
 Sliding Window Counter
 ======================
 
+.. warning:: The sliding window strategy is not implemented for the ``mongodb``
+    and ``etcd`` storage backends.
+
 This strategy approximates the moving window strategy, with less memory use.
 It approximates the behavior of a moving window by maintaining counters for two adjacent
 fixed windows: the current and the previous windows.
