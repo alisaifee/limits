@@ -80,7 +80,8 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
     async def get_many(self, keys: Iterable[str]) -> dict[bytes, ItemP]:
         """
         Return multiple counters at once
-        :param key: the key to get the counter value for
+
+        :param keys: the keys to get the counter values for
         """
         return await (await self.get_storage()).get_many(
             [k.encode("utf-8") for k in keys]
