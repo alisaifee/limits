@@ -26,7 +26,8 @@ P = ParamSpec("P")
 if TYPE_CHECKING:
     import coredis
     import coredis.commands.script
-    import pymongo
+    import pymongo.collection
+    import pymongo.database
     import redis
 
 
@@ -90,7 +91,7 @@ class MemcachedClientP(Protocol):
 
     def get(self, key: str, default: Optional[str] = None) -> bytes: ...
 
-    def get_many(self, keys: Iterable[str]) -> dict[str, Any]: ...  # type:ignore[misc]
+    def get_many(self, keys: Iterable[str]) -> dict[str, Any]: ...  # type:ignore[explicit-any]
 
     def incr(
         self, key: str, value: int, noreply: Optional[bool] = False
@@ -127,9 +128,9 @@ class ScriptP(Protocol[R_co]):
     def __call__(self, keys: List[Serializable], args: List[Serializable]) -> R_co: ...
 
 
-MongoClient: TypeAlias = "pymongo.MongoClient[Dict[str, Any]]"  # type:ignore[misc]
-MongoDatabase: TypeAlias = "pymongo.database.Database[Dict[str, Any]]"  # type:ignore
-MongoCollection: TypeAlias = "pymongo.collection.Collection[Dict[str, Any]]"  # type:ignore
+MongoClient: TypeAlias = "pymongo.MongoClient[Dict[str, Any]]"  # type:ignore[explicit-any]
+MongoDatabase: TypeAlias = "pymongo.database.Database[Dict[str, Any]]"  # type:ignore[explicit-any]
+MongoCollection: TypeAlias = "pymongo.collection.Collection[Dict[str, Any]]"  # type:ignore[explicit-any]
 
 __all__ = [
     "AsyncRedisClient",

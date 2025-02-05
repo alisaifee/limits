@@ -149,7 +149,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         """
         return int(self.storage.get(key, "0"))
 
-    def get_many(self, keys: Iterable[str]) -> dict[str, Any]:  # type:ignore[misc]
+    def get_many(self, keys: Iterable[str]) -> dict[str, Any]:  # type:ignore[explicit-any]
         """
         Return multiple counters at once
         :param key: the key to get the counter value for

@@ -41,7 +41,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     STORAGE_SCHEME: Optional[List[str]]
     """The storage schemes to register against this implementation"""
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Storage:  # type: ignore[misc]
+    def __new__(cls, *args: Any, **kwargs: Any) -> Storage:  # type: ignore[explicit-any]
         inst = super().__new__(cls)
 
         for method in {
@@ -135,7 +135,7 @@ class MovingWindowSupport(ABC):
     the moving window strategy
     """
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> MovingWindowSupport:  # type: ignore[misc]
+    def __new__(cls, *args: Any, **kwargs: Any) -> MovingWindowSupport:  # type: ignore[explicit-any]
         inst = super().__new__(cls)
 
         for method in {
@@ -179,7 +179,7 @@ class SlidingWindowCounterSupport(ABC):
     the sliding window counter strategy
     """
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> SlidingWindowCounterSupport:  # type: ignore[misc]
+    def __new__(cls, *args: Any, **kwargs: Any) -> SlidingWindowCounterSupport:  # type: ignore[explicit-any]
         inst = super().__new__(cls)
 
         for method in {"acquire_sliding_window_entry", "get_sliding_window"}:
