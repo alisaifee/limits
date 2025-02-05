@@ -46,6 +46,7 @@ be maintained in memory per resource and rate limit.
 
 Sliding Window Counter
 ======================
+.. versionadded:: 4.2
 
 .. warning:: The sliding window strategy is not implemented for the ``mongodb``
     and ``etcd`` storage backends.
