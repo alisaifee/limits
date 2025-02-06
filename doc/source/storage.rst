@@ -207,7 +207,7 @@ MongoDB Storage
 ---------------
 
 Requires the location(s) of a mongodb installation using the uri schema
-described by the `Mongodb URI Specification <https://github.com/mongodb/specifications/blob/master/source/uri-options/uri-options.rst>`_
+described by the `Mongodb URI Specification <https://github.com/mongodb/specifications/blob/master/source/uri-options/uri-options.md>`_
 
 Examples:
 
