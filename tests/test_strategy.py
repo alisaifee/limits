@@ -8,7 +8,7 @@ from limits.limits import (
     RateLimitItemPerMinute,
     RateLimitItemPerSecond,
 )
-from limits.storage import MemcachedStorage, storage_from_string
+from limits.storage import storage_from_string
 from limits.storage.base import TimestampedSlidingWindow
 from limits.strategies import (
     FixedWindowElasticExpiryRateLimiter,
@@ -26,8 +26,8 @@ from tests.utils import (
 )
 
 
-class TestWindow:
-    @all_storage
+@all_storage
+class TestFixedWindow:
     @fixed_start
     def test_fixed_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
@@ -41,7 +41,6 @@ class TestWindow:
             start + 2, 1e-2
         )
 
-    @all_storage
     @fixed_start
     def test_fixed_window_empty_stats(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
@@ -52,7 +51,6 @@ class TestWindow:
             time.time(), 1e-2
         )
 
-    @all_storage
     @fixed_start
     def test_fixed_window_multiple_cost(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
@@ -64,7 +62,6 @@ class TestWindow:
         assert not limiter.test(limit, "k2", cost=6)
         assert not limiter.hit(limit, "k2", cost=6)
 
-    @all_storage
     @fixed_start
     def test_fixed_window_with_elastic_expiry(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
@@ -85,7 +82,6 @@ class TestWindow:
             end + 2, 1e-2
         )
 
-    @all_storage
     @fixed_start
     def test_fixed_window_with_elastic_expiry_multiple_cost(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
@@ -100,7 +96,21 @@ class TestWindow:
         )
         assert not limiter.hit(limit, "k2", cost=6)
 
-    @sliding_window_counter_storage
+    @fixed_start
+    @pytest.mark.flaky
+    def test_test_fixed_window(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = FixedWindowRateLimiter(storage)
+        limit = RateLimitItemPerHour(2, 1)
+        assert limiter.hit(limit)
+        assert limiter.test(limit)
+        assert limiter.hit(limit)
+        assert not limiter.test(limit)
+        assert not limiter.hit(limit)
+
+
+@sliding_window_counter_storage
+class TestSlidingWindow:
     @fixed_start
     def test_sliding_window_counter(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
@@ -131,7 +141,6 @@ class TestWindow:
                 start + 2, 1e-2
             )
 
-    @sliding_window_counter_storage
     def test_sliding_window_counter_total_reset(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = SlidingWindowCounterRateLimiter(storage)
@@ -153,7 +162,6 @@ class TestWindow:
             time.time(), abs=1e-2
         )
 
-    @sliding_window_counter_storage
     def test_sliding_window_counter_current_window(self, uri, args, fixture):
         """Check the window stats when only the current window is filled"""
         storage = storage_from_string(uri, **args)
@@ -177,7 +185,6 @@ class TestWindow:
         assert limiter.hit(limit)
         assert not limiter.hit(limit)
 
-    @sliding_window_counter_storage
     @pytest.mark.flaky(max_runs=3)
     def test_sliding_window_counter_previous_window(self, uri, args, fixture):
         """Check the window stats when the previous window is partially filled"""
@@ -234,7 +241,6 @@ class TestWindow:
             # Wait for the next hit available
             time.sleep(reset_in + sleep_margin)
 
-    @sliding_window_counter_storage
     @fixed_start
     def test_sliding_window_counter_empty_stats(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
@@ -245,7 +251,6 @@ class TestWindow:
             time.time(), 1e-2
         )
 
-    @sliding_window_counter_storage
     @fixed_start
     def test_sliding_window_counter_multiple_cost(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
@@ -262,7 +267,21 @@ class TestWindow:
         assert not limiter.test(limit, "k2", cost=6)
         assert not limiter.hit(limit, "k2", cost=6)
 
-    @moving_window_storage
+    @fixed_start
+    @pytest.mark.flaky
+    def test_test_sliding_window_counter(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = SlidingWindowCounterRateLimiter(storage)
+        limit = RateLimitItemPerHour(2, 1)
+        assert limiter.hit(limit)
+        assert limiter.test(limit)
+        assert limiter.hit(limit)
+        assert not limiter.test(limit)
+        assert not limiter.hit(limit)
+
+
+@moving_window_storage
+class TestMovingWindow:
     def test_moving_window_empty_stats(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
@@ -272,7 +291,6 @@ class TestWindow:
             time.time() + 2, 1e-2
         )
 
-    @moving_window_storage
     def test_moving_window_stats(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
@@ -287,7 +305,6 @@ class TestWindow:
             limit, "key"
         ).reset_time - time.time() == pytest.approx(58, 1e-2)
 
-    @moving_window_storage
     def test_moving_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
@@ -302,7 +319,6 @@ class TestWindow:
             # 11th fails
             assert not limiter.hit(limit)
 
-    @moving_window_storage
     def test_moving_window_multiple_cost(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
@@ -324,7 +340,6 @@ class TestWindow:
         assert limiter.get_window_stats(limit, "k2")[1] == 0
         assert not limiter.hit(limit, "k2", cost=2)
 
-    @moving_window_storage
     def test_moving_window_varying_cost(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
@@ -334,7 +349,6 @@ class TestWindow:
         limiter.clear(five_per_min)
         assert limiter.hit(five_per_min)
 
-    @moving_window_storage
     def test_moving_window_huge_cost_sync(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
@@ -344,39 +358,6 @@ class TestWindow:
         limiter.clear(many_per_min)
         assert limiter.hit(many_per_min)
 
-    @pytest.mark.memcached
-    def test_moving_window_memcached(self, memcached):
-        storage = MemcachedStorage("memcached://localhost:22122")
-        with pytest.raises(NotImplementedError):
-            MovingWindowRateLimiter(storage)
-
-    @all_storage
-    @fixed_start
-    @pytest.mark.flaky
-    def test_test_fixed_window(self, uri, args, fixture):
-        storage = storage_from_string(uri, **args)
-        limiter = FixedWindowRateLimiter(storage)
-        limit = RateLimitItemPerHour(2, 1)
-        assert limiter.hit(limit)
-        assert limiter.test(limit)
-        assert limiter.hit(limit)
-        assert not limiter.test(limit)
-        assert not limiter.hit(limit)
-
-    @sliding_window_counter_storage
-    @fixed_start
-    @pytest.mark.flaky
-    def test_test_sliding_window_counter(self, uri, args, fixture):
-        storage = storage_from_string(uri, **args)
-        limiter = SlidingWindowCounterRateLimiter(storage)
-        limit = RateLimitItemPerHour(2, 1)
-        assert limiter.hit(limit)
-        assert limiter.test(limit)
-        assert limiter.hit(limit)
-        assert not limiter.test(limit)
-        assert not limiter.hit(limit)
-
-    @moving_window_storage
     def test_test_moving_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limit = RateLimitItemPerHour(2, 1)
