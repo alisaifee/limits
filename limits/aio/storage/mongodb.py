@@ -417,29 +417,34 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                 },
                 {
                     "$set": {
-                        "_acquired": {
-                            "$lte": [{"$add": ["$curWeightedCount", amount]}, limit]
-                        }
-                    }
-                },
-                {"$unset": ["curWeightedCount"]},
-                {
-                    "$set": {
                         "currentCount": {
                             "$cond": {
-                                "if": {"$eq": ["$_acquired", True]},
+                                "if": {
+                                    "$lte": [
+                                        {"$add": ["$curWeightedCount", amount]},
+                                        limit,
+                                    ]
+                                },
                                 "then": {"$add": ["$currentCount", amount]},
                                 "else": "$currentCount",
                             }
                         }
                     }
                 },
+                {
+                    "$set": {
+                        "_acquired": {
+                            "$lte": [{"$add": ["$curWeightedCount", amount]}, limit]
+                        }
+                    }
+                },
+                {"$unset": ["curWeightedCount"]},
             ],
             return_document=self.proxy_dependency.module.ReturnDocument.AFTER,
             upsert=True,
         )
 
-        return cast(bool, result["_acquired"]) and result["currentCount"] <= limit
+        return cast(bool, result["_acquired"])
 
     async def get_sliding_window(
         self, key: str, expiry: int

@@ -457,28 +457,33 @@ class MongoDBStorageBase(
                 },
                 {
                     "$set": {
-                        "_acquired": {
-                            "$lte": [{"$add": ["$curWeightedCount", amount]}, limit]
-                        }
-                    }
-                },
-                {"$unset": ["curWeightedCount"]},
-                {
-                    "$set": {
                         "currentCount": {
                             "$cond": {
-                                "if": {"$eq": ["$_acquired", True]},
+                                "if": {
+                                    "$lte": [
+                                        {"$add": ["$curWeightedCount", amount]},
+                                        limit,
+                                    ]
+                                },
                                 "then": {"$add": ["$currentCount", amount]},
                                 "else": "$currentCount",
                             }
                         }
                     }
                 },
+                {
+                    "$set": {
+                        "_acquired": {
+                            "$lte": [{"$add": ["$curWeightedCount", amount]}, limit]
+                        }
+                    }
+                },
+                {"$unset": ["curWeightedCount"]},
             ],
             return_document=self.lib.ReturnDocument.AFTER,
             upsert=True,
         )
-        return cast(bool, result["_acquired"]) and result["currentCount"] <= limit
+        return cast(bool, result["_acquired"])
 
 
 @versionadded(version="2.1")
