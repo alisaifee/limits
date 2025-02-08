@@ -269,6 +269,13 @@ sliding_window_counter_storage = pytest.mark.parametrize(
             marks=pytest.mark.redis_sentinel,
             id="redis-sentinel",
         ),
+        pytest.param(
+            "mongodb://localhost:37017/",
+            {},
+            lf("mongodb"),
+            marks=pytest.mark.mongodb,
+            id="mongodb",
+        ),
     ],
 )
 
@@ -465,6 +472,13 @@ async_sliding_window_counter_storage = pytest.mark.parametrize(
             lf("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
             id="redis-sentinel",
+        ),
+        pytest.param(
+            "async+mongodb://localhost:37017/",
+            {},
+            lf("mongodb"),
+            marks=pytest.mark.mongodb,
+            id="mongodb",
         ),
     ],
 )

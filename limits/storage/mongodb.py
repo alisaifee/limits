@@ -20,10 +20,12 @@ from limits.typing import (
 )
 
 from ..util import get_dependency
-from .base import MovingWindowSupport, Storage
+from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
 
 
-class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
+class MongoDBStorageBase(
+    Storage, MovingWindowSupport, SlidingWindowCounterSupport, ABC
+):
     """
     Rate limit storage with MongoDB as backend.
 
@@ -48,7 +50,8 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
          collections.
         :param counter_collection_name: The collection name to use for individual counters
          used in fixed window strategies
-        :param window_collection_name: The collection name to use for moving window storage
+        :param window_collection_name: The collection name to use for sliding & moving window
+         storage
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed to the
@@ -288,6 +291,199 @@ class MongoDBStorageBase(Storage, MovingWindowSupport, ABC):
             return True
         except self.lib.errors.DuplicateKeyError:
             return False
+
+    def get_sliding_window(
+        self, key: str, expiry: int
+    ) -> Tuple[int, float, int, float]:
+        expiry_ms = expiry * 1000
+        if result := self.windows.find_one_and_update(
+            {"_id": key},
+            [
+                {
+                    "$set": {
+                        "previousCount": {
+                            "$cond": {
+                                "if": {
+                                    "$lte": [
+                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        expiry_ms,
+                                    ]
+                                },
+                                "then": {"$ifNull": ["$currentCount", 0]},
+                                "else": {"$ifNull": ["$previousCount", 0]},
+                            }
+                        },
+                        "currentCount": {
+                            "$cond": {
+                                "if": {
+                                    "$lte": [
+                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        expiry_ms,
+                                    ]
+                                },
+                                "then": 0,
+                                "else": {"$ifNull": ["$currentCount", 0]},
+                            }
+                        },
+                        "expiresAt": {
+                            "$cond": {
+                                "if": {
+                                    "$lte": [
+                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        expiry_ms,
+                                    ]
+                                },
+                                "then": {
+                                    "$add": ["$expiresAt", expiry_ms],
+                                },
+                                "else": "$expiresAt",
+                            }
+                        },
+                    }
+                }
+            ],
+            return_document=self.lib.ReturnDocument.AFTER,
+            projection=["currentCount", "previousCount", "expiresAt"],
+        ):
+            expires_at = (
+                (result["expiresAt"].replace(tzinfo=datetime.timezone.utc).timestamp())
+                if result.get("expiresAt")
+                else time.time()
+            )
+            current_ttl = max(0, expires_at - time.time())
+            prev_ttl = max(0, current_ttl - expiry if result["previousCount"] else 0)
+
+            return (
+                result["previousCount"],
+                prev_ttl,
+                result["currentCount"],
+                current_ttl,
+            )
+        return 0, 0.0, 0, 0.0
+
+    def acquire_sliding_window_entry(
+        self, key: str, limit: int, expiry: int, amount: int = 1
+    ) -> bool:
+        expiry_ms = expiry * 1000
+        result = self.windows.find_one_and_update(
+            {"_id": key},
+            [
+                {
+                    "$set": {
+                        "previousCount": {
+                            "$cond": {
+                                "if": {
+                                    "$lte": [
+                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        expiry_ms,
+                                    ]
+                                },
+                                "then": {"$ifNull": ["$currentCount", 0]},
+                                "else": {"$ifNull": ["$previousCount", 0]},
+                            }
+                        },
+                    }
+                },
+                {
+                    "$set": {
+                        "currentCount": {
+                            "$cond": {
+                                "if": {
+                                    "$lte": [
+                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        expiry_ms,
+                                    ]
+                                },
+                                "then": 0,
+                                "else": {"$ifNull": ["$currentCount", 0]},
+                            }
+                        },
+                        "expiresAt": {
+                            "$cond": {
+                                "if": {
+                                    "$lte": [
+                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        expiry_ms,
+                                    ]
+                                },
+                                "then": {
+                                    "$cond": {
+                                        "if": {"$gt": ["$expiresAt", 0]},
+                                        "then": {"$add": ["$expiresAt", expiry_ms]},
+                                        "else": {"$add": ["$$NOW", 2 * expiry_ms]},
+                                    }
+                                },
+                                "else": "$expiresAt",
+                            }
+                        },
+                    }
+                },
+                {
+                    "$set": {
+                        "curWeightedCount": {
+                            "$floor": {
+                                "$add": [
+                                    {
+                                        "$multiply": [
+                                            "$previousCount",
+                                            {
+                                                "$divide": [
+                                                    {
+                                                        "$max": [
+                                                            0,
+                                                            {
+                                                                "$subtract": [
+                                                                    "$expiresAt",
+                                                                    {
+                                                                        "$add": [
+                                                                            "$$NOW",
+                                                                            expiry_ms,
+                                                                        ]
+                                                                    },
+                                                                ]
+                                                            },
+                                                        ]
+                                                    },
+                                                    expiry_ms,
+                                                ]
+                                            },
+                                        ]
+                                    },
+                                    "$currentCount",
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "$set": {
+                        "currentCount": {
+                            "$cond": {
+                                "if": {
+                                    "$lte": [
+                                        {"$add": ["$curWeightedCount", amount]},
+                                        limit,
+                                    ]
+                                },
+                                "then": {"$add": ["$currentCount", amount]},
+                                "else": "$currentCount",
+                            }
+                        }
+                    }
+                },
+                {
+                    "$set": {
+                        "_acquired": {
+                            "$lte": [{"$add": ["$curWeightedCount", amount]}, limit]
+                        }
+                    }
+                },
+                {"$unset": ["curWeightedCount"]},
+            ],
+            return_document=self.lib.ReturnDocument.AFTER,
+            upsert=True,
+        )
+        return cast(bool, result["_acquired"])
 
 
 @versionadded(version="2.1")

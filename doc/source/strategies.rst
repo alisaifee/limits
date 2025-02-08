@@ -48,8 +48,8 @@ Sliding Window Counter
 ======================
 .. versionadded:: 4.2
 
-.. warning:: The sliding window strategy is not implemented for the ``mongodb``
-    and ``etcd`` storage backends.
+.. warning:: The sliding window strategy is not implemented for the
+   ``etcd`` storage backend.
 
 This strategy approximates the moving window strategy, with less memory use.
 It approximates the behavior of a moving window by maintaining counters for two adjacent
