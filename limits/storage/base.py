@@ -131,8 +131,8 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
 
 class MovingWindowSupport(ABC):
     """
-    Abstract base for storages that intend to support
-    the moving window strategy
+    Abstract base class for storages that support
+    the :ref:`strategies:moving window` strategy
     """
 
     def __new__(cls, *args: Any, **kwargs: Any) -> MovingWindowSupport:  # type: ignore[explicit-any]
@@ -175,8 +175,8 @@ class MovingWindowSupport(ABC):
 
 class SlidingWindowCounterSupport(ABC):
     """
-    Abstract base for storages that intend to support
-    the sliding window counter strategy
+    Abstract base class for storages that support
+    the :ref:`strategies:sliding window counter` strategy.
     """
 
     def __new__(cls, *args: Any, **kwargs: Any) -> SlidingWindowCounterSupport:  # type: ignore[explicit-any]

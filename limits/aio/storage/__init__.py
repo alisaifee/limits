@@ -3,7 +3,7 @@ Implementations of storage backends to be used with
 :class:`limits.aio.strategies.RateLimiter` strategies
 """
 
-from .base import MovingWindowSupport, Storage
+from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
 from .etcd import EtcdStorage
 from .memcached import MemcachedStorage
 from .memory import MemoryStorage
@@ -13,6 +13,7 @@ from .redis import RedisClusterStorage, RedisSentinelStorage, RedisStorage
 __all__ = [
     "Storage",
     "MovingWindowSupport",
+    "SlidingWindowCounterSupport",
     "EtcdStorage",
     "MemcachedStorage",
     "MemoryStorage",

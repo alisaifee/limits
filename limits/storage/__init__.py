@@ -9,7 +9,7 @@ from typing import Union, cast
 import limits
 
 from ..errors import ConfigurationError
-from .base import MovingWindowSupport, Storage
+from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
 from .etcd import EtcdStorage
 from .memcached import MemcachedStorage
 from .memory import MemoryStorage
@@ -67,6 +67,7 @@ __all__ = [
     "storage_from_string",
     "Storage",
     "MovingWindowSupport",
+    "SlidingWindowCounterSupport",
     "EtcdStorage",
     "MongoDBStorageBase",
     "MemoryStorage",
