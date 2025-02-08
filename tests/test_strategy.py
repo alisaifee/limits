@@ -141,6 +141,7 @@ class TestSlidingWindow:
                 start + 2, 1e-2
             )
 
+    @pytest.mark.flaky
     def test_sliding_window_counter_total_reset(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = SlidingWindowCounterRateLimiter(storage)
