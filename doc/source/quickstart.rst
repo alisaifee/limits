@@ -31,14 +31,35 @@ Initialize the storage backend
         from limits import storage
         limits_storage = storage.RedisStorage("redis://localhost:6379/1")
 
-Initialize a rate limiter with the :ref:`Moving Window<strategies:moving window>` Strategy
-------------------------------------------------------------------------------------------
+Initialize a rate limiter
+--------------------------
 
-.. code::
+.. tab:: With the Fixed window strategy
 
-    from limits import strategies
-    moving_window = strategies.MovingWindowRateLimiter(limits_storage)
+    .. code::
 
+        from limits import strategies
+        limiter = strategies.FixedWindowRateLimiter(limits_storage)
+
+.. tab:: With the Moving window strategy
+
+    .. caution:: If the storage used does not support the moving window
+       strategy, :exc:`NotImplementedError` will be raised
+
+    .. code::
+
+        from limits import strategies
+        limiter = strategies.MovingWindowRateLimiter(limits_storage)
+
+.. tab:: With the Sliding window counter strategy
+
+    .. caution:: If the storage used does not support the sliding window
+       counter strategy, :exc:`NotImplementedError` will be raised
+
+    .. code::
+
+        from limits import strategies
+        limiter = strategies.SlidingWindowCounterRateLimiter(limits_storage)
 
 Describe the rate limit
 =======================
@@ -68,36 +89,36 @@ Consume the limits
 
 .. code::
 
-    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
-    assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
-    assert True == moving_window.hit(one_per_minute, "test_namespace", "bar")
+    assert True == limiter.hit(one_per_minute, "test_namespace", "foo")
+    assert False == limiter.hit(one_per_minute, "test_namespace", "foo")
+    assert True == limiter.hit(one_per_minute, "test_namespace", "bar")
 
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
-    assert False == moving_window.hit(one_per_second, "test_namespace", "foo")
+    assert True == limiter.hit(one_per_second, "test_namespace", "foo")
+    assert False == limiter.hit(one_per_second, "test_namespace", "foo")
     time.sleep(1)
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
+    assert True == limiter.hit(one_per_second, "test_namespace", "foo")
 
 Check without consuming
 -----------------------
 
 .. code::
 
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
-    while not moving_window.test(one_per_second, "test_namespace", "foo"):
+    assert True == limiter.hit(one_per_second, "test_namespace", "foo")
+    while not limiter.test(one_per_second, "test_namespace", "foo"):
         time.sleep(0.01)
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
+    assert True == limiter.hit(one_per_second, "test_namespace", "foo")
 
 Query available capacity and reset time
 -----------------------------------------
 
 .. code::
 
-   assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
-   window = moving_window.get_window_stats(one_per_minute, "test_namespace", "foo")
+   assert True == limiter.hit(one_per_minute, "test_namespace", "foo")
+   window = limiter.get_window_stats(one_per_minute, "test_namespace", "foo")
    assert window.remaining == 0
-   assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
+   assert False == limiter.hit(one_per_minute, "test_namespace", "foo")
    time.sleep(window.reset_time - time.time())
-   assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
+   assert True == limiter.hit(one_per_minute, "test_namespace", "foo")
 
 
 Clear a limit
@@ -105,10 +126,10 @@ Clear a limit
 
 .. code::
 
-    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
-    assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
-    moving_window.clear(one_per_minute, "test_namespace", "foo")
-    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
+    assert True == limiter.hit(one_per_minute, "test_namespace", "foo")
+    assert False == limiter.hit(one_per_minute, "test_namespace", "foo")
+    limiter.clear(one_per_minute, "test_namespace", "foo")
+    assert True == limiter.hit(one_per_minute, "test_namespace", "foo")
 
 
 
