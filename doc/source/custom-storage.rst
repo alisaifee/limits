@@ -5,7 +5,7 @@ Custom storage backends
 =======================
 
 The **limits** package ships with a few storage implementations which allow you
-to get started with some common data stores (redis & memcached) used for rate limiting.
+to get started with some common data stores (Redis & Memcached) used for rate limiting.
 
 To accommodate customizations to either the default storage backends or
 different storage backends altogether, **limits** uses a registry pattern that
@@ -15,77 +15,96 @@ to the package itself).
 Creating a custom backend requires:
 
     #. Subclassing :class:`limits.storage.Storage` or :class:`limits.aio.storage.Storage`
-    #. Providing implementations for the abstractmethods of :class:`~limits.storage.Storage`
-    #. If the storage can support the :ref:`strategies:moving window` strategy - additionally implementing
+    #. Providing implementations for the abstract methods of :class:`~limits.storage.Storage`
+    #. If the storage can support the :ref:`strategies:moving window` strategy – additionally implementing
        the methods from :class:`~limits.storage.MovingWindowSupport`
-    #. Providing naming *schemes* that can be used to lookup the custom storage in the storage registry.
+    #. If the storage can support the :ref:`strategies:sliding window counter` strategy – additionally implementing
+       the methods from :class:`~limits.storage.SlidingWindowCounterSupport`
+    #. Providing naming *schemes* that can be used to look up the custom storage in the storage registry.
        (Refer to :ref:`storage:storage scheme` for more details)
 
 Example
 =======
 
-The following example shows two backend stores: one which doesn't implement the
-:ref:`strategies:moving window` strategy and one that does. Do note the :code:`STORAGE_SCHEME` class
+The following example shows two backend stores: one which only supports the :ref:`strategies:fixed window`
+strategy and one that implements all strategies. Note the :code:`STORAGE_SCHEME` class
 variables which result in the classes getting registered with the **limits** storage registry::
 
-
-    import urlparse
-    from limits.storage import MovingWindowSupport
-    from limits.storage import Storage
     import time
+    from urllib.parse import urlparse
+    from typing import Tuple
+    from limits.storage import Storage, MovingWindowSupport, SlidingWindowCounterSupport
 
-    class AwesomeStorage(Storage):
-        STORAGE_SCHEME = ["awesomedb"]
-        def __init__(self, uri, **options):
-            self.awesomesness = options.get("awesomeness", None)
-            self.host = urlparse.urlparse(uri).netloc
-            self.port = urlparse.urlparse(uri).port
+    class BasicStorage(Storage):
+        """A simple fixed-window storage backend."""
+        STORAGE_SCHEME = ["basicdb"]
+
+        def __init__(self, uri: str, **options) -> None:
+            self.host = urlparse(uri).hostname or ""
+            self.port = urlparse(uri).port or 0
 
         def check(self) -> bool:
             return True
 
-        def get_expiry(self, key:str) -> int:
+        def get_expiry(self, key: str) -> int:
             return int(time.time())
 
-        def incr(self, key: str, expiry: int, elastic_expiry=False) -> int:
-            return
+        def incr(self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1) -> int:
+            return amount
 
-        def get(self, key):
+        def get(self, key: str) -> int:
             return 0
 
+        def reset(self) -> int:
+            return 0
 
-    class AwesomerStorage(Storage, MovingWindowSupport):
-        STORAGE_SCHEME = ["awesomerdb"]
-        def __init__(self, uri, **options):
-            self.awesomesness = options.get("awesomeness", None)
-            self.host = urlparse.urlparse(uri).netloc
-            self.port = urlparse.urlparse(uri).port
+        def clear(self, key: str) -> None:
+            pass
 
-        def check(self):
+    class AdvancedStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
+        """A more advanced storage backend supporting all rate-limiting strategies."""
+        STORAGE_SCHEME = ["advanceddatabase"]
+
+        def __init__(self, uri: str, **options) -> None:
+            self.host = urlparse(uri).hostname or ""
+            self.port = urlparse(uri).port or 0
+
+        def check(self) -> bool:
             return True
 
-        def get_expiry(self, key):
+        def get_expiry(self, key: str) -> int:
             return int(time.time())
 
-        def incr(self, key, expiry, elastic_expiry=False):
-            return
+        def incr(self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1) -> int:
+            return amount
 
-        def get(self, key):
+        def get(self, key: str) -> int:
             return 0
 
-        def acquire_entry(self, key, limit, expiry):
+        def reset(self) -> int:
+            return 0
+
+        def clear(self, key: str) -> None:
+            pass
+
+        # --- Moving Window Support ---
+        def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
             return True
 
-        def get_moving_window(
-            self, key, limit, expiry
-        ):
-            return [0, 10]
+        def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[float, int]:
+            return (time.time(), 0)
 
+        # --- Sliding Window Counter Support ---
+        def acquire_sliding_window_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
+            return True
 
-Once the above implementations are declared you can look them up
+        def get_sliding_window(self, key: str, expiry: int) -> Tuple[int, float, int, float]:
+            return (0, expiry / 2, 0, expiry)
+
+Once the above implementations are declared, you can look them up
 using the :ref:`api:storage factory function` in the following manner::
 
     from limits.storage import storage_from_string
 
-    awesome = storage_from_string("awesomedb://localhoax:42", awesomeness=0)
-    awesomer = storage_from_string("awesomerdb://localhoax:42", awesomeness=1)
+    basic_store = storage_from_string("basicdb://localhost:42")
+    advanced_store = storage_from_string("advanceddatabase://localhost:42")
