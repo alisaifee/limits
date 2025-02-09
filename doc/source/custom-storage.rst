@@ -15,7 +15,8 @@ to the package itself).
 Creating a custom backend requires:
 
     #. Subclassing :class:`limits.storage.Storage` or :class:`limits.aio.storage.Storage`
-    #. Providing implementations for the abstract methods of :class:`~limits.storage.Storage`
+       and implementing the abstract methods. This will allow the storage to be used with
+       the :ref:`strategies:fixed window` strategies.
     #. If the storage can support the :ref:`strategies:moving window` strategy – additionally implementing
        the methods from :class:`~limits.storage.MovingWindowSupport`
     #. If the storage can support the :ref:`strategies:sliding window counter` strategy – additionally implementing
@@ -32,7 +33,7 @@ variables which result in the classes getting registered with the **limits** sto
 
     import time
     from urllib.parse import urlparse
-    from typing import Tuple
+    from typing import Tuple, Type, Union
     from limits.storage import Storage, MovingWindowSupport, SlidingWindowCounterSupport
 
     class BasicStorage(Storage):
@@ -42,6 +43,10 @@ variables which result in the classes getting registered with the **limits** sto
         def __init__(self, uri: str, **options) -> None:
             self.host = urlparse(uri).hostname or ""
             self.port = urlparse(uri).port or 0
+
+        @property
+        def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+            return ()
 
         def check(self) -> bool:
             return True
@@ -68,6 +73,10 @@ variables which result in the classes getting registered with the **limits** sto
         def __init__(self, uri: str, **options) -> None:
             self.host = urlparse(uri).hostname or ""
             self.port = urlparse(uri).port or 0
+
+        @property
+        def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+            return ()
 
         def check(self) -> bool:
             return True
