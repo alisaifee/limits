@@ -2,6 +2,11 @@
 Quickstart
 ==========
 
+.. note:: In an async context, simply substitute the imports
+   from :mod:`limits` to :mod:`limits.aio` and use ``await`` in
+   the storage and limiter methods.
+
+
 Initialize the strategy & storage
 =================================
 
