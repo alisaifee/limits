@@ -13,6 +13,7 @@ from limits.aio.storage import (
     RedisClusterStorage,
     RedisSentinelStorage,
     RedisStorage,
+    SlidingWindowCounterSupport,
     Storage,
 )
 from limits.aio.strategies import MovingWindowRateLimiter
@@ -267,7 +268,7 @@ class TestConcreteStorages:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("wrap_exceptions", (True, False))
 class TestStorageErrors:
-    class MyStorage(Storage, MovingWindowSupport):
+    class MyStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         STORAGE_SCHEME = ["mystorage"]
 
         class MyError(Exception):
@@ -299,6 +300,16 @@ class TestStorageErrors:
             raise self.MyError()
 
         async def get_moving_window(self, key, limit, expiry):
+            raise self.MyError()
+
+        async def acquire_sliding_window_entry(
+            self, key: str, limit: int, expiry: int, amount: int = 1
+        ) -> bool:
+            raise self.MyError()
+
+        async def get_sliding_window(
+            self, key: str, expiry: int
+        ) -> tuple[int, float, int, float]:
             raise self.MyError()
 
     def assert_exception(self, exc, wrap_exceptions):
@@ -356,6 +367,22 @@ class TestStorageErrors:
         with pytest.raises(Exception) as exc:
             await self.MyStorage(wrap_exceptions=wrap_exceptions).get_moving_window(
                 "", 1, 1
+            )
+
+        self.assert_exception(exc.value, wrap_exceptions)
+
+    async def test_acquire_sliding_window_entry_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            await self.MyStorage(
+                wrap_exceptions=wrap_exceptions
+            ).acquire_sliding_window_entry("", 1, 1)
+
+        self.assert_exception(exc.value, wrap_exceptions)
+
+    async def test_get_sliding_window_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            await self.MyStorage(wrap_exceptions=wrap_exceptions).get_sliding_window(
+                "", 1
             )
 
         self.assert_exception(exc.value, wrap_exceptions)
