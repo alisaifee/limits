@@ -219,6 +219,21 @@ class TestConcreteStorages:
         time.sleep(1.1)
         assert await storage.get(limit.key_for()) == 0
 
+    @async_fixed_start
+    async def test_expiry_acquire_sliding_window_entry(
+        self, uri, args, expected_instance, fixture
+    ):
+        if not issubclass(expected_instance, SlidingWindowCounterSupport):
+            pytest.skip("%s does not support acquire entry" % expected_instance)
+        storage = storage_from_string(uri, **args)
+        limit = RateLimitItemPerSecond(1)
+        assert await storage.acquire_sliding_window_entry(
+            limit.key_for(), limit.amount, limit.get_expiry()
+        )
+        assert await storage.get_sliding_window(limit.key_for(), limit.get_expiry())[
+            -1
+        ] == pytest.approx(2, abs=1e2)
+
     async def test_incr_custom_amount(self, uri, args, expected_instance, fixture):
         storage = storage_from_string(uri, **args)
         limit = RateLimitItemPerMinute(1)
