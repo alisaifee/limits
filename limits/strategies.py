@@ -5,7 +5,6 @@ Rate limiting strategies
 import time
 from abc import ABCMeta, abstractmethod
 from math import floor
-from typing import Dict, Type, Union, cast
 
 from deprecated.sphinx import versionadded
 
@@ -13,6 +12,7 @@ from limits.storage.base import SlidingWindowCounterSupport
 
 from .limits import RateLimitItem
 from .storage import MovingWindowSupport, Storage, StorageTypes
+from .typing import Union, cast
 from .util import WindowStats
 
 
@@ -310,13 +310,13 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
 
 
 KnownStrategy = Union[
-    Type[SlidingWindowCounterRateLimiter],
-    Type[FixedWindowRateLimiter],
-    Type[FixedWindowElasticExpiryRateLimiter],
-    Type[MovingWindowRateLimiter],
+    type[SlidingWindowCounterRateLimiter],
+    type[FixedWindowRateLimiter],
+    type[FixedWindowElasticExpiryRateLimiter],
+    type[MovingWindowRateLimiter],
 ]
 
-STRATEGIES: Dict[str, KnownStrategy] = {
+STRATEGIES: dict[str, KnownStrategy] = {
     "sliding-window-counter": SlidingWindowCounterRateLimiter,
     "fixed-window": FixedWindowRateLimiter,
     "fixed-window-elastic-expiry": FixedWindowElasticExpiryRateLimiter,

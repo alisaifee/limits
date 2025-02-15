@@ -3,19 +3,18 @@ from __future__ import annotations
 import functools
 import threading
 from abc import ABC, abstractmethod
-from typing import Any, cast
 
 from limits import errors
 from limits.storage.registry import StorageRegistry
 from limits.typing import (
+    Any,
     Callable,
-    List,
     Optional,
     P,
     R,
-    Tuple,
     Type,
     Union,
+    cast,
 )
 from limits.util import LazyDependency
 
@@ -38,7 +37,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     Base class to extend when implementing a storage backend.
     """
 
-    STORAGE_SCHEME: Optional[List[str]]
+    STORAGE_SCHEME: Optional[list[str]]
     """The storage schemes to register against this implementation"""
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Storage:  # type: ignore[explicit-any]
@@ -73,7 +72,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
 
     @property
     @abstractmethod
-    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+    def base_exceptions(self) -> Union[Type[Exception], tuple[Type[Exception], ...]]:
         raise NotImplementedError
 
     @abstractmethod
@@ -161,7 +160,7 @@ class MovingWindowSupport(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[float, int]:
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -228,7 +227,7 @@ class TimestampedSlidingWindow:
     """Helper class for storage that support the sliding window counter, with timestamp based keys."""
 
     @classmethod
-    def sliding_window_keys(cls, key: str, expiry: int, at: float) -> Tuple[str, str]:
+    def sliding_window_keys(cls, key: str, expiry: int, at: float) -> tuple[str, str]:
         """
         returns the previous and the current window's keys.
 

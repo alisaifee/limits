@@ -1,20 +1,19 @@
+from collections import Counter
+from collections.abc import Awaitable, Iterable
 from typing import (
     TYPE_CHECKING,
     Any,
-    Awaitable,
     Callable,
-    Dict,
-    Iterable,
-    List,
+    ClassVar,
     NamedTuple,
     Optional,
-    Tuple,
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
-from typing_extensions import ClassVar, Counter, ParamSpec, Protocol, TypeAlias
+from typing_extensions import ParamSpec, Protocol, TypeAlias
 
 Serializable = Union[int, str, float]
 
@@ -125,23 +124,22 @@ RedisClient = Union["redis.Redis[bytes]", "redis.cluster.RedisCluster[bytes]"]
 
 
 class ScriptP(Protocol[R_co]):
-    def __call__(self, keys: List[Serializable], args: List[Serializable]) -> R_co: ...
+    def __call__(self, keys: list[Serializable], args: list[Serializable]) -> R_co: ...
 
 
-MongoClient: TypeAlias = "pymongo.MongoClient[Dict[str, Any]]"  # type:ignore[explicit-any]
-MongoDatabase: TypeAlias = "pymongo.database.Database[Dict[str, Any]]"  # type:ignore[explicit-any]
-MongoCollection: TypeAlias = "pymongo.collection.Collection[Dict[str, Any]]"  # type:ignore[explicit-any]
+MongoClient: TypeAlias = "pymongo.MongoClient[dict[str, Any]]"  # type:ignore[explicit-any]
+MongoDatabase: TypeAlias = "pymongo.database.Database[dict[str, Any]]"  # type:ignore[explicit-any]
+MongoCollection: TypeAlias = "pymongo.collection.Collection[dict[str, Any]]"  # type:ignore[explicit-any]
 
 __all__ = [
+    "Any",
     "AsyncRedisClient",
     "Awaitable",
     "Callable",
     "ClassVar",
     "Counter",
-    "Dict",
     "EmcacheClientP",
     "ItemP",
-    "List",
     "MemcachedClientP",
     "MongoClient",
     "MongoCollection",
@@ -157,8 +155,9 @@ __all__ = [
     "R",
     "R_co",
     "RedisClient",
-    "Tuple",
     "Type",
     "TypeVar",
+    "TYPE_CHECKING",
     "Union",
+    "cast",
 ]

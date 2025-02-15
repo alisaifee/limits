@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from functools import total_ordering
-from typing import Dict, NamedTuple, Optional, Tuple, Type, Union, cast
 
-from limits.typing import ClassVar, List
+from limits.typing import ClassVar, NamedTuple, cast
 
 
-def safe_string(value: Union[bytes, str, int, float]) -> str:
+def safe_string(value: bytes | str | int | float) -> str:
     """
     normalize a byte/str/int or float to a str
     """
@@ -33,15 +32,15 @@ TIME_TYPES = dict(
     second=Granularity(1, "second"),
 )
 
-GRANULARITIES: Dict[str, Type[RateLimitItem]] = {}
+GRANULARITIES: dict[str, type[RateLimitItem]] = {}
 
 
 class RateLimitItemMeta(type):
     def __new__(
         cls,
         name: str,
-        parents: Tuple[type, ...],
-        dct: Dict[str, Union[Granularity, List[str]]],
+        parents: tuple[type, ...],
+        dct: dict[str, Granularity | list[str]],
     ) -> RateLimitItemMeta:
         if "__slots__" not in dct:
             dct["__slots__"] = []
@@ -49,7 +48,7 @@ class RateLimitItemMeta(type):
 
         if "GRANULARITY" in dct:
             GRANULARITIES[dct["GRANULARITY"][1]] = cast(
-                Type[RateLimitItem], granularity
+                type[RateLimitItem], granularity
             )
 
         return granularity
@@ -77,7 +76,7 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
     """
 
     def __init__(
-        self, amount: int, multiples: Optional[int] = 1, namespace: str = "LIMITER"
+        self, amount: int, multiples: int | None = 1, namespace: str = "LIMITER"
     ):
         self.namespace = namespace
         self.amount = int(amount)
@@ -101,7 +100,7 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
 
         return self.GRANULARITY.seconds * self.multiples
 
-    def key_for(self, *identifiers: Union[bytes, str, int, float]) -> str:
+    def key_for(self, *identifiers: bytes | str | int | float) -> str:
         """
         Constructs a key for the current limit and any additional
         identifiers provided.

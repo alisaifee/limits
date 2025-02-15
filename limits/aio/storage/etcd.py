@@ -1,7 +1,7 @@
 import asyncio
 import time
 import urllib.parse
-from typing import TYPE_CHECKING, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from limits.aio.storage.base import Storage
 from limits.errors import ConcurrentUpdateError
@@ -53,7 +53,7 @@ class EtcdStorage(Storage):
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[type[Exception], tuple[type[Exception], ...]]:  # pragma: no cover
         return self.lib.ClientError  # type: ignore[no-any-return]
 
     def prefixed_key(self, key: str) -> bytes:

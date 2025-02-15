@@ -11,7 +11,7 @@ from limits.aio.storage.base import (
     Storage,
 )
 from limits.errors import ConfigurationError
-from limits.typing import AsyncRedisClient, Dict, Optional, Tuple, Type, Union
+from limits.typing import AsyncRedisClient, Optional, Type, Union
 from limits.util import get_package_data
 
 if TYPE_CHECKING:
@@ -88,7 +88,7 @@ class RedisInteractor:
 
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
-    ) -> Tuple[float, int]:
+    ) -> tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -108,7 +108,7 @@ class RedisInteractor:
 
     async def get_sliding_window(
         self, key: str, expiry: int
-    ) -> Tuple[int, float, int, float]:
+    ) -> tuple[int, float, int, float]:
         previous_key = self.prefixed_key(self._previous_window_key(key))
         current_key = self.prefixed_key(self._current_window_key(key))
 
@@ -268,7 +268,7 @@ class RedisStorage(
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.dependency.exceptions.RedisError  # type: ignore[no-any-return]
 
     def initialize_storage(self, _uri: str) -> None:
@@ -387,7 +387,7 @@ class RedisClusterStorage(RedisStorage):
     The storage schemes for redis cluster to be used in an async context
     """
 
-    DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
+    DEFAULT_OPTIONS: dict[str, Union[float, str, bool]] = {
         "max_connections": 1000,
     }
     "Default options passed to :class:`coredis.RedisCluster`"
@@ -407,7 +407,7 @@ class RedisClusterStorage(RedisStorage):
          available or if the redis host cannot be pinged.
         """
         parsed = urllib.parse.urlparse(uri)
-        parsed_auth: Dict[str, Union[float, str, bool]] = {}
+        parsed_auth: dict[str, Union[float, str, bool]] = {}
 
         if parsed.username:
             parsed_auth["username"] = parsed.username
@@ -471,7 +471,7 @@ class RedisSentinelStorage(RedisStorage):
         uri: str,
         service_name: Optional[str] = None,
         use_replicas: bool = True,
-        sentinel_kwargs: Optional[Dict[str, Union[float, str, bool]]] = None,
+        sentinel_kwargs: Optional[dict[str, Union[float, str, bool]]] = None,
         **options: Union[float, str, bool],
     ):
         """
@@ -492,7 +492,7 @@ class RedisSentinelStorage(RedisStorage):
         sentinel_configuration = []
         connection_options = options.copy()
         sentinel_options = sentinel_kwargs.copy() if sentinel_kwargs else {}
-        parsed_auth: Dict[str, Union[float, str, bool]] = {}
+        parsed_auth: dict[str, Union[float, str, bool]] = {}
 
         if parsed.username:
             parsed_auth["username"] = parsed.username

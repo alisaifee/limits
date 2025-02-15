@@ -5,7 +5,7 @@ from packaging.version import Version
 
 from limits.errors import ConfigurationError
 from limits.storage.redis import RedisStorage
-from limits.typing import Dict, Optional, Tuple, Type, Union
+from limits.typing import Optional, Type, Union
 
 if TYPE_CHECKING:
     import redis.sentinel
@@ -28,7 +28,7 @@ class RedisSentinelStorage(RedisStorage):
         uri: str,
         service_name: Optional[str] = None,
         use_replicas: bool = True,
-        sentinel_kwargs: Optional[Dict[str, Union[float, str, bool]]] = None,
+        sentinel_kwargs: Optional[dict[str, Union[float, str, bool]]] = None,
         wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
@@ -56,7 +56,7 @@ class RedisSentinelStorage(RedisStorage):
         sentinel_configuration = []
         sentinel_options = sentinel_kwargs.copy() if sentinel_kwargs else {}
 
-        parsed_auth: Dict[str, Union[float, str, bool]] = {}
+        parsed_auth: dict[str, Union[float, str, bool]] = {}
 
         if parsed.username:
             parsed_auth["username"] = parsed.username
@@ -89,7 +89,7 @@ class RedisSentinelStorage(RedisStorage):
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.dependencies["redis"].RedisError  # type: ignore[no-any-return, attr-defined]
 
     def get(self, key: str) -> int:

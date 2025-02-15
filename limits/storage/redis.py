@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from packaging.version import Version
 
-from limits.typing import Optional, RedisClient, ScriptP, Tuple, Type, Union
+from limits.typing import Optional, RedisClient, ScriptP, Type, Union
 
 from ..util import get_package_data
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
@@ -29,9 +29,9 @@ class RedisInteractor:
         f"{RES_DIR}/acquire_sliding_window.lua"
     )
 
-    lua_moving_window: ScriptP[Tuple[int, int]]
+    lua_moving_window: ScriptP[tuple[int, int]]
     lua_acquire_moving_window: ScriptP[bool]
-    lua_sliding_window: ScriptP[Tuple[int, float, int, float]]
+    lua_sliding_window: ScriptP[tuple[int, float, int, float]]
     lua_acquire_sliding_window: ScriptP[bool]
 
     PREFIX = "LIMITS"
@@ -39,7 +39,7 @@ class RedisInteractor:
     def prefixed_key(self, key: str) -> str:
         return f"{self.PREFIX}:{key}"
 
-    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[float, int]:
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -57,7 +57,7 @@ class RedisInteractor:
 
     def get_sliding_window(
         self, key: str, expiry: int
-    ) -> Tuple[int, float, int, float]:
+    ) -> tuple[int, float, int, float]:
         previous_key = self.prefixed_key(self._previous_window_key(key))
         current_key = self.prefixed_key(self._current_window_key(key))
         if window := self.lua_sliding_window([previous_key, current_key], [expiry]):
@@ -250,7 +250,7 @@ class RedisStorage(
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.dependency.RedisError  # type: ignore[no-any-return]
 
     def initialize_storage(self, _uri: str) -> None:

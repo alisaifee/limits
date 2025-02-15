@@ -2,9 +2,9 @@ import inspect
 import threading
 import time
 import urllib.parse
+from collections.abc import Iterable
 from math import ceil, floor
 from types import ModuleType
-from typing import Any, Iterable, cast
 
 from limits.errors import ConfigurationError
 from limits.storage.base import (
@@ -13,15 +13,15 @@ from limits.storage.base import (
     TimestampedSlidingWindow,
 )
 from limits.typing import (
+    Any,
     Callable,
-    List,
     MemcachedClientP,
     Optional,
     P,
     R,
-    Tuple,
     Type,
     Union,
+    cast,
 )
 from limits.util import get_dependency
 
@@ -75,7 +75,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
             options.pop("cluster_library", "pymemcache.client.hash")
         )
         self.client_getter = cast(
-            Callable[[ModuleType, List[Tuple[str, int]]], MemcachedClientP],
+            Callable[[ModuleType, list[tuple[str, int]]], MemcachedClientP],
             options.pop("client_getter", self.get_client),
         )
         self.options = options
@@ -91,11 +91,11 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.dependency.MemcacheError  # type: ignore[no-any-return]
 
     def get_client(
-        self, module: ModuleType, hosts: List[Tuple[str, int]], **kwargs: str
+        self, module: ModuleType, hosts: list[tuple[str, int]], **kwargs: str
     ) -> MemcachedClientP:
         """
         returns a memcached client.

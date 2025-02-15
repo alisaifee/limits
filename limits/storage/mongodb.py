@@ -3,20 +3,17 @@ from __future__ import annotations
 import datetime
 import time
 from abc import ABC, abstractmethod
-from typing import cast
 
 from deprecated.sphinx import versionadded, versionchanged
 
 from limits.typing import (
-    Dict,
-    List,
     MongoClient,
     MongoCollection,
     MongoDatabase,
     Optional,
-    Tuple,
     Type,
     Union,
+    cast,
 )
 
 from ..util import get_dependency
@@ -101,7 +98,7 @@ class MongoDBStorageBase(
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.lib_errors.PyMongoError  # type: ignore
 
     def __initialize_database(self) -> None:
@@ -206,7 +203,7 @@ class MongoDBStorageBase(
         except:  # noqa: E722
             return False
 
-    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[float, int]:
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -260,9 +257,9 @@ class MongoDBStorageBase(
 
         timestamp = time.time()
         try:
-            updates: Dict[
+            updates: dict[
                 str,
-                Dict[str, Union[datetime.datetime, Dict[str, Union[List[float], int]]]],
+                dict[str, Union[datetime.datetime, dict[str, Union[list[float], int]]]],
             ] = {
                 "$push": {
                     "entries": {
@@ -294,7 +291,7 @@ class MongoDBStorageBase(
 
     def get_sliding_window(
         self, key: str, expiry: int
-    ) -> Tuple[int, float, int, float]:
+    ) -> tuple[int, float, int, float]:
         expiry_ms = expiry * 1000
         if result := self.windows.find_one_and_update(
             {"_id": key},

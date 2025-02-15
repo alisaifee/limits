@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import datetime
 import time
-from typing import cast
 
 from deprecated.sphinx import versionadded, versionchanged
 
@@ -12,7 +11,14 @@ from limits.aio.storage.base import (
     SlidingWindowCounterSupport,
     Storage,
 )
-from limits.typing import Dict, List, Optional, ParamSpec, Tuple, Type, TypeVar, Union
+from limits.typing import (
+    Optional,
+    ParamSpec,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 from limits.util import get_dependency
 
 P = ParamSpec("P")
@@ -88,7 +94,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.lib_errors.PyMongoError  # type: ignore
 
     @property
@@ -229,7 +235,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
 
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
-    ) -> Tuple[float, int]:
+    ) -> tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -286,9 +292,9 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
 
         timestamp = time.time()
         try:
-            updates: Dict[
+            updates: dict[
                 str,
-                Dict[str, Union[datetime.datetime, Dict[str, Union[List[float], int]]]],
+                dict[str, Union[datetime.datetime, dict[str, Union[list[float], int]]]],
             ] = {
                 "$push": {
                     "entries": {
@@ -448,7 +454,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
 
     async def get_sliding_window(
         self, key: str, expiry: int
-    ) -> Tuple[int, float, int, float]:
+    ) -> tuple[int, float, int, float]:
         expiry_ms = expiry * 1000
         if result := await self.database[
             self.__collection_mapping["windows"]

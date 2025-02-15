@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from abc import ABCMeta
 
-from limits.typing import Dict, List, Tuple, Union
+from limits.typing import Union
 
-SCHEMES: Dict[str, StorageRegistry] = {}
+SCHEMES: dict[str, StorageRegistry] = {}
 
 
 class StorageRegistry(ABCMeta):
     def __new__(
-        mcs, name: str, bases: Tuple[type, ...], dct: Dict[str, Union[str, List[str]]]
+        mcs, name: str, bases: tuple[type, ...], dct: dict[str, Union[str, list[str]]]
     ) -> StorageRegistry:
         storage_scheme = dct.get("STORAGE_SCHEME", None)
         cls = super().__new__(mcs, name, bases, dct)

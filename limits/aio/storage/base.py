@@ -2,22 +2,21 @@ from __future__ import annotations
 
 import functools
 from abc import ABC, abstractmethod
-from typing import Any, cast
 
 from deprecated.sphinx import versionadded
 
 from limits import errors
 from limits.storage.registry import StorageRegistry
 from limits.typing import (
+    Any,
     Awaitable,
     Callable,
-    List,
     Optional,
     P,
     R,
-    Tuple,
     Type,
     Union,
+    cast,
 )
 from limits.util import LazyDependency
 
@@ -44,7 +43,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     Base class to extend when implementing an async storage backend.
     """
 
-    STORAGE_SCHEME: Optional[List[str]]
+    STORAGE_SCHEME: Optional[list[str]]
     """The storage schemes to register against this implementation"""
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Storage:  # type: ignore[explicit-any]
@@ -77,7 +76,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
 
     @property
     @abstractmethod
-    def base_exceptions(self) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:
+    def base_exceptions(self) -> Union[Type[Exception], tuple[Type[Exception], ...]]:
         raise NotImplementedError
 
     @abstractmethod
@@ -169,7 +168,7 @@ class MovingWindowSupport(ABC):
     @abstractmethod
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
-    ) -> Tuple[float, int]:
+    ) -> tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window

@@ -10,7 +10,7 @@ from limits.storage.base import (
     Storage,
     TimestampedSlidingWindow,
 )
-from limits.typing import Dict, List, Optional, Tuple, Type, Union
+from limits.typing import Optional, Type, Union
 
 
 class LockableEntry(threading._RLock):  # type: ignore
@@ -37,8 +37,8 @@ class MemoryStorage(
     ):
         self.storage: limits.typing.Counter[str] = Counter()
         self.locks: defaultdict[str, threading.RLock] = defaultdict(threading.RLock)
-        self.expirations: Dict[str, float] = {}
-        self.events: Dict[str, List[LockableEntry]] = {}
+        self.expirations: dict[str, float] = {}
+        self.events: dict[str, list[LockableEntry]] = {}
         self.timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **_)
@@ -46,7 +46,7 @@ class MemoryStorage(
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return ValueError
 
     def __expire_events(self) -> None:
@@ -170,7 +170,7 @@ class MemoryStorage(
             else 0
         )
 
-    def get_moving_window(self, key: str, limit: int, expiry: int) -> Tuple[float, int]:
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -240,7 +240,7 @@ class MemoryStorage(
 
     def get_sliding_window(
         self, key: str, expiry: int
-    ) -> Tuple[int, float, int, float]:
+    ) -> tuple[int, float, int, float]:
         now = time.time()
         previous_key, current_key = self.sliding_window_keys(key, expiry, now)
         return self._get_sliding_window_info(previous_key, current_key, expiry, now)

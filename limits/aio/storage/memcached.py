@@ -1,13 +1,13 @@
 import time
 import urllib.parse
+from collections.abc import Iterable
 from math import ceil, floor
-from typing import Iterable
 
 from deprecated.sphinx import versionadded
 
 from limits.aio.storage.base import SlidingWindowCounterSupport, Storage
 from limits.storage.base import TimestampedSlidingWindow
-from limits.typing import EmcacheClientP, ItemP, Optional, Tuple, Type, Union
+from limits.typing import EmcacheClientP, ItemP, Optional, Type, Union
 
 
 @versionadded(version="2.1")
@@ -54,7 +54,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return (
             self.dependency.ClusterNoAvailableNodes,
             self.dependency.CommandError,
@@ -250,7 +250,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
 
     async def get_sliding_window(
         self, key: str, expiry: int
-    ) -> Tuple[int, float, int, float]:
+    ) -> tuple[int, float, int, float]:
         now = time.time()
         previous_key, current_key = self.sliding_window_keys(key, expiry, now)
         return await self._get_sliding_window_info(
@@ -259,7 +259,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
 
     async def _get_sliding_window_info(
         self, previous_key: str, current_key: str, expiry: int, now: float
-    ) -> Tuple[int, float, int, float]:
+    ) -> tuple[int, float, int, float]:
         result = await self.get_many([previous_key, current_key])
 
         raw_previous_count = result.get(previous_key.encode("utf-8"))

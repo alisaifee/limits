@@ -5,16 +5,15 @@ Asynchronous rate limiting strategies
 import time
 from abc import ABC, abstractmethod
 from math import floor
-from typing import cast
 
 from deprecated.sphinx import versionadded
 
-from limits.aio.storage.base import SlidingWindowCounterSupport
-
 from ..limits import RateLimitItem
 from ..storage import StorageTypes
+from ..typing import cast
 from ..util import WindowStats
 from .storage import MovingWindowSupport, Storage
+from .storage.base import SlidingWindowCounterSupport
 
 
 class RateLimiter(ABC):

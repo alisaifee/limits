@@ -1,9 +1,9 @@
 import time
 import urllib.parse
-from typing import TYPE_CHECKING, Optional, Tuple, Type, Union
 
 from limits.errors import ConcurrentUpdateError
 from limits.storage.base import Storage
+from limits.typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
     import etcd3
@@ -51,7 +51,7 @@ class EtcdStorage(Storage):
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[type[Exception], tuple[type[Exception], ...]]:  # pragma: no cover
         return self.lib.Etcd3Exception  # type: ignore[no-any-return]
 
     def prefixed_key(self, key: str) -> bytes:

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from packaging.version import Version
 
-from limits.typing import Dict, List, NamedTuple, Optional, Tuple, Type, Union
+from limits.typing import NamedTuple, Optional, Type, Union
 
 from .errors import ConfigurationError
 from .limits import GRANULARITIES, RateLimitItem
@@ -34,7 +34,7 @@ EXPR = re.compile(
 
 class WindowStats(NamedTuple):
     """
-    Tuple to describe a rate limited window
+    tuple to describe a rate limited window
     """
 
     #: Time as seconds since the Epoch when this window will be reset
@@ -84,7 +84,7 @@ class LazyDependency:
     without having to import them explicitly.
     """
 
-    DEPENDENCIES: Union[Dict[str, Optional[Version]], List[str]] = []
+    DEPENDENCIES: Union[dict[str, Optional[Version]], list[str]] = []
     """
     The python modules this class has a dependency on.
     Used to lazily populate the :attr:`dependencies`
@@ -105,7 +105,7 @@ class LazyDependency:
 
         if not getattr(self, "_dependencies", None):
             dependencies = DependencyDict()
-            mapping: Dict[str, Optional[Version]]
+            mapping: dict[str, Optional[Version]]
 
             if isinstance(self.DEPENDENCIES, list):
                 mapping = {dependency: None for dependency in self.DEPENDENCIES}
@@ -126,7 +126,7 @@ class LazyDependency:
         return self._dependencies
 
 
-def get_dependency(module_path: str) -> Tuple[Optional[ModuleType], Optional[Version]]:
+def get_dependency(module_path: str) -> tuple[Optional[ModuleType], Optional[Version]]:
     """
     safe function to import a module at runtime
     """
@@ -145,7 +145,7 @@ def get_package_data(path: str) -> bytes:
     return importlib.resources.files("limits").joinpath(path).read_bytes()
 
 
-def parse_many(limit_string: str) -> List[RateLimitItem]:
+def parse_many(limit_string: str) -> list[RateLimitItem]:
     """
     parses rate limits in string notation containing multiple rate limits
     (e.g. ``1/second; 5/minute``)

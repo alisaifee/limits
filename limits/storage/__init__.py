@@ -4,11 +4,11 @@ Implementations of storage backends to be used with
 """
 
 import urllib
-from typing import Union, cast
 
-import limits
+import limits  # noqa
 
 from ..errors import ConfigurationError
+from ..typing import Union, cast
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
 from .etcd import EtcdStorage
 from .memcached import MemcachedStorage

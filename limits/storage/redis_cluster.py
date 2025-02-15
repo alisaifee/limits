@@ -4,7 +4,7 @@ from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
 from limits.storage.redis import RedisStorage
-from limits.typing import Dict, Optional, Union
+from limits.typing import Optional, Union
 
 
 @versionchanged(
@@ -34,7 +34,7 @@ class RedisClusterStorage(RedisStorage):
     STORAGE_SCHEME = ["redis+cluster"]
     """The storage scheme for redis cluster"""
 
-    DEFAULT_OPTIONS: Dict[str, Union[float, str, bool]] = {
+    DEFAULT_OPTIONS: dict[str, Union[float, str, bool]] = {
         "max_connections": 1000,
     }
     "Default options passed to the :class:`~redis.cluster.RedisCluster`"
@@ -60,7 +60,7 @@ class RedisClusterStorage(RedisStorage):
          available or if the redis cluster cannot be reached.
         """
         parsed = urllib.parse.urlparse(uri)
-        parsed_auth: Dict[str, Union[float, str, bool]] = {}
+        parsed_auth: dict[str, Union[float, str, bool]] = {}
 
         if parsed.username:
             parsed_auth["username"] = parsed.username

@@ -12,7 +12,7 @@ from limits.aio.storage.base import (
     Storage,
 )
 from limits.storage.base import TimestampedSlidingWindow
-from limits.typing import Dict, List, Optional, Tuple, Type, Union
+from limits.typing import Optional, Type, Union
 
 
 class LockableEntry(asyncio.Lock):
@@ -43,15 +43,15 @@ class MemoryStorage(
     ) -> None:
         self.storage: limits.typing.Counter[str] = Counter()
         self.locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
-        self.expirations: Dict[str, float] = {}
-        self.events: Dict[str, List[LockableEntry]] = {}
+        self.expirations: dict[str, float] = {}
+        self.events: dict[str, list[LockableEntry]] = {}
         self.timer: Optional[asyncio.Task[None]] = None
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **_)
 
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return ValueError
 
     async def __expire_events(self) -> None:
@@ -178,7 +178,7 @@ class MemoryStorage(
     # FIXME: arg limit is not used
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
-    ) -> Tuple[float, int]:
+    ) -> tuple[float, int]:
         """
         returns the starting point and the number of entries in the moving
         window
@@ -232,7 +232,7 @@ class MemoryStorage(
 
     async def get_sliding_window(
         self, key: str, expiry: int
-    ) -> Tuple[int, float, int, float]:
+    ) -> tuple[int, float, int, float]:
         now = time.time()
         previous_key, current_key = self.sliding_window_keys(key, expiry, now)
         return await self._get_sliding_window_info(
