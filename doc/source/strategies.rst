@@ -46,7 +46,7 @@ be maintained in memory per resource and rate limit.
 
 Sliding Window Counter
 ======================
-.. versionadded:: 4.2
+.. versionadded:: 4.1
 
 .. warning:: The sliding window strategy is not implemented for the
    ``etcd`` storage backend.
