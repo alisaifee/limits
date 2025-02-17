@@ -6,7 +6,7 @@ import time
 from abc import ABCMeta, abstractmethod
 from math import floor
 
-from deprecated.sphinx import versionadded
+from deprecated.sphinx import versionadded, deprecated
 
 from limits.storage.base import SlidingWindowCounterSupport
 
@@ -283,6 +283,7 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
         return WindowStats(reset, remaining)
 
 
+@deprecated(version="4.1", action="always")
 class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
     """
     Reference: :ref:`strategies:fixed window with elastic expiry`

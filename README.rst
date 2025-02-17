@@ -29,11 +29,6 @@ Supported Strategies
    - Allow 10 requests at ``00:00:59`` and 10 more requests at ``00:01:00``
 
 
-`Fixed Window (Elastic) <https://limits.readthedocs.io/en/latest/strategies.html#fixed-window-with-elastic-expiry>`_
-   Identical to Fixed window, except every breach of rate limit results in an extension
-   to the time out. For example a rate limit of `1/minute` hit twice within a minute will
-   result in a lock-out for two minutes.
-
 `Moving Window <https://limits.readthedocs.io/en/latest/strategies.html#moving-window>`_
    Moving window strategy enforces a rate limit of N/(m time units)
    on the **last m** time units at the second granularity.
