@@ -4,7 +4,10 @@ from typing import cast
 
 from deprecated.sphinx import versionadded
 from packaging.version import Version
-import redis.asyncio.cluster
+from redis.asyncio import Redis, RedisCluster, Sentinel
+from redis.asyncio.cluster import ClusterNode
+from redis.commands.core import Script
+from redis.exceptions import RedisError
 
 from limits.aio.storage.base import (
     MovingWindowSupport,
@@ -14,9 +17,6 @@ from limits.aio.storage.base import (
 from limits.errors import ConfigurationError
 from limits.typing import AsyncRedisClient, Optional, Type, Union
 from limits.util import get_package_data
-from redis.asyncio import Redis, RedisCluster, Sentinel
-from redis.commands.core import Script
-from redis.exceptions import RedisError
 
 import redis
 
@@ -416,9 +416,7 @@ class RedisClusterStorage(RedisStorage):
         for loc in parsed.netloc[sep:].split(","):
             host, port = loc.split(":")
             # Create a dict with host and port keys as expected by RedisCluster
-            cluster_hosts.append(
-                redis.asyncio.cluster.ClusterNode(host=host, port=int(port))
-            )
+            cluster_hosts.append(ClusterNode(host=host, port=int(port)))
 
         super(RedisStorage, self).__init__(
             uri, wrap_exceptions=wrap_exceptions, **options
