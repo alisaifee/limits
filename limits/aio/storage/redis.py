@@ -1,6 +1,6 @@
 import time
 import urllib
-from typing import TYPE_CHECKING, cast, Tuple
+from typing import cast
 
 from deprecated.sphinx import versionadded
 from packaging.version import Version
@@ -19,9 +19,6 @@ from redis.commands.core import Script
 from redis.exceptions import RedisError
 
 import redis
-
-if TYPE_CHECKING:
-    pass
 
 
 class RedisInteractor:
@@ -370,7 +367,7 @@ class RedisStorage(
         """
 
         prefix = self.prefixed_key("*")
-        return cast(int, await self.lua_clear_keys(prefix))
+        return cast(int, await self.lua_clear_keys([prefix]))
 
 
 @versionadded(version="2.1")
@@ -448,7 +445,7 @@ class RedisClusterStorage(RedisStorage):
         """
 
         prefix = self.prefixed_key("*")
-        keys = await self.storage.keys(prefix)
+        keys = await self.storage.keys(prefix, target_nodes=RedisCluster.ALL_NODES)
         count = 0
         for key in keys:
             count += await self.storage.delete(key)
