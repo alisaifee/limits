@@ -1,9 +1,10 @@
 import time
 import urllib
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, Tuple
 
 from deprecated.sphinx import versionadded
 from packaging.version import Version
+import redis.asyncio.cluster
 
 from limits.aio.storage.base import (
     MovingWindowSupport,
@@ -13,10 +14,14 @@ from limits.aio.storage.base import (
 from limits.errors import ConfigurationError
 from limits.typing import AsyncRedisClient, Optional, Type, Union
 from limits.util import get_package_data
+from redis.asyncio import Redis, RedisCluster, Sentinel
+from redis.commands.core import Script
+from redis.exceptions import RedisError
+
+import redis
 
 if TYPE_CHECKING:
-    import coredis
-    import coredis.commands
+    pass
 
 
 class RedisInteractor:
@@ -33,12 +38,12 @@ class RedisInteractor:
         f"{RES_DIR}/acquire_sliding_window.lua"
     )
 
-    lua_moving_window: "coredis.commands.Script[bytes]"
-    lua_acquire_moving_window: "coredis.commands.Script[bytes]"
-    lua_sliding_window: "coredis.commands.Script[bytes]"
-    lua_acquire_sliding_window: "coredis.commands.Script[bytes]"
-    lua_clear_keys: "coredis.commands.Script[bytes]"
-    lua_incr_expire: "coredis.commands.Script[bytes]"
+    lua_moving_window: Script
+    lua_acquire_moving_window: Script
+    lua_sliding_window: Script
+    lua_acquire_sliding_window: Script
+    lua_clear_keys: Script
+    lua_incr_expire: Script
 
     PREFIX = "LIMITS"
 
@@ -84,7 +89,7 @@ class RedisInteractor:
         :param connection: Redis connection
         """
         key = self.prefixed_key(key)
-        await connection.delete([key])
+        await connection.delete(key)
 
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
@@ -99,9 +104,7 @@ class RedisInteractor:
         """
         key = self.prefixed_key(key)
         timestamp = time.time()
-        window = await self.lua_moving_window.execute(
-            [key], [timestamp - expiry, limit]
-        )
+        window = await self.lua_moving_window([key], [timestamp - expiry, limit])
         if window:
             return float(window[0]), window[1]  # type: ignore
         return timestamp, 0
@@ -112,7 +115,7 @@ class RedisInteractor:
         previous_key = self.prefixed_key(self._previous_window_key(key))
         current_key = self.prefixed_key(self._current_window_key(key))
 
-        if window := await self.lua_sliding_window.execute(
+        if window := await self.lua_sliding_window(
             [previous_key, current_key], [expiry]
         ):
             return (
@@ -139,7 +142,7 @@ class RedisInteractor:
         """
         key = self.prefixed_key(key)
         timestamp = time.time()
-        acquired = await self.lua_acquire_moving_window.execute(
+        acquired = await self.lua_acquire_moving_window(
             [key], [timestamp, limit, expiry, amount]
         )
 
@@ -155,7 +158,7 @@ class RedisInteractor:
     ) -> bool:
         previous_key = self.prefixed_key(previous_key)
         current_key = self.prefixed_key(current_key)
-        acquired = await self.lua_acquire_sliding_window.execute(
+        acquired = await self.lua_acquire_sliding_window(
             [previous_key, current_key], [limit, expiry, amount]
         )
         return bool(acquired)
@@ -214,19 +217,19 @@ class RedisStorage(
     """
     Rate limit storage with redis as backend.
 
-    Depends on :pypi:`coredis`
+    Depends on :pypi:`redis`
     """
 
     STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
     """
     The storage schemes for redis to be used in an async context
     """
-    DEPENDENCIES = {"coredis": Version("3.4.0")}
+    DEPENDENCIES = {"redis": Version("4.2.0")}
 
     def __init__(
         self,
         uri: str,
-        connection_pool: Optional["coredis.ConnectionPool"] = None,
+        connection_pool: Optional["redis.asyncio.connection.ConnectionPool"] = None,
         wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
@@ -238,7 +241,7 @@ class RedisStorage(
          - ``async+rediss://[:password]@host:port``
          - ``async+redis+unix:///path/to/sock?db=0`` etc...
 
-         This uri is passed directly to :meth:`coredis.Redis.from_url` with
+         This uri is passed directly to :meth:`redis.asyncio.Redis.from_url` with
          the initial ``async`` removed, except for the case of ``async+redis+unix``
          where it is replaced with ``unix``.
         :param connection_pool: if provided, the redis client is initialized with
@@ -246,7 +249,7 @@ class RedisStorage(
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`coredis.Redis`
+         directly to the constructor of :class:`redis.asyncio.Redis`
         :raise ConfigurationError: when the redis library is not available
         """
         uri = uri.replace("async+redis", "redis", 1)
@@ -254,25 +257,23 @@ class RedisStorage(
 
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
 
-        self.dependency = self.dependencies["coredis"].module
+        self.dependency = self.dependencies["redis"].module
 
         if connection_pool:
-            self.storage = self.dependency.Redis(
-                connection_pool=connection_pool, **options
-            )
+            self.storage = Redis(connection_pool=connection_pool, **options)
         else:
-            self.storage = self.dependency.Redis.from_url(uri, **options)
+            self.storage = Redis.from_url(uri, **options)
 
         self.initialize_storage(uri)
 
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
-        return self.dependency.exceptions.RedisError  # type: ignore[no-any-return]
+    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
+        return RedisError
 
     def initialize_storage(self, _uri: str) -> None:
-        # all these methods are coroutines, so must be called with await
+        # Redis-py uses a slightly different script registration
         self.lua_moving_window = self.storage.register_script(self.SCRIPT_MOVING_WINDOW)
         self.lua_acquire_moving_window = self.storage.register_script(
             self.SCRIPT_ACQUIRE_MOVING_WINDOW
@@ -303,9 +304,7 @@ class RedisStorage(
             )
         else:
             key = self.prefixed_key(key)
-            return cast(
-                int, await self.lua_incr_expire.execute([key], [expiry, amount])
-            )
+            return cast(int, await self.lua_incr_expire([key], [expiry, amount]))
 
     async def get(self, key: str) -> int:
         """
@@ -355,7 +354,7 @@ class RedisStorage(
 
     async def check(self) -> bool:
         """
-        Check if storage is healthy by calling :meth:`coredis.Redis.ping`
+        Check if storage is healthy by calling :meth:`redis.asyncio.Redis.ping`
         """
 
         return await super()._check(self.storage)
@@ -371,7 +370,7 @@ class RedisStorage(
         """
 
         prefix = self.prefixed_key("*")
-        return cast(int, await self.lua_clear_keys.execute([prefix]))
+        return cast(int, await self.lua_clear_keys(prefix))
 
 
 @versionadded(version="2.1")
@@ -379,7 +378,7 @@ class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend
 
-    Depends on :pypi:`coredis`
+    Depends on :pypi:`redis`
     """
 
     STORAGE_SCHEME = ["async+redis+cluster"]
@@ -390,7 +389,7 @@ class RedisClusterStorage(RedisStorage):
     DEFAULT_OPTIONS: dict[str, Union[float, str, bool]] = {
         "max_connections": 1000,
     }
-    "Default options passed to :class:`coredis.RedisCluster`"
+    "Default options passed to :class:`redis.asyncio.RedisCluster`"
 
     def __init__(
         self,
@@ -402,8 +401,8 @@ class RedisClusterStorage(RedisStorage):
         :param uri: url of the form
          ``async+redis+cluster://[:password]@host:port,host:port``
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`coredis.RedisCluster`
-        :raise ConfigurationError: when the coredis library is not
+         directly to the constructor of :class:`redis.asyncio.RedisCluster`
+        :raise ConfigurationError: when the redis library is not
          available or if the redis host cannot be pinged.
         """
         parsed = urllib.parse.urlparse(uri)
@@ -419,15 +418,18 @@ class RedisClusterStorage(RedisStorage):
 
         for loc in parsed.netloc[sep:].split(","):
             host, port = loc.split(":")
-            cluster_hosts.append({"host": host, "port": int(port)})
+            # Create a dict with host and port keys as expected by RedisCluster
+            cluster_hosts.append(
+                redis.asyncio.cluster.ClusterNode(host=host, port=int(port))
+            )
 
         super(RedisStorage, self).__init__(
             uri, wrap_exceptions=wrap_exceptions, **options
         )
 
-        self.dependency = self.dependencies["coredis"].module
+        self.dependency = self.dependencies["redis"].module
 
-        self.storage: "coredis.RedisCluster[str]" = self.dependency.RedisCluster(
+        self.storage = RedisCluster(
             startup_nodes=cluster_hosts,
             **{**self.DEFAULT_OPTIONS, **parsed_auth, **options},
         )
@@ -449,7 +451,7 @@ class RedisClusterStorage(RedisStorage):
         keys = await self.storage.keys(prefix)
         count = 0
         for key in keys:
-            count += await self.storage.delete([key])
+            count += await self.storage.delete(key)
         return count
 
 
@@ -458,13 +460,13 @@ class RedisSentinelStorage(RedisStorage):
     """
     Rate limit storage with redis sentinel as backend
 
-    Depends on :pypi:`coredis`
+    Depends on :pypi:`redis`
     """
 
     STORAGE_SCHEME = ["async+redis+sentinel"]
     """The storage scheme for redis accessed via a redis sentinel installation"""
 
-    DEPENDENCIES = {"coredis.sentinel": Version("3.4.0")}
+    DEPENDENCIES = {"redis": Version("4.2.0")}
 
     def __init__(
         self,
@@ -481,10 +483,10 @@ class RedisSentinelStorage(RedisStorage):
          (if not provided in `uri`)
         :param use_replicas: Whether to use replicas for read only operations
         :param sentinel_kwargs, optional: kwargs to pass as
-         ``sentinel_kwargs`` to :class:`coredis.sentinel.Sentinel`
+         ``sentinel_kwargs`` to :class:`redis.asyncio.Sentinel`
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`coredis.sentinel.Sentinel`
-        :raise ConfigurationError: when the coredis library is not available
+         directly to the constructor of :class:`redis.asyncio.Sentinel`
+        :raise ConfigurationError: when the redis library is not available
          or if the redis primary host cannot be pinged.
         """
 
@@ -514,15 +516,15 @@ class RedisSentinelStorage(RedisStorage):
 
         super(RedisStorage, self).__init__()
 
-        self.dependency = self.dependencies["coredis.sentinel"].module
+        self.dependency = self.dependencies["redis"].module
 
-        self.sentinel = self.dependency.Sentinel(
+        self.sentinel = Sentinel(
             sentinel_configuration,
             sentinel_kwargs={**parsed_auth, **sentinel_options},
             **{**parsed_auth, **connection_options},
         )
-        self.storage = self.sentinel.primary_for(self.service_name)
-        self.storage_replica = self.sentinel.replica_for(self.service_name)
+        self.storage = self.sentinel.master_for(self.service_name)
+        self.storage_replica = self.sentinel.slave_for(self.service_name)
         self.use_replicas = use_replicas
         self.initialize_storage(uri)
 
@@ -546,7 +548,7 @@ class RedisSentinelStorage(RedisStorage):
 
     async def check(self) -> bool:
         """
-        Check if storage is healthy by calling :meth:`coredis.Redis.ping`
+        Check if storage is healthy by calling :meth:`redis.asyncio.Redis.ping`
         on the replica.
         """
 

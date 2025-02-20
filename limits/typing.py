@@ -23,8 +23,8 @@ P = ParamSpec("P")
 
 
 if TYPE_CHECKING:
-    import coredis
-    import coredis.commands.script
+    # import coredis  # Remove this
+    # import coredis.commands.script  # Remove this
     import pymongo.collection
     import pymongo.database
     import redis
@@ -119,7 +119,7 @@ class MemcachedClientP(Protocol):
     ) -> bool: ...
 
 
-AsyncRedisClient = Union["coredis.Redis[bytes]", "coredis.RedisCluster[bytes]"]
+AsyncRedisClient = Union["redis.Redis[bytes]", "redis.cluster.RedisCluster[bytes]"]
 RedisClient = Union["redis.Redis[bytes]", "redis.cluster.RedisCluster[bytes]"]
 
 
