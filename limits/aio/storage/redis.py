@@ -1,13 +1,10 @@
 import time
 import urllib
-from typing import cast
+from typing import cast, TYPE_CHECKING
 
 from deprecated.sphinx import versionadded
 from packaging.version import Version
-from redis.asyncio import RedisCluster, Sentinel, connection
-from redis.asyncio.cluster import ClusterNode
-from redis.commands.core import Script
-from redis.exceptions import RedisError
+import redis.asyncio.cluster
 
 from limits.aio.storage.base import (
     MovingWindowSupport,
@@ -19,6 +16,9 @@ from limits.typing import AsyncRedisClient, Optional, Type, Union
 from limits.util import get_package_data
 
 
+if TYPE_CHECKING:
+    import redis
+    import redis.commands.core  
 
 
 class RedisInteractor:
@@ -35,12 +35,12 @@ class RedisInteractor:
         f"{RES_DIR}/acquire_sliding_window.lua"
     )
 
-    lua_moving_window: Script
-    lua_acquire_moving_window: Script
-    lua_sliding_window: Script
-    lua_acquire_sliding_window: Script
-    lua_clear_keys: Script
-    lua_incr_expire: Script
+    lua_moving_window: redis.commands.core.Script
+    lua_acquire_moving_window: redis.commands.core.Script
+    lua_sliding_window: redis.commands.core.Script
+    lua_acquire_sliding_window: redis.commands.core.Script
+    lua_clear_keys: redis.commands.core.Script
+    lua_incr_expire: redis.commands.core.Script
 
     PREFIX = "LIMITS"
 
@@ -218,12 +218,15 @@ class RedisStorage(
     """
 
     STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
+    """
+    The storage schemes for redis to be used in an async context
+    """
     DEPENDENCIES = {"redis": Version("4.2.0")}
 
     def __init__(
         self,
         uri: str,
-        connection_pool: Optional[connection.ConnectionPool] = None,
+        connection_pool: Optional["redis.asyncio.connection.ConnectionPool"] = None,
         wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
@@ -251,12 +254,10 @@ class RedisStorage(
 
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
 
-        self.dependency = self.dependencies["redis"].module
+        self.dependency: redis = self.dependencies["redis"].module
 
         if connection_pool:
-            self.storage = self.dependency.asyncio.Redis(
-                connection_pool=connection_pool, **options
-            )
+            self.storage = self.dependency.asyncio.Redis(connection_pool=connection_pool, **options)
         else:
             self.storage = self.dependency.asyncio.Redis.from_url(uri, **options)
 
@@ -265,8 +266,8 @@ class RedisStorage(
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], Tuple[Type[Exception], ...]]:  # pragma: no cover
-        return RedisError
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
+        return self.dependency.exceptions.RedisError
 
     def initialize_storage(self, _uri: str) -> None:
         # Redis-py uses a slightly different script registration
@@ -412,18 +413,21 @@ class RedisClusterStorage(RedisStorage):
         sep = parsed.netloc.find("@") + 1
         cluster_hosts = []
 
-        for loc in parsed.netloc[sep:].split(","):
-            host, port = loc.split(":")
-            # Create a dict with host and port keys as expected by RedisCluster
-            cluster_hosts.append(ClusterNode(host=host, port=int(port)))
-
         super(RedisStorage, self).__init__(
             uri, wrap_exceptions=wrap_exceptions, **options
         )
 
         self.dependency = self.dependencies["redis"].module
+        
+        for loc in parsed.netloc[sep:].split(","):
+            host, port = loc.split(":")
+            # Create a dict with host and port keys as expected by RedisCluster
+            cluster_hosts.append(
+                self.dependency.asyncio.cluster.ClusterNode(host=host, port=int(port))
+            )
 
-        self.storage = RedisCluster(
+
+        self.storage = self.dependency.asyncio.RedisCluster(
             startup_nodes=cluster_hosts,
             **{**self.DEFAULT_OPTIONS, **parsed_auth, **options},
         )
@@ -442,7 +446,7 @@ class RedisClusterStorage(RedisStorage):
         """
 
         prefix = self.prefixed_key("*")
-        keys = await self.storage.keys(prefix, target_nodes=RedisCluster.ALL_NODES)
+        keys = await self.storage.keys(prefix, target_nodes=self.dependency.asyncio.cluster.RedisCluster.ALL_NODES)
         count = 0
         for key in keys:
             count += await self.storage.delete(key)
@@ -512,7 +516,7 @@ class RedisSentinelStorage(RedisStorage):
 
         self.dependency = self.dependencies["redis"].module
 
-        self.sentinel = Sentinel(
+        self.sentinel = self.dependency.asyncio.Sentinel(
             sentinel_configuration,
             sentinel_kwargs={**parsed_auth, **sentinel_options},
             **{**parsed_auth, **connection_options},
