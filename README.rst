@@ -106,6 +106,7 @@ Test the limits
 
 .. code-block:: python
 
+    import time
     assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
     assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
     assert True == moving_window.hit(one_per_minute, "test_namespace", "bar")
