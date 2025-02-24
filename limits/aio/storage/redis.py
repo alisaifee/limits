@@ -4,7 +4,7 @@ from typing import cast
 
 from deprecated.sphinx import versionadded
 from packaging.version import Version
-from redis.asyncio import Redis, RedisCluster, Sentinel
+from redis.asyncio import RedisCluster, Sentinel, connection
 from redis.asyncio.cluster import ClusterNode
 from redis.commands.core import Script
 from redis.exceptions import RedisError
@@ -18,7 +18,7 @@ from limits.errors import ConfigurationError
 from limits.typing import AsyncRedisClient, Optional, Type, Union
 from limits.util import get_package_data
 
-import redis
+
 
 
 class RedisInteractor:
@@ -218,15 +218,12 @@ class RedisStorage(
     """
 
     STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
-    """
-    The storage schemes for redis to be used in an async context
-    """
     DEPENDENCIES = {"redis": Version("4.2.0")}
 
     def __init__(
         self,
         uri: str,
-        connection_pool: Optional["redis.asyncio.connection.ConnectionPool"] = None,
+        connection_pool: Optional[connection.ConnectionPool] = None,
         wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
@@ -257,9 +254,11 @@ class RedisStorage(
         self.dependency = self.dependencies["redis"].module
 
         if connection_pool:
-            self.storage = Redis(connection_pool=connection_pool, **options)
+            self.storage = self.dependency.asyncio.Redis(
+                connection_pool=connection_pool, **options
+            )
         else:
-            self.storage = Redis.from_url(uri, **options)
+            self.storage = self.dependency.asyncio.Redis.from_url(uri, **options)
 
         self.initialize_storage(uri)
 
