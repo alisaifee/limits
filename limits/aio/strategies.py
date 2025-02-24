@@ -6,7 +6,7 @@ import time
 from abc import ABC, abstractmethod
 from math import floor
 
-from deprecated.sphinx import versionadded, deprecated
+from deprecated.sphinx import deprecated, versionadded
 
 from ..limits import RateLimitItem
 from ..storage import StorageTypes
