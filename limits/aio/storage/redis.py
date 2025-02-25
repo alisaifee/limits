@@ -1,10 +1,11 @@
 import time
 import urllib
-from typing import cast, TYPE_CHECKING
+from types import ModuleType
+from typing import TYPE_CHECKING, cast
 
+import redis.asyncio.cluster
 from deprecated.sphinx import versionadded
 from packaging.version import Version
-import redis.asyncio.cluster
 
 from limits.aio.storage.base import (
     MovingWindowSupport,
@@ -15,10 +16,10 @@ from limits.errors import ConfigurationError
 from limits.typing import AsyncRedisClient, Optional, Type, Union
 from limits.util import get_package_data
 
-
 if TYPE_CHECKING:
     import redis
-    import redis.commands.core  
+    import redis.asyncio.connection
+    import redis.commands.core
 
 
 class RedisInteractor:
@@ -64,10 +65,10 @@ class RedisInteractor:
         :param amount: the number to increment by
         """
         key = self.prefixed_key(key)
-        value = await connection.incrby(key, amount)
+        value: int = await connection.execute_command("INCRBY", key, amount)
 
         if elastic_expiry or value == amount:
-            await connection.expire(key, expiry)
+            await connection.execute_command("EXPIRE", key, expiry)
 
         return value
 
@@ -78,7 +79,7 @@ class RedisInteractor:
         """
 
         key = self.prefixed_key(key)
-        return int(await connection.get(key) or 0)
+        return int(await connection.execute_command("GET", key) or 0)
 
     async def _clear(self, key: str, connection: AsyncRedisClient) -> None:
         """
@@ -86,7 +87,7 @@ class RedisInteractor:
         :param connection: Redis connection
         """
         key = self.prefixed_key(key)
-        await connection.delete(key)
+        await connection.execute_command("DEL", key)
 
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
@@ -103,7 +104,7 @@ class RedisInteractor:
         timestamp = time.time()
         window = await self.lua_moving_window([key], [timestamp - expiry, limit])
         if window:
-            return float(window[0]), window[1]  # type: ignore
+            return float(window[0]), window[1]
         return timestamp, 0
 
     async def get_sliding_window(
@@ -116,10 +117,10 @@ class RedisInteractor:
             [previous_key, current_key], [expiry]
         ):
             return (
-                int(window[0] or 0),  # type: ignore
-                max(0, float(window[1] or 0)) / 1000,  # type: ignore
-                int(window[2] or 0),  # type: ignore
-                max(0, float(window[3] or 0)) / 1000,  # type: ignore
+                int(window[0] or 0),
+                max(0, float(window[1] or 0)) / 1000,
+                int(window[2] or 0),
+                max(0, float(window[3] or 0)) / 1000,
             )
         return 0, 0.0, 0, 0.0
 
@@ -167,7 +168,8 @@ class RedisInteractor:
         """
 
         key = self.prefixed_key(key)
-        return max(await connection.ttl(key), 0) + time.time()
+        ttl: int = await connection.execute_command("TTL", key)
+        return max(ttl, 0) + time.time()
 
     async def _check(self, connection: AsyncRedisClient) -> bool:
         """
@@ -176,7 +178,7 @@ class RedisInteractor:
         :param connection: Redis connection
         """
         try:
-            await connection.ping()
+            await connection.execute_command("PING")
 
             return True
         except:  # noqa
@@ -226,7 +228,11 @@ class RedisStorage(
     def __init__(
         self,
         uri: str,
-        connection_pool: Optional["redis.asyncio.connection.ConnectionPool"] = None,
+        connection_pool: Optional[
+            redis.asyncio.connection.ConnectionPool[
+                redis.asyncio.connection.AbstractConnection
+            ]
+        ] = None,
         wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
@@ -254,10 +260,12 @@ class RedisStorage(
 
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
 
-        self.dependency: redis = self.dependencies["redis"].module
+        self.dependency: ModuleType = self.dependencies["redis"].module
 
         if connection_pool:
-            self.storage = self.dependency.asyncio.Redis(connection_pool=connection_pool, **options)
+            self.storage = self.dependency.asyncio.Redis(
+                connection_pool=connection_pool, **options
+            )
         else:
             self.storage = self.dependency.asyncio.Redis.from_url(uri, **options)
 
@@ -267,7 +275,7 @@ class RedisStorage(
     def base_exceptions(
         self,
     ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
-        return self.dependency.exceptions.RedisError
+        return self.dependency.RedisError  # type: ignore[no-any-return]
 
     def initialize_storage(self, _uri: str) -> None:
         # Redis-py uses a slightly different script registration
@@ -417,15 +425,14 @@ class RedisClusterStorage(RedisStorage):
             uri, wrap_exceptions=wrap_exceptions, **options
         )
 
-        self.dependency = self.dependencies["redis"].module
-        
+        self.dependency: ModuleType = self.dependencies["redis"].module
+
         for loc in parsed.netloc[sep:].split(","):
             host, port = loc.split(":")
             # Create a dict with host and port keys as expected by RedisCluster
             cluster_hosts.append(
                 self.dependency.asyncio.cluster.ClusterNode(host=host, port=int(port))
             )
-
 
         self.storage = self.dependency.asyncio.RedisCluster(
             startup_nodes=cluster_hosts,
@@ -446,7 +453,9 @@ class RedisClusterStorage(RedisStorage):
         """
 
         prefix = self.prefixed_key("*")
-        keys = await self.storage.keys(prefix, target_nodes=self.dependency.asyncio.cluster.RedisCluster.ALL_NODES)
+        keys = await self.storage.keys(
+            prefix, target_nodes=self.dependency.asyncio.cluster.RedisCluster.ALL_NODES
+        )
         count = 0
         for key in keys:
             count += await self.storage.delete(key)
