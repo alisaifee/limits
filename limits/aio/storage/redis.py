@@ -228,11 +228,7 @@ class RedisStorage(
     def __init__(
         self,
         uri: str,
-        connection_pool: Optional[
-            redis.asyncio.connection.ConnectionPool[
-                redis.asyncio.connection.AbstractConnection
-            ]
-        ] = None,
+        connection_pool: Optional[redis.asyncio.connection.ConnectionPool] = None,  # type: ignore
         wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
