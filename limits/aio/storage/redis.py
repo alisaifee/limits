@@ -35,12 +35,12 @@ class RedisInteractor:
         f"{RES_DIR}/acquire_sliding_window.lua"
     )
 
-    lua_moving_window: redis.commands.core.Script
-    lua_acquire_moving_window: redis.commands.core.Script
-    lua_sliding_window: redis.commands.core.Script
-    lua_acquire_sliding_window: redis.commands.core.Script
-    lua_clear_keys: redis.commands.core.Script
-    lua_incr_expire: redis.commands.core.Script
+    lua_moving_window: "redis.commands.core.Script"
+    lua_acquire_moving_window: "redis.commands.core.Script"
+    lua_sliding_window: "redis.commands.core.Script"
+    lua_acquire_sliding_window: "redis.commands.core.Script"
+    lua_clear_keys: "redis.commands.core.Script"
+    lua_incr_expire: "redis.commands.core.Script"
 
     PREFIX = "LIMITS"
 
