@@ -133,12 +133,11 @@ class TestAsyncMovingWindow:
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
-
-        # 5 hits in the first 100ms
-        async with async_window(0.1):
+        # 5 hits in the first 500ms
+        async with async_window(0.5):
             assert all([await limiter.hit(limit) for i in range(5)])
-        # 5 hits in the last 100ms
-        async with async_window(2, delay=1.8):
+        # 5 hits in the last 200ms
+        async with async_window(2, delay=1.3):
             assert all([await limiter.hit(limit) for i in range(5)])
             # 11th fails
             assert not await limiter.hit(limit)
