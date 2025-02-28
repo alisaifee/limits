@@ -3,7 +3,6 @@ import urllib
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-import redis.asyncio.cluster
 from deprecated.sphinx import versionadded
 from packaging.version import Version
 
@@ -228,7 +227,7 @@ class RedisStorage(
     def __init__(
         self,
         uri: str,
-        connection_pool: Optional[redis.asyncio.connection.ConnectionPool] = None,  # type: ignore
+        connection_pool: Optional["redis.asyncio.connection.ConnectionPool"] = None,  # type: ignore
         wrap_exceptions: bool = False,
         **options: Union[float, str, bool],
     ) -> None:
