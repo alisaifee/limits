@@ -18,36 +18,60 @@ limits
 
 **limits** is a python library to perform rate limiting with commonly used storage backends (Redis, Memcached, MongoDB & Etcd).
 
-
 Supported Strategies
 ====================
+
+All strategies implement a common set of methods:
+
+- ``hit`` (i.e., consume a request)
+- ``test`` (check if a request can be allowed), and
+- ``get_window_stats`` (to determine remaining quota and reset time).
+
+These operations provide consistent behavior across different implementations.
+
+Fixed Window
+------------
 `Fixed Window <https://limits.readthedocs.io/en/latest/strategies.html#fixed-window>`_
-   This strategy resets at a fixed interval (start of minute, hour, day etc).
-   For example, given a rate limit of ``10/minute`` the strategy will:
 
-   - Allow 10 requests between ``00:01:00`` and ``00:02:00``
-   - Allow 10 requests at ``00:00:59`` and 10 more requests at ``00:01:00``
+This strategy is the most memory & compute efficient because it uses a single counter
+per resource and rate limit. When the first request arrives, a window is started for a fixed duration
+(e.g., 60 seconds for a 10/minute limit). All requests within that window increment the counter,
+and when the window expires, the counter resets. Burst traffic near window boundaries
+may occur.
 
+For example, with a rate limit of 10/minute:
 
+- 10 requests are allowed between 00:00:00 and 00:01:00 if the first request arrives at 00:00:00.
+- It is possible to have 1 request at 00:00:00, 9 requests at 00:00:59 and then 10 more at 00:01:00.
+
+Moving Window
+-------------
 `Moving Window <https://limits.readthedocs.io/en/latest/strategies.html#moving-window>`_
-   Moving window strategy enforces a rate limit of N/(m time units)
-   on the **last m** time units at the second granularity.
 
-   For example, with a rate limit of ``10/minute``:
+This strategy records each request’s timestamp and enforces the limit by counting only
+the requests within the last fixed duration (e.g., 60 seconds for a 10/minute limit).
+This creates a continuously sliding window that strictly applies the rate limit based
+on recent activity.
 
-   - Allow 9 requests that arrive at ``00:00:59``
-   - Allow another request that arrives at ``00:01:00``
-   - Reject the request that arrives at ``00:01:01``
+For example, with a rate limit of 10/minute:
 
+- Only requests in the last 60 seconds are counted.
+- A new request is allowed only if the earliest request has expired.
+
+Sliding Window Counter
+------------------------
 `Sliding Window Counter <https://limits.readthedocs.io/en/latest/strategies.html#sliding-window-counter>`_
-   The sliding window counter strategy enforces a rate limit of N/(m time units)
-   by approximating the moving window strategy, with less memory use. It approximates the behavior
-   of a moving window by maintaining counters for two adjacent fixed windows: the current and the previous windows.
 
-   To determine if a request should be allowed, we assume the requests in the previous window were distributed evenly
-   over its duration and use a weighted sum of the previous and current window counts to calculate the effective
-   current capacity.
+This strategy approximates the moving window while using less memory by maintaining
+two counters (for the current and previous buckets). It computes a weighted sum of these
+counters—based on the elapsed time since the previous bucket shifted—to determine the
+effective count. If the weighted count is below the limit, the request is allowed.
 
+For example, with a rate limit of 10/minute:
+
+- The effective count is calculated by combining the counts from the current and
+  previous buckets using a weight factor.
+- If the weighted sum is below the limit, the new request is accepted.
 
 Storage backends
 ================
@@ -66,21 +90,27 @@ Initialize the storage backend
 .. code-block:: python
 
    from limits import storage
-   memory_storage = storage.MemoryStorage()
+   backend = storage.MemoryStorage()
    # or memcached
-   memcached_storage = storage.MemcachedStorage("memcached://localhost:11211")
+   backend = storage.MemcachedStorage("memcached://localhost:11211")
    # or redis
-   redis_storage = storage.RedisStorage("redis://localhost:6379")
+   backend = storage.RedisStorage("redis://localhost:6379")
+   # or mongodb
+   backend = storage.MongoDbStorage("mongodb://localhost:27017")
    # or use the factory
    storage_uri = "memcached://localhost:11211"
-   some_storage = storage.storage_from_string(storage_uri)
+   backend = storage.storage_from_string(storage_uri)
 
-Initialize a rate limiter with the Moving Window Strategy
+Initialize a rate limiter with a strategy
 
 .. code-block:: python
 
    from limits import strategies
-   moving_window = strategies.MovingWindowRateLimiter(memory_storage)
+   strategy = strategies.MovingWindowRateLimiter(backend)
+   # or fixed window
+   strategy = strategies.FixedWindowRateLimiter(backend)
+   # or sliding window
+   strategy = strategies.SlidingWindowCounterRateLimiter(backend)
 
 
 Initialize a rate limit
@@ -102,34 +132,34 @@ Test the limits
 .. code-block:: python
 
     import time
-    assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
-    assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
-    assert True == moving_window.hit(one_per_minute, "test_namespace", "bar")
+    assert True == strategy.hit(one_per_minute, "test_namespace", "foo")
+    assert False == strategy.hit(one_per_minute, "test_namespace", "foo")
+    assert True == strategy.hit(one_per_minute, "test_namespace", "bar")
 
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
-    assert False == moving_window.hit(one_per_second, "test_namespace", "foo")
+    assert True == strategy.hit(one_per_second, "test_namespace", "foo")
+    assert False == strategy.hit(one_per_second, "test_namespace", "foo")
     time.sleep(1)
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
+    assert True == strategy.hit(one_per_second, "test_namespace", "foo")
 
 Check specific limits without hitting them
 
 .. code-block:: python
 
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
-    while not moving_window.test(one_per_second, "test_namespace", "foo"):
+    assert True == strategy.hit(one_per_second, "test_namespace", "foo")
+    while not strategy.test(one_per_second, "test_namespace", "foo"):
         time.sleep(0.01)
-    assert True == moving_window.hit(one_per_second, "test_namespace", "foo")
+    assert True == strategy.hit(one_per_second, "test_namespace", "foo")
 
 Query available capacity and reset time for a limit
 
 .. code-block:: python
 
-   assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
-   window = moving_window.get_window_stats(one_per_minute, "test_namespace", "foo")
+   assert True == strategy.hit(one_per_minute, "test_namespace", "foo")
+   window = strategy.get_window_stats(one_per_minute, "test_namespace", "foo")
    assert window.remaining == 0
-   assert False == moving_window.hit(one_per_minute, "test_namespace", "foo")
+   assert False == strategy.hit(one_per_minute, "test_namespace", "foo")
    time.sleep(window.reset_time - time.time())
-   assert True == moving_window.hit(one_per_minute, "test_namespace", "foo")
+   assert True == strategy.hit(one_per_minute, "test_namespace", "foo")
 
 
 Links
