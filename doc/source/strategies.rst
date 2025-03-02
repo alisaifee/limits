@@ -1,100 +1,151 @@
 ========================
-Rate limiting strategies
+Rate Limiting Strategies
 ========================
 
+TL;DR: How to choose a strategy
+===============================
+
+- **Fixed Window:**
+  Use when low memory usage and high performance are critical, and occasional bursts
+  are acceptable or can be mitigated by additional fine-grained limits.
+
+- **Moving Window:**
+  Use when exactly accurate rate limiting is required and extra memory overhead is acceptable.
+
+- **Sliding Window Counter:**
+  Use when a balance between memory efficiency and accuracy is needed. This strategy
+  smooths transitions between time periods with less overhead than a full moving window,
+  though it may trade off some precision near bucket boundaries.
 
 Fixed Window
 ============
 
-This is the most memory efficient strategy to use as it maintains one counter
-per resource and rate limit. It does however have its drawbacks as it allows
-bursts within each window - thus allowing an 'attacker' to by-pass the limits.
-The effects of these bursts can be partially circumvented by enforcing multiple
-granularities of windows per resource.
+This strategy is the most memory‑efficient because it uses a single counter per resource and
+rate limit. When the first request arrives, a window is started for a fixed duration
+(e.g., for a rate limit of 10 requests per minute the window expires in 60 seconds from the first request).
+All requests in that window increment the counter and when the window expires, the counter resets.
 
-For example, if you specify a ``100/minute`` rate limit on a route, this strategy will
-allow 100 hits in the last second of one window and a 100 more in the first
-second of the next window. To ensure that such bursts are managed, you could add a second rate limit
-of ``2/second`` on the same route.
+Burst traffic that bypasses the rate limit may occur at window boundaries.
+
+For example, with a rate limit of 10 requests per minute:
+
+- At **00:00:45**, the first request arrives, starting a window from **00:00:45** to **00:01:45**.
+- All requests between **00:00:45** and **00:01:45** count toward the limit.
+- If 10 requests occur at any time in that window, any further request before **00:01:45** is rejected.
+- At **00:01:45**, the counter resets and a new window starts which would allow 10 requests
+  until **00:02:45**.
+
+.. tip::
+   To mitigate burstiness (e.g., many requests at window edges), combine limits
+   with large windows with finer-granularity ones
+   (e.g., combine a 2 requests per second limit with a 10 requests per minute limit).
+
 
 
 Fixed Window with Elastic Expiry
-================================
+==================================
 .. deprecated:: 4.1
 
-This strategy works almost identically to the Fixed Window strategy with the exception
-that each hit results in the extension of the window. This strategy works well for
-creating large penalties for breaching a rate limit.
+This variant extends the window’s expiry with each hit by resetting the timer on
+every request. Although designed to impose larger penalties for breaches, it is now
+deprecated and should not be used.
 
-For example, if you specify a ``100/minute`` rate limit on a route and it is being
-attacked at the rate of 5 hits per second for 2 minutes - the attacker will be locked
-out of the resource for an extra 60 seconds after the last hit. This strategy helps
-circumvent bursts.
 
 
 Moving Window
 =============
 
-.. warning:: The moving window strategy is not implemented for the ``memcached``
-    and ``etcd`` storage backends.
+This strategy adds each request’s timestamp to a log if the ``nth`` oldest entry (where ``n``
+is the limit) is either not present or is older than the duration of the window (for example with a rate limit of
+``10 requests per minute`` if there are either less than 10 entries or the 10th oldest entry is atleast
+60 seconds old). Upon adding a new entry to the log "expired" entries are truncated.
 
-This strategy is the most effective for preventing bursts from by-passing the
-rate limit as the window for each limit is not fixed at the start and end of each time unit
-(i.e. N/second for a moving window means N in the last 1000 milliseconds). There is
-however a higher memory cost associated with this strategy as it requires ``N`` items to
-be maintained in memory per resource and rate limit.
+For example, with a rate limit of 10 requests per minute:
 
+- At **00:00:10**, a client sends 1 requests which are allowed.
+- At **00:00:20**, a client sends 2 requests which are allowed.
+- At **00:00:30**, the client sends 4 requests which are allowed.
+- At **00:00:50**, the client sends 3 requests which are allowed (total = 10).
+- At **00:01:11**, the client sends 1 request. The strategy checks the timestamp of the
+  10th oldest entry (**00:00:10**) which is now 61 seconds old and thus expired. The request
+  is allowed.
+- At **00:01:12**, the client sends 1 request. The 10th oldest entry's timestamp is **00:00:20**
+  which is only 52 seconds old. The request is rejected.
 
 Sliding Window Counter
-======================
+=======================
 .. versionadded:: 4.1
 
-.. warning:: The sliding window strategy is not implemented for the
-   ``etcd`` storage backend.
+This strategy approximates the moving window while using less memory by maintaining
+two counters:
 
-This strategy approximates the moving window strategy, with less memory use.
-It approximates the behavior of a moving window by maintaining counters for two adjacent
-fixed windows: the current and the previous windows.
+- **Current bucket:** counts requests in the ongoing period.
+- **Previous bucket:** counts requests in the immediately preceding period.
 
-The current window counter increases at the first hit, and the sampling period begins. Then,
-at the end of the sampling period, the window counter and expiration are moved to the
-previous window, and new requests will still increase the current window counter.
-
-**To determine if a request should be allowed, we assume the requests in the previous window
-were distributed evenly over its duration (eg: if it received 5 requests in 10 seconds,
-we consider it has received one request every two seconds).**
-
-Depending on how much time has elapsed since the current window was moved, a weight is applied:
+A weighted sum of these counters is computed based on the elapsed time in the current
+bucket. The weighted count is defined as:
 
 .. math::
 
-    \begin{aligned}
-        C_{\text{weighted}} &= \frac{C_{\text{prev}} \times (T_{\text{exp}} - T_{\text{elapsed}})}{T_{\text{exp}}} + C_{\text{current}} \\[10pt]
-        \text{where} \quad
-        C_{\text{weighted}} &\quad \text{is the weighted count}, \\
-        C_{\text{prev}} &\quad \text{is the previous count}, \\
-        C_{\text{current}} &\quad \text{is the current count}, \\
-        T_{\text{exp}} &\quad \text{is the expiration period}, \\
-        T_{\text{elapsed}} &\quad \text{is the time elapsed since shift}.
-    \end{aligned}
+    C_{\text{weighted}} = \left\lfloor C_{\text{current}} +
+    \left(C_{\text{prev}} \times w\right) \right\rfloor
 
-
-For example, for a sampling period of 10 seconds and if the window has shifted 2 seconds ago,
-the weighted count will be computed as follows:
+and the weight factor :math:`w` is calculated as:
 
 .. math::
 
-   C_{\text{weighted}} &= \frac{C_{\text{prev}} \times (10 - 2)}{10} + C_{\text{current}} \\[10pt]
+    w = \frac{T_{\text{exp}} - T_{\text{elapsed}}}{T_{\text{exp}}}
 
-Contrary to the moving window strategy, at most two counters per rate limiter are needed,
-which dramatically reduces memory usage.
+Where:
 
-.. warning::
+- :math:`T_{\text{exp}}` is the bucket duration.
+- :math:`T_{\text{elapsed}}` is the time elapsed since the bucket shifted.
+- :math:`C_{\text{prev}}` is the previous bucket's count.
+- :math:`C_{\text{current}}` is the current bucket's count.
 
-   With some storage implementations, the sampling period doesn't start at the first hit,
-   but at a fixed interval like the fixed window, thus allowing an 'attacker' to bypass the limits,
-   especially if the counter is very low. This burst is observed only at the first sampling period.
-   Eg: with "1 / day", the attacker can send one request at 23:59:59 and another at 00:00:00.
-   However, the subsequent requests will be rate-limited once a day, since the previous window is full.
 
-   The following storage implementations are affected: ``memcached`` and ``in-memory``.
+For example, with a rate limit of ``100 requests per minute``
+
+Suppose:
+
+- Current bucket (:math:`C_{\text{current}}`) has 80 hits.
+- Previous bucket (:math:`C_{\text{prev}}`) has 40 hits.
+
+Scenario 1
+~~~~~~~~~~
+
+The bucket shifted 30 seconds ago (:math:`T_{\text{elapsed}} = 30`).
+
+.. math::
+
+  w = \frac{60 - 30}{60} = 0.5
+
+.. math::
+
+  C_{\text{weighted}} = \left\lfloor 80 + (0.5 \times 40) \right\rfloor = 100
+
+Since the effective count equals the limit, a new request is rejected.
+
+Scenario 2
+~~~~~~~~~~
+
+The bucket shifted 40 seconds ago (:math:`T_{\text{elapsed}} = 40`).
+
+.. math::
+
+  w = \frac{60 - 40}{60} \approx 0.33
+
+.. math::
+
+  C_{\text{weighted}} = \left\lfloor 80 + (0.33 \times 40) \right\rfloor = 93
+
+Since the effective count is below the limit, a new request is allowed.
+
+.. note::
+   Some storage implementations use fixed bucket boundaries (e.g., aligning buckets with
+   clock intervals), while others adjust buckets dynamically based on the first hit.
+   This difference can allow an attacker to bypass limits during the initial sampling
+   period. The affected implementations are ``memcached`` and ``in-memory``.
+
+
+
