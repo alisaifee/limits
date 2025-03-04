@@ -5,6 +5,7 @@ from typing import (
     Any,
     Callable,
     ClassVar,
+    Literal,
     NamedTuple,
     Optional,
     Type,
@@ -23,6 +24,7 @@ P = ParamSpec("P")
 
 
 if TYPE_CHECKING:
+    import coredis
     import pymongo.collection
     import pymongo.database
     import redis
@@ -138,12 +140,12 @@ class AsyncRedisClientP(Protocol):
     async def ttl(self, key: str) -> int: ...
     async def expire(self, key: str, seconds: int) -> bool: ...
     async def ping(self) -> bool: ...
-    def register_script(self, script: bytes) -> ScriptP[bytes]: ...
+    def register_script(self, script: bytes) -> "redis.commands.core.Script": ...
 
 
-AsyncRedisClient = AsyncRedisClientP
 RedisClient = RedisClientP
-
+AsyncRedisClient = AsyncRedisClientP
+AsyncCoRedisClient = Union["coredis.Redis[bytes]", "coredis.RedisCluster[bytes]"]
 
 MongoClient: TypeAlias = "pymongo.MongoClient[dict[str, Any]]"  # type:ignore[explicit-any]
 MongoDatabase: TypeAlias = "pymongo.database.Database[dict[str, Any]]"  # type:ignore[explicit-any]
@@ -158,6 +160,7 @@ __all__ = [
     "Counter",
     "EmcacheClientP",
     "ItemP",
+    "Literal",
     "MemcachedClientP",
     "MongoClient",
     "MongoCollection",
