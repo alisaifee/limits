@@ -108,38 +108,32 @@ For example, with a rate limit of ``100 requests per minute``
 
 Suppose:
 
-- Current bucket (:math:`C_{\text{current}}`) has 80 hits.
-- Previous bucket (:math:`C_{\text{prev}}`) has 40 hits.
+- Current bucket has 80 hits (:math:`C_{\text{current}}`)
+- Previous bucket has 40 hits (:math:`C_{\text{prev}}`)
 
-Scenario 1
-~~~~~~~~~~
+- If the bucket shifted 30 seconds ago (:math:`T_{\text{elapsed}} = 30`).
 
-The bucket shifted 30 seconds ago (:math:`T_{\text{elapsed}} = 30`).
+  .. math::
 
-.. math::
+    w = \frac{60 - 30}{60} = 0.5
 
-  w = \frac{60 - 30}{60} = 0.5
+  .. math::
 
-.. math::
+    C_{\text{weighted}} = \left\lfloor 80 + (0.5 \times 40) \right\rfloor = 100
 
-  C_{\text{weighted}} = \left\lfloor 80 + (0.5 \times 40) \right\rfloor = 100
+  Since the effective count equals the limit, a new request is rejected.
 
-Since the effective count equals the limit, a new request is rejected.
+- If the bucket shifted 40 seconds ago (:math:`T_{\text{elapsed}} = 40`).
 
-Scenario 2
-~~~~~~~~~~
+  .. math::
 
-The bucket shifted 40 seconds ago (:math:`T_{\text{elapsed}} = 40`).
+    w = \frac{60 - 40}{60} \approx 0.33
 
-.. math::
+  .. math::
 
-  w = \frac{60 - 40}{60} \approx 0.33
+    C_{\text{weighted}} = \left\lfloor 80 + (0.33 \times 40) \right\rfloor = 93
 
-.. math::
-
-  C_{\text{weighted}} = \left\lfloor 80 + (0.33 \times 40) \right\rfloor = 93
-
-Since the effective count is below the limit, a new request is allowed.
+  Since the effective count is below the limit, a new request is allowed.
 
 .. note::
    Some storage implementations use fixed bucket boundaries (e.g., aligning buckets with
