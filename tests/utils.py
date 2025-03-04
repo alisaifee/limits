@@ -47,7 +47,7 @@ def async_fixed_start(fn):
         while time.time() < math.ceil(start):
             time.sleep(0.01)
 
-        return fn(*a, **k)
+        return await fn(*a, **k)
 
     return __inner
 
