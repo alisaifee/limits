@@ -64,10 +64,10 @@ class RedisInteractor:
         :param amount: the number to increment by
         """
         key = self.prefixed_key(key)
-        value: int = await connection.execute_command("INCRBY", key, amount)
+        value = await connection.incrby(key, amount)
 
         if elastic_expiry or value == amount:
-            await connection.execute_command("EXPIRE", key, expiry)
+            await connection.expire(key, expiry)
 
         return value
 
@@ -78,7 +78,7 @@ class RedisInteractor:
         """
 
         key = self.prefixed_key(key)
-        return int(await connection.execute_command("GET", key) or 0)
+        return int(await connection.get(key) or 0)
 
     async def _clear(self, key: str, connection: AsyncRedisClient) -> None:
         """
@@ -86,7 +86,7 @@ class RedisInteractor:
         :param connection: Redis connection
         """
         key = self.prefixed_key(key)
-        await connection.execute_command("DEL", key)
+        await connection.delete(key)
 
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
@@ -167,8 +167,7 @@ class RedisInteractor:
         """
 
         key = self.prefixed_key(key)
-        ttl: int = await connection.execute_command("TTL", key)
-        return max(ttl, 0) + time.time()
+        return max(await connection.ttl(key), 0) + time.time()
 
     async def _check(self, connection: AsyncRedisClient) -> bool:
         """
@@ -177,7 +176,7 @@ class RedisInteractor:
         :param connection: Redis connection
         """
         try:
-            await connection.execute_command("PING")
+            await connection.ping()
 
             return True
         except:  # noqa
@@ -222,7 +221,7 @@ class RedisStorage(
     """
     The storage schemes for redis to be used in an async context
     """
-    DEPENDENCIES = {"redis": Version("4.2.0")}
+    DEPENDENCIES = {"redis": Version("5.2.0")}
 
     def __init__(
         self,

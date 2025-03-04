@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     import pymongo.collection
     import pymongo.database
     import redis
-    import redis.asyncio
 
 
 class ItemP(Protocol):
@@ -118,14 +117,23 @@ class MemcachedClientP(Protocol):
     ) -> bool: ...
 
 
-AsyncRedisClient = Union[
-    "redis.asyncio.Redis[bytes]", "redis.asyncio.RedisCluster[bytes]"
-]
-RedisClient = Union["redis.Redis[bytes]", "redis.cluster.RedisCluster[bytes]"]
-
-
 class ScriptP(Protocol[R_co]):
     def __call__(self, keys: list[Serializable], args: list[Serializable]) -> R_co: ...
+
+
+class AsyncRedisClientP(Protocol):
+    async def incrby(self, key: str, amount: int) -> int: ...
+    async def get(self, key: str) -> Optional[bytes]: ...
+    async def delete(self, key: str) -> int: ...
+    async def ttl(self, key: str) -> int: ...
+    async def expire(self, key: str, seconds: int) -> bool: ...
+    async def ping(self) -> bool: ...
+    def register_script(self, script: bytes) -> ScriptP[bytes]: ...
+
+
+AsyncRedisClient = AsyncRedisClientP
+
+RedisClient = Union["redis.Redis[bytes]", "redis.cluster.RedisCluster[bytes]"]
 
 
 MongoClient: TypeAlias = "pymongo.MongoClient[dict[str, Any]]"  # type:ignore[explicit-any]
