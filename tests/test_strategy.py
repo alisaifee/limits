@@ -65,7 +65,8 @@ class TestFixedWindow:
     @fixed_start
     def test_fixed_window_with_elastic_expiry(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
-        limiter = FixedWindowElasticExpiryRateLimiter(storage)
+        with pytest.warns(DeprecationWarning):
+            limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         with window(1) as (start, end):
             assert all([limiter.hit(limit) for _ in range(0, 10)])
@@ -85,7 +86,8 @@ class TestFixedWindow:
     @fixed_start
     def test_fixed_window_with_elastic_expiry_multiple_cost(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
-        limiter = FixedWindowElasticExpiryRateLimiter(storage)
+        with pytest.warns(DeprecationWarning):
+            limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         assert not limiter.hit(limit, "k1", cost=11)
         with window(0) as (start, end):
