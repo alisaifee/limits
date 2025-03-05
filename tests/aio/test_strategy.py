@@ -215,7 +215,7 @@ class TestAsyncSlidingWindow:
         if isinstance(storage, TimestampedSlidingWindow):
             # Avoid testing the behaviour when the window is about to be reset
             ttl = timestamp_based_key_ttl(limit)
-            if ttl < 0.5:
+            if ttl < 1:
                 time.sleep(ttl)
         async with async_window(1) as (start, _):
             assert all([await limiter.hit(limit) for _ in range(0, 10)])
