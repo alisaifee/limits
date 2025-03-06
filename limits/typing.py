@@ -129,10 +129,6 @@ class RedisClientP(Protocol):
     def register_script(self, script: bytes) -> "redis.commands.core.Script": ...
 
 
-
-
-
-
 class AsyncRedisClientP(Protocol):
     async def incrby(self, key: str, amount: int) -> int: ...
     async def get(self, key: str) -> Optional[bytes]: ...
