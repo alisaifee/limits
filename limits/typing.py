@@ -170,7 +170,6 @@ __all__ = [
     "P",
     "ParamSpec",
     "Protocol",
-    "ScriptP",
     "Serializable",
     "TypeVar",
     "R",
