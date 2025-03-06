@@ -22,15 +22,15 @@ from limits.util import LazyDependency
 
 
 def _wrap_errors(
-    storage: Storage,
     fn: Callable[P, Awaitable[R]],
 ) -> Callable[P, Awaitable[R]]:
     @functools.wraps(fn)
     async def inner(*args: P.args, **kwargs: P.kwargs) -> R:  # type: ignore[misc]
+        instance = cast(Storage, args[0])
         try:
             return await fn(*args, **kwargs)
-        except storage.base_exceptions as exc:
-            if storage.wrap_exceptions:
+        except instance.base_exceptions as exc:
+            if instance.wrap_exceptions:
                 raise errors.StorageError(exc) from exc
             raise
 
@@ -46,9 +46,8 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     STORAGE_SCHEME: Optional[list[str]]
     """The storage schemes to register against this implementation"""
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Storage:  # type: ignore[explicit-any]
-        inst = super().__new__(cls)
-
+    def __init_subclass__(cls, **kwargs: Any) -> None:  # type:ignore[explicit-any]
+        super().__init_subclass__(**kwargs)
         for method in {
             "incr",
             "get",
@@ -57,9 +56,8 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
             "reset",
             "clear",
         }:
-            setattr(inst, method, _wrap_errors(inst, getattr(inst, method)))
-
-        return inst
+            setattr(cls, method, _wrap_errors(getattr(cls, method)))
+        super().__init_subclass__(**kwargs)
 
     def __init__(
         self,
@@ -138,20 +136,17 @@ class MovingWindowSupport(ABC):
     the :ref:`strategies:moving window` strategy
     """
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> MovingWindowSupport:  # type: ignore[explicit-any]
-        inst = super().__new__(cls)
-
+    def __init_subclass__(cls, **kwargs: Any) -> None:  # type: ignore[explicit-any]
         for method in {
             "acquire_entry",
             "get_moving_window",
         }:
             setattr(
-                inst,
+                cls,
                 method,
-                _wrap_errors(cast(Storage, inst), getattr(inst, method)),
+                _wrap_errors(getattr(cls, method)),
             )
-
-        return inst
+        super().__init_subclass__(**kwargs)
 
     @abstractmethod
     async def acquire_entry(
@@ -186,17 +181,14 @@ class SlidingWindowCounterSupport(ABC):
     the :ref:`strategies:sliding window counter` strategy
     """
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> SlidingWindowCounterSupport:  # type: ignore[explicit-any]
-        inst = super().__new__(cls)
-
+    def __init_subclass__(cls, **kwargs: Any) -> None:  # type: ignore[explicit-any]
         for method in {"acquire_sliding_window_entry", "get_sliding_window"}:
             setattr(
-                inst,
+                cls,
                 method,
-                _wrap_errors(cast(Storage, inst), getattr(inst, method)),
+                _wrap_errors(getattr(cls, method)),
             )
-
-        return inst
+        super().__init_subclass__(**kwargs)
 
     @abstractmethod
     async def acquire_sliding_window_entry(
