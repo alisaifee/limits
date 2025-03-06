@@ -47,7 +47,7 @@ def async_fixed_start(fn):
         while time.time() < math.ceil(start):
             time.sleep(0.01)
 
-        return fn(*a, **k)
+        return await fn(*a, **k)
 
     return __inner
 
@@ -213,7 +213,7 @@ moving_window_storage = pytest.mark.parametrize(
 sliding_window_counter_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        pytest.param("memory://", {}, None, id="in-memory"),
+        pytest.param("memory://", {}, None, marks=pytest.mark.memory, id="in-memory"),
         pytest.param(
             "redis://localhost:7379",
             {},
@@ -417,7 +417,9 @@ async_moving_window_storage = pytest.mark.parametrize(
 async_sliding_window_counter_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        pytest.param("async+memory://", {}, None, id="in-memory"),
+        pytest.param(
+            "async+memory://", {}, None, marks=pytest.mark.memory, id="in-memory"
+        ),
         pytest.param(
             "async+redis://localhost:7379",
             {},

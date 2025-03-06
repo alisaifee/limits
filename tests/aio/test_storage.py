@@ -96,7 +96,14 @@ class TestBaseStorage:
 @pytest.mark.parametrize(
     "uri, args, expected_instance, fixture",
     [
-        pytest.param("async+memory://", {}, MemoryStorage, None, id="in-memory"),
+        pytest.param(
+            "async+memory://",
+            {},
+            MemoryStorage,
+            None,
+            marks=pytest.mark.memory,
+            id="in-memory",
+        ),
         pytest.param(
             "async+redis://localhost:7379",
             {},
@@ -230,7 +237,7 @@ class TestConcreteStorages:
         assert await storage.acquire_sliding_window_entry(
             limit.key_for(), limit.amount, limit.get_expiry()
         )
-        assert await storage.get_sliding_window(limit.key_for(), limit.get_expiry())[
+        assert (await storage.get_sliding_window(limit.key_for(), limit.get_expiry()))[
             -1
         ] == pytest.approx(2, abs=1e2)
 

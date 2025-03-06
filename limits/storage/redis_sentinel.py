@@ -5,10 +5,10 @@ from packaging.version import Version
 
 from limits.errors import ConfigurationError
 from limits.storage.redis import RedisStorage
-from limits.typing import Optional, Type, Union
+from limits.typing import Optional, RedisClient, Type, Union
 
 if TYPE_CHECKING:
-    import redis.sentinel
+    pass
 
 
 class RedisSentinelStorage(RedisStorage):
@@ -21,7 +21,7 @@ class RedisSentinelStorage(RedisStorage):
     STORAGE_SCHEME = ["redis+sentinel"]
     """The storage scheme for redis accessed via a redis sentinel installation"""
 
-    DEPENDENCIES = {"redis.sentinel": Version("3.0")}
+    DEPENDENCIES = {"redis": Version("3.0"), "redis.sentinel": Version("3.0")}
 
     def __init__(
         self,
@@ -76,13 +76,13 @@ class RedisSentinelStorage(RedisStorage):
             raise ConfigurationError("'service_name' not provided")
 
         sentinel_dep = self.dependencies["redis.sentinel"].module
-        self.sentinel: "redis.sentinel.Sentinel" = sentinel_dep.Sentinel(
+        self.sentinel = sentinel_dep.Sentinel(
             sentinel_configuration,
             sentinel_kwargs={**parsed_auth, **sentinel_options},
             **{**parsed_auth, **options},
         )
-        self.storage = self.sentinel.master_for(self.service_name)
-        self.storage_slave = self.sentinel.slave_for(self.service_name)
+        self.storage: RedisClient = self.sentinel.master_for(self.service_name)
+        self.storage_slave: RedisClient = self.sentinel.slave_for(self.service_name)
         self.use_replicas = use_replicas
         self.initialize_storage(uri)
 
@@ -90,30 +90,7 @@ class RedisSentinelStorage(RedisStorage):
     def base_exceptions(
         self,
     ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
-        return self.dependencies["redis"].RedisError  # type: ignore[no-any-return, attr-defined]
+        return self.dependencies["redis"].module.RedisError  # type: ignore[no-any-return]
 
-    def get(self, key: str) -> int:
-        """
-        :param key: the key to get the counter value for
-        """
-
-        return super()._get(
-            key, self.storage_slave if self.use_replicas else self.storage
-        )
-
-    def get_expiry(self, key: str) -> float:
-        """
-        :param key: the key to get the expiry for
-        """
-
-        return super()._get_expiry(
-            key, self.storage_slave if self.use_replicas else self.storage
-        )
-
-    def check(self) -> bool:
-        """
-        Check if storage is healthy by calling :class:`aredis.StrictRedis.ping`
-        on the slave.
-        """
-
-        return super()._check(self.storage_slave if self.use_replicas else self.storage)
+    def get_connection(self, readonly: bool = False) -> RedisClient:
+        return self.storage_slave if (readonly and self.use_replicas) else self.storage

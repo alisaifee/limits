@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from packaging.version import Version
 
-from limits.typing import Optional, RedisClient, ScriptP, Type, Union
+from limits.typing import Optional, RedisClient, Type, Union
 
 from ..util import get_package_data
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
@@ -14,7 +14,18 @@ if TYPE_CHECKING:
     import redis
 
 
-class RedisInteractor:
+class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
+    """
+    Rate limit storage with redis as backend.
+
+    Depends on :pypi:`redis`.
+    """
+
+    STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]
+    """The storage scheme for redis"""
+
+    DEPENDENCIES = {"redis": Version("3.0")}
+
     RES_DIR = "resources/redis/lua_scripts"
 
     SCRIPT_MOVING_WINDOW = get_package_data(f"{RES_DIR}/moving_window.lua")
@@ -29,189 +40,12 @@ class RedisInteractor:
         f"{RES_DIR}/acquire_sliding_window.lua"
     )
 
-    lua_moving_window: ScriptP[tuple[int, int]]
-    lua_acquire_moving_window: ScriptP[bool]
-    lua_sliding_window: ScriptP[tuple[int, float, int, float]]
-    lua_acquire_sliding_window: ScriptP[bool]
+    lua_moving_window: "redis.commands.core.Script"
+    lua_acquire_moving_window: "redis.commands.core.Script"
+    lua_sliding_window: "redis.commands.core.Script"
+    lua_acquire_sliding_window: "redis.commands.core.Script"
 
     PREFIX = "LIMITS"
-
-    def prefixed_key(self, key: str) -> str:
-        return f"{self.PREFIX}:{key}"
-
-    def get_moving_window(self, key: str, limit: int, expiry: int) -> tuple[float, int]:
-        """
-        returns the starting point and the number of entries in the moving
-        window
-
-        :param key: rate limit key
-        :param expiry: expiry of entry
-        :return: (start of window, number of acquired entries)
-        """
-        key = self.prefixed_key(key)
-        timestamp = time.time()
-        if window := self.lua_moving_window([key], [timestamp - expiry, limit]):
-            return float(window[0]), window[1]
-
-        return timestamp, 0
-
-    def get_sliding_window(
-        self, key: str, expiry: int
-    ) -> tuple[int, float, int, float]:
-        previous_key = self.prefixed_key(self._previous_window_key(key))
-        current_key = self.prefixed_key(self._current_window_key(key))
-        if window := self.lua_sliding_window([previous_key, current_key], [expiry]):
-            return (
-                int(window[0] or 0),
-                max(0, float(window[1] or 0)) / 1000,
-                int(window[2] or 0),
-                max(0, float(window[3] or 0)) / 1000,
-            )
-        return 0, 0.0, 0, 0.0
-
-    def _incr(
-        self,
-        key: str,
-        expiry: int,
-        connection: RedisClient,
-        elastic_expiry: bool = False,
-        amount: int = 1,
-    ) -> int:
-        """
-        increments the counter for a given rate limit key
-
-        :param connection: Redis connection
-        :param key: the key to increment
-        :param expiry: amount in seconds for the key to expire in
-        :param amount: the number to increment by
-        """
-        key = self.prefixed_key(key)
-        value = connection.incrby(key, amount)
-
-        if elastic_expiry or value == amount:
-            connection.expire(key, expiry)
-
-        return value
-
-    def _get(self, key: str, connection: RedisClient) -> int:
-        """
-        :param connection: Redis connection
-        :param key: the key to get the counter value for
-        """
-
-        key = self.prefixed_key(key)
-        return int(connection.get(key) or 0)
-
-    def _clear(self, key: str, connection: RedisClient) -> None:
-        """
-        :param key: the key to clear rate limits for
-        :param connection: Redis connection
-        """
-        key = self.prefixed_key(key)
-        connection.delete(key)
-
-    def _acquire_entry(
-        self,
-        key: str,
-        limit: int,
-        expiry: int,
-        connection: RedisClient,
-        amount: int = 1,
-    ) -> bool:
-        """
-        :param key: rate limit key to acquire an entry in
-        :param limit: amount of entries allowed
-        :param expiry: expiry of the entry
-        :param connection: Redis connection
-        :param amount: the number of entries to acquire
-        """
-        key = self.prefixed_key(key)
-        timestamp = time.time()
-        acquired = self.lua_acquire_moving_window(
-            [key], [timestamp, limit, expiry, amount]
-        )
-
-        return bool(acquired)
-
-    def _acquire_sliding_window_entry(
-        self,
-        key: str,
-        limit: int,
-        expiry: int,
-        amount: int = 1,
-    ) -> bool:
-        """
-        Acquire an entry. Shift the current window to the previous window if it expired.
-        :param current_window_key: current window key
-        :param previous_window_key: previous window key
-        :param limit: amount of entries allowed
-        :param expiry: expiry of the entry
-        :param amount: the number of entries to acquire
-        """
-        previous_key = self.prefixed_key(self._previous_window_key(key))
-        current_key = self.prefixed_key(self._current_window_key(key))
-        acquired = self.lua_acquire_sliding_window(
-            [previous_key, current_key], [limit, expiry, amount]
-        )
-        return bool(acquired)
-
-    def _get_expiry(self, key: str, connection: RedisClient) -> float:
-        """
-        :param key: the key to get the expiry for
-        :param connection: Redis connection
-        """
-
-        key = self.prefixed_key(key)
-        return max(connection.ttl(key), 0) + time.time()
-
-    def _check(self, connection: RedisClient) -> bool:
-        """
-        :param connection: Redis connection
-        check if storage is healthy
-        """
-        try:
-            return connection.ping()
-        except:  # noqa
-            return False
-
-    def _current_window_key(self, key: str) -> str:
-        """
-        Return the current window's storage key (Sliding window strategy)
-
-        Contrary to other strategies that have one key per rate limit item,
-        this strategy has two keys per rate limit item than must be on the same machine.
-        To keep the current key and the previous key on the same Redis cluster node,
-        curly braces are added.
-
-        Eg: "{constructed_key}"
-        """
-        return f"{{{key}}}"
-
-    def _previous_window_key(self, key: str) -> str:
-        """
-        Return the previous window's storage key (Sliding window strategy).
-
-        Curvy braces are added on the common pattern with the current window's key,
-        so the current and the previous key are stored on the same Redis cluster node.
-
-        Eg: "{constructed_key}/-1"
-        """
-        return f"{self._current_window_key(key)}/-1"
-
-
-class RedisStorage(
-    RedisInteractor, Storage, MovingWindowSupport, SlidingWindowCounterSupport
-):
-    """
-    Rate limit storage with redis as backend.
-
-    Depends on :pypi:`redis`.
-    """
-
-    STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]
-    """The storage scheme for redis"""
-
-    DEPENDENCIES = {"redis": Version("3.0")}
 
     def __init__(
         self,
@@ -254,59 +88,145 @@ class RedisStorage(
         return self.dependency.RedisError  # type: ignore[no-any-return]
 
     def initialize_storage(self, _uri: str) -> None:
-        self.lua_moving_window = self.storage.register_script(self.SCRIPT_MOVING_WINDOW)
-        self.lua_acquire_moving_window = self.storage.register_script(
+        self.lua_moving_window = self.get_connection().register_script(
+            self.SCRIPT_MOVING_WINDOW
+        )
+        self.lua_acquire_moving_window = self.get_connection().register_script(
             self.SCRIPT_ACQUIRE_MOVING_WINDOW
         )
-        self.lua_clear_keys = self.storage.register_script(self.SCRIPT_CLEAR_KEYS)
-        self.lua_incr_expire = self.storage.register_script(self.SCRIPT_INCR_EXPIRE)
-        self.lua_sliding_window = self.storage.register_script(
+        self.lua_clear_keys = self.get_connection().register_script(
+            self.SCRIPT_CLEAR_KEYS
+        )
+        self.lua_incr_expire = self.get_connection().register_script(
+            self.SCRIPT_INCR_EXPIRE
+        )
+        self.lua_sliding_window = self.get_connection().register_script(
             self.SCRIPT_SLIDING_WINDOW
         )
-        self.lua_acquire_sliding_window = self.storage.register_script(
+        self.lua_acquire_sliding_window = self.get_connection().register_script(
             self.SCRIPT_ACQUIRE_SLIDING_WINDOW
         )
 
+    def get_connection(self, readonly: bool = False) -> RedisClient:
+        return cast(RedisClient, self.storage)
+
+    def _current_window_key(self, key: str) -> str:
+        """
+        Return the current window's storage key (Sliding window strategy)
+
+        Contrary to other strategies that have one key per rate limit item,
+        this strategy has two keys per rate limit item than must be on the same machine.
+        To keep the current key and the previous key on the same Redis cluster node,
+        curly braces are added.
+
+        Eg: "{constructed_key}"
+        """
+        return f"{{{key}}}"
+
+    def _previous_window_key(self, key: str) -> str:
+        """
+        Return the previous window's storage key (Sliding window strategy).
+
+        Curvy braces are added on the common pattern with the current window's key,
+        so the current and the previous key are stored on the same Redis cluster node.
+
+        Eg: "{constructed_key}/-1"
+        """
+        return f"{self._current_window_key(key)}/-1"
+
+    def prefixed_key(self, key: str) -> str:
+        return f"{self.PREFIX}:{key}"
+
+    def get_moving_window(self, key: str, limit: int, expiry: int) -> tuple[float, int]:
+        """
+        returns the starting point and the number of entries in the moving
+        window
+
+        :param key: rate limit key
+        :param expiry: expiry of entry
+        :return: (start of window, number of acquired entries)
+        """
+        key = self.prefixed_key(key)
+        timestamp = time.time()
+        if window := self.lua_moving_window([key], [timestamp - expiry, limit]):
+            return float(window[0]), window[1]
+
+        return timestamp, 0
+
+    def get_sliding_window(
+        self, key: str, expiry: int
+    ) -> tuple[int, float, int, float]:
+        previous_key = self.prefixed_key(self._previous_window_key(key))
+        current_key = self.prefixed_key(self._current_window_key(key))
+        if window := self.lua_sliding_window([previous_key, current_key], [expiry]):
+            return (
+                int(window[0] or 0),
+                max(0, float(window[1] or 0)) / 1000,
+                int(window[2] or 0),
+                max(0, float(window[3] or 0)) / 1000,
+            )
+        return 0, 0.0, 0, 0.0
+
     def incr(
-        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
+        self,
+        key: str,
+        expiry: int,
+        elastic_expiry: bool = False,
+        amount: int = 1,
     ) -> int:
         """
         increments the counter for a given rate limit key
+
 
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
         :param amount: the number to increment by
         """
-
+        key = self.prefixed_key(key)
         if elastic_expiry:
-            return super()._incr(key, expiry, self.storage, elastic_expiry, amount)
+            value = self.get_connection().incrby(key, amount)
+            self.get_connection().expire(key, expiry)
+            return value
         else:
-            key = self.prefixed_key(key)
             return int(self.lua_incr_expire([key], [expiry, amount]))
 
     def get(self, key: str) -> int:
         """
+
         :param key: the key to get the counter value for
         """
 
-        return super()._get(key, self.storage)
+        key = self.prefixed_key(key)
+        return int(self.get_connection(True).get(key) or 0)
 
     def clear(self, key: str) -> None:
         """
         :param key: the key to clear rate limits for
         """
+        key = self.prefixed_key(key)
+        self.get_connection().delete(key)
 
-        return super()._clear(key, self.storage)
-
-    def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
+    def acquire_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+    ) -> bool:
         """
         :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
-        :param amount: the number to increment by
-        """
 
-        return super()._acquire_entry(key, limit, expiry, self.storage, amount)
+        :param amount: the number of entries to acquire
+        """
+        key = self.prefixed_key(key)
+        timestamp = time.time()
+        acquired = self.lua_acquire_moving_window(
+            [key], [timestamp, limit, expiry, amount]
+        )
+
+        return bool(acquired)
 
     def acquire_sliding_window_entry(
         self,
@@ -315,21 +235,38 @@ class RedisStorage(
         expiry: int,
         amount: int = 1,
     ) -> bool:
-        return super()._acquire_sliding_window_entry(key, limit, expiry, amount)
+        """
+        Acquire an entry. Shift the current window to the previous window if it expired.
+        :param current_window_key: current window key
+        :param previous_window_key: previous window key
+        :param limit: amount of entries allowed
+        :param expiry: expiry of the entry
+        :param amount: the number of entries to acquire
+        """
+        previous_key = self.prefixed_key(self._previous_window_key(key))
+        current_key = self.prefixed_key(self._current_window_key(key))
+        acquired = self.lua_acquire_sliding_window(
+            [previous_key, current_key], [limit, expiry, amount]
+        )
+        return bool(acquired)
 
     def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
+
         """
 
-        return super()._get_expiry(key, self.storage)
+        key = self.prefixed_key(key)
+        return max(self.get_connection(True).ttl(key), 0) + time.time()
 
     def check(self) -> bool:
         """
         check if storage is healthy
         """
-
-        return super()._check(self.storage)
+        try:
+            return self.get_connection().ping()
+        except:  # noqa
+            return False
 
     def reset(self) -> Optional[int]:
         """

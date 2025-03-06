@@ -17,9 +17,11 @@
 
 ----
 
-*limits* is a python library to perform rate limiting with commonly used
-storage backends (Redis, Memcached & MongoDB).
+**limits** is a python library for rate limiting via multiple strategies
+with commonly used storage backends (Redis, Memcached, MongoDB & Etcd).
 
+The library provides identical APIs for use in sync and
+:ref:`async <async:async support>`  codebases.
 
 Get started by taking a look at :ref:`installation:installation` and :ref:`quickstart:quickstart`.
 

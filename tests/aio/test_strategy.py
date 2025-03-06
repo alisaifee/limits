@@ -66,7 +66,8 @@ class TestAsyncFixedWindow:
     @async_fixed_start
     async def test_fixed_window_with_elastic_expiry(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
-        limiter = FixedWindowElasticExpiryRateLimiter(storage)
+        with pytest.warns(DeprecationWarning):
+            limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         async with async_window(1) as (start, end):
             assert all([await limiter.hit(limit) for _ in range(0, 10)])
@@ -88,7 +89,8 @@ class TestAsyncFixedWindow:
         self, uri, args, fixture
     ):
         storage = storage_from_string(uri, **args)
-        limiter = FixedWindowElasticExpiryRateLimiter(storage)
+        with pytest.warns(DeprecationWarning):
+            limiter = FixedWindowElasticExpiryRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         assert not await limiter.hit(limit, "k1", cost=11)
         async with async_window(0) as (_, end):
@@ -213,7 +215,7 @@ class TestAsyncSlidingWindow:
         if isinstance(storage, TimestampedSlidingWindow):
             # Avoid testing the behaviour when the window is about to be reset
             ttl = timestamp_based_key_ttl(limit)
-            if ttl < 0.5:
+            if ttl < 1:
                 time.sleep(ttl)
         async with async_window(1) as (start, _):
             assert all([await limiter.hit(limit) for _ in range(0, 10)])

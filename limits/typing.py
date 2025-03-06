@@ -117,8 +117,18 @@ class MemcachedClientP(Protocol):
     ) -> bool: ...
 
 
-class ScriptP(Protocol[R_co]):
-    def __call__(self, keys: list[Serializable], args: list[Serializable]) -> R_co: ...
+class RedisClientP(Protocol):
+    def incrby(self, key: str, amount: int) -> int: ...
+    def get(self, key: str) -> Optional[bytes]: ...
+    def delete(self, key: str) -> int: ...
+    def ttl(self, key: str) -> int: ...
+    def expire(self, key: str, seconds: int) -> bool: ...
+    def ping(self) -> bool: ...
+    def register_script(self, script: bytes) -> "redis.commands.core.Script": ...
+
+
+
+
 
 
 class AsyncRedisClientP(Protocol):
@@ -132,8 +142,7 @@ class AsyncRedisClientP(Protocol):
 
 
 AsyncRedisClient = AsyncRedisClientP
-
-RedisClient = Union["redis.Redis[bytes]", "redis.cluster.RedisCluster[bytes]"]
+RedisClient = RedisClientP
 
 
 MongoClient: TypeAlias = "pymongo.MongoClient[dict[str, Any]]"  # type:ignore[explicit-any]

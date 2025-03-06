@@ -5,6 +5,5 @@ keyring
 mypy
 twine
 types-deprecated
-types-redis
 types-setuptools
 wheel
