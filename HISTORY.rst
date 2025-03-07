@@ -3,6 +3,22 @@
 Changelog
 =========
 
+v4.1
+----
+Release Date: 2025-03-07
+
+  * Feature
+
+    * Add new Sliding Window Counter strategy
+
+  * Deprecation
+
+    * Deprecate the Fixed window with elastic expiry strategy
+
+  * Documentation
+
+    * Re-write strategy documentation with concrete examples
+
 v4.0.1
 ------
 Release Date: 2025-01-16
@@ -694,6 +710,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
