@@ -41,6 +41,7 @@ jobs:
         python-version: [3.9]
         marker: [not (integration or benchmark)]
         os: [ubuntu-latest]
+        async_redis_implementation: ["coredis"]
         include:
           - python-version: "3.10"
             marker: 'not benchmark'
@@ -51,6 +52,14 @@ jobs:
           - python-version: "3.12"
             marker: 'not benchmark'
             os: ubuntu-latest
+          - python-version: "3.12"
+            marker: 'not benchmark and (redis or redis_cluster or redis_sentinel) and asyncio'
+            os: ubuntu-latest
+            async_redis_implementation: "redispy"
+          - python-version: "3.13"
+            marker: 'not benchmark and (redis or redis_cluster or redis_sentinel) and asyncio'
+            os: ubuntu-latest
+            async_redis_implementation: "redispy"
           - python-version: "3.13"
             marker: 'not benchmark and not (asyncio and memcached)'
             os: ubuntu-latest
@@ -76,6 +85,7 @@ jobs:
     - name: Tests
       env:
         CI: "True"
+        ASYNC_REDIS_IMPLEMENTATION: "${{ matrix.async_redis_implementation }}"
       run: |
         py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch --max-runs=3
     - name: Upload coverage to Codecov

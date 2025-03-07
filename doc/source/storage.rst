@@ -31,6 +31,11 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    .. literalinclude:: ../../requirements/storage/async-redis.txt
 
+   .. note::
+     .. versionadded:: 4.2
+        :pypi:`redis` can be used instead of :pypi:`coredis` by setting
+        :paramref:`limits.aio.storage.RedisStorage.implementation` to ``redispy``
+
    `Redis <https://redis.io>`_
 
    .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
@@ -52,6 +57,11 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
    Dependency versions (async):
 
    .. literalinclude:: ../../requirements/storage/async-redis.txt
+
+   .. note::
+      .. versionadded:: 4.2
+         :pypi:`redis` can be used instead of :pypi:`coredis` by setting
+         :paramref:`limits.aio.storage.RedisClusterStorage.implementation` to ``redispy``
 
    `Redis cluster <https://redis.io/topics/cluster-tutorial>`_
 

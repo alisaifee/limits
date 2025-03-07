@@ -5,6 +5,7 @@ from typing import (
     Any,
     Callable,
     ClassVar,
+    Literal,
     NamedTuple,
     Optional,
     Type,
@@ -24,7 +25,6 @@ P = ParamSpec("P")
 
 if TYPE_CHECKING:
     import coredis
-    import coredis.commands.script
     import pymongo.collection
     import pymongo.database
     import redis
@@ -129,13 +129,19 @@ class RedisClientP(Protocol):
     def register_script(self, script: bytes) -> "redis.commands.core.Script": ...
 
 
-AsyncRedisClient = Union["coredis.Redis[bytes]", "coredis.RedisCluster[bytes]"]
+class AsyncRedisClientP(Protocol):
+    async def incrby(self, key: str, amount: int) -> int: ...
+    async def get(self, key: str) -> Optional[bytes]: ...
+    async def delete(self, key: str) -> int: ...
+    async def ttl(self, key: str) -> int: ...
+    async def expire(self, key: str, seconds: int) -> bool: ...
+    async def ping(self) -> bool: ...
+    def register_script(self, script: bytes) -> "redis.commands.core.Script": ...
+
+
 RedisClient = RedisClientP
-
-
-class ScriptP(Protocol[R_co]):
-    def __call__(self, keys: list[Serializable], args: list[Serializable]) -> R_co: ...
-
+AsyncRedisClient = AsyncRedisClientP
+AsyncCoRedisClient = Union["coredis.Redis[bytes]", "coredis.RedisCluster[bytes]"]
 
 MongoClient: TypeAlias = "pymongo.MongoClient[dict[str, Any]]"  # type:ignore[explicit-any]
 MongoDatabase: TypeAlias = "pymongo.database.Database[dict[str, Any]]"  # type:ignore[explicit-any]
@@ -150,6 +156,7 @@ __all__ = [
     "Counter",
     "EmcacheClientP",
     "ItemP",
+    "Literal",
     "MemcachedClientP",
     "MongoClient",
     "MongoCollection",
@@ -159,7 +166,6 @@ __all__ = [
     "P",
     "ParamSpec",
     "Protocol",
-    "ScriptP",
     "Serializable",
     "TypeVar",
     "R",

@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import functools
 import math
+import os
 import time
 from typing import Optional
 
@@ -9,6 +10,8 @@ import pytest
 from pytest_lazy_fixtures import lf
 
 from limits.limits import RateLimitItem
+
+ASYNC_REDIS_IMPLEMENTATION = os.environ.get("ASYNC_REDIS_IMPLEMENTATION", "coredis")
 
 
 def fixed_start(fn):
@@ -287,7 +290,9 @@ async_all_storage = pytest.mark.parametrize(
         ),
         pytest.param(
             "async+redis://localhost:7379",
-            {},
+            {
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
+            },
             lf("redis_basic"),
             marks=pytest.mark.redis,
             id="redis",
@@ -308,14 +313,18 @@ async_all_storage = pytest.mark.parametrize(
         ),
         pytest.param(
             "async+redis+cluster://localhost:7001/",
-            {},
+            {
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
+            },
             lf("redis_cluster"),
             marks=pytest.mark.redis_cluster,
             id="redis-cluster",
         ),
         pytest.param(
             "async+redis+cluster://:sekret@localhost:8400/",
-            {},
+            {
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
+            },
             lf("redis_auth_cluster"),
             marks=pytest.mark.redis_cluster,
             id="redis-cluster-auth",
@@ -328,6 +337,7 @@ async_all_storage = pytest.mark.parametrize(
                 "ssl_keyfile": "./tests/tls/client.key",
                 "ssl_certfile": "./tests/tls/client.crt",
                 "ssl_ca_certs": "./tests/tls/ca.crt",
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
             },
             lf("redis_ssl_cluster"),
             marks=pytest.mark.redis_cluster,
@@ -335,7 +345,10 @@ async_all_storage = pytest.mark.parametrize(
         ),
         pytest.param(
             "async+redis+sentinel://localhost:26379/mymaster",
-            {"use_replicas": False},
+            {
+                "use_replicas": False,
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
+            },
             lf("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
             id="redis-sentinel",
@@ -365,21 +378,27 @@ async_moving_window_storage = pytest.mark.parametrize(
         ),
         pytest.param(
             "async+redis://localhost:7379",
-            {},
+            {
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
+            },
             lf("redis_basic"),
             marks=pytest.mark.redis,
             id="redis",
         ),
         pytest.param(
             "async+redis+cluster://localhost:7001/",
-            {},
+            {
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
+            },
             lf("redis_cluster"),
             marks=pytest.mark.redis_cluster,
             id="redis-cluster",
         ),
         pytest.param(
             "async+redis+cluster://:sekret@localhost:8400/",
-            {},
+            {
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
+            },
             lf("redis_auth_cluster"),
             marks=pytest.mark.redis_cluster,
             id="redis-cluster-auth",
@@ -392,6 +411,7 @@ async_moving_window_storage = pytest.mark.parametrize(
                 "ssl_keyfile": "./tests/tls/client.key",
                 "ssl_certfile": "./tests/tls/client.crt",
                 "ssl_ca_certs": "./tests/tls/ca.crt",
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
             },
             lf("redis_ssl_cluster"),
             marks=pytest.mark.redis_cluster,
@@ -399,7 +419,10 @@ async_moving_window_storage = pytest.mark.parametrize(
         ),
         pytest.param(
             "async+redis+sentinel://localhost:26379/mymaster",
-            {"use_replicas": False},
+            {
+                "use_replicas": False,
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
+            },
             lf("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
             id="redis-sentinel",
@@ -422,7 +445,7 @@ async_sliding_window_counter_storage = pytest.mark.parametrize(
         ),
         pytest.param(
             "async+redis://localhost:7379",
-            {},
+            {"implementation": ASYNC_REDIS_IMPLEMENTATION},
             lf("redis_basic"),
             marks=pytest.mark.redis,
             id="redis",
@@ -443,14 +466,14 @@ async_sliding_window_counter_storage = pytest.mark.parametrize(
         ),
         pytest.param(
             "async+redis+cluster://localhost:7001/",
-            {},
+            {"implementation": ASYNC_REDIS_IMPLEMENTATION},
             lf("redis_cluster"),
             marks=pytest.mark.redis_cluster,
             id="redis-cluster",
         ),
         pytest.param(
             "async+redis+cluster://:sekret@localhost:8400/",
-            {},
+            {"implementation": ASYNC_REDIS_IMPLEMENTATION},
             lf("redis_auth_cluster"),
             marks=pytest.mark.redis_cluster,
             id="redis-cluster-auth",
@@ -463,6 +486,7 @@ async_sliding_window_counter_storage = pytest.mark.parametrize(
                 "ssl_keyfile": "./tests/tls/client.key",
                 "ssl_certfile": "./tests/tls/client.crt",
                 "ssl_ca_certs": "./tests/tls/ca.crt",
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
             },
             lf("redis_ssl_cluster"),
             marks=pytest.mark.redis_cluster,
@@ -470,7 +494,10 @@ async_sliding_window_counter_storage = pytest.mark.parametrize(
         ),
         pytest.param(
             "async+redis+sentinel://localhost:26379/mymaster",
-            {"use_replicas": False},
+            {
+                "use_replicas": False,
+                "implementation": ASYNC_REDIS_IMPLEMENTATION,
+            },
             lf("redis_sentinel"),
             marks=pytest.mark.redis_sentinel,
             id="redis-sentinel",
