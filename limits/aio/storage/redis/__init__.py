@@ -16,7 +16,7 @@ from limits.typing import Literal
     reason=(
         "Added support for using the asyncio redis client from :pypi:`redis`"
         " through :paramref:`implementation`"
-    )
+    ),
 )
 class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     """
@@ -209,7 +209,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
 @versionadded(version="2.1")
 @versionchanged(
     version="4.2",
-    reason="Added support for using the asyncio redis client from :pypi:`redis` "
+    reason="Added support for using the asyncio redis client from :pypi:`redis` ",
 )
 class RedisClusterStorage(RedisStorage):
     """
@@ -273,7 +273,7 @@ class RedisClusterStorage(RedisStorage):
 @versionadded(version="2.1")
 @versionchanged(
     version="4.2",
-    reason="Added support for using the asyncio redis client from :pypi:`redis` "
+    reason="Added support for using the asyncio redis client from :pypi:`redis` ",
 )
 class RedisSentinelStorage(RedisStorage):
     """
