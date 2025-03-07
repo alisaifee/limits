@@ -10,7 +10,10 @@ A new namespace ``limits.aio`` is available which mirrors the original
 The following async storage backends are implemented:
 
 - In-Memory
-- Redis (via `redis-py <https://redis-py.readthedocs.io>`_)
+- Redis (via `coredis <https://coredis.readthedocs.org>`_
+  or `redis-py <https://redis-py.readthedocs.io>`_. Refer to
+  :paramref:`limits.aio.storage.RedisStorage.implementation` for
+  details on selecting the dependency)
 - Memcached (via `emcache <https://emcache.readthedocs.org>`_)
 - MongoDB (via `motor <https://motor.readthedocs.org>`_)
 - Etcd (via `aetcd <https://aetcd.readthedocs.org>`_)

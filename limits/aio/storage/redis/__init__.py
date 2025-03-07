@@ -1,6 +1,6 @@
 from typing import Optional, Type, Union
 
-from deprecated.sphinx import versionadded
+from deprecated.sphinx import versionadded, versionchanged
 from packaging.version import Version
 
 from limits.aio.storage import MovingWindowSupport, SlidingWindowCounterSupport, Storage
@@ -11,11 +11,18 @@ from limits.typing import Literal
 
 
 @versionadded(version="2.1")
+@versionchanged(
+    version="4.2",
+    reason=(
+        "Added support for using the asyncio redis client from :pypi:`redis`"
+        " through :paramref:`implementation`"
+    )
+)
 class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     """
     Rate limit storage with redis as backend.
 
-    Depends on :pypi:`redis`
+    Depends on :pypi:`coredis` or :pypi:`redis`
     """
 
     STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
@@ -42,15 +49,17 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
          - ``async+rediss://[:password]@host:port``
          - ``async+redis+unix:///path/to/sock?db=0`` etc...
 
-         This uri is passed directly to :meth:`redis.asyncio.Redis.from_url` with
-         the initial ``async`` removed, except for the case of ``async+redis+unix``
-         where it is replaced with ``unix``.
+         This uri is passed directly to :meth:`coredis.Redis.from_url` or
+          :meth:`redis.asyncio.client.Redis.from_url` with the initial ``async`` removed,
+          except for the case of ``async+redis+unix`` where it is replaced with ``unix``.
         :param connection_pool: if provided, the redis client is initialized with
          the connection pool and any other params passed as :paramref:`options`
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
+        :param implementation: Whether to use the client implementation from
+         :class:`coredis.Redis` (``coredis``) or :class:`redis.asyncio.client.Redis` (``redispy``).
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`redis.asyncio.Redis`
+         directly to the constructor of :class:`coredis.Redis` or :class:`redis.asyncio.client.Redis`
         :raise ConfigurationError: when the redis library is not available
         """
         uri = uri.replace("async+redis", "redis", 1)
@@ -179,7 +188,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
 
     async def check(self) -> bool:
         """
-        Check if storage is healthy by calling :meth:`redis.asyncio.Redis.ping`
+        Check if storage is healthy by calling ``PING``
         """
 
         return await self.bridge.check()
@@ -198,11 +207,15 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
 
 
 @versionadded(version="2.1")
+@versionchanged(
+    version="4.2",
+    reason="Added support for using the asyncio redis client from :pypi:`redis` "
+)
 class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend
 
-    Depends on :pypi:`redis`
+    Depends on :pypi:`coredis` or :pypi:`redis`
     """
 
     STORAGE_SCHEME = ["async+redis+cluster"]
@@ -222,8 +235,13 @@ class RedisClusterStorage(RedisStorage):
         """
         :param uri: url of the form
          ``async+redis+cluster://[:password]@host:port,host:port``
+        :param wrap_exceptions: Whether to wrap storage exceptions in
+         :exc:`limits.errors.StorageError` before raising it.
+        :param implementation: Whether to use the client implementation from
+         :class:`coredis.RedisCluster` (``coredis``) or :class:`redis.asyncio.cluster.RedisCluster` (``redispy``).
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`redis.asyncio.RedisCluster`
+         directly to the constructor of :class:`coredis.RedisCluster` or
+         :class:`redis.asyncio.RedisCluster`
         :raise ConfigurationError: when the redis library is not
          available or if the redis host cannot be pinged.
         """
@@ -253,11 +271,15 @@ class RedisClusterStorage(RedisStorage):
 
 
 @versionadded(version="2.1")
+@versionchanged(
+    version="4.2",
+    reason="Added support for using the asyncio redis client from :pypi:`redis` "
+)
 class RedisSentinelStorage(RedisStorage):
     """
     Rate limit storage with redis sentinel as backend
 
-    Depends on :pypi:`redis`
+    Depends on :pypi:`coredis` or :pypi:`redis`
     """
 
     STORAGE_SCHEME = ["async+redis+sentinel"]
@@ -284,13 +306,19 @@ class RedisSentinelStorage(RedisStorage):
         """
         :param uri: url of the form
          ``async+redis+sentinel://host:port,host:port/service_name``
-        :param service_name, optional: sentinel service name
-         (if not provided in `uri`)
+        :param wrap_exceptions: Whether to wrap storage exceptions in
+         :exc:`limits.errors.StorageError` before raising it.
+        :param implementation: Whether to use the client implementation from
+         :class:`coredis.sentinel.Sentinel` (``coredis``) or
+         :class:`redis.asyncio.sentinel.Sentinel` (``redispy``)
+        :param service_name: sentinel service name (if not provided in `uri`)
         :param use_replicas: Whether to use replicas for read only operations
-        :param sentinel_kwargs, optional: kwargs to pass as
-         ``sentinel_kwargs`` to :class:`redis.asyncio.Sentinel`
+        :param sentinel_kwargs: optional arguments to pass as
+         `sentinel_kwargs`` to :class:`coredis.sentinel.Sentinel` or
+         :class:`redis.asyncio.Sentinel`
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`redis.asyncio.Sentinel`
+         directly to the constructor of :class:`coredis.sentinel.Sentinel` or
+         :class:`redis.asyncio.sentinel.Sentinel`
         :raise ConfigurationError: when the redis library is not available
          or if the redis primary host cannot be pinged.
         """
