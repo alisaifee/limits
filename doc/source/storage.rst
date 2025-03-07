@@ -25,93 +25,89 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    Dependency versions:
 
-     .. literalinclude:: ../../requirements/storage/redis.txt
+   .. literalinclude:: ../../requirements/storage/redis.txt
 
    Dependency versions (async):
 
-     .. literalinclude:: ../../requirements/storage/async-redis.txt
+   .. literalinclude:: ../../requirements/storage/async-redis.txt
 
-     .. note::
+   .. note::
+     .. versionadded:: 4.2
+        :pypi:`redis` can be used instead of :pypi:`coredis` by setting
+        :paramref:`limits.aio.storage.RedisStorage.implementation` to ``redispy``
 
-       .. versionadded:: 4.2
+   `Redis <https://redis.io>`_
 
-         :pypi:`redis` can be used instead of :pypi:`coredis` by setting
-         :paramref:`limits.aio.storage.RedisStorage.implementation` to ``redispy``
-
-    `Redis <https://redis.io>`_
-
-     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
    Redis with SSL
 
-     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_SSL_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_SSL_VERSION=[\d\.]+' | cut -d = -f 2"
 
    `Redis Sentinel <https://redis.io/topics/sentinel>`_
 
-     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SENTINEL_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SENTINEL_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
 .. tab:: Redis Cluster
 
    Dependency versions:
 
-     .. literalinclude:: ../../requirements/storage/rediscluster.txt
+   .. literalinclude:: ../../requirements/storage/rediscluster.txt
 
    Dependency versions (async):
 
-     .. literalinclude:: ../../requirements/storage/async-redis.txt
+   .. literalinclude:: ../../requirements/storage/async-redis.txt
 
-     .. note::
-
-       .. versionadded:: 4.2
-
+   .. note::
+      .. versionadded:: 4.2
          :pypi:`redis` can be used instead of :pypi:`coredis` by setting
          :paramref:`limits.aio.storage.RedisClusterStorage.implementation` to ``redispy``
 
    `Redis cluster <https://redis.io/topics/cluster-tutorial>`_
 
-     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
 .. tab:: Memcached
 
    Dependency versions:
 
-     .. literalinclude:: ../../requirements/storage/memcached.txt
+   .. literalinclude:: ../../requirements/storage/memcached.txt
 
    Dependency versions (async):
 
-     .. literalinclude:: ../../requirements/storage/async-memcached.txt
+   .. literalinclude:: ../../requirements/storage/async-memcached.txt
 
    `Memcached <https://memcached.org/>`_
 
-     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MEMCACHED_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MEMCACHED_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
 .. tab:: MongoDB
 
    Dependency versions:
 
-     .. literalinclude:: ../../requirements/storage/mongodb.txt
+   .. literalinclude:: ../../requirements/storage/mongodb.txt
 
    Dependency versions (async):
 
-     .. literalinclude:: ../../requirements/storage/async-mongodb.txt
+   .. literalinclude:: ../../requirements/storage/async-mongodb.txt
 
    `MongoDB <https://www.mongodb.com/>`_
 
-     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MONGODB_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MONGODB_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
 .. tab:: Etcd
 
    Dependency versions:
 
-     .. literalinclude:: ../../requirements/storage/etcd.txt
+   .. literalinclude:: ../../requirements/storage/etcd.txt
 
    Dependency versions (async):
 
-     .. literalinclude:: ../../requirements/storage/async-etcd.txt
+   .. literalinclude:: ../../requirements/storage/async-etcd.txt
 
    `Etcd <https://www.etcd.io/>`_
 
-     .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_ETCD_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_ETCD_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
 
 
 Storage scheme
