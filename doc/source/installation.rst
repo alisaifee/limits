@@ -79,6 +79,12 @@ along with the package using the following extras:
 
    .. literalinclude:: ../../requirements/storage/async-redis.txt
 
+   .. versionadded:: 4.2
+      :pypi:`redis` if installed can be used instead of :pypi:`coredis` by setting
+      :paramref:`~limits.aio.storage.Redis.implementation` to ``redispy``.
+      See :class:`limits.aio.storage.RedisStorage` for more details.
+
+
 .. tab:: Memcached
 
    .. code:: console
