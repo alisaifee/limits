@@ -16,7 +16,10 @@ from limits.aio.storage import (
     SlidingWindowCounterSupport,
     Storage,
 )
-from limits.aio.strategies import MovingWindowRateLimiter
+from limits.aio.strategies import (
+    MovingWindowRateLimiter,
+    SlidingWindowCounterRateLimiter,
+)
 from limits.errors import StorageError
 from limits.storage import storage_from_string
 from tests.utils import async_fixed_start
@@ -24,9 +27,9 @@ from tests.utils import async_fixed_start
 
 @pytest.mark.asyncio
 class TestBaseStorage:
-    async def test_pluggable_storage_no_moving_window(self):
+    async def test_pluggable_storage_fixed_only(self):
         class MyStorage(Storage):
-            STORAGE_SCHEME = ["async+mystorage"]
+            STORAGE_SCHEME = ["async+mystorage+fixed"]
 
             @property
             def base_exceptions(self):
@@ -50,14 +53,16 @@ class TestBaseStorage:
             async def clear(self):
                 return
 
-        storage = storage_from_string("async+mystorage://")
+        storage = storage_from_string("async+mystorage+fixed://")
         assert isinstance(storage, MyStorage)
         with pytest.raises(NotImplementedError):
             MovingWindowRateLimiter(storage)
+        with pytest.raises(NotImplementedError):
+            SlidingWindowCounterRateLimiter(storage)
 
     async def test_pluggable_storage_moving_window(self):
         class MyStorage(Storage):
-            STORAGE_SCHEME = ["async+mystorage"]
+            STORAGE_SCHEME = ["async+mystorage+moving"]
 
             @property
             def base_exceptions(self):
@@ -87,9 +92,49 @@ class TestBaseStorage:
             async def get_moving_window(self, *a, **k):
                 return (time.time(), 1)
 
-        storage = storage_from_string("async+mystorage://")
+        storage = storage_from_string("async+mystorage+moving://")
         assert isinstance(storage, MyStorage)
         MovingWindowRateLimiter(storage)
+
+    async def test_pluggable_storage_sliding_window_counter(self):
+        class MyStorage(Storage, SlidingWindowCounterSupport):
+            STORAGE_SCHEME = ["async+mystorage+sliding"]
+
+            @property
+            def base_exceptions(self):
+                return ValueError
+
+            async def incr(self, key, expiry, elastic_expiry=False):
+                return
+
+            async def get(self, key):
+                return 0
+
+            async def get_expiry(self, key):
+                return time.time()
+
+            async def reset(self):
+                return
+
+            async def check(self):
+                return
+
+            async def clear(self):
+                return
+
+            async def acquire_sliding_window_entry(
+                self, key: str, limit: int, expiry: int, amount: int = 1
+            ) -> bool:
+                pass
+
+            async def get_sliding_window(
+                self, key: str, expiry: int
+            ) -> tuple[int, float, int, float]:
+                pass
+
+        storage = storage_from_string("async+mystorage+sliding://")
+        assert isinstance(storage, MyStorage)
+        SlidingWindowCounterRateLimiter(storage)
 
 
 @pytest.mark.asyncio

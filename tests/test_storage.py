@@ -18,7 +18,7 @@ from limits.storage import (
     Storage,
     storage_from_string,
 )
-from limits.strategies import MovingWindowRateLimiter
+from limits.strategies import MovingWindowRateLimiter, SlidingWindowCounterRateLimiter
 from tests.utils import fixed_start
 
 
@@ -30,9 +30,9 @@ class TestBaseStorage:
         with pytest.raises(ConfigurationError):
             storage_from_string(uri, **args)
 
-    def test_pluggable_storage_no_moving_window(self):
+    def test_pluggable_storage_fixed_only(self):
         class MyStorage(Storage):
-            STORAGE_SCHEME = ["mystorage"]
+            STORAGE_SCHEME = ["mystorage+fixed"]
 
             @property
             def base_exceptions(self):
@@ -56,14 +56,16 @@ class TestBaseStorage:
             def clear(self):
                 return
 
-        storage = storage_from_string("mystorage://")
+        storage = storage_from_string("mystorage+fixed://")
         assert isinstance(storage, MyStorage)
         with pytest.raises(NotImplementedError):
             MovingWindowRateLimiter(storage)
+        with pytest.raises(NotImplementedError):
+            SlidingWindowCounterRateLimiter(storage)
 
     def test_pluggable_storage_moving_window(self):
-        class MyStorage(Storage):
-            STORAGE_SCHEME = ["mystorage"]
+        class MyStorage(Storage, MovingWindowSupport):
+            STORAGE_SCHEME = ["mystorage+moving"]
 
             @property
             def base_exceptions(self):
@@ -93,9 +95,49 @@ class TestBaseStorage:
             def get_moving_window(self, *a, **k):
                 return (time.time(), 1)
 
-        storage = storage_from_string("mystorage://")
+        storage = storage_from_string("mystorage+moving://")
         assert isinstance(storage, MyStorage)
         MovingWindowRateLimiter(storage)
+
+    def test_pluggable_storage_sliding_window_counter(self):
+        class MyStorage(Storage, SlidingWindowCounterSupport):
+            STORAGE_SCHEME = ["mystorage+sliding"]
+
+            @property
+            def base_exceptions(self):
+                return ValueError
+
+            def incr(self, key, expiry, elastic_expiry=False):
+                return
+
+            def get(self, key):
+                return 0
+
+            def get_expiry(self, key):
+                return time.time()
+
+            def reset(self):
+                return
+
+            def check(self):
+                return
+
+            def clear(self):
+                return
+
+            def acquire_sliding_window_entry(
+                self, key: str, limit: int, expiry: int, amount: int = 1
+            ) -> bool:
+                pass
+
+            def get_sliding_window(
+                self, key: str, expiry: int
+            ) -> tuple[int, float, int, float]:
+                pass
+
+        storage = storage_from_string("mystorage+sliding://")
+        assert isinstance(storage, MyStorage)
+        SlidingWindowCounterRateLimiter(storage)
 
 
 @pytest.mark.parametrize(
