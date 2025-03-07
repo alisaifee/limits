@@ -55,7 +55,7 @@ class CoredisBridge(RedisBridge):
         )
 
     def use_basic(self, **options: Union[str, float, bool]) -> None:
-        if connection_pool := options.get("connection_pool", None):
+        if connection_pool := options.pop("connection_pool", None):
             self.storage = self.dependency.Redis(
                 connection_pool=connection_pool, **options
             )
