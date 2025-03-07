@@ -237,8 +237,8 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     ) -> bool:
         """
         Acquire an entry. Shift the current window to the previous window if it expired.
-        :param current_window_key: current window key
-        :param previous_window_key: previous window key
+
+        :param key: rate limit key to acquire an entry in
         :param limit: amount of entries allowed
         :param expiry: expiry of the entry
         :param amount: the number of entries to acquire

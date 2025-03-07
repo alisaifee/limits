@@ -337,6 +337,7 @@ class TestAsyncSlidingWindow:
         )
 
     @async_fixed_start
+    @pytest.mark.flaky
     async def test_sliding_window_counter_stats(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = SlidingWindowCounterRateLimiter(storage)

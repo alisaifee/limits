@@ -4,7 +4,7 @@ Asynchronous rate limiting strategies
 
 import time
 from abc import ABC, abstractmethod
-from math import floor
+from math import floor, inf
 
 from deprecated.sphinx import deprecated, versionadded
 
@@ -275,6 +275,7 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
         ) = await cast(SlidingWindowCounterSupport, self.storage).get_sliding_window(
             item.key_for(*identifiers), item.get_expiry()
         )
+
         remaining = max(
             0,
             item.amount
@@ -284,21 +285,21 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
                 )
             ),
         )
-        now = time.time()
-        if previous_count >= 1 and current_count == 0:
-            previous_window_reset_period = item.get_expiry() / previous_count
-            reset = previous_expires_in % previous_window_reset_period + now
-        elif previous_count >= 1 and current_count >= 1:
-            previous_window_reset_period = item.get_expiry() / previous_count
-            previous_reset = previous_expires_in % previous_window_reset_period + now
-            current_reset = current_expires_in % item.get_expiry() + now
-            reset = min(previous_reset, current_reset)
-        elif previous_count == 0 and current_count >= 1:
-            reset = current_expires_in % item.get_expiry() + now
-        else:
-            reset = now
 
-        return WindowStats(reset, remaining)
+        now = time.time()
+
+        if not (previous_count or current_count):
+            return WindowStats(now, remaining)
+
+        expiry = item.get_expiry()
+
+        previous_reset_in, current_reset_in = inf, inf
+        if previous_count:
+            previous_reset_in = previous_expires_in % (expiry / previous_count)
+        if current_count:
+            current_reset_in = current_expires_in % expiry
+
+        return WindowStats(now + min(previous_reset_in, current_reset_in), remaining)
 
 
 @deprecated(version="4.1")
