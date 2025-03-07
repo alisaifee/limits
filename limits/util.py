@@ -51,6 +51,9 @@ class Dependency:
     module: ModuleType
 
 
+MissingModule = ModuleType("Missing")
+
+
 if TYPE_CHECKING:
     _UserDict = UserDict[str, Dependency]
 else:
@@ -58,20 +61,29 @@ else:
 
 
 class DependencyDict(_UserDict):
-    Missing = Dependency("Missing", None, None, ModuleType("Missing"))
-
     def __getitem__(self, key: str) -> Dependency:
         dependency = super().__getitem__(key)
 
-        if dependency == DependencyDict.Missing:
-            raise ConfigurationError(f"{key} prerequisite not available")
+        if dependency.module is MissingModule:
+            message = f"'{dependency.name}' prerequisite not available."
+            if dependency.version_required:
+                message += (
+                    f" A minimum version of {dependency.version_required} is required."
+                    if dependency.version_required
+                    else ""
+                )
+            message += (
+                " See https://limits.readthedocs.io/en/stable/storage.html#supported-versions"
+                " for more details."
+            )
+            raise ConfigurationError(message)
         elif dependency.version_required and (
             not dependency.version_found
             or dependency.version_found < dependency.version_required
         ):
             raise ConfigurationError(
                 f"The minimum version of {dependency.version_required}"
-                f" of {dependency.name} could not be found"
+                f" for '{dependency.name}' could not be found. Found version: {dependency.version_found}"
             )
 
         return dependency
@@ -115,18 +127,15 @@ class LazyDependency:
             for name, minimum_version in mapping.items():
                 dependency, version = get_dependency(name)
 
-                if not dependency:
-                    dependencies[name] = DependencyDict.Missing
-                else:
-                    dependencies[name] = Dependency(
-                        name, minimum_version, version, dependency
-                    )
+                dependencies[name] = Dependency(
+                    name, minimum_version, version, dependency
+                )
             self._dependencies = dependencies
 
         return self._dependencies
 
 
-def get_dependency(module_path: str) -> tuple[Optional[ModuleType], Optional[Version]]:
+def get_dependency(module_path: str) -> tuple[ModuleType, Optional[Version]]:
     """
     safe function to import a module at runtime
     """
@@ -138,7 +147,7 @@ def get_dependency(module_path: str) -> tuple[Optional[ModuleType], Optional[Ver
 
         return sys.modules[module_path], Version(version)
     except ImportError:  # pragma: no cover
-        return None, None
+        return MissingModule, None
 
 
 def get_package_data(path: str) -> bytes:

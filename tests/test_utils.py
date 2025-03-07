@@ -23,10 +23,10 @@ def test_lazy_dependency_version_low():
     d = Demo()
     with pytest.raises(
         ConfigurationError,
-        match="minimum version of 999.999 of redis could not be found",
+        match="minimum version of 999.999 for 'redis' could not be found",
     ):
         assert d.dependencies["redis"].version_found
     with pytest.raises(
-        ConfigurationError, match="maythisneverexist prerequisite not available"
+        ConfigurationError, match="'maythisneverexist' prerequisite not available"
     ):
         assert d.dependencies["maythisneverexist"].version_found
