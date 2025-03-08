@@ -66,12 +66,13 @@ class CoredisBridge(RedisBridge):
 
     def use_cluster(self, **options: Union[str, float, bool]) -> None:
         sep = self.parsed_uri.netloc.find("@") + 1
-        cluster_hosts = []
-
-        for loc in self.parsed_uri.netloc[sep:].split(","):
-            host, port = loc.split(":")
-            cluster_hosts.append({"host": host, "port": int(port)})
-
+        cluster_hosts: list[dict[str, Union[int, str]]] = []
+        cluster_hosts.extend(
+            {"host": host, "port": int(port)}
+            for loc in self.parsed_uri.netloc[sep:].split(",")
+            if loc
+            for host, port in [loc.split(":")]
+        )
         self.storage = self.dependency.RedisCluster(
             startup_nodes=cluster_hosts,
             **{**self.DEFAULT_CLUSTER_OPTIONS, **self.parsed_auth, **options},
