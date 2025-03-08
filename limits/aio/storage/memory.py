@@ -14,7 +14,6 @@ from limits.aio.storage.base import (
     Storage,
 )
 from limits.storage.base import TimestampedSlidingWindow
-from limits.typing import Optional, Type, Union
 
 
 class LockableEntry(asyncio.Lock):
@@ -41,19 +40,19 @@ class MemoryStorage(
     """
 
     def __init__(
-        self, uri: Optional[str] = None, wrap_exceptions: bool = False, **_: str
+        self, uri: str | None = None, wrap_exceptions: bool = False, **_: str
     ) -> None:
         self.storage: limits.typing.Counter[str] = Counter()
         self.locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
         self.expirations: dict[str, float] = {}
         self.events: dict[str, list[LockableEntry]] = {}
-        self.timer: Optional[asyncio.Task[None]] = None
+        self.timer: asyncio.Task[None] | None = None
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **_)
 
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
         return ValueError
 
     async def __expire_events(self) -> None:
@@ -144,7 +143,7 @@ class MemoryStorage(
         await self.__schedule_expiry()
         timestamp = time.time()
         try:
-            entry: Optional[LockableEntry] = self.events[key][limit - amount]
+            entry: LockableEntry | None = self.events[key][limit - amount]
         except IndexError:
             entry = None
 
@@ -264,7 +263,7 @@ class MemoryStorage(
 
         return True
 
-    async def reset(self) -> Optional[int]:
+    async def reset(self) -> int | None:
         num_items = max(len(self.storage), len(self.events))
         self.storage.clear()
         self.expirations.clear()
