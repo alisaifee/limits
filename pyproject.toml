@@ -1,3 +1,11 @@
+[tool.versioneer]
+VCS = "git"
+style = "pep440-pre"
+versionfile_source = "limits/_version.py"
+versionfile_build = "limits/_version.py"
+parentdir_prefix = "limits-"
+tag_prefix = ""
+
 [tool.ruff]
 line-length = 88
 indent-width = 4
