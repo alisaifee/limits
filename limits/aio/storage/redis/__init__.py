@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional, Type, Union
 
 from deprecated.sphinx import versionadded, versionchanged

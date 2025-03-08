@@ -1,5 +1,7 @@
 """ """
 
+from __future__ import annotations
+
 import dataclasses
 import importlib.resources
 import re

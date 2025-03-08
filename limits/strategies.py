@@ -2,6 +2,8 @@
 Rate limiting strategies
 """
 
+from __future__ import annotations
+
 import time
 from abc import ABCMeta, abstractmethod
 from math import floor, inf

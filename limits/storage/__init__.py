@@ -3,6 +3,8 @@ Implementations of storage backends to be used with
 :class:`limits.strategies.RateLimiter` strategies
 """
 
+from __future__ import annotations
+
 import urllib
 
 import limits  # noqa

@@ -3,6 +3,8 @@ Implementations of storage backends to be used with
 :class:`limits.aio.strategies.RateLimiter` strategies
 """
 
+from __future__ import annotations
+
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
 from .etcd import EtcdStorage
 from .memcached import MemcachedStorage

@@ -2,6 +2,8 @@
 Rate limiting with commonly used storage backends
 """
 
+from __future__ import annotations
+
 from . import _version, aio, storage, strategies
 from .limits import (
     RateLimitItem,

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import Counter
 from collections.abc import Awaitable, Iterable
 from typing import (

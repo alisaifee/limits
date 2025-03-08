@@ -19,3 +19,7 @@ line-ending = "auto"
 
 [tool.ruff.lint]
 typing-modules = ["limits.typing"]
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
