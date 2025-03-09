@@ -74,7 +74,7 @@ class MovingWindowRateLimiter(RateLimiter):
         ):
             raise NotImplementedError(
                 "MovingWindowRateLimiting is not implemented for storage "
-                f"of type {storage.__class__}"
+                "of type %s" % storage.__class__
             )
         super().__init__(storage)
 
@@ -193,7 +193,7 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
         ):
             raise NotImplementedError(
                 "SlidingWindowCounterRateLimiting is not implemented for storage "
-                f"of type {storage.__class__}"
+                "of type %s" % storage.__class__
             )
         super().__init__(storage)
 

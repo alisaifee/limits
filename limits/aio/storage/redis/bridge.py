@@ -4,6 +4,7 @@ import urllib
 from abc import ABC, abstractmethod
 from types import ModuleType
 
+from limits.typing import Optional, Type, Union
 from limits.util import get_package_data
 
 
@@ -45,23 +46,23 @@ class RedisBridge(ABC):
     @abstractmethod
     def use_sentinel(
         self,
-        service_name: str | None,
+        service_name: Optional[str],
         use_replicas: bool,
-        sentinel_kwargs: dict[str, str | float | bool] | None,
-        **options: str | float | bool,
+        sentinel_kwargs: Optional[dict[str, Union[str, float, bool]]],
+        **options: Union[str, float, bool],
     ) -> None: ...
 
     @abstractmethod
-    def use_basic(self, **options: str | float | bool) -> None: ...
+    def use_basic(self, **options: Union[str, float, bool]) -> None: ...
 
     @abstractmethod
-    def use_cluster(self, **options: str | float | bool) -> None: ...
+    def use_cluster(self, **options: Union[str, float, bool]) -> None: ...
 
     @property
     @abstractmethod
     def base_exceptions(
         self,
-    ) -> type[Exception] | tuple[type[Exception], ...]: ...
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]: ...
 
     @abstractmethod
     async def incr(
@@ -114,7 +115,7 @@ class RedisBridge(ABC):
     async def check(self) -> bool: ...
 
     @abstractmethod
-    async def reset(self) -> int | None: ...
+    async def reset(self) -> Optional[int]: ...
 
     @abstractmethod
-    async def lua_reset(self) -> int | None: ...
+    async def lua_reset(self) -> Optional[int]: ...

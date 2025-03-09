@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from packaging.version import Version
 
-from limits.typing import NamedTuple
+from limits.typing import NamedTuple, Optional, Type, Union
 
 from .errors import ConfigurationError
 from .limits import GRANULARITIES, RateLimitItem
@@ -27,7 +27,9 @@ SINGLE_EXPR = re.compile(
     re.IGNORECASE | re.VERBOSE,
 )
 EXPR = re.compile(
-    rf"^{SINGLE_EXPR.pattern}(:?{SEPARATORS.pattern}{SINGLE_EXPR.pattern})*$",
+    r"^{SINGLE}(:?{SEPARATORS}{SINGLE})*$".format(
+        SINGLE=SINGLE_EXPR.pattern, SEPARATORS=SEPARATORS.pattern
+    ),
     re.IGNORECASE | re.VERBOSE,
 )
 
@@ -46,8 +48,8 @@ class WindowStats(NamedTuple):
 @dataclasses.dataclass
 class Dependency:
     name: str
-    version_required: Version | None
-    version_found: Version | None
+    version_required: Optional[Version]
+    version_found: Optional[Version]
     module: ModuleType
 
 
@@ -96,7 +98,7 @@ class LazyDependency:
     without having to import them explicitly.
     """
 
-    DEPENDENCIES: dict[str, Version | None] | list[str] = []
+    DEPENDENCIES: Union[dict[str, Optional[Version]], list[str]] = []
     """
     The python modules this class has a dependency on.
     Used to lazily populate the :attr:`dependencies`
@@ -117,7 +119,7 @@ class LazyDependency:
 
         if not getattr(self, "_dependencies", None):
             dependencies = DependencyDict()
-            mapping: dict[str, Version | None]
+            mapping: dict[str, Optional[Version]]
 
             if isinstance(self.DEPENDENCIES, list):
                 mapping = {dependency: None for dependency in self.DEPENDENCIES}
@@ -135,7 +137,7 @@ class LazyDependency:
         return self._dependencies
 
 
-def get_dependency(module_path: str) -> tuple[ModuleType, Version | None]:
+def get_dependency(module_path: str) -> tuple[ModuleType, Optional[Version]]:
     """
     safe function to import a module at runtime
     """
@@ -165,7 +167,7 @@ def parse_many(limit_string: str) -> list[RateLimitItem]:
     """
 
     if not (isinstance(limit_string, str) and EXPR.match(limit_string)):
-        raise ValueError(f"couldn't parse rate limit string '{limit_string}'")
+        raise ValueError("couldn't parse rate limit string '%s'" % limit_string)
     limits = []
 
     for limit in SEPARATORS.split(limit_string):
@@ -194,7 +196,7 @@ def parse(limit_string: str) -> RateLimitItem:
     return list(parse_many(limit_string))[0]
 
 
-def granularity_from_string(granularity_string: str) -> type[RateLimitItem]:
+def granularity_from_string(granularity_string: str) -> Type[RateLimitItem]:
     """
 
     :param granularity_string:
@@ -204,4 +206,4 @@ def granularity_from_string(granularity_string: str) -> type[RateLimitItem]:
     for granularity in GRANULARITIES.values():
         if granularity.check_granularity_string(granularity_string):
             return granularity
-    raise ValueError(f"no granularity matched for {granularity_string}")
+    raise ValueError("no granularity matched for %s" % granularity_string)

@@ -264,7 +264,7 @@ class TestConcreteStorages:
     @async_fixed_start
     async def test_expiry_acquire_entry(self, uri, args, expected_instance, fixture):
         if not issubclass(expected_instance, MovingWindowSupport):
-            pytest.skip(f"{expected_instance} does not support acquire entry")
+            pytest.skip("%s does not support acquire entry" % expected_instance)
         storage = storage_from_string(uri, **args)
         limit = RateLimitItemPerSecond(1)
         assert await storage.acquire_entry(
@@ -278,7 +278,7 @@ class TestConcreteStorages:
         self, uri, args, expected_instance, fixture
     ):
         if not issubclass(expected_instance, SlidingWindowCounterSupport):
-            pytest.skip(f"{expected_instance} does not support acquire entry")
+            pytest.skip("%s does not support acquire entry" % expected_instance)
         storage = storage_from_string(uri, **args)
         limit = RateLimitItemPerSecond(1)
         assert await storage.acquire_sliding_window_entry(
@@ -298,7 +298,7 @@ class TestConcreteStorages:
         self, uri, args, expected_instance, fixture
     ):
         if not issubclass(expected_instance, MovingWindowSupport):
-            pytest.skip(f"{expected_instance} does not support acquire entry")
+            pytest.skip("%s does not support acquire entry" % expected_instance)
         storage = storage_from_string(uri, **args)
         limit = RateLimitItemPerMinute(10)
         assert not await storage.acquire_entry(

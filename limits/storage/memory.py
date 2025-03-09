@@ -12,6 +12,7 @@ from limits.storage.base import (
     Storage,
     TimestampedSlidingWindow,
 )
+from limits.typing import Optional, Type, Union
 
 
 class LockableEntry(threading._RLock):  # type: ignore
@@ -33,7 +34,9 @@ class MemoryStorage(
 
     STORAGE_SCHEME = ["memory"]
 
-    def __init__(self, uri: str | None = None, wrap_exceptions: bool = False, **_: str):
+    def __init__(
+        self, uri: Optional[str] = None, wrap_exceptions: bool = False, **_: str
+    ):
         self.storage: limits.typing.Counter[str] = Counter()
         self.locks: defaultdict[str, threading.RLock] = defaultdict(threading.RLock)
         self.expirations: dict[str, float] = {}
@@ -45,7 +48,7 @@ class MemoryStorage(
     @property
     def base_exceptions(
         self,
-    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return ValueError
 
     def __expire_events(self) -> None:
@@ -251,7 +254,7 @@ class MemoryStorage(
 
         return True
 
-    def reset(self) -> int | None:
+    def reset(self) -> Optional[int]:
         num_items = max(len(self.storage), len(self.events))
         self.storage.clear()
         self.expirations.clear()

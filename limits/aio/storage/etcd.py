@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import time
 import urllib.parse
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 
 from limits.aio.storage.base import Storage
 from limits.errors import ConcurrentUpdateError
@@ -46,7 +46,7 @@ class EtcdStorage(Storage):
         """
         parsed = urllib.parse.urlparse(uri)
         self.lib = self.dependencies["aetcd"].module
-        self.storage: aetcd.Client = self.lib.Client(
+        self.storage: "aetcd.Client" = self.lib.Client(
             host=parsed.hostname, port=parsed.port, **options
         )
         self.max_retries = max_retries
@@ -55,7 +55,7 @@ class EtcdStorage(Storage):
     @property
     def base_exceptions(
         self,
-    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
+    ) -> Union[type[Exception], tuple[type[Exception], ...]]:  # pragma: no cover
         return self.lib.ClientError  # type: ignore[no-any-return]
 
     def prefixed_key(self, key: str) -> bytes:
@@ -136,7 +136,7 @@ class EtcdStorage(Storage):
         except:  # noqa
             return False
 
-    async def reset(self) -> int | None:
+    async def reset(self) -> Optional[int]:
         return (await self.storage.delete_prefix(f"{self.PREFIX}/".encode())).deleted
 
     async def clear(self, key: str) -> None:

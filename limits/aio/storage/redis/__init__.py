@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional, Type, Union
+
 from deprecated.sphinx import versionadded, versionchanged
 from packaging.version import Version
 
@@ -39,7 +41,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         uri: str,
         wrap_exceptions: bool = False,
         implementation: Literal["redispy", "coredis"] = "coredis",
-        **options: float | str | bool,
+        **options: Union[float, str, bool],
     ) -> None:
         """
         :param uri: uri of the form:
@@ -104,7 +106,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     @property
     def base_exceptions(
         self,
-    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.bridge.base_exceptions
 
     async def incr(
@@ -193,7 +195,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
 
         return await self.bridge.check()
 
-    async def reset(self) -> int | None:
+    async def reset(self) -> Optional[int]:
         """
         This function calls a Lua Script to delete keys prefixed with
         ``self.PREFIX`` in blocks of 5000.
@@ -230,7 +232,7 @@ class RedisClusterStorage(RedisStorage):
         uri: str,
         wrap_exceptions: bool = False,
         implementation: Literal["redispy", "coredis"] = "coredis",
-        **options: float | str | bool,
+        **options: Union[float, str, bool],
     ) -> None:
         """
         :param uri: url of the form
@@ -255,7 +257,7 @@ class RedisClusterStorage(RedisStorage):
     def configure_bridge(self) -> None:
         self.bridge.use_cluster(**self.options)
 
-    async def reset(self) -> int | None:
+    async def reset(self) -> Optional[int]:
         """
         Redis Clusters are sharded and deleting across shards
         can't be done atomically. Because of this, this reset loops over all
@@ -298,10 +300,10 @@ class RedisSentinelStorage(RedisStorage):
         uri: str,
         wrap_exceptions: bool = False,
         implementation: Literal["redispy", "coredis"] = "coredis",
-        service_name: str | None = None,
+        service_name: Optional[str] = None,
         use_replicas: bool = True,
-        sentinel_kwargs: dict[str, float | str | bool] | None = None,
-        **options: float | str | bool,
+        sentinel_kwargs: Optional[dict[str, Union[float, str, bool]]] = None,
+        **options: Union[float, str, bool],
     ):
         """
         :param uri: url of the form

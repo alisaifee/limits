@@ -25,7 +25,7 @@ StorageTypes = Union[Storage, "limits.aio.storage.Storage"]
 
 
 def storage_from_string(
-    storage_string: str, **options: float | str | bool
+    storage_string: str, **options: Union[float, str, bool]
 ) -> StorageTypes:
     """
     Factory function to get an instance of the storage class based
@@ -61,7 +61,7 @@ def storage_from_string(
     scheme = urllib.parse.urlparse(storage_string).scheme
 
     if scheme not in SCHEMES:
-        raise ConfigurationError(f"unknown storage scheme : {storage_string}")
+        raise ConfigurationError("unknown storage scheme : %s" % storage_string)
     return cast(StorageTypes, SCHEMES[scheme](storage_string, **options))
 
 

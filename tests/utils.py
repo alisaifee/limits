@@ -6,6 +6,7 @@ import functools
 import math
 import os
 import time
+from typing import Optional
 
 import pytest
 from pytest_lazy_fixtures import lf
@@ -28,7 +29,7 @@ def fixed_start(fn):
     return __inner
 
 
-def timestamp_based_key_ttl(item: RateLimitItem, now: float | None = None) -> float:
+def timestamp_based_key_ttl(item: RateLimitItem, now: Optional[float] = None) -> float:
     """
     Return the current timestamp-based key TTL.
 
@@ -57,7 +58,7 @@ def async_fixed_start(fn):
 
 
 @contextlib.contextmanager
-def window(delay_end: float, delay: float | None = None):
+def window(delay_end: float, delay: Optional[float] = None):
     start = time.time()
 
     if delay is not None:
@@ -70,7 +71,7 @@ def window(delay_end: float, delay: float | None = None):
 
 
 @contextlib.asynccontextmanager
-async def async_window(delay_end: float, delay: float | None = None):
+async def async_window(delay_end: float, delay: Optional[float] = None):
     start = time.time()
 
     if delay is not None:

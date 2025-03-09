@@ -11,8 +11,11 @@ from limits.typing import (
     Any,
     Awaitable,
     Callable,
+    Optional,
     P,
     R,
+    Type,
+    Union,
     cast,
 )
 from limits.util import LazyDependency
@@ -40,7 +43,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     Base class to extend when implementing an async storage backend.
     """
 
-    STORAGE_SCHEME: list[str] | None
+    STORAGE_SCHEME: Optional[list[str]]
     """The storage schemes to register against this implementation"""
 
     def __init_subclass__(cls, **kwargs: Any) -> None:  # type:ignore[explicit-any]
@@ -58,9 +61,9 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
 
     def __init__(
         self,
-        uri: str | None = None,
+        uri: Optional[str] = None,
         wrap_exceptions: bool = False,
-        **options: float | str | bool,
+        **options: Union[float, str, bool],
     ) -> None:
         """
         :param wrap_exceptions: Whether to wrap storage exceptions in
@@ -71,7 +74,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
 
     @property
     @abstractmethod
-    def base_exceptions(self) -> type[Exception] | tuple[type[Exception], ...]:
+    def base_exceptions(self) -> Union[Type[Exception], tuple[Type[Exception], ...]]:
         raise NotImplementedError
 
     @abstractmethod
@@ -111,7 +114,7 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
         raise NotImplementedError
 
     @abstractmethod
-    async def reset(self) -> int | None:
+    async def reset(self) -> Optional[int]:
         """
         reset storage to clear limits
         """

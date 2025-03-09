@@ -12,8 +12,11 @@ from limits.aio.storage.base import (
     Storage,
 )
 from limits.typing import (
+    Optional,
     ParamSpec,
+    Type,
     TypeVar,
+    Union,
     cast,
 )
 from limits.util import get_dependency
@@ -48,7 +51,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         counter_collection_name: str = "counters",
         window_collection_name: str = "windows",
         wrap_exceptions: bool = False,
-        **options: float | str | bool,
+        **options: Union[float, str, bool],
     ) -> None:
         """
         :param uri: uri of the form ``async+mongodb://[user:password]@host:port?...``,
@@ -91,7 +94,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     @property
     def base_exceptions(
         self,
-    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
+    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
         return self.lib_errors.PyMongoError  # type: ignore
 
     @property
@@ -110,7 +113,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             )
         self.__indices_created = True
 
-    async def reset(self) -> int | None:
+    async def reset(self) -> Optional[int]:
         """
         Delete all rate limit keys in the rate limit collections (counters, windows)
         """
@@ -291,7 +294,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         try:
             updates: dict[
                 str,
-                dict[str, datetime.datetime | dict[str, list[float] | int]],
+                dict[str, Union[datetime.datetime, dict[str, Union[list[float], int]]]],
             ] = {
                 "$push": {
                     "entries": {
