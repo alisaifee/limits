@@ -10,7 +10,7 @@ import urllib
 import limits  # noqa
 
 from ..errors import ConfigurationError
-from ..typing import cast
+from ..typing import TypeAlias, cast
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
 from .etcd import EtcdStorage
 from .memcached import MemcachedStorage
@@ -21,7 +21,7 @@ from .redis_cluster import RedisClusterStorage
 from .redis_sentinel import RedisSentinelStorage
 from .registry import SCHEMES
 
-StorageTypes = Storage | limits.aio.storage.Storage
+StorageTypes: TypeAlias = "Storage | limits.aio.storage.Storage"
 
 
 def storage_from_string(

@@ -139,13 +139,13 @@ class AsyncRedisClientP(Protocol):
     def register_script(self, script: bytes) -> redis.commands.core.Script: ...
 
 
-RedisClient = RedisClientP
-AsyncRedisClient = AsyncRedisClientP
-AsyncCoRedisClient = coredis.Redis[bytes] | coredis.RedisCluster[bytes]
+RedisClient: TypeAlias = RedisClientP
+AsyncRedisClient: TypeAlias = AsyncRedisClientP
+AsyncCoRedisClient: TypeAlias = "coredis.Redis[bytes] | coredis.RedisCluster[bytes]"
 
-MongoClient: TypeAlias = pymongo.mongo_client.MongoClient[dict[str, Any]]  # type:ignore[explicit-any]
-MongoDatabase: TypeAlias = pymongo.database.Database[dict[str, Any]]  # type:ignore[explicit-any]
-MongoCollection: TypeAlias = pymongo.collection.Collection[dict[str, Any]]  # type:ignore[explicit-any]
+MongoClient: TypeAlias = "pymongo.mongo_client.MongoClient[dict[str, Any]]"  # type:ignore[explicit-any]
+MongoDatabase: TypeAlias = "pymongo.database.Database[dict[str, Any]]"  # type:ignore[explicit-any]
+MongoCollection: TypeAlias = "pymongo.collection.Collection[dict[str, Any]]"  # type:ignore[explicit-any]
 
 __all__ = [
     "Any",
@@ -166,6 +166,7 @@ __all__ = [
     "ParamSpec",
     "Protocol",
     "Serializable",
+    "TypeAlias",
     "TypeVar",
     "R",
     "R_co",
