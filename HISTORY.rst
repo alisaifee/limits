@@ -3,6 +3,15 @@
 Changelog
 =========
 
+v4.2
+----
+Release Date: 2025-03-11
+
+  * Feature
+
+    * Add support for using ``redis-py`` instead of ``coredis``
+      which asyncio + redis storages
+
 v4.1
 ----
 Release Date: 2025-03-07
@@ -710,6 +719,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
