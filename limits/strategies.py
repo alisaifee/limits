@@ -14,7 +14,7 @@ from limits.storage.base import SlidingWindowCounterSupport
 
 from .limits import RateLimitItem
 from .storage import MovingWindowSupport, Storage, StorageTypes
-from .typing import Union, cast
+from .typing import cast
 from .util import WindowStats
 
 
@@ -313,12 +313,12 @@ class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
         )
 
 
-KnownStrategy = Union[
-    type[SlidingWindowCounterRateLimiter],
-    type[FixedWindowRateLimiter],
-    type[FixedWindowElasticExpiryRateLimiter],
-    type[MovingWindowRateLimiter],
-]
+KnownStrategy = (
+    type[SlidingWindowCounterRateLimiter]
+    | type[FixedWindowRateLimiter]
+    | type[FixedWindowElasticExpiryRateLimiter]
+    | type[MovingWindowRateLimiter]
+)
 
 STRATEGIES: dict[str, KnownStrategy] = {
     "sliding-window-counter": SlidingWindowCounterRateLimiter,

@@ -1,22 +1,21 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Awaitable, Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     ClassVar,
     Literal,
     NamedTuple,
+    ParamSpec,
+    Protocol,
+    TypeAlias,
     TypeVar,
-    Union,
     cast,
 )
 
-from typing_extensions import ParamSpec, Protocol, TypeAlias
-
-Serializable = Union[int, str, float]
+Serializable = int | str | float
 
 R = TypeVar("R")
 R_co = TypeVar("R_co", covariant=True)
@@ -27,6 +26,7 @@ if TYPE_CHECKING:
     import coredis
     import pymongo.collection
     import pymongo.database
+    import pymongo.mongo_client
     import redis
 
 
@@ -141,11 +141,11 @@ class AsyncRedisClientP(Protocol):
 
 RedisClient = RedisClientP
 AsyncRedisClient = AsyncRedisClientP
-AsyncCoRedisClient = Union["coredis.Redis[bytes]", "coredis.RedisCluster[bytes]"]
+AsyncCoRedisClient = coredis.Redis[bytes] | coredis.RedisCluster[bytes]
 
-MongoClient: TypeAlias = "pymongo.MongoClient[dict[str, Any]]"  # type:ignore[explicit-any]
-MongoDatabase: TypeAlias = "pymongo.database.Database[dict[str, Any]]"  # type:ignore[explicit-any]
-MongoCollection: TypeAlias = "pymongo.collection.Collection[dict[str, Any]]"  # type:ignore[explicit-any]
+MongoClient: TypeAlias = pymongo.mongo_client.MongoClient[dict[str, Any]]  # type:ignore[explicit-any]
+MongoDatabase: TypeAlias = pymongo.database.Database[dict[str, Any]]  # type:ignore[explicit-any]
+MongoCollection: TypeAlias = pymongo.collection.Collection[dict[str, Any]]  # type:ignore[explicit-any]
 
 __all__ = [
     "Any",
@@ -171,6 +171,5 @@ __all__ = [
     "R_co",
     "RedisClient",
     "TYPE_CHECKING",
-    "Union",
     "cast",
 ]

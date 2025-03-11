@@ -10,7 +10,7 @@ import urllib
 import limits  # noqa
 
 from ..errors import ConfigurationError
-from ..typing import Union, cast
+from ..typing import cast
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
 from .etcd import EtcdStorage
 from .memcached import MemcachedStorage
@@ -21,7 +21,7 @@ from .redis_cluster import RedisClusterStorage
 from .redis_sentinel import RedisSentinelStorage
 from .registry import SCHEMES
 
-StorageTypes = Union[Storage, "limits.aio.storage.Storage"]
+StorageTypes = Storage | limits.aio.storage.Storage
 
 
 def storage_from_string(
@@ -62,6 +62,7 @@ def storage_from_string(
 
     if scheme not in SCHEMES:
         raise ConfigurationError(f"unknown storage scheme : {storage_string}")
+
     return cast(StorageTypes, SCHEMES[scheme](storage_string, **options))
 
 
