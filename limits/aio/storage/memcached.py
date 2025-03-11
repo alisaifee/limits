@@ -9,7 +9,7 @@ from deprecated.sphinx import versionadded
 
 from limits.aio.storage.base import SlidingWindowCounterSupport, Storage
 from limits.storage.base import TimestampedSlidingWindow
-from limits.typing import EmcacheClientP, ItemP, Optional, Type, Union
+from limits.typing import EmcacheClientP, ItemP
 
 
 @versionadded(version="2.1")
@@ -29,7 +29,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         self,
         uri: str,
         wrap_exceptions: bool = False,
-        **options: Union[float, str, bool],
+        **options: float | str | bool,
     ) -> None:
         """
         :param uri: memcached location of the form
@@ -56,7 +56,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
         return (
             self.dependency.ClusterNoAvailableNodes,
             self.dependency.CommandError,
@@ -206,7 +206,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         except:  # noqa
             return False
 
-    async def reset(self) -> Optional[int]:
+    async def reset(self) -> int | None:
         raise NotImplementedError
 
     async def acquire_sliding_window_entry(

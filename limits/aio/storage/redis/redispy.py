@@ -1,32 +1,32 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Type, cast
+from typing import TYPE_CHECKING, cast
 
 from limits.aio.storage.redis.bridge import RedisBridge
 from limits.errors import ConfigurationError
-from limits.typing import AsyncRedisClient, Callable, Optional, Union
+from limits.typing import AsyncRedisClient, Callable
 
 if TYPE_CHECKING:
     import redis.commands
 
 
 class RedispyBridge(RedisBridge):
-    DEFAULT_CLUSTER_OPTIONS: dict[str, Union[float, str, bool]] = {
+    DEFAULT_CLUSTER_OPTIONS: dict[str, float | str | bool] = {
         "max_connections": 1000,
     }
     "Default options passed to :class:`redis.asyncio.RedisCluster`"
 
     @property
-    def base_exceptions(self) -> Union[Type[Exception], tuple[Type[Exception], ...]]:
+    def base_exceptions(self) -> type[Exception] | tuple[type[Exception], ...]:
         return (self.dependency.RedisError,)
 
     def use_sentinel(
         self,
-        service_name: Optional[str],
+        service_name: str | None,
         use_replicas: bool,
-        sentinel_kwargs: Optional[dict[str, Union[str, float, bool]]],
-        **options: Union[str, float, bool],
+        sentinel_kwargs: dict[str, str | float | bool] | None,
+        **options: str | float | bool,
     ) -> None:
         sentinel_configuration = []
 
@@ -57,7 +57,7 @@ class RedispyBridge(RedisBridge):
             self.storage_replica if readonly and use_replicas else self.storage
         )
 
-    def use_basic(self, **options: Union[str, float, bool]) -> None:
+    def use_basic(self, **options: str | float | bool) -> None:
         if connection_pool := options.pop("connection_pool", None):
             self.storage = self.dependency.asyncio.Redis(
                 connection_pool=connection_pool, **options
@@ -67,7 +67,7 @@ class RedispyBridge(RedisBridge):
 
         self.connection_getter = lambda _: self.storage
 
-    def use_cluster(self, **options: Union[str, float, bool]) -> None:
+    def use_cluster(self, **options: str | float | bool) -> None:
         sep = self.parsed_uri.netloc.find("@") + 1
         cluster_hosts = []
 
@@ -83,12 +83,12 @@ class RedispyBridge(RedisBridge):
         )
         self.connection_getter = lambda _: self.storage
 
-    lua_moving_window: "redis.commands.core.Script"
-    lua_acquire_moving_window: "redis.commands.core.Script"
-    lua_sliding_window: "redis.commands.core.Script"
-    lua_acquire_sliding_window: "redis.commands.core.Script"
-    lua_clear_keys: "redis.commands.core.Script"
-    lua_incr_expire: "redis.commands.core.Script"
+    lua_moving_window: redis.commands.core.Script
+    lua_acquire_moving_window: redis.commands.core.Script
+    lua_sliding_window: redis.commands.core.Script
+    lua_acquire_sliding_window: redis.commands.core.Script
+    lua_clear_keys: redis.commands.core.Script
+    lua_incr_expire: redis.commands.core.Script
     connection_getter: Callable[[bool], AsyncRedisClient]
 
     def get_connection(self, readonly: bool = False) -> AsyncRedisClient:
@@ -156,7 +156,7 @@ class RedispyBridge(RedisBridge):
         key = self.prefixed_key(key)
         await self.get_connection().delete(key)
 
-    async def lua_reset(self) -> Optional[int]:
+    async def lua_reset(self) -> int | None:
         return cast(int, await self.lua_clear_keys([self.prefixed_key("*")]))
 
     async def get_moving_window(
@@ -246,7 +246,7 @@ class RedispyBridge(RedisBridge):
         except:  # noqa
             return False
 
-    async def reset(self) -> Optional[int]:
+    async def reset(self) -> int | None:
         prefix = self.prefixed_key("*")
         keys = await self.storage.keys(
             prefix, target_nodes=self.dependency.asyncio.cluster.RedisCluster.ALL_NODES

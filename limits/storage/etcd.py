@@ -5,7 +5,7 @@ import urllib.parse
 
 from limits.errors import ConcurrentUpdateError
 from limits.storage.base import Storage
-from limits.typing import TYPE_CHECKING, Optional, Union
+from limits.typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import etcd3
@@ -44,7 +44,7 @@ class EtcdStorage(Storage):
         """
         parsed = urllib.parse.urlparse(uri)
         self.lib = self.dependencies["etcd3"].module
-        self.storage: "etcd3.Etcd3Client" = self.lib.client(
+        self.storage: etcd3.Etcd3Client = self.lib.client(
             parsed.hostname, parsed.port, **options
         )
         self.max_retries = max_retries
@@ -53,7 +53,7 @@ class EtcdStorage(Storage):
     @property
     def base_exceptions(
         self,
-    ) -> Union[type[Exception], tuple[type[Exception], ...]]:  # pragma: no cover
+    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
         return self.lib.Etcd3Exception  # type: ignore[no-any-return]
 
     def prefixed_key(self, key: str) -> bytes:
@@ -129,7 +129,7 @@ class EtcdStorage(Storage):
         except:  # noqa
             return False
 
-    def reset(self) -> Optional[int]:
+    def reset(self) -> int | None:
         return self.storage.delete_prefix(f"{self.PREFIX}/").deleted
 
     def clear(self, key: str) -> None:

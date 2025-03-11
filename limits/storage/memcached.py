@@ -18,11 +18,8 @@ from limits.typing import (
     Any,
     Callable,
     MemcachedClientP,
-    Optional,
     P,
     R,
-    Type,
-    Union,
     cast,
 )
 from limits.util import get_dependency
@@ -43,7 +40,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         self,
         uri: str,
         wrap_exceptions: bool = False,
-        **options: Union[str, Callable[[], MemcachedClientP]],
+        **options: str | Callable[[], MemcachedClientP],
     ) -> None:
         """
         :param uri: memcached location of the form
@@ -84,7 +81,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
 
         if not get_dependency(self.library):
             raise ConfigurationError(
-                "memcached prerequisite not available. please install %s" % self.library
+                f"memcached prerequisite not available. please install {self.library}"
             )  # pragma: no cover
         self.local_storage = threading.local()
         self.local_storage.storage = None
@@ -93,7 +90,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
         return self.dependency.MemcacheError  # type: ignore[no-any-return]
 
     def get_client(
@@ -255,7 +252,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         except:  # noqa
             return False
 
-    def reset(self) -> Optional[int]:
+    def reset(self) -> int | None:
         raise NotImplementedError
 
     def acquire_sliding_window_entry(

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, cast
 
 from packaging.version import Version
 
-from limits.typing import Optional, RedisClient, Type, Union
+from limits.typing import RedisClient
 
 from ..util import get_package_data
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
@@ -40,19 +40,19 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         f"{RES_DIR}/acquire_sliding_window.lua"
     )
 
-    lua_moving_window: "redis.commands.core.Script"
-    lua_acquire_moving_window: "redis.commands.core.Script"
-    lua_sliding_window: "redis.commands.core.Script"
-    lua_acquire_sliding_window: "redis.commands.core.Script"
+    lua_moving_window: redis.commands.core.Script
+    lua_acquire_moving_window: redis.commands.core.Script
+    lua_sliding_window: redis.commands.core.Script
+    lua_acquire_sliding_window: redis.commands.core.Script
 
     PREFIX = "LIMITS"
 
     def __init__(
         self,
         uri: str,
-        connection_pool: Optional[redis.connection.ConnectionPool] = None,
+        connection_pool: redis.connection.ConnectionPool | None = None,
         wrap_exceptions: bool = False,
-        **options: Union[float, str, bool],
+        **options: float | str | bool,
     ) -> None:
         """
         :param uri: uri of the form ``redis://[:password]@host:port``,
@@ -84,7 +84,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
         return self.dependency.RedisError  # type: ignore[no-any-return]
 
     def initialize_storage(self, _uri: str) -> None:
@@ -268,7 +268,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         except:  # noqa
             return False
 
-    def reset(self) -> Optional[int]:
+    def reset(self) -> int | None:
         """
         This function calls a Lua Script to delete keys prefixed with
         ``self.PREFIX`` in blocks of 5000.

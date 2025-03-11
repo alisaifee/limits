@@ -10,9 +10,6 @@ from limits.typing import (
     MongoClient,
     MongoCollection,
     MongoDatabase,
-    Optional,
-    Type,
-    Union,
     cast,
 )
 
@@ -38,7 +35,7 @@ class MongoDBStorageBase(
         counter_collection_name: str = "counters",
         window_collection_name: str = "windows",
         wrap_exceptions: bool = False,
-        **options: Union[int, str, bool],
+        **options: int | str | bool,
     ) -> None:
         """
         :param uri: uri of the form ``mongodb://[user:password]@host:port?...``,
@@ -66,7 +63,7 @@ class MongoDBStorageBase(
         self.lib_errors, _ = get_dependency("pymongo.errors")
         self._storage_uri = uri
         self._storage_options = options
-        self._storage: Optional[MongoClient] = None
+        self._storage: MongoClient | None = None
 
     @property
     def storage(self) -> MongoClient:
@@ -91,21 +88,21 @@ class MongoDBStorageBase(
 
     @abstractmethod
     def _init_mongo_client(
-        self, uri: Optional[str], **options: Union[int, str, bool]
+        self, uri: str | None, **options: int | str | bool
     ) -> MongoClient:
         raise NotImplementedError()
 
     @property
     def base_exceptions(
         self,
-    ) -> Union[Type[Exception], tuple[Type[Exception], ...]]:  # pragma: no cover
+    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
         return self.lib_errors.PyMongoError  # type: ignore
 
     def __initialize_database(self) -> None:
         self.counters.create_index("expireAt", expireAfterSeconds=0)
         self.windows.create_index("expireAt", expireAfterSeconds=0)
 
-    def reset(self) -> Optional[int]:
+    def reset(self) -> int | None:
         """
         Delete all rate limit keys in the rate limit collections (counters, windows)
         """
@@ -259,7 +256,7 @@ class MongoDBStorageBase(
         try:
             updates: dict[
                 str,
-                dict[str, Union[datetime.datetime, dict[str, Union[list[float], int]]]],
+                dict[str, datetime.datetime | dict[str, list[float] | int]],
             ] = {
                 "$push": {
                     "entries": {
@@ -492,6 +489,6 @@ class MongoDBStorage(MongoDBStorageBase):
     STORAGE_SCHEME = ["mongodb", "mongodb+srv"]
 
     def _init_mongo_client(
-        self, uri: Optional[str], **options: Union[int, str, bool]
+        self, uri: str | None, **options: int | str | bool
     ) -> MongoClient:
         return cast(MongoClient, self.lib.MongoClient(uri, **options))
