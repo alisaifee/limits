@@ -13,14 +13,14 @@ from .mongodb import MongoDBStorage
 from .redis import RedisClusterStorage, RedisSentinelStorage, RedisStorage
 
 __all__ = [
-    "Storage",
-    "MovingWindowSupport",
-    "SlidingWindowCounterSupport",
     "EtcdStorage",
     "MemcachedStorage",
     "MemoryStorage",
     "MongoDBStorage",
-    "RedisStorage",
+    "MovingWindowSupport",
     "RedisClusterStorage",
     "RedisSentinelStorage",
+    "RedisStorage",
+    "SlidingWindowCounterSupport",
+    "Storage",
 ]

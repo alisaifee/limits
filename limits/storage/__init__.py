@@ -67,16 +67,16 @@ def storage_from_string(
 
 
 __all__ = [
-    "storage_from_string",
-    "Storage",
-    "MovingWindowSupport",
-    "SlidingWindowCounterSupport",
     "EtcdStorage",
-    "MongoDBStorageBase",
+    "MemcachedStorage",
     "MemoryStorage",
     "MongoDBStorage",
-    "RedisStorage",
+    "MongoDBStorageBase",
+    "MovingWindowSupport",
     "RedisClusterStorage",
     "RedisSentinelStorage",
-    "MemcachedStorage",
+    "RedisStorage",
+    "SlidingWindowCounterSupport",
+    "Storage",
+    "storage_from_string",
 ]

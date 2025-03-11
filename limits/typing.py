@@ -148,6 +148,7 @@ MongoDatabase: TypeAlias = "pymongo.database.Database[dict[str, Any]]"  # type:i
 MongoCollection: TypeAlias = "pymongo.collection.Collection[dict[str, Any]]"  # type:ignore[explicit-any]
 
 __all__ = [
+    "TYPE_CHECKING",
     "Any",
     "AsyncRedisClient",
     "Awaitable",
@@ -165,12 +166,11 @@ __all__ = [
     "P",
     "ParamSpec",
     "Protocol",
-    "Serializable",
-    "TypeAlias",
-    "TypeVar",
     "R",
     "R_co",
     "RedisClient",
-    "TYPE_CHECKING",
+    "Serializable",
+    "TypeAlias",
+    "TypeVar",
     "cast",
 ]
