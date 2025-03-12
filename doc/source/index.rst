@@ -55,7 +55,7 @@ To get started
 
 .. code:: console
 
-   $ git clone git://github.com/alisaifee/limits.git
+   $ git clone https://github.com/alisaifee/limits.git
    $ cd limits
    $ pip install -r requirements/dev.txt
 
