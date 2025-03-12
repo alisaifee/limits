@@ -57,7 +57,7 @@ Moving Window
 
 This strategy adds each request’s timestamp to a log if the ``nth`` oldest entry (where ``n``
 is the limit) is either not present or is older than the duration of the window (for example with a rate limit of
-``10 requests per minute`` if there are either less than 10 entries or the 10th oldest entry is atleast
+``10 requests per minute`` if there are either less than 10 entries or the 10th oldest entry is at least
 60 seconds old). Upon adding a new entry to the log "expired" entries are truncated.
 
 For example, with a rate limit of 10 requests per minute:
