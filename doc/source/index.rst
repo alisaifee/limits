@@ -60,7 +60,7 @@ To get started
    $ pip install -r requirements/dev.txt
 
 Since `limits` integrates with various backend storages, local development and running tests
-requires a a working `docker & docker-compose installation <https://docs.docker.com/compose/gettingstarted/>`_.
+requires a working `docker & docker-compose installation <https://docs.docker.com/compose/gettingstarted/>`_.
 
 Running the tests will start the relevant containers automatically - but will leave them running
 so as to not incur the overhead of starting up on each test run. To run the tests:

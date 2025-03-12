@@ -162,7 +162,7 @@ If the redis server is listening over a unix domain socket you can use :code:`re
 or :code:`redis+unix:///path/to/socket?db=n` (for database `n`).
 
 If the database is password protected the password can be provided in the url, for example
-:code:`redis://:foobared@localhost:6379` or :code:`redis+unix://:foobered/path/to/socket` if using a UDS..
+:code:`redis://:foobared@localhost:6379` or :code:`redis+unix://:foobered/path/to/socket` if using a UDS.
 
 For scenarios where a redis connection pool is already available and can be reused, it can be provided
 in :paramref:`~limits.storage.storage_from_string.options`, for example::
@@ -185,7 +185,7 @@ Depends on: :pypi:`redis`
 Redis+Sentinel Storage
 ----------------------
 
-Requires the location(s) of the redis sentinal instances and the `service-name`
+Requires the location(s) of the redis sentinel instances and the `service-name`
 that is monitored by the sentinels.
 :code:`redis+sentinel://localhost:26379/my-redis-service`
 or :code:`redis+sentinel://localhost:26379,localhost:26380/my-redis-service`.
@@ -197,7 +197,7 @@ When authentication details are provided in the url they will be used for both t
 and as connection arguments for the underlying redis nodes managed by the sentinel.
 
 If you need fine grained control it is recommended to use the additional :paramref:`~limits.storage.storage_from_string.options`
-arguments. More details can be found in the API documentation for :class:`~limits.storage.RedisSentinelStorage` (or the aysnc version: :class:`~limits.aio.storage.RedisSentinelStorage`).
+arguments. More details can be found in the API documentation for :class:`~limits.storage.RedisSentinelStorage` (or the async version: :class:`~limits.aio.storage.RedisSentinelStorage`).
 
 Depends on: :pypi:`redis`
 
