@@ -38,15 +38,15 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    `Redis <https://redis.io>`_
 
-   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
    Redis with SSL
 
-   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_SSL_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_SSL_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
    `Redis Sentinel <https://redis.io/topics/sentinel>`_
 
-   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SENTINEL_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SENTINEL_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
 .. tab:: Redis Cluster
 
@@ -65,7 +65,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    `Redis cluster <https://redis.io/topics/cluster-tutorial>`_
 
-   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
 .. tab:: Memcached
 
@@ -79,7 +79,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    `Memcached <https://memcached.org/>`_
 
-   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MEMCACHED_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MEMCACHED_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
 .. tab:: MongoDB
 
@@ -93,7 +93,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    `MongoDB <https://www.mongodb.com/>`_
 
-   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MONGODB_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MONGODB_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
 .. tab:: Etcd
 
@@ -107,7 +107,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    `Etcd <https://www.etcd.io/>`_
 
-   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_ETCD_SERVER_VERSION=[\d\.]+' | cut -d = -f 2"
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_ETCD_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
 
 Storage scheme
