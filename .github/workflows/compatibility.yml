@@ -67,6 +67,10 @@ jobs:
             marker: "etcd"
           - service_version: "LIMITS_ETCD_SERVER_VERSION=3.3"
             marker: "etcd"
+          - service_version: "LIMITS_VALKEY_SERVER_VERSION=7.2"
+            marker: "valkey"
+          - service_version: "LIMITS_VALKEY_SERVER_VERSION=8.0"
+            marker: "valkey"
 
     steps:
     - uses: actions/checkout@v4

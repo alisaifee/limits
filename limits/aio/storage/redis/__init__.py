@@ -7,6 +7,7 @@ from limits.aio.storage import MovingWindowSupport, SlidingWindowCounterSupport,
 from limits.aio.storage.redis.bridge import RedisBridge
 from limits.aio.storage.redis.coredis import CoredisBridge
 from limits.aio.storage.redis.redispy import RedispyBridge
+from limits.aio.storage.redis.valkey import ValkeyBridge
 from limits.typing import Literal
 
 
@@ -25,20 +26,32 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     Depends on :pypi:`coredis` or :pypi:`redis`
     """
 
-    STORAGE_SCHEME = ["async+redis", "async+rediss", "async+redis+unix"]
+    STORAGE_SCHEME = [
+        "async+redis",
+        "async+rediss",
+        "async+redis+unix",
+        "async+valkey",
+        "async+valkeys",
+        "async+valkey+unix",
+    ]
     """
     The storage schemes for redis to be used in an async context
     """
-    DEPENDENCIES = {"redis": Version("5.2.0"), "coredis": Version("3.4.0")}
+    DEPENDENCIES = {
+        "redis": Version("5.2.0"),
+        "coredis": Version("3.4.0"),
+        "valkey": Version("6.0"),
+    }
     MODE: Literal["BASIC", "CLUSTER", "SENTINEL"] = "BASIC"
     bridge: RedisBridge
     storage_exceptions: tuple[Exception, ...]
+    target_server: Literal["redis", "valkey"]
 
     def __init__(
         self,
         uri: str,
         wrap_exceptions: bool = False,
-        implementation: Literal["redispy", "coredis"] = "coredis",
+        implementation: Literal["redispy", "coredis", "valkey"] = "coredis",
         **options: float | str | bool,
     ) -> None:
         """
@@ -52,25 +65,35 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
          This uri is passed directly to :meth:`coredis.Redis.from_url` or
           :meth:`redis.asyncio.client.Redis.from_url` with the initial ``async`` removed,
           except for the case of ``async+redis+unix`` where it is replaced with ``unix``.
+
+         If the uri starts with ``async+valkey`` the implementation used will be from
+         :pypi:`valkey`.
         :param connection_pool: if provided, the redis client is initialized with
          the connection pool and any other params passed as :paramref:`options`
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param implementation: Whether to use the client implementation from
-         :class:`coredis.Redis` (``coredis``) or :class:`redis.asyncio.client.Redis` (``redispy``).
+         - :class:`coredis.Redis` (``coredis``)
+         - :class:`redis.asyncio.client.Redis` (``redispy``)
+         - :class:`valkey.asyncio.client.Valkey` (``valkey``)
+
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`coredis.Redis` or :class:`redis.asyncio.client.Redis`
         :raise ConfigurationError: when the redis library is not available
         """
-        uri = uri.replace("async+redis", "redis", 1)
-        uri = uri.replace("redis+unix", "unix")
+        uri = uri.removeprefix("async+")
+        self.target_server = "redis" if uri.startswith("redis") else "valkey"
+        uri = uri.replace(f"{self.target_server}+unix", "unix")
 
         super().__init__(uri, wrap_exceptions=wrap_exceptions)
         self.options = options
-        if implementation == "redispy":
-            self.bridge = RedispyBridge(uri, self.dependencies["redis"].module)
+        if self.target_server == "valkey" or implementation == "valkey":
+            self.bridge = ValkeyBridge(uri, self.dependencies["valkey"].module)
         else:
-            self.bridge = CoredisBridge(uri, self.dependencies["coredis"].module)
+            if implementation == "redispy":
+                self.bridge = RedispyBridge(uri, self.dependencies["redis"].module)
+            else:
+                self.bridge = CoredisBridge(uri, self.dependencies["coredis"].module)
         self.configure_bridge()
         self.bridge.register_scripts()
 
@@ -218,7 +241,7 @@ class RedisClusterStorage(RedisStorage):
     Depends on :pypi:`coredis` or :pypi:`redis`
     """
 
-    STORAGE_SCHEME = ["async+redis+cluster"]
+    STORAGE_SCHEME = ["async+redis+cluster", "async+valkey+cluster"]
     """
     The storage schemes for redis cluster to be used in an async context
     """
@@ -229,12 +252,15 @@ class RedisClusterStorage(RedisStorage):
         self,
         uri: str,
         wrap_exceptions: bool = False,
-        implementation: Literal["redispy", "coredis"] = "coredis",
+        implementation: Literal["redispy", "coredis", "valkey"] = "coredis",
         **options: float | str | bool,
     ) -> None:
         """
         :param uri: url of the form
          ``async+redis+cluster://[:password]@host:port,host:port``
+
+         If the uri starts with ``async+valkey`` the implementation used will be from
+         :pypi:`valkey`.
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param implementation: Whether to use the client implementation from
@@ -282,7 +308,10 @@ class RedisSentinelStorage(RedisStorage):
     Depends on :pypi:`coredis` or :pypi:`redis`
     """
 
-    STORAGE_SCHEME = ["async+redis+sentinel"]
+    STORAGE_SCHEME = [
+        "async+redis+sentinel",
+        "async+valkey+sentinel",
+    ]
     """The storage scheme for redis accessed via a redis sentinel installation"""
 
     MODE = "SENTINEL"
@@ -291,13 +320,14 @@ class RedisSentinelStorage(RedisStorage):
         "redis": Version("5.2.0"),
         "coredis": Version("3.4.0"),
         "coredis.sentinel": Version("3.4.0"),
+        "valkey": Version("6.0"),
     }
 
     def __init__(
         self,
         uri: str,
         wrap_exceptions: bool = False,
-        implementation: Literal["redispy", "coredis"] = "coredis",
+        implementation: Literal["redispy", "coredis", "valkey"] = "coredis",
         service_name: str | None = None,
         use_replicas: bool = True,
         sentinel_kwargs: dict[str, float | str | bool] | None = None,
@@ -306,6 +336,9 @@ class RedisSentinelStorage(RedisStorage):
         """
         :param uri: url of the form
          ``async+redis+sentinel://host:port,host:port/service_name``
+
+         If the uri starts with ``async+valkey`` the implementation used will be from
+         :pypi:`valkey`.
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param implementation: Whether to use the client implementation from

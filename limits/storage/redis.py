@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, cast
 
 from packaging.version import Version
 
-from limits.typing import RedisClient
+from limits.typing import Literal, RedisClient
 
 from ..util import get_package_data
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
@@ -21,10 +21,17 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     Depends on :pypi:`redis`.
     """
 
-    STORAGE_SCHEME = ["redis", "rediss", "redis+unix"]
+    STORAGE_SCHEME = [
+        "redis",
+        "rediss",
+        "redis+unix",
+        "valkey",
+        "valkeys",
+        "valkey+unix",
+    ]
     """The storage scheme for redis"""
 
-    DEPENDENCIES = {"redis": Version("3.0")}
+    DEPENDENCIES = {"redis": Version("3.0"), "valkey": Version("6.0")}
 
     RES_DIR = "resources/redis/lua_scripts"
 
@@ -46,6 +53,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     lua_acquire_sliding_window: redis.commands.core.Script
 
     PREFIX = "LIMITS"
+    target_server: Literal["redis", "valkey"]
 
     def __init__(
         self,
@@ -60,6 +68,9 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
          ``rediss://[:password]@host:port``, ``redis+unix:///path/to/sock`` etc.
          This uri is passed directly to :func:`redis.from_url` except for the
          case of ``redis+unix://`` where it is replaced with ``unix://``.
+
+         If the uri starts with ``valkey`` the implementation used will be from
+         :pypi:`valkey`.
         :param connection_pool: if provided, the redis client is initialized with
          the connection pool and any other params passed as :paramref:`options`
         :param wrap_exceptions: Whether to wrap storage exceptions in
@@ -69,23 +80,33 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         :raise ConfigurationError: when the :pypi:`redis` library is not available
         """
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
-        self.dependency = self.dependencies["redis"].module
+        self.target_server = "valkey" if uri.startswith("valkey") else "redis"
+        self.dependency = self.dependencies[self.target_server].module
 
-        uri = uri.replace("redis+unix", "unix")
+        uri = uri.replace(f"{self.target_server}+unix", "unix")
 
         if not connection_pool:
             self.storage = self.dependency.from_url(uri, **options)
         else:
-            self.storage = self.dependency.Redis(
-                connection_pool=connection_pool, **options
-            )
+            if self.target_server == "valkey":
+                self.storage = self.dependency.Redis(
+                    connection_pool=connection_pool, **options
+                )
+            else:
+                self.storage = self.dependency.Valkey(
+                    connection_pool=connection_pool, **options
+                )
         self.initialize_storage(uri)
 
     @property
     def base_exceptions(
         self,
     ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
-        return self.dependency.RedisError  # type: ignore[no-any-return]
+        return (  # type: ignore[no-any-return]
+            self.dependency.RedisError
+            if self.target_server == "redis"
+            else self.dependency.ValkeyError
+        )
 
     def initialize_storage(self, _uri: str) -> None:
         self.lua_moving_window = self.get_connection().register_script(

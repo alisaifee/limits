@@ -12,6 +12,7 @@ import pymongo
 import pytest
 import redis
 import redis.sentinel
+import valkey
 
 
 def check_redis_cluster_ready(host, port):
@@ -244,6 +245,23 @@ def mongodb_client(docker_services):
     return pymongo.MongoClient("mongodb://localhost:37017")
 
 
+@pytest.fixture(scope="session")
+def valkey_basic_client(docker_services):
+    docker_services.start("valkey-basic")
+    ci_delay()
+    return valkey.Valkey("localhost", 12379)
+
+
+@pytest.fixture(scope="session")
+def valkey_cluster_client(docker_services):
+    docker_services.start("valkey-cluster-init")
+    docker_services.wait_for_service(
+        "valkey-cluster-6", 2006, check_redis_cluster_ready
+    )
+    ci_delay()
+    return redis.cluster.RedisCluster("localhost", 2001)
+
+
 @pytest.fixture
 def memcached(memcached_client):
     memcached_client.flush_all()
@@ -340,6 +358,20 @@ def mongodb(mongodb_client):
 def etcd(etcd_client):
     etcd_client.delete_prefix("limits/")
     return etcd_client
+
+
+@pytest.fixture
+def valkey_basic(valkey_basic_client):
+    valkey_basic_client.flushall()
+
+    return valkey_basic_client
+
+
+@pytest.fixture
+def valkey_cluster(valkey_cluster_client):
+    valkey_cluster_client.flushall()
+
+    return valkey_cluster_client
 
 
 @pytest.fixture(scope="session")
