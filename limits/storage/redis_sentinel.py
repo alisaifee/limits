@@ -17,7 +17,8 @@ class RedisSentinelStorage(RedisStorage):
     """
     Rate limit storage with redis sentinel as backend
 
-    Depends on :pypi:`redis` package
+    Depends on :pypi:`redis` package (or :pypi:`valkey` if :paramref:`uri` starts with
+    ``valkey+sentinel://``)
     """
 
     STORAGE_SCHEME = ["redis+sentinel", "valkey+sentinel"]
@@ -43,7 +44,7 @@ class RedisSentinelStorage(RedisStorage):
         :param uri: url of the form
          ``redis+sentinel://host:port,host:port/service_name``
 
-         If the uri starts with ``valkey`` the implementation used will be from
+         If the uri scheme is ``valkey+sentinel`` the implementation used will be from
          :pypi:`valkey`.
         :param service_name: sentinel service name
          (if not provided in :attr:`uri`)

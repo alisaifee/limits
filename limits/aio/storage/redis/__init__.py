@@ -66,16 +66,17 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
           :meth:`redis.asyncio.client.Redis.from_url` with the initial ``async`` removed,
           except for the case of ``async+redis+unix`` where it is replaced with ``unix``.
 
-         If the uri starts with ``async+valkey`` the implementation used will be from
+         If the uri scheme is ``async+valkey`` the implementation used will be from
          :pypi:`valkey`.
         :param connection_pool: if provided, the redis client is initialized with
          the connection pool and any other params passed as :paramref:`options`
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param implementation: Whether to use the client implementation from
-         - :class:`coredis.Redis` (``coredis``)
-         - :class:`redis.asyncio.client.Redis` (``redispy``)
-         - :class:`valkey.asyncio.client.Valkey` (``valkey``)
+
+         - ``coredis``: :class:`coredis.Redis`
+         - ``redispy``: :class:`redis.asyncio.client.Redis`
+         - ``valkey``: :class:`valkey.asyncio.client.Valkey`
 
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`coredis.Redis` or :class:`redis.asyncio.client.Redis`
@@ -259,12 +260,15 @@ class RedisClusterStorage(RedisStorage):
         :param uri: url of the form
          ``async+redis+cluster://[:password]@host:port,host:port``
 
-         If the uri starts with ``async+valkey`` the implementation used will be from
+         If the uri scheme is ``async+valkey+cluster`` the implementation used will be from
          :pypi:`valkey`.
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param implementation: Whether to use the client implementation from
-         :class:`coredis.RedisCluster` (``coredis``) or :class:`redis.asyncio.cluster.RedisCluster` (``redispy``).
+
+         - ``coredis``: :class:`coredis.RedisCluster`
+         - ``redispy``: :class:`redis.asyncio.cluster.RedisCluster`
+         - ``valkey``: :class:`valkey.asyncio.cluster.ValkeyCluster`
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`coredis.RedisCluster` or
          :class:`redis.asyncio.RedisCluster`
@@ -337,13 +341,15 @@ class RedisSentinelStorage(RedisStorage):
         :param uri: url of the form
          ``async+redis+sentinel://host:port,host:port/service_name``
 
-         If the uri starts with ``async+valkey`` the implementation used will be from
+         If the uri schema is ``async+valkey+sentinel`` the implementation used will be from
          :pypi:`valkey`.
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param implementation: Whether to use the client implementation from
-         :class:`coredis.sentinel.Sentinel` (``coredis``) or
-         :class:`redis.asyncio.sentinel.Sentinel` (``redispy``)
+
+         - ``coredis``: :class:`coredis.sentinel.Sentinel`
+         - ``redispy``: :class:`redis.asyncio.sentinel.Sentinel`
+         - ``valkey``: :class:`valkey.asyncio.sentinel.Sentinel`
         :param service_name: sentinel service name (if not provided in `uri`)
         :param use_replicas: Whether to use replicas for read only operations
         :param sentinel_kwargs: optional arguments to pass as

@@ -29,7 +29,8 @@ class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend
 
-    Depends on :pypi:`redis`.
+    Depends on :pypi:`redis` (or :pypi:`valkey` if :paramref:`uri`
+    starts with ``valkey+cluster://``).
     """
 
     STORAGE_SCHEME = ["redis+cluster", "valkey+cluster"]
@@ -55,7 +56,7 @@ class RedisClusterStorage(RedisStorage):
         :param uri: url of the form
          ``redis+cluster://[:password]@host:port,host:port``
 
-         If the uri starts with ``valkey`` the implementation used will be from
+         If the uri scheme is ``valkey+cluster`` the implementation used will be from
          :pypi:`valkey`.
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.

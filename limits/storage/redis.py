@@ -18,7 +18,8 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     """
     Rate limit storage with redis as backend.
 
-    Depends on :pypi:`redis`.
+    Depends on :pypi:`redis` (or :pypi:`valkey` if :paramref:`uri` starts with
+    ``valkey://``
     """
 
     STORAGE_SCHEME = [
@@ -69,7 +70,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
          This uri is passed directly to :func:`redis.from_url` except for the
          case of ``redis+unix://`` where it is replaced with ``unix://``.
 
-         If the uri starts with ``valkey`` the implementation used will be from
+         If the uri scheme is ``valkey`` the implementation used will be from
          :pypi:`valkey`.
         :param connection_pool: if provided, the redis client is initialized with
          the connection pool and any other params passed as :paramref:`options`
