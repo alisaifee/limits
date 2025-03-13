@@ -20,10 +20,15 @@ class RedisSentinelStorage(RedisStorage):
     Depends on :pypi:`redis` package
     """
 
-    STORAGE_SCHEME = ["redis+sentinel"]
+    STORAGE_SCHEME = ["redis+sentinel", "valkey+sentinel"]
     """The storage scheme for redis accessed via a redis sentinel installation"""
 
-    DEPENDENCIES = {"redis": Version("3.0"), "redis.sentinel": Version("3.0")}
+    DEPENDENCIES = {
+        "redis": Version("3.0"),
+        "redis.sentinel": Version("3.0"),
+        "valkey": Version("6.0"),
+        "valkey.sentinel": Version("6.0"),
+    }
 
     def __init__(
         self,
@@ -37,6 +42,9 @@ class RedisSentinelStorage(RedisStorage):
         """
         :param uri: url of the form
          ``redis+sentinel://host:port,host:port/service_name``
+
+         If the uri starts with ``valkey`` the implementation used will be from
+         :pypi:`valkey`.
         :param service_name: sentinel service name
          (if not provided in :attr:`uri`)
         :param use_replicas: Whether to use replicas for read only operations
@@ -77,7 +85,8 @@ class RedisSentinelStorage(RedisStorage):
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
 
-        sentinel_dep = self.dependencies["redis.sentinel"].module
+        self.implementation = "valkey" if uri.startswith("valkey") else "redis"
+        sentinel_dep = self.dependencies[f"{self.implementation}.sentinel"].module
         self.sentinel = sentinel_dep.Sentinel(
             sentinel_configuration,
             sentinel_kwargs={**parsed_auth, **sentinel_options},

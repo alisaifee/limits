@@ -32,7 +32,7 @@ class RedisClusterStorage(RedisStorage):
     Depends on :pypi:`redis`.
     """
 
-    STORAGE_SCHEME = ["redis+cluster"]
+    STORAGE_SCHEME = ["redis+cluster", "valkey+cluster"]
     """The storage scheme for redis cluster"""
 
     DEFAULT_OPTIONS: dict[str, float | str | bool] = {
@@ -42,6 +42,7 @@ class RedisClusterStorage(RedisStorage):
 
     DEPENDENCIES = {
         "redis": Version("4.2.0"),
+        "valkey": Version("6.0"),
     }
 
     def __init__(
@@ -53,6 +54,9 @@ class RedisClusterStorage(RedisStorage):
         """
         :param uri: url of the form
          ``redis+cluster://[:password]@host:port,host:port``
+
+         If the uri starts with ``valkey`` the implementation used will be from
+         :pypi:`valkey`.
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
@@ -75,12 +79,19 @@ class RedisClusterStorage(RedisStorage):
             cluster_hosts.append((host, int(port)))
 
         self.storage = None
+        self.implementation = "valkey" if uri.startswith("valkey") else "redis"
         merged_options = {**self.DEFAULT_OPTIONS, **parsed_auth, **options}
-        self.dependency = self.dependencies["redis"].module
+        self.dependency = self.dependencies[self.implementation].module
         startup_nodes = [self.dependency.cluster.ClusterNode(*c) for c in cluster_hosts]
-        self.storage = self.dependency.cluster.RedisCluster(
-            startup_nodes=startup_nodes, **merged_options
-        )
+        if self.implementation == "redis":
+            self.storage = self.dependency.cluster.RedisCluster(
+                startup_nodes=startup_nodes, **merged_options
+            )
+        else:
+            self.storage = self.dependency.cluster.ValkeyCluster(
+                startup_nodes=startup_nodes, **merged_options
+            )
+
         assert self.storage
         self.initialize_storage(uri)
         super(RedisStorage, self).__init__(uri, wrap_exceptions, **options)

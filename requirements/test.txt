@@ -4,10 +4,12 @@
 -r storage/rediscluster.txt
 -r storage/mongodb.txt
 -r storage/memcached.txt
+-r storage/valkey.txt
 -r storage/async-etcd.txt
 -r storage/async-memcached.txt
 -r storage/async-mongodb.txt
 -r storage/async-redis.txt
+-r storage/async-valkey.txt
 
 # Pin to < 4 for aetcd compatibility
 protobuf>3.6.1,<4

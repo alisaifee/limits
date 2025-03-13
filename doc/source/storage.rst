@@ -109,6 +109,19 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_ETCD_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
+.. tab:: Valkey
+
+   Dependency versions:
+
+   .. literalinclude:: ../../requirements/storage/valkey.txt
+
+   Dependency versions (async):
+
+   .. literalinclude:: ../../requirements/storage/async-valkey.txt
+
+   `Valkey <https://www.valkey.io/>`_
+
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_VALKEY_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
 Storage scheme
 ==============

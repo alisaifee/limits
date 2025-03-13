@@ -221,3 +221,48 @@ services:
       - '21379:6379'
     ulimits:
       memlock: -1
+  valkey-basic:
+    image: "valkey/valkey:${LIMITS_VALKEY_SERVER_VERSION:-latest}"
+    command: valkey-server --port 6379 ${DEFAULT_ARGS---enable-debug-command yes} --appendonly yes
+    ports:
+      - '12379:6379'
+  valkey-cluster-1:
+    image: "valkey/valkey:${LIMITS_VALKEY_SERVER_VERSION:-latest}"
+    command: valkey-server --port 2001 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '2001:2001'
+      - '12001:12001'
+  valkey-cluster-2:
+    image: "valkey/valkey:${LIMITS_VALKEY_SERVER_VERSION:-latest}"
+    command: valkey-server --port 2002 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '2002:2002'
+      - '12002:12002'
+  valkey-cluster-3:
+    image: "valkey/valkey:${LIMITS_VALKEY_SERVER_VERSION:-latest}"
+    command: valkey-server --port 2003 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '2003:2003'
+      - '12003:12003'
+  valkey-cluster-4:
+    image: "valkey/valkey:${LIMITS_VALKEY_SERVER_VERSION:-latest}"
+    command: valkey-server --port 2004 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '2004:2004'
+      - '12004:12004'
+  valkey-cluster-5:
+    image: "valkey/valkey:${LIMITS_VALKEY_SERVER_VERSION:-latest}"
+    command: valkey-server --port 2005 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '2005:2005'
+      - '12005:12005'
+  valkey-cluster-6:
+    image: "valkey/valkey:${LIMITS_VALKEY_SERVER_VERSION:-latest}"
+    command: valkey-server --port 2006 --protected-mode no --cluster-enabled yes --loglevel verbose --cluster-announce-ip ${HOST_IP}
+    ports:
+      - '2006:2006'
+      - '12006:12006'
+  valkey-cluster-init:
+    image: "valkey/valkey:${LIMITS_VALKEY_SERVER_VERSION:-latest}"
+    command: bash -c "echo yes | valkey-cli --cluster create --cluster-replicas 1 ${HOST_IP}:2001 ${HOST_IP}:2002 ${HOST_IP}:2003 ${HOST_IP}:2004 ${HOST_IP}:2005 ${HOST_IP}:2006"
+    depends_on: [valkey-cluster-1, valkey-cluster-2, valkey-cluster-3, valkey-cluster-4, valkey-cluster-5, valkey-cluster-6]

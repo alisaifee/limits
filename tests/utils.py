@@ -156,6 +156,20 @@ all_storage = pytest.mark.parametrize(
             marks=[pytest.mark.etcd, pytest.mark.flaky],
             id="etcd",
         ),
+        pytest.param(
+            "valkey://localhost:12379",
+            {},
+            lf("valkey_basic"),
+            marks=pytest.mark.valkey,
+            id="valkey_basic",
+        ),
+        pytest.param(
+            "valkey+cluster://localhost:2001/",
+            {},
+            lf("valkey_cluster"),
+            marks=pytest.mark.valkey_cluster,
+            id="valkey-cluster",
+        ),
     ],
 )
 
@@ -210,6 +224,20 @@ moving_window_storage = pytest.mark.parametrize(
             lf("mongodb"),
             marks=pytest.mark.mongodb,
             id="mongodb",
+        ),
+        pytest.param(
+            "valkey://localhost:12379",
+            {},
+            lf("valkey_basic"),
+            marks=pytest.mark.valkey,
+            id="valkey_basic",
+        ),
+        pytest.param(
+            "valkey+cluster://localhost:2001/",
+            {},
+            lf("valkey_cluster"),
+            marks=pytest.mark.valkey_cluster,
+            id="valkey-cluster",
         ),
     ],
 )
@@ -279,6 +307,20 @@ sliding_window_counter_storage = pytest.mark.parametrize(
             lf("mongodb"),
             marks=pytest.mark.mongodb,
             id="mongodb",
+        ),
+        pytest.param(
+            "valkey://localhost:12379",
+            {},
+            lf("valkey_basic"),
+            marks=pytest.mark.valkey,
+            id="valkey_basic",
+        ),
+        pytest.param(
+            "valkey+cluster://localhost:2001/",
+            {},
+            lf("valkey_cluster"),
+            marks=pytest.mark.valkey_cluster,
+            id="valkey-cluster",
         ),
     ],
 )
@@ -368,6 +410,20 @@ async_all_storage = pytest.mark.parametrize(
             marks=[pytest.mark.etcd, pytest.mark.flaky],
             id="etcd",
         ),
+        pytest.param(
+            "async+valkey://localhost:12379",
+            {},
+            lf("valkey_basic"),
+            marks=pytest.mark.valkey,
+            id="valkey_basic",
+        ),
+        pytest.param(
+            "async+valkey+cluster://localhost:2001/",
+            {},
+            lf("valkey_cluster"),
+            marks=pytest.mark.valkey_cluster,
+            id="valkey-cluster",
+        ),
     ],
 )
 
@@ -434,6 +490,20 @@ async_moving_window_storage = pytest.mark.parametrize(
             lf("mongodb"),
             marks=pytest.mark.mongodb,
             id="mongodb",
+        ),
+        pytest.param(
+            "async+valkey://localhost:12379",
+            {},
+            lf("valkey_basic"),
+            marks=pytest.mark.valkey,
+            id="valkey_basic",
+        ),
+        pytest.param(
+            "async+valkey+cluster://localhost:2001/",
+            {},
+            lf("valkey_cluster"),
+            marks=pytest.mark.valkey_cluster,
+            id="valkey-cluster",
         ),
     ],
 )
@@ -509,6 +579,20 @@ async_sliding_window_counter_storage = pytest.mark.parametrize(
             lf("mongodb"),
             marks=pytest.mark.mongodb,
             id="mongodb",
+        ),
+        pytest.param(
+            "async+valkey://localhost:12379",
+            {},
+            lf("valkey_basic"),
+            marks=pytest.mark.valkey,
+            id="valkey_basic",
+        ),
+        pytest.param(
+            "async+valkey+cluster://localhost:2001/",
+            {},
+            lf("valkey_cluster"),
+            marks=pytest.mark.valkey_cluster,
+            id="valkey-cluster",
         ),
     ],
 )
