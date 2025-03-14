@@ -109,6 +109,19 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_ETCD_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
+.. tab:: Valkey
+
+   Dependency versions:
+
+   .. literalinclude:: ../../requirements/storage/valkey.txt
+
+   Dependency versions (async):
+
+   .. literalinclude:: ../../requirements/storage/async-valkey.txt
+
+   `Valkey <https://www.valkey.io/>`_
+
+   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_VALKEY_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
 Storage scheme
 ==============
@@ -171,6 +184,12 @@ in :paramref:`~limits.storage.storage_from_string.options`, for example::
     storage_from_string("redis://", connection_pool=pool)
 
 Depends on: :pypi:`redis`
+
+
+.. versionadded:: 4.3
+
+   If the database ``uri`` scheme uses ``valkey`` instead of ``redis`` the implementation
+   used will be from :pypi:`valkey` instead of :pypi:`redis`.
 
 Redis+SSL Storage
 -----------------

@@ -58,6 +58,16 @@ Install the package with pip:
 
    .. literalinclude:: ../../requirements/storage/etcd.txt
 
+.. tab:: Valkey
+
+   .. code:: console
+
+      $ pip install limits[valkey]
+
+   Includes:
+
+   .. literalinclude:: ../../requirements/storage/valkey.txt
+
 More details around the specifics of each storage backend can be
 found in :ref:`storage`
 
@@ -114,3 +124,15 @@ along with the package using the following extras:
    Includes:
 
    .. literalinclude:: ../../requirements/storage/async-etcd.txt
+
+.. tab:: Valkey
+
+   .. code:: console
+
+      $ pip install limits[async-valkey]
+
+   Includes:
+
+   .. literalinclude:: ../../requirements/storage/async-valkey.txt
+
+

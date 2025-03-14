@@ -3,6 +3,7 @@ from __future__ import annotations
 import urllib.parse
 from typing import TYPE_CHECKING
 
+from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
 from limits.errors import ConfigurationError
@@ -13,17 +14,30 @@ if TYPE_CHECKING:
     pass
 
 
+@versionchanged(
+    version="4.3",
+    reason=(
+        "Added support for using the redis client from :pypi:`valkey`"
+        " if :paramref:`uri` has the ``valkey+sentinel://`` schema"
+    ),
+)
 class RedisSentinelStorage(RedisStorage):
     """
     Rate limit storage with redis sentinel as backend
 
-    Depends on :pypi:`redis` package
+    Depends on :pypi:`redis` package (or :pypi:`valkey` if :paramref:`uri` starts with
+    ``valkey+sentinel://``)
     """
 
-    STORAGE_SCHEME = ["redis+sentinel"]
+    STORAGE_SCHEME = ["redis+sentinel", "valkey+sentinel"]
     """The storage scheme for redis accessed via a redis sentinel installation"""
 
-    DEPENDENCIES = {"redis": Version("3.0"), "redis.sentinel": Version("3.0")}
+    DEPENDENCIES = {
+        "redis": Version("3.0"),
+        "redis.sentinel": Version("3.0"),
+        "valkey": Version("6.0"),
+        "valkey.sentinel": Version("6.0"),
+    }
 
     def __init__(
         self,
@@ -37,6 +51,9 @@ class RedisSentinelStorage(RedisStorage):
         """
         :param uri: url of the form
          ``redis+sentinel://host:port,host:port/service_name``
+
+         If the uri scheme is ``valkey+sentinel`` the implementation used will be from
+         :pypi:`valkey`.
         :param service_name: sentinel service name
          (if not provided in :attr:`uri`)
         :param use_replicas: Whether to use replicas for read only operations
@@ -77,7 +94,8 @@ class RedisSentinelStorage(RedisStorage):
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
 
-        sentinel_dep = self.dependencies["redis.sentinel"].module
+        self.target_server = "valkey" if uri.startswith("valkey") else "redis"
+        sentinel_dep = self.dependencies[f"{self.target_server}.sentinel"].module
         self.sentinel = sentinel_dep.Sentinel(
             sentinel_configuration,
             sentinel_kwargs={**parsed_auth, **sentinel_options},
@@ -92,7 +110,11 @@ class RedisSentinelStorage(RedisStorage):
     def base_exceptions(
         self,
     ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
-        return self.dependencies["redis"].module.RedisError  # type: ignore[no-any-return]
+        return (  # type: ignore[no-any-return]
+            self.dependencies["redis"].module.RedisError
+            if self.target_server == "redis"
+            else self.dependencies["valkey"].module.ValkeyError
+        )
 
     def get_connection(self, readonly: bool = False) -> RedisClient:
         return self.storage_slave if (readonly and self.use_replicas) else self.storage
