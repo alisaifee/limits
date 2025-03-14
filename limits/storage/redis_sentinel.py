@@ -3,6 +3,7 @@ from __future__ import annotations
 import urllib.parse
 from typing import TYPE_CHECKING
 
+from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
 from limits.errors import ConfigurationError
@@ -13,6 +14,13 @@ if TYPE_CHECKING:
     pass
 
 
+@versionchanged(
+    version="4.3",
+    reason=(
+        "Added support for using the redis client from :pypi:`valkey`"
+        " if :paramref:`uri` has the ``valkey+sentinel://`` schema"
+    ),
+)
 class RedisSentinelStorage(RedisStorage):
     """
     Rate limit storage with redis sentinel as backend

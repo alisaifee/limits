@@ -25,6 +25,13 @@ however if the version of the package is lower than ``4.2.0`` the implementation
 will fallback to trying to use :class:`rediscluster.RedisCluster`.
 """,
 )
+@versionchanged(
+    version="4.3",
+    reason=(
+        "Added support for using the redis client from :pypi:`valkey`"
+        " if :paramref:`uri` has the ``valkey+cluster://`` schema"
+    ),
+)
 class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend

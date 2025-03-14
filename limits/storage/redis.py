@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING, cast
 
+from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
 from limits.typing import Literal, RedisClient
@@ -14,6 +15,13 @@ if TYPE_CHECKING:
     import redis
 
 
+@versionchanged(
+    version="4.3",
+    reason=(
+        "Added support for using the redis client from :pypi:`valkey`"
+        " if :paramref:`uri` has the ``valkey://`` schema"
+    ),
+)
 class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     """
     Rate limit storage with redis as backend.

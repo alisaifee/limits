@@ -19,6 +19,14 @@ from limits.typing import Literal
         " through :paramref:`implementation`"
     ),
 )
+@versionchanged(
+    version="4.3",
+    reason=(
+        "Added support for using the asyncio redis client from :pypi:`valkey`"
+        " through :paramref:`implementation` or if :paramref:`uri` has the"
+        " ``async+valkey`` schema"
+    ),
+)
 class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     """
     Rate limit storage with redis as backend.
@@ -235,6 +243,14 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     version="4.2",
     reason="Added support for using the asyncio redis client from :pypi:`redis` ",
 )
+@versionchanged(
+    version="4.3",
+    reason=(
+        "Added support for using the asyncio redis client from :pypi:`valkey`"
+        " through :paramref:`implementation` or if :paramref:`uri` has the"
+        " ``async+valkey+cluster`` schema"
+    ),
+)
 class RedisClusterStorage(RedisStorage):
     """
     Rate limit storage with redis cluster as backend
@@ -304,6 +320,14 @@ class RedisClusterStorage(RedisStorage):
 @versionchanged(
     version="4.2",
     reason="Added support for using the asyncio redis client from :pypi:`redis` ",
+)
+@versionchanged(
+    version="4.3",
+    reason=(
+        "Added support for using the asyncio redis client from :pypi:`valkey`"
+        " through :paramref:`implementation` or if :paramref:`uri` has the"
+        " ``async+valkey+sentinel`` schema"
+    ),
 )
 class RedisSentinelStorage(RedisStorage):
     """

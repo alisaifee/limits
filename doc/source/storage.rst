@@ -185,6 +185,12 @@ in :paramref:`~limits.storage.storage_from_string.options`, for example::
 
 Depends on: :pypi:`redis`
 
+
+.. versionadded:: 4.3
+
+   If the database ``uri`` scheme uses ``valkey`` instead of ``redis`` the implementation
+   used will be from :pypi:`valkey` instead of :pypi:`redis`.
+
 Redis+SSL Storage
 -----------------
 
