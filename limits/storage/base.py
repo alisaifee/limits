@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import functools
-import threading
 from abc import ABC, abstractmethod
 
 from limits import errors
@@ -63,7 +62,6 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
          :exc:`limits.errors.StorageError` before raising it.
         """
 
-        self.lock = threading.RLock()
         super().__init__()
         self.wrap_exceptions = wrap_exceptions
 
