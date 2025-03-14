@@ -89,7 +89,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         if not connection_pool:
             self.storage = self.dependency.from_url(uri, **options)
         else:
-            if self.target_server == "valkey":
+            if self.target_server == "redis":
                 self.storage = self.dependency.Redis(
                     connection_pool=connection_pool, **options
                 )

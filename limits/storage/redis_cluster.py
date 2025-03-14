@@ -80,11 +80,11 @@ class RedisClusterStorage(RedisStorage):
             cluster_hosts.append((host, int(port)))
 
         self.storage = None
-        self.implementation = "valkey" if uri.startswith("valkey") else "redis"
+        self.target_server = "valkey" if uri.startswith("valkey") else "redis"
         merged_options = {**self.DEFAULT_OPTIONS, **parsed_auth, **options}
-        self.dependency = self.dependencies[self.implementation].module
+        self.dependency = self.dependencies[self.target_server].module
         startup_nodes = [self.dependency.cluster.ClusterNode(*c) for c in cluster_hosts]
-        if self.implementation == "redis":
+        if self.target_server == "redis":
             self.storage = self.dependency.cluster.RedisCluster(
                 startup_nodes=startup_nodes, **merged_options
             )

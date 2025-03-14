@@ -86,8 +86,8 @@ class RedisSentinelStorage(RedisStorage):
         if self.service_name is None:
             raise ConfigurationError("'service_name' not provided")
 
-        self.implementation = "valkey" if uri.startswith("valkey") else "redis"
-        sentinel_dep = self.dependencies[f"{self.implementation}.sentinel"].module
+        self.target_server = "valkey" if uri.startswith("valkey") else "redis"
+        sentinel_dep = self.dependencies[f"{self.target_server}.sentinel"].module
         self.sentinel = sentinel_dep.Sentinel(
             sentinel_configuration,
             sentinel_kwargs={**parsed_auth, **sentinel_options},
@@ -102,7 +102,11 @@ class RedisSentinelStorage(RedisStorage):
     def base_exceptions(
         self,
     ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
-        return self.dependencies["redis"].module.RedisError  # type: ignore[no-any-return]
+        return (  # type: ignore[no-any-return]
+            self.dependencies["redis"].module.RedisError
+            if self.target_server == "redis"
+            else self.dependencies["valkey"].module.ValkeyError
+        )
 
     def get_connection(self, readonly: bool = False) -> RedisClient:
         return self.storage_slave if (readonly and self.use_replicas) else self.storage
