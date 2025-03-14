@@ -201,7 +201,6 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         self,
         key: str,
         expiry: int,
-        elastic_expiry: bool = False,
         amount: int = 1,
     ) -> int:
         """
@@ -213,12 +212,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         :param amount: the number to increment by
         """
         key = self.prefixed_key(key)
-        if elastic_expiry:
-            value = self.get_connection().incrby(key, amount)
-            self.get_connection().expire(key, expiry)
-            return value
-        else:
-            return int(self.lua_incr_expire([key], [expiry, amount]))
+        return int(self.lua_incr_expire([key], [expiry, amount]))
 
     def get(self, key: str) -> int:
         """

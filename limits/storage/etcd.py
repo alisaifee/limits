@@ -62,9 +62,7 @@ class EtcdStorage(Storage):
     def prefixed_key(self, key: str) -> bytes:
         return f"{self.PREFIX}/{key}".encode()
 
-    def incr(
-        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
-    ) -> int:
+    def incr(self, key: str, expiry: int, amount: int = 1) -> int:
         retries = 0
         etcd_key = self.prefixed_key(key)
         while retries < self.max_retries:
@@ -92,9 +90,6 @@ class EtcdStorage(Storage):
                     self.storage.revoke_lease(meta.lease_id)
                     self.storage.delete(etcd_key)
                 else:
-                    if elastic_expiry:
-                        self.storage.refresh_lease(meta.lease_id)
-                        window_end = now + expiry
                     new = int(cur_value) + amount
                     if self.storage.transaction(
                         compare=[self.storage.transactions.value(etcd_key) == cur],

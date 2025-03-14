@@ -8,7 +8,7 @@ import time
 from abc import ABCMeta, abstractmethod
 from math import floor, inf
 
-from deprecated.sphinx import deprecated, versionadded
+from deprecated.sphinx import versionadded
 
 from limits.storage.base import SlidingWindowCounterSupport
 
@@ -148,7 +148,6 @@ class FixedWindowRateLimiter(RateLimiter):
             self.storage.incr(
                 item.key_for(*identifiers),
                 item.get_expiry(),
-                elastic_expiry=False,
                 amount=cost,
             )
             <= item.amount
@@ -286,43 +285,14 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
         return WindowStats(now + min(previous_reset_in, current_reset_in), remaining)
 
 
-@deprecated(version="4.1", action="always")
-class FixedWindowElasticExpiryRateLimiter(FixedWindowRateLimiter):
-    """
-    Reference: :ref:`strategies:fixed window with elastic expiry`
-    """
-
-    def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
-        """
-        Consume the rate limit
-
-        :param item: The rate limit item
-        :param identifiers: variable list of strings to uniquely identify this
-         instance of the limit
-        :param cost: The cost of this hit, default 1
-        """
-
-        return (
-            self.storage.incr(
-                item.key_for(*identifiers),
-                item.get_expiry(),
-                elastic_expiry=True,
-                amount=cost,
-            )
-            <= item.amount
-        )
-
-
 KnownStrategy = (
     type[SlidingWindowCounterRateLimiter]
     | type[FixedWindowRateLimiter]
-    | type[FixedWindowElasticExpiryRateLimiter]
     | type[MovingWindowRateLimiter]
 )
 
 STRATEGIES: dict[str, KnownStrategy] = {
     "sliding-window-counter": SlidingWindowCounterRateLimiter,
     "fixed-window": FixedWindowRateLimiter,
-    "fixed-window-elastic-expiry": FixedWindowElasticExpiryRateLimiter,
     "moving-window": MovingWindowRateLimiter,
 }

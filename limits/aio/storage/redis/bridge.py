@@ -68,7 +68,6 @@ class RedisBridge(ABC):
         self,
         key: str,
         expiry: int,
-        elastic_expiry: bool = False,
         amount: int = 1,
     ) -> int: ...
 

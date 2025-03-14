@@ -117,7 +117,6 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         self,
         key: str,
         expiry: float,
-        elastic_expiry: bool = False,
         amount: int = 1,
         set_expiration_key: bool = True,
     ) -> int:
@@ -126,7 +125,6 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
 
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
-        :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
         :param amount: the number to increment by
         :param set_expiration_key: if set to False, the expiration time won't be stored but the key will still expire
@@ -136,17 +134,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         expire_key = self._expiration_key(key).encode()
         value = None
         try:
-            value = await storage.increment(limit_key, amount) or amount
-            if elastic_expiry:
-                await storage.touch(limit_key, exptime=ceil(expiry))
-                if set_expiration_key:
-                    await storage.set(
-                        expire_key,
-                        str(expiry + time.time()).encode("utf-8"),
-                        exptime=ceil(expiry),
-                        noreply=False,
-                    )
-            return value
+            return await storage.increment(limit_key, amount) or amount
         except self.dependency.NotFoundCommandError:
             # Incrementation failed because the key doesn't exist
             storage = await self.get_storage()
@@ -161,18 +149,9 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
                     )
                 value = amount
             except self.dependency.NotStoredStorageCommandError:
-                # Coult not add the key, probably because a concurrent call has added it
+                # Could not add the key, probably because a concurrent call has added it
                 storage = await self.get_storage()
-                value = await storage.increment(limit_key, amount) or amount
-                if elastic_expiry:
-                    await storage.touch(limit_key, exptime=ceil(expiry))
-                    if set_expiration_key:
-                        await storage.set(
-                            expire_key,
-                            str(expiry + time.time()).encode("utf-8"),
-                            exptime=ceil(expiry),
-                            noreply=False,
-                        )
+                return await storage.increment(limit_key, amount) or amount
             return value
 
     async def get_expiry(self, key: str) -> float:

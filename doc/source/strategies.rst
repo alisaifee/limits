@@ -41,17 +41,6 @@ For example, with a rate limit of 10 requests per minute:
    (e.g., combine a 2 requests per second limit with a 10 requests per minute limit).
 
 
-
-Fixed Window with Elastic Expiry
-==================================
-.. deprecated:: 4.1
-
-This variant extends the window’s expiry with each hit by resetting the timer on
-every request. Although designed to impose larger penalties for breaches, it is now
-deprecated and should not be used.
-
-
-
 Moving Window
 =============
 

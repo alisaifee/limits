@@ -6,7 +6,6 @@ from math import ceil
 import pytest
 
 from limits.aio.strategies import (
-    FixedWindowElasticExpiryRateLimiter,
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
     SlidingWindowCounterRateLimiter,
@@ -63,44 +62,6 @@ class TestAsyncFixedWindow:
         assert await limiter.hit(limit, "k2", cost=5)
         assert (await limiter.get_window_stats(limit, "k2")).remaining == 5
         assert not await limiter.test(limit, "k2", cost=6)
-        assert not await limiter.hit(limit, "k2", cost=6)
-
-    @async_fixed_start
-    async def test_fixed_window_with_elastic_expiry(self, uri, args, fixture):
-        storage = storage_from_string(uri, **args)
-        with pytest.warns(DeprecationWarning):
-            limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-        async with async_window(1) as (start, end):
-            assert all([await limiter.hit(limit) for _ in range(0, 10)])
-            assert not await limiter.hit(limit)
-        assert (await limiter.get_window_stats(limit)).remaining == 0
-        assert (await limiter.get_window_stats(limit)).reset_time == pytest.approx(
-            start + 2, 1e-2
-        )
-        async with async_window(3) as (start, end):
-            assert not await limiter.hit(limit)
-        assert await limiter.hit(limit)
-        assert (await limiter.get_window_stats(limit)).remaining == 9
-        assert (await limiter.get_window_stats(limit)).reset_time == pytest.approx(
-            end + 2, 1e-2
-        )
-
-    @async_fixed_start
-    async def test_fixed_window_with_elastic_expiry_multiple_cost(
-        self, uri, args, fixture
-    ):
-        storage = storage_from_string(uri, **args)
-        with pytest.warns(DeprecationWarning):
-            limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-        assert not await limiter.hit(limit, "k1", cost=11)
-        async with async_window(0) as (_, end):
-            assert await limiter.hit(limit, "k2", cost=5)
-        assert (await limiter.get_window_stats(limit, "k2")).remaining == 5
-        assert (
-            await limiter.get_window_stats(limit, "k2")
-        ).reset_time == pytest.approx(end + 2, 1e-2)
         assert not await limiter.hit(limit, "k2", cost=6)
 
     @async_fixed_start

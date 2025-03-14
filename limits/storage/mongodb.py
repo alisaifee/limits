@@ -144,9 +144,7 @@ class MongoDBStorageBase(
 
         return counter and counter["count"] or 0
 
-    def incr(
-        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
-    ) -> int:
+    def incr(self, key: str, expiry: int, amount: int = 1) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -175,9 +173,7 @@ class MongoDBStorageBase(
                                 "$cond": {
                                     "if": {"$lt": ["$expireAt", "$$NOW"]},
                                     "then": expiration,
-                                    "else": (
-                                        expiration if elastic_expiry else "$expireAt"
-                                    ),
+                                    "else": "$expireAt",
                                 }
                             },
                         }

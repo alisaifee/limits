@@ -13,7 +13,6 @@ from limits.limits import (
 from limits.storage import storage_from_string
 from limits.storage.base import TimestampedSlidingWindow
 from limits.strategies import (
-    FixedWindowElasticExpiryRateLimiter,
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
     SlidingWindowCounterRateLimiter,
@@ -62,42 +61,6 @@ class TestFixedWindow:
         assert limiter.hit(limit, "k2", cost=5)
         assert limiter.get_window_stats(limit, "k2").remaining == 5
         assert not limiter.test(limit, "k2", cost=6)
-        assert not limiter.hit(limit, "k2", cost=6)
-
-    @fixed_start
-    def test_fixed_window_with_elastic_expiry(self, uri, args, fixture):
-        storage = storage_from_string(uri, **args)
-        with pytest.warns(DeprecationWarning):
-            limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-        with window(1) as (start, end):
-            assert all([limiter.hit(limit) for _ in range(0, 10)])
-            assert not limiter.hit(limit)
-        assert limiter.get_window_stats(limit).remaining == 0
-        assert limiter.get_window_stats(limit).reset_time == pytest.approx(
-            start + 2, 1e-2
-        )
-        with window(3) as (start, end):
-            assert not limiter.hit(limit)
-        assert limiter.hit(limit)
-        assert limiter.get_window_stats(limit).remaining == 9
-        assert limiter.get_window_stats(limit).reset_time == pytest.approx(
-            end + 2, 1e-2
-        )
-
-    @fixed_start
-    def test_fixed_window_with_elastic_expiry_multiple_cost(self, uri, args, fixture):
-        storage = storage_from_string(uri, **args)
-        with pytest.warns(DeprecationWarning):
-            limiter = FixedWindowElasticExpiryRateLimiter(storage)
-        limit = RateLimitItemPerSecond(10, 2)
-        assert not limiter.hit(limit, "k1", cost=11)
-        with window(0) as (start, end):
-            assert limiter.hit(limit, "k2", cost=5)
-        assert limiter.get_window_stats(limit, "k2").remaining == 5
-        assert limiter.get_window_stats(limit, "k2").reset_time == pytest.approx(
-            end + 2, 1e-2
-        )
         assert not limiter.hit(limit, "k2", cost=6)
 
     @fixed_start

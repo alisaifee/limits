@@ -25,7 +25,7 @@ class MemoryStorage(
 ):
     """
     rate limit storage using :class:`collections.Counter`
-    as an in memory storage for fixed and elastic window strategies,
+    as an in memory storage for fixed and sliding window strategies,
     and a simple list to implement moving window strategy.
 
     """
@@ -78,26 +78,18 @@ class MemoryStorage(
     ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
         return ValueError
 
-    def incr(
-        self, key: str, expiry: float, elastic_expiry: bool = False, amount: int = 1
-    ) -> int:
+    def incr(self, key: str, expiry: float, amount: int = 1) -> int:
         """
         increments the counter for a given rate limit key
 
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
-        :param elastic_expiry: whether to keep extending the rate limit
-         window every hit.
         :param amount: the number to increment by
         """
         self.get(key)
         self.__schedule_expiry()
         with self.locks[key]:
             self.storage[key] += amount
-
-            if elastic_expiry or self.storage[key] == amount:
-                self.expirations[key] = time.time() + expiry
-
         return self.storage.get(key, 0)
 
     def decr(self, key: str, amount: int = 1) -> int:

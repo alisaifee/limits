@@ -139,9 +139,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
         return self.bridge.base_exceptions
 
-    async def incr(
-        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
-    ) -> int:
+    async def incr(self, key: str, expiry: int, amount: int = 1) -> int:
         """
         increments the counter for a given rate limit key
 
@@ -150,7 +148,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         :param amount: the number to increment by
         """
 
-        return await self.bridge.incr(key, expiry, elastic_expiry, amount)
+        return await self.bridge.incr(key, expiry, amount)
 
     async def get(self, key: str) -> int:
         """

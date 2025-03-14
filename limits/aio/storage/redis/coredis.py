@@ -112,15 +112,9 @@ class CoredisBridge(RedisBridge):
             self.SCRIPT_ACQUIRE_SLIDING_WINDOW
         )
 
-    async def incr(
-        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
-    ) -> int:
+    async def incr(self, key: str, expiry: int, amount: int = 1) -> int:
         key = self.prefixed_key(key)
-        value = await self.get_connection().incrby(key, amount)
-        if elastic_expiry or value == amount:
-            await self.get_connection().expire(key, expiry)
-
-        return value
+        return await self.get_connection().incrby(key, amount)
 
     async def get(self, key: str) -> int:
         key = self.prefixed_key(key)

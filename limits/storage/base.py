@@ -71,16 +71,12 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
         raise NotImplementedError
 
     @abstractmethod
-    def incr(
-        self, key: str, expiry: int, elastic_expiry: bool = False, amount: int = 1
-    ) -> int:
+    def incr(self, key: str, expiry: int, amount: int = 1) -> int:
         """
         increments the counter for a given rate limit key
 
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
-        :param elastic_expiry: whether to keep extending the rate limit
-         window every hit.
         :param amount: the number to increment by
         """
         raise NotImplementedError

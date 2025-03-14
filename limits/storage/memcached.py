@@ -166,7 +166,6 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         self,
         key: str,
         expiry: float,
-        elastic_expiry: bool = False,
         amount: int = 1,
         set_expiration_key: bool = True,
     ) -> int:
@@ -175,43 +174,21 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
 
         :param key: the key to increment
         :param expiry: amount in seconds for the key to expire in
-        :param elastic_expiry: whether to keep extending the rate limit
          window every hit.
         :param amount: the number to increment by
         :param set_expiration_key: set the expiration key with the expiration time if needed. If set to False, the key will still expire, but memcached cannot provide the expiration time.
         """
-        value = self.call_memcached_func(self.storage.incr, key, amount, noreply=False)
-        if value is not None:
-            if elastic_expiry:
-                self.call_memcached_func(self.storage.touch, key, ceil(expiry))
-                if set_expiration_key:
-                    self.call_memcached_func(
-                        self.storage.set,
-                        self._expiration_key(key),
-                        expiry + time.time(),
-                        expire=ceil(expiry),
-                        noreply=False,
-                    )
-
+        if (
+            value := self.call_memcached_func(
+                self.storage.incr, key, amount, noreply=False
+            )
+        ) is not None:
             return value
         else:
             if not self.call_memcached_func(
                 self.storage.add, key, amount, ceil(expiry), noreply=False
             ):
-                value = self.storage.incr(key, amount) or amount
-
-                if elastic_expiry:
-                    self.call_memcached_func(self.storage.touch, key, ceil(expiry))
-                    if set_expiration_key:
-                        self.call_memcached_func(
-                            self.storage.set,
-                            self._expiration_key(key),
-                            expiry + time.time(),
-                            expire=ceil(expiry),
-                            noreply=False,
-                        )
-
-                return value
+                return self.storage.incr(key, amount) or amount
             else:
                 if set_expiration_key:
                     self.call_memcached_func(

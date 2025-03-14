@@ -119,7 +119,6 @@ class RedispyBridge(RedisBridge):
         self,
         key: str,
         expiry: int,
-        elastic_expiry: bool = False,
         amount: int = 1,
     ) -> int:
         """
@@ -131,13 +130,7 @@ class RedispyBridge(RedisBridge):
         :param amount: the number to increment by
         """
         key = self.prefixed_key(key)
-
-        if elastic_expiry:
-            value = await self.get_connection().incrby(key, amount)
-            await self.get_connection().expire(key, expiry)
-            return value
-        else:
-            return cast(int, await self.lua_incr_expire([key], [expiry, amount]))
+        return cast(int, await self.lua_incr_expire([key], [expiry, amount]))
 
     async def get(self, key: str) -> int:
         """
