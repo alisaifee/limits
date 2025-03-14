@@ -41,11 +41,17 @@ class MemoryStorage(
         self.timer.start()
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **_)
 
-    @property
-    def base_exceptions(
-        self,
-    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
-        return ValueError
+    def __getstate__(self) -> dict[str, limits.typing.Any]:  # type: ignore[explicit-any]
+        state = self.__dict__.copy()
+        del state["timer"]
+        del state["locks"]
+        return state
+
+    def __setstate__(self, state: dict[str, limits.typing.Any]) -> None:  # type: ignore[explicit-any]
+        self.__dict__.update(state)
+        self.locks = defaultdict(threading.RLock)
+        self.timer = threading.Timer(0.01, self.__expire_events)
+        self.timer.start()
 
     def __expire_events(self) -> None:
         for key in list(self.events.keys()):
@@ -65,6 +71,12 @@ class MemoryStorage(
         if not self.timer.is_alive():
             self.timer = threading.Timer(0.01, self.__expire_events)
             self.timer.start()
+
+    @property
+    def base_exceptions(
+        self,
+    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
+        return ValueError
 
     def incr(
         self, key: str, expiry: float, elastic_expiry: bool = False, amount: int = 1

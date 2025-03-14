@@ -48,11 +48,17 @@ class MemoryStorage(
         self.timer: asyncio.Task[None] | None = None
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **_)
 
-    @property
-    def base_exceptions(
-        self,
-    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
-        return ValueError
+    def __getstate__(self) -> dict[str, limits.typing.Any]:  # type: ignore[explicit-any]
+        state = self.__dict__.copy()
+        del state["timer"]
+        del state["locks"]
+        return state
+
+    def __setstate__(self, state: dict[str, limits.typing.Any]) -> None:  # type: ignore[explicit-any]
+        self.__dict__.update(state)
+        self.timer = None
+        self.locks = defaultdict(asyncio.Lock)
+        asyncio.ensure_future(self.__schedule_expiry())
 
     async def __expire_events(self) -> None:
         for key in self.events.keys():
@@ -73,6 +79,12 @@ class MemoryStorage(
     async def __schedule_expiry(self) -> None:
         if not self.timer or self.timer.done():
             self.timer = asyncio.create_task(self.__expire_events())
+
+    @property
+    def base_exceptions(
+        self,
+    ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
+        return ValueError
 
     async def incr(
         self, key: str, expiry: float, elastic_expiry: bool = False, amount: int = 1
