@@ -19,7 +19,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     Rate limit storage with redis as backend.
 
     Depends on :pypi:`redis` (or :pypi:`valkey` if :paramref:`uri` starts with
-    ``valkey://``
+    ``valkey://``)
     """
 
     STORAGE_SCHEME = [
