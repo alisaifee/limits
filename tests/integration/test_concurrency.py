@@ -4,6 +4,7 @@ import asyncio
 import random
 import threading
 import time
+from contextlib import suppress
 from uuid import uuid4
 
 import pytest
@@ -11,6 +12,7 @@ import pytest
 import limits.aio.storage.memory
 import limits.aio.strategies
 import limits.strategies
+from limits.errors import ConcurrentUpdateError
 from limits.limits import RateLimitItemPerMinute
 from limits.storage import storage_from_string
 from limits.storage.base import TimestampedSlidingWindow
@@ -27,23 +29,28 @@ from tests.utils import (
 
 @pytest.mark.integration
 class TestConcurrency:
+    CONCURRENT_REQUESTS: int = 100
+
     @all_storage
     def test_fixed_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = limits.strategies.FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerMinute(5)
 
-        [limiter.hit(limit, uuid4().hex) for _ in range(50)]
+        [limiter.hit(limit, uuid4().hex) for _ in range(self.CONCURRENT_REQUESTS)]
 
         key = uuid4().hex
         hits = []
 
         def hit():
-            time.sleep(random.random())
-            if limiter.hit(limit, key):
-                hits.append(None)
+            time.sleep(random.random() / 1000)
+            with suppress(ConcurrentUpdateError):
+                if limiter.hit(limit, key):
+                    hits.append(None)
 
-        threads = [threading.Thread(target=hit) for _ in range(50)]
+        threads = [
+            threading.Thread(target=hit) for _ in range(self.CONCURRENT_REQUESTS)
+        ]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
@@ -55,7 +62,7 @@ class TestConcurrency:
         limiter = limits.strategies.SlidingWindowCounterRateLimiter(storage)
         limit = RateLimitItemPerMinute(5)
 
-        [limiter.hit(limit, uuid4().hex) for _ in range(100)]
+        [limiter.hit(limit, uuid4().hex) for _ in range(self.CONCURRENT_REQUESTS)]
 
         key = uuid4().hex
         hits = []
@@ -65,7 +72,9 @@ class TestConcurrency:
             if limiter.hit(limit, key):
                 hits.append(None)
 
-        threads = [threading.Thread(target=hit) for _ in range(100)]
+        threads = [
+            threading.Thread(target=hit) for _ in range(self.CONCURRENT_REQUESTS)
+        ]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
@@ -77,17 +86,19 @@ class TestConcurrency:
         limiter = limits.strategies.MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerMinute(5)
 
-        [limiter.hit(limit, uuid4().hex) for _ in range(50)]
+        [limiter.hit(limit, uuid4().hex) for _ in range(self.CONCURRENT_REQUESTS)]
 
         key = uuid4().hex
         hits = []
 
         def hit():
-            time.sleep(random.random())
+            time.sleep(random.random() / 1000)
             if limiter.hit(limit, key):
                 hits.append(None)
 
-        threads = [threading.Thread(target=hit) for _ in range(50)]
+        threads = [
+            threading.Thread(target=hit) for _ in range(self.CONCURRENT_REQUESTS)
+        ]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
@@ -97,23 +108,26 @@ class TestConcurrency:
 @pytest.mark.asyncio
 @pytest.mark.integration
 class TestAsyncConcurrency:
+    CONCURRENT_REQUESTS: int = 100
+
     @async_all_storage
     async def test_fixed_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = limits.aio.strategies.FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerMinute(5)
 
-        [await limiter.hit(limit, uuid4().hex) for _ in range(50)]
+        [await limiter.hit(limit, uuid4().hex) for _ in range(self.CONCURRENT_REQUESTS)]
 
         key = uuid4().hex
         hits = []
 
         async def hit():
-            await asyncio.sleep(random.random())
-            if await limiter.hit(limit, key):
-                hits.append(None)
+            await asyncio.sleep(random.random() / 1000)
+            with suppress(ConcurrentUpdateError):
+                if await limiter.hit(limit, key):
+                    hits.append(None)
 
-        await asyncio.gather(*[hit() for _ in range(50)])
+        await asyncio.gather(*[hit() for _ in range(self.CONCURRENT_REQUESTS)])
 
         assert len(hits) == 5
 
@@ -136,7 +150,7 @@ class TestAsyncConcurrency:
             if await limiter.hit(limit, key):
                 hits.append(None)
 
-        await asyncio.gather(*[hit() for _ in range(100)])
+        await asyncio.gather(*[hit() for _ in range(self.CONCURRENT_REQUESTS)])
 
         assert len(hits) == 5
 
@@ -146,16 +160,16 @@ class TestAsyncConcurrency:
         limiter = limits.aio.strategies.MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerMinute(5)
 
-        [await limiter.hit(limit, uuid4().hex) for _ in range(50)]
+        [await limiter.hit(limit, uuid4().hex) for _ in range(self.CONCURRENT_REQUESTS)]
 
         key = uuid4().hex
         hits = []
 
         async def hit():
-            await asyncio.sleep(random.random())
+            await asyncio.sleep(random.random() / 1000)
             if await limiter.hit(limit, key):
                 hits.append(None)
 
-        await asyncio.gather(*[hit() for _ in range(50)])
+        await asyncio.gather(*[hit() for _ in range(self.CONCURRENT_REQUESTS)])
 
         assert len(hits) == 5
