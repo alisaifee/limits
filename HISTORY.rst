@@ -3,6 +3,21 @@
 Changelog
 =========
 
+v4.3
+----
+Release Date: 2025-03-14
+
+* Feature
+
+  * Add support for ``valkey://`` schemas and using ``valkey-py``
+    dependency
+
+* Compatibility
+
+  * Drop support for python 3.9
+  * Improve typing to use python 3.10+ features
+
+
 v4.2
 ----
 Release Date: 2025-03-11
@@ -719,6 +734,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
