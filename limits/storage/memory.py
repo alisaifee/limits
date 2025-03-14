@@ -14,11 +14,10 @@ from limits.storage.base import (
 )
 
 
-class LockableEntry(threading._RLock):  # type: ignore
+class Entry:
     def __init__(self, expiry: float) -> None:
         self.atime = time.time()
         self.expiry = self.atime + expiry
-        super().__init__()
 
 
 class MemoryStorage(
@@ -37,8 +36,8 @@ class MemoryStorage(
         self.storage: limits.typing.Counter[str] = Counter()
         self.locks: defaultdict[str, threading.RLock] = defaultdict(threading.RLock)
         self.expirations: dict[str, float] = {}
-        self.events: dict[str, list[LockableEntry]] = {}
-        self.timer = threading.Timer(0.01, self.__expire_events)
+        self.events: dict[str, list[Entry]] = {}
+        self.timer: threading.Timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **_)
 
@@ -50,11 +49,12 @@ class MemoryStorage(
 
     def __expire_events(self) -> None:
         for key in list(self.events.keys()):
-            for event in list(self.events[key]):
-                with event:
+            with self.locks[key]:
+                for event in list(self.events[key]):
                     if event.expiry <= time.time() and event in self.events[key]:
                         self.events[key].remove(event)
-
+                if not self.events.get(key, None):
+                    self.locks.pop(key, None)
         for key in list(self.expirations.keys()):
             if self.expirations[key] <= time.time():
                 self.storage.pop(key, None)
@@ -133,19 +133,20 @@ class MemoryStorage(
         if amount > limit:
             return False
 
-        self.events.setdefault(key, [])
         self.__schedule_expiry()
-        timestamp = time.time()
-        try:
-            entry = self.events[key][limit - amount]
-        except IndexError:
-            entry = None
+        with self.locks[key]:
+            self.events.setdefault(key, [])
+            timestamp = time.time()
+            try:
+                entry = self.events[key][limit - amount]
+            except IndexError:
+                entry = None
 
-        if entry and entry.atime >= timestamp - expiry:
-            return False
-        else:
-            self.events[key][:0] = [LockableEntry(expiry) for _ in range(amount)]
-            return True
+            if entry and entry.atime >= timestamp - expiry:
+                return False
+            else:
+                self.events[key][:0] = [Entry(expiry) for _ in range(amount)]
+                return True
 
     def get_expiry(self, key: str) -> float:
         """
@@ -164,7 +165,7 @@ class MemoryStorage(
         timestamp = time.time()
 
         return (
-            len([k for k in self.events[key] if k.atime >= timestamp - expiry])
+            len([k for k in self.events.get(key, []) if k.atime >= timestamp - expiry])
             if self.events.get(key)
             else 0
         )
@@ -217,7 +218,6 @@ class MemoryStorage(
                 # Limitation: during high concurrency at the end of the window,
                 # the counter is shifted and cannot be decremented, so less requests than expected are allowed.
                 self.decr(current_key, amount)
-                # print("Concurrent call, reverting the counter increase")
                 return False
             return True
 
