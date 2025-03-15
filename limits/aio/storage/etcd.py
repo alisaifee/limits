@@ -5,7 +5,7 @@ import time
 import urllib.parse
 from typing import TYPE_CHECKING
 
-from deprecated import deprecated
+from deprecated.sphinx import deprecated
 
 from limits.aio.storage.base import Storage
 from limits.errors import ConcurrentUpdateError

@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 import urllib.parse
 
-from deprecated import deprecated
+from deprecated.sphinx import deprecated
 
 from limits.errors import ConcurrentUpdateError
 from limits.storage.base import Storage
