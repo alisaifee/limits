@@ -4,7 +4,6 @@ import asyncio
 import random
 import threading
 import time
-from contextlib import suppress
 from uuid import uuid4
 
 import pytest
@@ -12,7 +11,6 @@ import pytest
 import limits.aio.storage.memory
 import limits.aio.strategies
 import limits.strategies
-from limits.errors import ConcurrentUpdateError
 from limits.limits import RateLimitItemPerMinute
 from limits.storage import storage_from_string
 from limits.storage.base import TimestampedSlidingWindow
@@ -44,9 +42,8 @@ class TestConcurrency:
 
         def hit():
             time.sleep(random.random() / 1000)
-            with suppress(ConcurrentUpdateError):
-                if limiter.hit(limit, key):
-                    hits.append(None)
+            if limiter.hit(limit, key):
+                hits.append(None)
 
         threads = [
             threading.Thread(target=hit) for _ in range(self.CONCURRENT_REQUESTS)
@@ -123,9 +120,8 @@ class TestAsyncConcurrency:
 
         async def hit():
             await asyncio.sleep(random.random() / 1000)
-            with suppress(ConcurrentUpdateError):
-                if await limiter.hit(limit, key):
-                    hits.append(None)
+            if await limiter.hit(limit, key):
+                hits.append(None)
 
         await asyncio.gather(*[hit() for _ in range(self.CONCURRENT_REQUESTS)])
 
