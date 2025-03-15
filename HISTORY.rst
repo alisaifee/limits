@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v4.4.1
+------
+Release Date: 2025-03-14
+
+* Documentation
+
+  * Fix deprecation documentation for etcd
+
 v4.4
 ----
 Release Date: 2025-03-14
@@ -742,6 +750,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
