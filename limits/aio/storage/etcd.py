@@ -5,6 +5,8 @@ import time
 import urllib.parse
 from typing import TYPE_CHECKING
 
+from deprecated import deprecated
+
 from limits.aio.storage.base import Storage
 from limits.errors import ConcurrentUpdateError
 
@@ -12,6 +14,7 @@ if TYPE_CHECKING:
     import aetcd
 
 
+@deprecated(version="4.4")
 class EtcdStorage(Storage):
     """
     Rate limit storage with etcd as backend.

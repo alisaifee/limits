@@ -3,6 +3,8 @@ from __future__ import annotations
 import time
 import urllib.parse
 
+from deprecated import deprecated
+
 from limits.errors import ConcurrentUpdateError
 from limits.storage.base import Storage
 from limits.typing import TYPE_CHECKING
@@ -11,6 +13,7 @@ if TYPE_CHECKING:
     import etcd3
 
 
+@deprecated(version="4.4")
 class EtcdStorage(Storage):
     """
     Rate limit storage with etcd as backend.
