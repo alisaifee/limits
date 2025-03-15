@@ -36,17 +36,9 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
         :pypi:`redis` can be used instead of :pypi:`coredis` by setting
         :paramref:`limits.aio.storage.RedisStorage.implementation` to ``redispy``
 
-   `Redis <https://redis.io>`_
+   `Redis Server <https://redis.io>`_
 
    .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
-
-   Redis with SSL
-
-   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_SSL_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
-
-   `Redis Sentinel <https://redis.io/topics/sentinel>`_
-
-   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SENTINEL_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
 .. tab:: Redis Cluster
 
@@ -63,7 +55,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
          :pypi:`redis` can be used instead of :pypi:`coredis` by setting
          :paramref:`limits.aio.storage.RedisClusterStorage.implementation` to ``redispy``
 
-   `Redis cluster <https://redis.io/topics/cluster-tutorial>`_
+   `Redis Server <https://redis.io/topics/cluster-tutorial>`_
 
    .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
