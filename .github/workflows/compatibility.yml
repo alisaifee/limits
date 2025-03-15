@@ -61,12 +61,6 @@ jobs:
             marker: "memcached"
           - service_version: "LIMITS_MEMCACHED_SERVER_VERSION=1.4.34"
             marker: "memcached"
-          - service_version: "LIMITS_ETCD_SERVER_VERSION=3.5"
-            marker: "etcd"
-          - service_version: "LIMITS_ETCD_SERVER_VERSION=3.4"
-            marker: "etcd"
-          - service_version: "LIMITS_ETCD_SERVER_VERSION=3.3"
-            marker: "etcd"
           - service_version: "LIMITS_VALKEY_SERVER_VERSION=7.2"
             marker: "valkey"
           - service_version: "LIMITS_VALKEY_SERVER_VERSION=8.0"
@@ -89,7 +83,7 @@ jobs:
       run: |
         python -m pip install -U pip
         python -m pip install -U setuptools wheel
-        pip install --no-binary protobuf -r requirements/ci.txt
+        pip install -r requirements/ci.txt
     - name: Tests
       env:
         CI: "True"

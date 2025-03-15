@@ -98,6 +98,8 @@ class MemoryStorage(
         await self.__schedule_expiry()
         async with self.locks[key]:
             self.storage[key] += amount
+            if self.storage[key] == amount:
+                self.expirations[key] = time.time() + expiry
         return self.storage.get(key, amount)
 
     async def decr(self, key: str, amount: int = 1) -> int:

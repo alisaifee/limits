@@ -95,20 +95,6 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_MONGODB_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
-.. tab:: Etcd
-
-   Dependency versions:
-
-   .. literalinclude:: ../../requirements/storage/etcd.txt
-
-   Dependency versions (async):
-
-   .. literalinclude:: ../../requirements/storage/async-etcd.txt
-
-   `Etcd <https://www.etcd.io/>`_
-
-   .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_ETCD_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
-
 .. tab:: Valkey
 
    Dependency versions:
@@ -246,15 +232,6 @@ Examples:
 
 Depends on: :pypi:`pymongo`
 
-Etcd Storage
-------------
-
-Requires the location of an etcd node
-
-Example: ``etcd://localhost:2379``
-
-Depends on: :pypi:`etcd3`
-
 Async Storage
 =============
 
@@ -271,7 +248,6 @@ For example:
 - ``async+redis+cluster://localhost:7000,localhost:7001``
 - ``async+redis+sentinel://:sekret@localhost:26379/my-redis-service``
 - ``async+memcached://localhost:11211``
-- ``async+etcd://localhost:2379``
 - ``async+memory://``
 
 For implementation details of currently supported async backends refer to :ref:`api:async storage`

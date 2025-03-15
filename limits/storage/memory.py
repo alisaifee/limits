@@ -88,8 +88,11 @@ class MemoryStorage(
         """
         self.get(key)
         self.__schedule_expiry()
+        print(key, amount, expiry)
         with self.locks[key]:
             self.storage[key] += amount
+            if self.storage[key] == amount:
+                self.expirations[key] = time.time() + expiry
         return self.storage.get(key, 0)
 
     def decr(self, key: str, amount: int = 1) -> int:

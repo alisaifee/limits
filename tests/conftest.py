@@ -5,7 +5,6 @@ import platform
 import socket
 import time
 
-import etcd3
 import pymemcache
 import pymemcache.client
 import pymongo
@@ -78,14 +77,6 @@ def check_mongo_ready(host, port):
         return False
 
 
-def check_etcd_ready(host, port):
-    try:
-        etcd3.client(host, port).status()
-        return True
-    except:  # noqa
-        return False
-
-
 @pytest.fixture(scope="session")
 def host_ip_env():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -107,14 +98,6 @@ def docker_services(host_ip_env, docker_services):
 def ci_delay():
     if os.environ.get("CI") == "True":
         time.sleep(10)
-
-
-@pytest.fixture(scope="session")
-def etcd_client(docker_services):
-    docker_services.start("etcd")
-    docker_services.wait_for_service("etcd", 2379, check_etcd_ready)
-    ci_delay()
-    return etcd3.client()
 
 
 @pytest.fixture(scope="session")
@@ -352,12 +335,6 @@ def mongodb(mongodb_client):
     mongodb_client.limits.counters.drop()
 
     return mongodb_client
-
-
-@pytest.fixture
-def etcd(etcd_client):
-    etcd_client.delete_prefix("limits/")
-    return etcd_client
 
 
 @pytest.fixture

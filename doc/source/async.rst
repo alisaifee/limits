@@ -16,7 +16,6 @@ The following async storage backends are implemented:
   details on selecting the dependency)
 - Memcached (via `emcache <https://emcache.readthedocs.org>`_)
 - MongoDB (via `motor <https://motor.readthedocs.org>`_)
-- Etcd (via `aetcd <https://aetcd.readthedocs.org>`_)
 
 Quick start
 ===========

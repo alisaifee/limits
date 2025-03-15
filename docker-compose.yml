@@ -1,16 +1,6 @@
 version: '3.2'
 
 services:
-  # etcd
-  etcd:
-    image: "bitnami/etcd:${LIMITS_ETCD_SERVER_VERSION:-latest}"
-    environment:
-      - ALLOW_NONE_AUTHENTICATION=yes
-      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
-      - ETCD_ELECTION_TIMEOUT=600
-    ports:
-      - 2379:2379
-      - 2380:2380
   # memcached
   memcached-1:
     image: "memcached:${LIMITS_MEMCACHED_SERVER_VERSION:-latest}"

@@ -17,7 +17,7 @@ limits
 
 
 **limits** is a python library for rate limiting via multiple strategies
-with commonly used storage backends (Redis, Memcached, MongoDB & Etcd).
+with commonly used storage backends (Redis, Memcached & MongoDB).
 
 The library provides identical APIs for use in sync and
 `async <https://limits.readthedocs.io/en/stable/async.html>`_ codebases.
@@ -119,7 +119,6 @@ Storage backends
 - `Redis <https://limits.readthedocs.io/en/latest/storage.html#redis-storage>`_
 - `Memcached <https://limits.readthedocs.io/en/latest/storage.html#memcached-storage>`_
 - `MongoDB <https://limits.readthedocs.io/en/latest/storage.html#mongodb-storage>`_
-- `Etcd <https://limits.readthedocs.io/en/latest/storage.html#etcd-storage>`_
 - `In-Memory <https://limits.readthedocs.io/en/latest/storage.html#in-memory-storage>`_
 
 Dive right in

@@ -12,7 +12,6 @@ import limits  # noqa
 from ..errors import ConfigurationError
 from ..typing import TypeAlias, cast
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
-from .etcd import EtcdStorage
 from .memcached import MemcachedStorage
 from .memory import MemoryStorage
 from .mongodb import MongoDBStorage, MongoDBStorageBase
@@ -67,7 +66,6 @@ def storage_from_string(
 
 
 __all__ = [
-    "EtcdStorage",
     "MemcachedStorage",
     "MemoryStorage",
     "MongoDBStorage",

@@ -8,7 +8,6 @@ from pytest_lazy_fixtures import lf
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
 from limits.errors import ConfigurationError, StorageError
 from limits.storage import (
-    EtcdStorage,
     MemcachedStorage,
     MemoryStorage,
     MongoDBStorage,
@@ -241,14 +240,6 @@ class TestBaseStorage:
             lf("mongodb"),
             marks=pytest.mark.mongodb,
             id="mongodb",
-        ),
-        pytest.param(
-            "etcd://localhost:2379",
-            {},
-            EtcdStorage,
-            lf("etcd"),
-            marks=pytest.mark.etcd,
-            id="etcd",
         ),
     ],
 )

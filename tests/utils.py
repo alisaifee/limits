@@ -150,13 +150,6 @@ all_storage = pytest.mark.parametrize(
             id="mongodb",
         ),
         pytest.param(
-            "etcd://localhost:2379",
-            {},
-            lf("etcd"),
-            marks=[pytest.mark.etcd, pytest.mark.flaky],
-            id="etcd",
-        ),
-        pytest.param(
             "valkey://localhost:12379",
             {},
             lf("valkey_basic"),
@@ -402,13 +395,6 @@ async_all_storage = pytest.mark.parametrize(
             lf("mongodb"),
             marks=pytest.mark.mongodb,
             id="mongodb",
-        ),
-        pytest.param(
-            "async+etcd://localhost:2379",
-            {},
-            lf("etcd"),
-            marks=[pytest.mark.etcd, pytest.mark.flaky],
-            id="etcd",
         ),
         pytest.param(
             "async+valkey://localhost:12379",

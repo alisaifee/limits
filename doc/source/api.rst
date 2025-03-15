@@ -99,11 +99,6 @@ MongoDB Storage
 
 .. autoclass:: MongoDBStorage
 
-Etcd Storage
-^^^^^^^^^^^^
-
-.. autoclass:: EtcdStorage
-
 
 Async Storage
 -------------
@@ -141,11 +136,6 @@ Async MongoDB Storage
 ^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: MongoDBStorage
-
-Async Etcd Storage
-^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: EtcdStorage
 
 Abstract storage classes
 ------------------------

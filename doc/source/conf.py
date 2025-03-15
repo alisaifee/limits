@@ -79,7 +79,5 @@ intersphinx_mapping = {
     "redis-py": ("https://redis-py.readthedocs.io/en/latest/", None),
     "pymemcache": ("https://pymemcache.readthedocs.io/en/latest/", None),
     "pymongo": ("https://pymongo.readthedocs.io/en/stable/", None),
-    "python-etcd3": ("https://python-etcd3.readthedocs.io/en/latest/", None),
-    "aetcd": ("https://aetcd.readthedocs.io/en/latest/", None),
     "valkey-py": ("https://valkey-py.readthedocs.io/en/latest/", None),
 }
