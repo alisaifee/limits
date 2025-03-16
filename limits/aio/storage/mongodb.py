@@ -333,7 +333,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                             "$cond": {
                                 "if": {
                                     "$lte": [
-                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        {"$subtract": ["$expireAt", "$$NOW"]},
                                         expiry_ms,
                                     ]
                                 },
@@ -349,7 +349,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                             "$cond": {
                                 "if": {
                                     "$lte": [
-                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        {"$subtract": ["$expireAt", "$$NOW"]},
                                         expiry_ms,
                                     ]
                                 },
@@ -357,22 +357,22 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                                 "else": {"$ifNull": ["$currentCount", 0]},
                             }
                         },
-                        "expiresAt": {
+                        "expireAt": {
                             "$cond": {
                                 "if": {
                                     "$lte": [
-                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        {"$subtract": ["$expireAt", "$$NOW"]},
                                         expiry_ms,
                                     ]
                                 },
                                 "then": {
                                     "$cond": {
-                                        "if": {"$gt": ["$expiresAt", 0]},
-                                        "then": {"$add": ["$expiresAt", expiry_ms]},
+                                        "if": {"$gt": ["$expireAt", 0]},
+                                        "then": {"$add": ["$expireAt", expiry_ms]},
                                         "else": {"$add": ["$$NOW", 2 * expiry_ms]},
                                     }
                                 },
-                                "else": "$expiresAt",
+                                "else": "$expireAt",
                             }
                         },
                     }
@@ -392,7 +392,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                                                             0,
                                                             {
                                                                 "$subtract": [
-                                                                    "$expiresAt",
+                                                                    "$expireAt",
                                                                     {
                                                                         "$add": [
                                                                             "$$NOW",
@@ -460,7 +460,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                             "$cond": {
                                 "if": {
                                     "$lte": [
-                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        {"$subtract": ["$expireAt", "$$NOW"]},
                                         expiry_ms,
                                     ]
                                 },
@@ -472,7 +472,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                             "$cond": {
                                 "if": {
                                     "$lte": [
-                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        {"$subtract": ["$expireAt", "$$NOW"]},
                                         expiry_ms,
                                     ]
                                 },
@@ -480,27 +480,27 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                                 "else": {"$ifNull": ["$currentCount", 0]},
                             }
                         },
-                        "expiresAt": {
+                        "expireAt": {
                             "$cond": {
                                 "if": {
                                     "$lte": [
-                                        {"$subtract": ["$expiresAt", "$$NOW"]},
+                                        {"$subtract": ["$expireAt", "$$NOW"]},
                                         expiry_ms,
                                     ]
                                 },
-                                "then": {"$add": ["$expiresAt", expiry_ms]},
-                                "else": "$expiresAt",
+                                "then": {"$add": ["$expireAt", expiry_ms]},
+                                "else": "$expireAt",
                             }
                         },
                     }
                 }
             ],
             return_document=self.proxy_dependency.module.ReturnDocument.AFTER,
-            projection=["currentCount", "previousCount", "expiresAt"],
+            projection=["currentCount", "previousCount", "expireAt"],
         ):
             expires_at = (
-                (result["expiresAt"].replace(tzinfo=datetime.timezone.utc).timestamp())
-                if result.get("expiresAt")
+                (result["expireAt"].replace(tzinfo=datetime.timezone.utc).timestamp())
+                if result.get("expireAt")
                 else time.time()
             )
             current_ttl = max(0, expires_at - time.time())

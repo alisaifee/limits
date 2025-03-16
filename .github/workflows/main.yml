@@ -87,11 +87,17 @@ jobs:
         CI: "True"
         ASYNC_REDIS_IMPLEMENTATION: "${{ matrix.async_redis_implementation }}"
       run: |
-        py.test -m "${{ matrix.marker }}" --cov-report=xml --cov-branch --max-runs=3
+        py.test -m "${{ matrix.marker }}" --junitxml=junit.xml -o junit_family=legacy --cov-branch --max-runs=3
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+
   benchmark:
     needs: [test]
     runs-on: ubuntu-latest
