@@ -11,8 +11,9 @@
 .. |docs| image:: https://readthedocs.org/projects/limits/badge/?version=latest
    :target: https://limits.readthedocs.org
 
+######
 limits
-------
+######
 |docs| |ci| |codecov| |pypi| |pypi-versions| |license|
 
 
@@ -112,6 +113,7 @@ Scenario 2:
 - ``weight = (60 - 40) / 60 ≈ 0.33``.
 - ``weighted_count = floor(8 + (4 * 0.33)) = floor(8 + 1.32) = 9``.
 - Since the weighted count is below the limit, the request is allowed.
+
 
 Storage backends
 ================
