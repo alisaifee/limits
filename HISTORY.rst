@@ -3,6 +3,15 @@
 Changelog
 =========
 
+v4.5
+----
+Release Date: 2025-04-03
+
+* Bug Fix
+
+  * Fix concurrent update error when expiring moving window entries.
+    `Issue 267 <https://github.com/alisaifee/limits/issues/267>`_
+
 v4.4.1
 ------
 Release Date: 2025-03-14
@@ -750,6 +759,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
