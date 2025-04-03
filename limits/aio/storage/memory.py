@@ -61,7 +61,7 @@ class MemoryStorage(
         asyncio.ensure_future(self.__schedule_expiry())
 
     async def __expire_events(self) -> None:
-        for key in self.events.keys():
+        for key in list(self.events.keys()):
             async with self.locks[key]:
                 for event in list(self.events[key]):
                     if event.expiry <= time.time() and event in self.events[key]:
