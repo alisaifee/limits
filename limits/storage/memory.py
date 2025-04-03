@@ -88,7 +88,6 @@ class MemoryStorage(
         """
         self.get(key)
         self.__schedule_expiry()
-        print(key, amount, expiry)
         with self.locks[key]:
             self.storage[key] += amount
             if self.storage[key] == amount:
