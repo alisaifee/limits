@@ -70,8 +70,9 @@ def check_sentinel_auth_ready(host, port):
 
 def check_mongo_ready(host, port):
     try:
-        pymongo.MongoClient("mongodb://localhost:37017").server_info()
-
+        client = pymongo.MongoClient("mongodb://localhost:37017")
+        client.server_info()
+        client.close()
         return True
     except:  # noqa
         return False
@@ -225,7 +226,9 @@ def mongodb_client(docker_services):
     docker_services.start("mongodb")
     docker_services.wait_for_service("mongodb", 27017, check_mongo_ready)
     ci_delay()
-    return pymongo.MongoClient("mongodb://localhost:37017")
+    client = pymongo.MongoClient("mongodb://localhost:37017")
+    yield client
+    client.close()
 
 
 @pytest.fixture(scope="session")

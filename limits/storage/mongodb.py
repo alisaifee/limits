@@ -475,6 +475,10 @@ class MongoDBStorageBase(
         )
         return cast(bool, result["_acquired"])
 
+    def __del__(self) -> None:
+        if self.storage:
+            self.storage.close()
+
 
 @versionadded(version="2.1")
 @versionchanged(

@@ -513,3 +513,6 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                 current_ttl,
             )
         return 0, 0.0, 0, 0.0
+
+    def __del__(self) -> None:
+        self.storage and self.storage.close()
