@@ -3,6 +3,15 @@
 Changelog
 =========
 
+v4.6
+----
+Release Date: 2025-04-03
+
+* Bug Fix
+
+  * Ensure mongo clients are closed on storage destruction.
+    `Issue 264 <https://github.com/alisaifee/limits/issues/264>`_
+
 v4.5
 ----
 Release Date: 2025-04-03
@@ -759,6 +768,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
