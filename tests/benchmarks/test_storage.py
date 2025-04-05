@@ -6,20 +6,14 @@ import random
 import pytest
 
 import limits.aio.strategies
-from limits import (
-    RateLimitItemPerDay,
-    RateLimitItemPerMinute,
-)
+from limits import RateLimitItemPerDay, RateLimitItemPerMinute
 from limits.storage import storage_from_string
 from limits.strategies import (
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
     SlidingWindowCounterRateLimiter,
 )
-from tests.utils import (
-    ALL_STORAGES,
-    ALL_STORAGES_ASYNC,
-)
+from tests.utils import ALL_STORAGES, ALL_STORAGES_ASYNC
 
 benchmark_limits = pytest.mark.parametrize(
     "limit",
@@ -66,215 +60,177 @@ benchmark_moving_window_async_storages = pytest.mark.parametrize(
 )
 
 
-def hit_window(strategy, storage, limit):
-    uid = int(random.random() * 100)
-    strategy(storage).hit(limit, uid)
-
-
-def get_window_stats(strategy, storage, limit):
-    uid = int(random.random() * 100)
-    strategy(storage).get_window_stats(limit, uid)
-
-
-def hit_window_async(event_loop, strategy, storage, limit):
-    uid = int(random.random() * 100)
-    event_loop.run_until_complete(strategy(storage).hit(limit, uid))
-
-
-def get_window_stats_async(event_loop, strategy, storage, limit):
-    uid = int(random.random() * 100)
-    event_loop.run_until_complete(strategy(storage).get_window_stats(limit, uid))
-
-
-def seed_limit(limiter, limit):
-    for uid in range(100):
-        limiter.hit(limit, uid, cost=int(limit.amount / 2))
-
-
-def seed_limit_async(limiter, limit, event_loop):
-    for uid in range(100):
-        event_loop.run_until_complete(
-            limiter.hit(limit, uid, cost=int(limit.amount / 2))
+@pytest.fixture(autouse=True)
+def ensure_supported(strategy, uri):
+    storage = storage_from_string(uri)
+    try:
+        strategy(storage)
+    except NotImplementedError:
+        return pytest.skip(
+            f"{strategy.__name__} not supported by {storage.__class__.__name__}"
         )
+
+
+def call_hit(strategy, storage, limit, event_loop=None):
+    uid = int(random.random() * 100)
+    call = strategy(storage).hit(limit, uid)
+
+    if isinstance(storage, limits.aio.storage.Storage):
+        event_loop.run_until_complete(call)
+
+
+def call_test(strategy, storage, limit, event_loop=None):
+    uid = int(random.random() * 100)
+    call = strategy(storage).test(limit, uid)
+
+    if isinstance(storage, limits.aio.storage.Storage):
+        event_loop.run_until_complete(call)
+
+
+def call_get_window_stats(strategy, storage, limit, event_loop=None):
+    uid = int(random.random() * 100)
+    call = strategy(storage).get_window_stats(limit, uid)
+
+    if isinstance(storage, limits.aio.storage.Storage):
+        event_loop.run_until_complete(call)
+
+
+def seed_limit(limiter, limit, event_loop=None):
+    for uid in range(100):
+        call = limiter.hit(limit, uid, cost=int(limit.amount / 2))
+
+        if isinstance(limiter, limits.aio.strategies.RateLimiter):
+            event_loop.run_until_complete(call)
 
 
 @benchmark_all_storages
 @benchmark_limits
-@pytest.mark.benchmark(group="fixed-window-hit")
-def test_fixed_window_hit(benchmark, uri, args, limit, fixture):
+@pytest.mark.benchmark(group="hit")
+@pytest.mark.parametrize(
+    "strategy",
+    [
+        FixedWindowRateLimiter,
+        SlidingWindowCounterRateLimiter,
+        MovingWindowRateLimiter,
+    ],
+    ids=["fixed-window", "sliding-window", "moving-window"],
+)
+def test_hit(benchmark, strategy, uri, args, limit, fixture):
+    benchmark.extra_info["async"] = False
     benchmark(
-        functools.partial(
-            hit_window, FixedWindowRateLimiter, storage_from_string(uri, **args), limit
-        )
+        functools.partial(call_hit, strategy, storage_from_string(uri, **args), limit)
     )
 
 
 @benchmark_all_storages
 @benchmark_limits
-@pytest.mark.benchmark(group="fixed-window-get-window-stats")
-def test_fixed_window_get_stats(benchmark, uri, args, limit, fixture):
+@pytest.mark.parametrize(
+    "strategy",
+    [
+        FixedWindowRateLimiter,
+        SlidingWindowCounterRateLimiter,
+        MovingWindowRateLimiter,
+    ],
+    ids=["fixed-window", "sliding-window", "moving-window"],
+)
+@pytest.mark.benchmark(group="get-window-stats")
+def test_get_window_stats(benchmark, strategy, uri, args, limit, fixture):
     storage = storage_from_string(uri, **args)
-    seed_limit(FixedWindowRateLimiter(storage), limit)
-    benchmark(
-        functools.partial(get_window_stats, FixedWindowRateLimiter, storage, limit)
-    )
+    seed_limit(strategy(storage), limit)
+    benchmark(functools.partial(call_get_window_stats, strategy, storage, limit))
 
 
 @benchmark_all_storages
 @benchmark_limits
-@pytest.mark.benchmark(group="sliding-window-counter-hit")
-def test_sliding_window_counter_hit(benchmark, uri, args, limit, fixture):
+@pytest.mark.parametrize(
+    "strategy",
+    [
+        FixedWindowRateLimiter,
+        SlidingWindowCounterRateLimiter,
+        MovingWindowRateLimiter,
+    ],
+    ids=["fixed-window", "sliding-window", "moving-window"],
+)
+@pytest.mark.benchmark(group="test")
+def test_test(benchmark, strategy, uri, args, limit, fixture):
+    storage = storage_from_string(uri, **args)
+    seed_limit(strategy(storage), limit)
+    benchmark(functools.partial(call_test, strategy, storage, limit))
+
+
+@benchmark_all_async_storages
+@benchmark_limits
+@pytest.mark.parametrize(
+    "strategy",
+    [
+        limits.aio.strategies.FixedWindowRateLimiter,
+        limits.aio.strategies.SlidingWindowCounterRateLimiter,
+        limits.aio.strategies.MovingWindowRateLimiter,
+    ],
+    ids=["fixed-window", "sliding-window", "moving-window"],
+)
+@pytest.mark.benchmark(group="hit")
+def test_hit_async(event_loop, benchmark, strategy, uri, args, limit, fixture):
     benchmark(
         functools.partial(
-            hit_window,
-            SlidingWindowCounterRateLimiter,
+            call_hit,
+            strategy,
             storage_from_string(uri, **args),
             limit,
+            event_loop,
         )
-    )
-
-
-@benchmark_all_storages
-@benchmark_limits
-@pytest.mark.benchmark(group="sliding-window-counter-get-window-stats")
-def test_sliding_window_get_stats(benchmark, uri, args, limit, fixture):
-    storage = storage_from_string(uri, **args)
-    seed_limit(SlidingWindowCounterRateLimiter(storage), limit)
-    benchmark(
-        functools.partial(
-            get_window_stats,
-            SlidingWindowCounterRateLimiter,
-            storage,
-            limit,
-        )
-    )
-
-
-@benchmark_moving_window_storages
-@benchmark_limits
-@pytest.mark.benchmark(group="moving-window-hit")
-def test_moving_window_hit(benchmark, uri, args, limit, fixture):
-    benchmark(
-        functools.partial(
-            hit_window, MovingWindowRateLimiter, storage_from_string(uri, **args), limit
-        )
-    )
-
-
-@benchmark_moving_window_storages
-@benchmark_limits
-@pytest.mark.benchmark(group="moving-window-get-window-stats")
-def test_moving_window_get_stats(benchmark, uri, args, limit, fixture):
-    storage = storage_from_string(uri, **args)
-    seed_limit(MovingWindowRateLimiter(storage), limit)
-    benchmark(
-        functools.partial(get_window_stats, MovingWindowRateLimiter, storage, limit)
     )
 
 
 @benchmark_all_async_storages
 @benchmark_limits
-@pytest.mark.benchmark(group="async-fixed-window-hit")
-def test_fixed_window_async(event_loop, benchmark, uri, args, limit, fixture):
-    benchmark(
-        functools.partial(
-            hit_window_async,
-            event_loop,
-            limits.aio.strategies.FixedWindowRateLimiter,
-            storage_from_string(uri, **args),
-            limit,
-        )
-    )
-
-
-@benchmark_all_async_storages
-@benchmark_limits
-@pytest.mark.benchmark(group="async-fixed-window-get-window-stats")
-def test_fixed_window_get_stats_async(event_loop, benchmark, uri, args, limit, fixture):
+@pytest.mark.parametrize(
+    "strategy",
+    [
+        limits.aio.strategies.FixedWindowRateLimiter,
+        limits.aio.strategies.SlidingWindowCounterRateLimiter,
+        limits.aio.strategies.MovingWindowRateLimiter,
+    ],
+    ids=["fixed-window", "sliding-window", "moving-window"],
+)
+@pytest.mark.benchmark(group="get-window-stats")
+def test_get_window_stats_async(
+    event_loop, benchmark, strategy, uri, args, limit, fixture
+):
     storage = storage_from_string(uri, **args)
-    seed_limit_async(
-        limits.aio.strategies.FixedWindowRateLimiter(storage), limit, event_loop
-    )
+    seed_limit(strategy(storage), limit, event_loop)
     benchmark(
         functools.partial(
-            get_window_stats_async,
-            event_loop,
-            limits.aio.strategies.FixedWindowRateLimiter,
+            call_get_window_stats,
+            strategy,
             storage,
             limit,
+            event_loop,
         )
     )
 
 
 @benchmark_moving_window_async_storages
 @benchmark_limits
-@pytest.mark.benchmark(group="async-moving-window-hit")
-def test_moving_window_async(event_loop, benchmark, uri, args, limit, fixture):
-    benchmark(
-        functools.partial(
-            hit_window_async,
-            event_loop,
-            limits.aio.strategies.MovingWindowRateLimiter,
-            storage_from_string(uri, **args),
-            limit,
-        )
-    )
-
-
-@benchmark_moving_window_async_storages
-@benchmark_limits
-@pytest.mark.benchmark(group="async-moving-window-get-window-stats")
-def test_moving_window_get_stats_async(
-    event_loop, benchmark, uri, args, limit, fixture
-):
+@pytest.mark.parametrize(
+    "strategy",
+    [
+        limits.aio.strategies.FixedWindowRateLimiter,
+        limits.aio.strategies.SlidingWindowCounterRateLimiter,
+        limits.aio.strategies.MovingWindowRateLimiter,
+    ],
+    ids=["fixed-window", "sliding-window", "moving-window"],
+)
+@pytest.mark.benchmark(group="test")
+def test_test_async(event_loop, benchmark, strategy, uri, args, limit, fixture):
     storage = storage_from_string(uri, **args)
-    seed_limit_async(
-        limits.aio.strategies.MovingWindowRateLimiter(storage), limit, event_loop
-    )
+    seed_limit(strategy(storage), limit, event_loop)
     benchmark(
         functools.partial(
-            get_window_stats_async,
-            event_loop,
-            limits.aio.strategies.MovingWindowRateLimiter,
+            call_hit,
+            strategy,
             storage,
             limit,
-        )
-    )
-
-
-@benchmark_all_async_storages
-@benchmark_limits
-@pytest.mark.benchmark(group="async-sliding-window-counter-hit")
-def test_sliding_window_counter_async(event_loop, benchmark, uri, args, limit, fixture):
-    benchmark(
-        functools.partial(
-            hit_window_async,
             event_loop,
-            limits.aio.strategies.SlidingWindowCounterRateLimiter,
-            storage_from_string(uri, **args),
-            limit,
-        )
-    )
-
-
-@benchmark_all_async_storages
-@benchmark_limits
-@pytest.mark.benchmark(group="async-sliding-window-counter-get-window-stats")
-def test_sliding_window_counter_get_stats_async(
-    event_loop, benchmark, uri, args, limit, fixture
-):
-    storage = storage_from_string(uri, **args)
-    seed_limit_async(
-        limits.aio.strategies.SlidingWindowCounterRateLimiter(storage),
-        limit,
-        event_loop,
-    )
-    benchmark(
-        functools.partial(
-            get_window_stats_async,
-            event_loop,
-            limits.aio.strategies.SlidingWindowCounterRateLimiter,
-            storage,
-            limit,
         )
     )
