@@ -126,7 +126,8 @@ jobs:
       env:
         CI: "True"
       run: |
-        py.test -W ignore -m "benchmark" --benchmark-min-rounds=1000 --benchmark-json=benchmarks/benchmark.json
+        mkdir -p benchmarks
+        py.test -m "benchmark" --benchmark-min-rounds=1000 --benchmark-json=benchmarks/benchmark.json
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
       with:
