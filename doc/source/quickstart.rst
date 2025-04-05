@@ -92,7 +92,7 @@ Test the limits
 Consume the limits
 ------------------
 
-.. code::
+.. code-block:: python-console
 
     >>> limiter.hit(one_per_minute, "test_namespace", "foo")
     True
@@ -112,7 +112,7 @@ Consume the limits
 Check without consuming
 -----------------------
 
-.. code::
+.. code-block:: python-console
 
     >>> limiter.hit(one_per_second, "test_namespace", "foo")
     True
@@ -124,7 +124,7 @@ Check without consuming
 Query available capacity and reset time
 -----------------------------------------
 
-.. code::
+.. code-block:: python-console
 
    >>> limiter.hit(one_per_minute, "test_namespace", "foo")
    True
@@ -141,7 +141,7 @@ Query available capacity and reset time
 Clear a limit
 =============
 
-.. code::
+.. code-block:: python-console
 
     >>> limiter.hit(one_per_minute, "test_namespace", "foo")
     True
