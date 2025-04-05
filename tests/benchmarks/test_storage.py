@@ -19,12 +19,8 @@ from limits.strategies import (
     SlidingWindowCounterRateLimiter,
 )
 from tests.utils import (
-    all_storage,
-    async_all_storage,
-    async_moving_window_storage,
-    async_sliding_window_counter_storage,
-    moving_window_storage,
-    sliding_window_counter_storage,
+    ALL_STORAGES,
+    ALL_STORAGES_ASYNC,
 )
 
 benchmark_limits = pytest.mark.parametrize(
@@ -49,7 +45,41 @@ def hit_window_async(event_loop, strategy, storage, limit):
     event_loop.run_until_complete(strategy(storage).hit(limit, uid))
 
 
-@all_storage
+benchmark_all_storages = pytest.mark.parametrize(
+    "uri, args, fixture",
+    [
+        storage
+        for name, storage in ALL_STORAGES.items()
+        if name in {"memory", "redis", "memcached", "mongodb"}
+    ],
+)
+benchmark_moving_window_storages = pytest.mark.parametrize(
+    "uri, args, fixture",
+    [
+        storage
+        for name, storage in ALL_STORAGES.items()
+        if name in {"memory", "redis", "mongodb"}
+    ],
+)
+benchmark_all_async_storages = pytest.mark.parametrize(
+    "uri, args, fixture",
+    [
+        storage
+        for name, storage in ALL_STORAGES_ASYNC.items()
+        if name in {"memory", "redis", "memcached", "mongodb"}
+    ],
+)
+benchmark_moving_window_async_storages = pytest.mark.parametrize(
+    "uri, args, fixture",
+    [
+        storage
+        for name, storage in ALL_STORAGES_ASYNC.items()
+        if name in {"memory", "redis", "mongodb"}
+    ],
+)
+
+
+@benchmark_all_storages
 @benchmark_limits
 @pytest.mark.benchmark(group="fixed-window")
 def test_fixed_window(benchmark, uri, args, limit, fixture):
@@ -60,7 +90,7 @@ def test_fixed_window(benchmark, uri, args, limit, fixture):
     )
 
 
-@sliding_window_counter_storage
+@benchmark_all_storages
 @benchmark_limits
 @pytest.mark.benchmark(group="sliding-window-counter")
 def test_sliding_window_counter(benchmark, uri, args, limit, fixture):
@@ -74,7 +104,7 @@ def test_sliding_window_counter(benchmark, uri, args, limit, fixture):
     )
 
 
-@moving_window_storage
+@benchmark_moving_window_storages
 @benchmark_limits
 @pytest.mark.benchmark(group="moving-window")
 def test_moving_window(benchmark, uri, args, limit, fixture):
@@ -85,7 +115,7 @@ def test_moving_window(benchmark, uri, args, limit, fixture):
     )
 
 
-@async_all_storage
+@benchmark_all_async_storages
 @benchmark_limits
 @pytest.mark.benchmark(group="async-fixed-window")
 def test_fixed_window_async(event_loop, benchmark, uri, args, limit, fixture):
@@ -100,7 +130,7 @@ def test_fixed_window_async(event_loop, benchmark, uri, args, limit, fixture):
     )
 
 
-@async_moving_window_storage
+@benchmark_moving_window_async_storages
 @benchmark_limits
 @pytest.mark.benchmark(group="async-moving-window")
 def test_moving_window_async(event_loop, benchmark, uri, args, limit, fixture):
@@ -115,7 +145,7 @@ def test_moving_window_async(event_loop, benchmark, uri, args, limit, fixture):
     )
 
 
-@async_sliding_window_counter_storage
+@benchmark_all_async_storages
 @benchmark_limits
 @pytest.mark.benchmark(group="async-sliding-window-counter")
 def test_sliding_window_counter_async(event_loop, benchmark, uri, args, limit, fixture):
