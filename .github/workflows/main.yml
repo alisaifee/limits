@@ -99,7 +99,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
 
   benchmark:
-    needs: [test]
+    needs: [lint]
     runs-on: ubuntu-latest
     strategy:
       matrix:
