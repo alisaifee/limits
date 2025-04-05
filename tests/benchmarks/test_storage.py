@@ -21,6 +21,7 @@ benchmark_limits = pytest.mark.parametrize(
         RateLimitItemPerMinute(500),
         RateLimitItemPerMinute(1000),
         RateLimitItemPerDay(10000),
+        RateLimitItemPerDay(100000),
     ],
     ids=lambda limit: str(limit),
 )
