@@ -83,516 +83,227 @@ async def async_window(delay_end: float, delay: float | None = None):
         await asyncio.sleep(0.001)
 
 
-all_storage = pytest.mark.parametrize(
-    "uri, args, fixture",
-    [
-        pytest.param("memory://", {}, None, marks=pytest.mark.memory, id="in-memory"),
-        pytest.param(
-            "redis://localhost:7379",
-            {},
-            lf("redis_basic"),
-            marks=pytest.mark.redis,
-            id="redis_basic",
-        ),
-        pytest.param(
-            "memcached://localhost:22122",
-            {},
-            lf("memcached"),
-            marks=[pytest.mark.memcached, pytest.mark.flaky],
-            id="memcached",
-        ),
-        pytest.param(
-            "memcached://localhost:22122,localhost:22123",
-            {},
-            lf("memcached_cluster"),
-            marks=[pytest.mark.memcached, pytest.mark.flaky],
-            id="memcached-cluster",
-        ),
-        pytest.param(
-            "redis+cluster://localhost:7001/",
-            {},
-            lf("redis_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster",
-        ),
-        pytest.param(
-            "redis+cluster://:sekret@localhost:8400/",
-            {},
-            lf("redis_auth_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster-auth",
-        ),
-        pytest.param(
-            "redis+cluster://localhost:8301",
-            {
-                "ssl": True,
-                "ssl_cert_reqs": "required",
-                "ssl_keyfile": "./tests/tls/client.key",
-                "ssl_certfile": "./tests/tls/client.crt",
-                "ssl_ca_certs": "./tests/tls/ca.crt",
-            },
-            lf("redis_ssl_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-ssl-cluster",
-        ),
-        pytest.param(
-            "redis+sentinel://localhost:26379/mymaster",
-            {"use_replicas": False},
-            lf("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-            id="redis-sentinel",
-        ),
-        pytest.param(
-            "mongodb://localhost:37017/",
-            {},
-            lf("mongodb"),
-            marks=pytest.mark.mongodb,
-            id="mongodb",
-        ),
-        pytest.param(
-            "etcd://localhost:2379",
-            {},
-            lf("etcd"),
-            marks=[pytest.mark.etcd, pytest.mark.flaky],
-            id="etcd",
-        ),
-        pytest.param(
-            "valkey://localhost:12379",
-            {},
-            lf("valkey_basic"),
-            marks=pytest.mark.valkey,
-            id="valkey_basic",
-        ),
-        pytest.param(
-            "valkey+cluster://localhost:2001/",
-            {},
-            lf("valkey_cluster"),
-            marks=pytest.mark.valkey_cluster,
-            id="valkey-cluster",
-        ),
-    ],
-)
+ALL_STORAGES = {
+    "memory": pytest.param(
+        "memory://", {}, None, marks=pytest.mark.memory, id="in-memory"
+    ),
+    "redis": pytest.param(
+        "redis://localhost:7379",
+        {},
+        lf("redis_basic"),
+        marks=pytest.mark.redis,
+        id="redis_basic",
+    ),
+    "memcached": pytest.param(
+        "memcached://localhost:22122",
+        {},
+        lf("memcached"),
+        marks=[pytest.mark.memcached, pytest.mark.flaky],
+        id="memcached",
+    ),
+    "memcached-cluster": pytest.param(
+        "memcached://localhost:22122,localhost:22123",
+        {},
+        lf("memcached_cluster"),
+        marks=[pytest.mark.memcached, pytest.mark.flaky],
+        id="memcached-cluster",
+    ),
+    "redis-cluster": pytest.param(
+        "redis+cluster://localhost:7001/",
+        {},
+        lf("redis_cluster"),
+        marks=pytest.mark.redis_cluster,
+        id="redis-cluster",
+    ),
+    "redis-cluster_auth": pytest.param(
+        "redis+cluster://:sekret@localhost:8400/",
+        {},
+        lf("redis_auth_cluster"),
+        marks=pytest.mark.redis_cluster,
+        id="redis-cluster-auth",
+    ),
+    "redis-ssl-cluster": pytest.param(
+        "redis+cluster://localhost:8301",
+        {
+            "ssl": True,
+            "ssl_cert_reqs": "required",
+            "ssl_keyfile": "./tests/tls/client.key",
+            "ssl_certfile": "./tests/tls/client.crt",
+            "ssl_ca_certs": "./tests/tls/ca.crt",
+        },
+        lf("redis_ssl_cluster"),
+        marks=pytest.mark.redis_cluster,
+        id="redis-ssl-cluster",
+    ),
+    "redis-sentinel": pytest.param(
+        "redis+sentinel://localhost:26379/mymaster",
+        {"use_replicas": False},
+        lf("redis_sentinel"),
+        marks=pytest.mark.redis_sentinel,
+        id="redis-sentinel",
+    ),
+    "mongodb": pytest.param(
+        "mongodb://localhost:37017/",
+        {},
+        lf("mongodb"),
+        marks=pytest.mark.mongodb,
+        id="mongodb",
+    ),
+    "etcd": pytest.param(
+        "etcd://localhost:2379",
+        {},
+        lf("etcd"),
+        marks=[pytest.mark.etcd, pytest.mark.flaky],
+        id="etcd",
+    ),
+    "valkey": pytest.param(
+        "valkey://localhost:12379",
+        {},
+        lf("valkey_basic"),
+        marks=pytest.mark.valkey,
+        id="valkey_basic",
+    ),
+    "valkey-cluster": pytest.param(
+        "valkey+cluster://localhost:2001/",
+        {},
+        lf("valkey_cluster"),
+        marks=pytest.mark.valkey_cluster,
+        id="valkey-cluster",
+    ),
+}
+ALL_STORAGES_ASYNC = {
+    "memory": pytest.param(
+        "async+memory://", {}, None, marks=pytest.mark.memory, id="in-memory"
+    ),
+    "redis": pytest.param(
+        "async+redis://localhost:7379",
+        {
+            "implementation": ASYNC_REDIS_IMPLEMENTATION,
+        },
+        lf("redis_basic"),
+        marks=pytest.mark.redis,
+        id="redis",
+    ),
+    "memcached": pytest.param(
+        "async+memcached://localhost:22122",
+        {},
+        lf("memcached"),
+        marks=[pytest.mark.memcached, pytest.mark.flaky],
+        id="memcached",
+    ),
+    "memcached-cluster": pytest.param(
+        "async+memcached://localhost:22122,localhost:22123",
+        {},
+        lf("memcached_cluster"),
+        marks=[pytest.mark.memcached, pytest.mark.flaky],
+        id="memcached-cluster",
+    ),
+    "redis-cluster": pytest.param(
+        "async+redis+cluster://localhost:7001/",
+        {
+            "implementation": ASYNC_REDIS_IMPLEMENTATION,
+        },
+        lf("redis_cluster"),
+        marks=pytest.mark.redis_cluster,
+        id="redis-cluster",
+    ),
+    "redis-cluster-auth": pytest.param(
+        "async+redis+cluster://:sekret@localhost:8400/",
+        {
+            "implementation": ASYNC_REDIS_IMPLEMENTATION,
+        },
+        lf("redis_auth_cluster"),
+        marks=pytest.mark.redis_cluster,
+        id="redis-cluster-auth",
+    ),
+    "redis-ssl-cluster": pytest.param(
+        "async+redis+cluster://localhost:8301",
+        {
+            "ssl": True,
+            "ssl_cert_reqs": "required",
+            "ssl_keyfile": "./tests/tls/client.key",
+            "ssl_certfile": "./tests/tls/client.crt",
+            "ssl_ca_certs": "./tests/tls/ca.crt",
+            "implementation": ASYNC_REDIS_IMPLEMENTATION,
+        },
+        lf("redis_ssl_cluster"),
+        marks=pytest.mark.redis_cluster,
+        id="redis-ssl-cluster",
+    ),
+    "redis-sentinel": pytest.param(
+        "async+redis+sentinel://localhost:26379/mymaster",
+        {
+            "use_replicas": False,
+            "implementation": ASYNC_REDIS_IMPLEMENTATION,
+        },
+        lf("redis_sentinel"),
+        marks=pytest.mark.redis_sentinel,
+        id="redis-sentinel",
+    ),
+    "mongodb": pytest.param(
+        "async+mongodb://localhost:37017/",
+        {},
+        lf("mongodb"),
+        marks=pytest.mark.mongodb,
+        id="mongodb",
+    ),
+    "etcd": pytest.param(
+        "async+etcd://localhost:2379",
+        {},
+        lf("etcd"),
+        marks=[pytest.mark.etcd, pytest.mark.flaky],
+        id="etcd",
+    ),
+    "valkey": pytest.param(
+        "async+valkey://localhost:12379",
+        {},
+        lf("valkey_basic"),
+        marks=pytest.mark.valkey,
+        id="valkey_basic",
+    ),
+    "valkey-cluster": pytest.param(
+        "async+valkey+cluster://localhost:2001/",
+        {},
+        lf("valkey_cluster"),
+        marks=pytest.mark.valkey_cluster,
+        id="valkey-cluster",
+    ),
+}
+
+all_storage = pytest.mark.parametrize("uri, args, fixture", ALL_STORAGES.values())
 
 moving_window_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        pytest.param("memory://", {}, None, marks=pytest.mark.memory, id="in-memory"),
-        pytest.param(
-            "redis://localhost:7379",
-            {},
-            lf("redis_basic"),
-            marks=pytest.mark.redis,
-            id="redis",
-        ),
-        pytest.param(
-            "redis+cluster://localhost:7001/",
-            {},
-            lf("redis_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster",
-        ),
-        pytest.param(
-            "redis+cluster://:sekret@localhost:8400/",
-            {},
-            lf("redis_auth_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster-auth",
-        ),
-        pytest.param(
-            "redis+cluster://localhost:8301",
-            {
-                "ssl": True,
-                "ssl_cert_reqs": "required",
-                "ssl_keyfile": "./tests/tls/client.key",
-                "ssl_certfile": "./tests/tls/client.crt",
-                "ssl_ca_certs": "./tests/tls/ca.crt",
-            },
-            lf("redis_ssl_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-ssl-cluster",
-        ),
-        pytest.param(
-            "redis+sentinel://localhost:26379/mymaster",
-            {"use_replicas": False},
-            lf("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-            id="redis-sentinel",
-        ),
-        pytest.param(
-            "mongodb://localhost:37017/",
-            {},
-            lf("mongodb"),
-            marks=pytest.mark.mongodb,
-            id="mongodb",
-        ),
-        pytest.param(
-            "valkey://localhost:12379",
-            {},
-            lf("valkey_basic"),
-            marks=pytest.mark.valkey,
-            id="valkey_basic",
-        ),
-        pytest.param(
-            "valkey+cluster://localhost:2001/",
-            {},
-            lf("valkey_cluster"),
-            marks=pytest.mark.valkey_cluster,
-            id="valkey-cluster",
-        ),
+        storage
+        for name, storage in ALL_STORAGES.items()
+        if not (name.startswith("memcached") or name.startswith("etcd"))
     ],
 )
 
 sliding_window_counter_storage = pytest.mark.parametrize(
     "uri, args, fixture",
-    [
-        pytest.param("memory://", {}, None, marks=pytest.mark.memory, id="in-memory"),
-        pytest.param(
-            "redis://localhost:7379",
-            {},
-            lf("redis_basic"),
-            marks=pytest.mark.redis,
-            id="redis",
-        ),
-        pytest.param(
-            "memcached://localhost:22122",
-            {},
-            lf("memcached"),
-            marks=[pytest.mark.memcached, pytest.mark.flaky],
-            id="memcached",
-        ),
-        pytest.param(
-            "memcached://localhost:22122,localhost:22123",
-            {},
-            lf("memcached_cluster"),
-            marks=[pytest.mark.memcached, pytest.mark.flaky],
-            id="memcached-cluster",
-        ),
-        pytest.param(
-            "redis+cluster://localhost:7001/",
-            {},
-            lf("redis_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster",
-        ),
-        pytest.param(
-            "redis+cluster://:sekret@localhost:8400/",
-            {},
-            lf("redis_auth_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster-auth",
-        ),
-        pytest.param(
-            "redis+cluster://localhost:8301",
-            {
-                "ssl": True,
-                "ssl_cert_reqs": "required",
-                "ssl_keyfile": "./tests/tls/client.key",
-                "ssl_certfile": "./tests/tls/client.crt",
-                "ssl_ca_certs": "./tests/tls/ca.crt",
-            },
-            lf("redis_ssl_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-ssl-cluster",
-        ),
-        pytest.param(
-            "redis+sentinel://localhost:26379/mymaster",
-            {"use_replicas": False},
-            lf("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-            id="redis-sentinel",
-        ),
-        pytest.param(
-            "mongodb://localhost:37017/",
-            {},
-            lf("mongodb"),
-            marks=pytest.mark.mongodb,
-            id="mongodb",
-        ),
-        pytest.param(
-            "valkey://localhost:12379",
-            {},
-            lf("valkey_basic"),
-            marks=pytest.mark.valkey,
-            id="valkey_basic",
-        ),
-        pytest.param(
-            "valkey+cluster://localhost:2001/",
-            {},
-            lf("valkey_cluster"),
-            marks=pytest.mark.valkey_cluster,
-            id="valkey-cluster",
-        ),
-    ],
+    [storage for name, storage in ALL_STORAGES.items() if not name.startswith("etcd")],
 )
 
 async_all_storage = pytest.mark.parametrize(
-    "uri, args, fixture",
-    [
-        pytest.param(
-            "async+memory://", {}, None, marks=pytest.mark.memory, id="in-memory"
-        ),
-        pytest.param(
-            "async+redis://localhost:7379",
-            {
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_basic"),
-            marks=pytest.mark.redis,
-            id="redis",
-        ),
-        pytest.param(
-            "async+memcached://localhost:22122",
-            {},
-            lf("memcached"),
-            marks=[pytest.mark.memcached, pytest.mark.flaky],
-            id="memcached",
-        ),
-        pytest.param(
-            "async+memcached://localhost:22122,localhost:22123",
-            {},
-            lf("memcached_cluster"),
-            marks=[pytest.mark.memcached, pytest.mark.flaky],
-            id="memcached-cluster",
-        ),
-        pytest.param(
-            "async+redis+cluster://localhost:7001/",
-            {
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster",
-        ),
-        pytest.param(
-            "async+redis+cluster://:sekret@localhost:8400/",
-            {
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_auth_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster-auth",
-        ),
-        pytest.param(
-            "async+redis+cluster://localhost:8301",
-            {
-                "ssl": True,
-                "ssl_cert_reqs": "required",
-                "ssl_keyfile": "./tests/tls/client.key",
-                "ssl_certfile": "./tests/tls/client.crt",
-                "ssl_ca_certs": "./tests/tls/ca.crt",
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_ssl_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-ssl-cluster",
-        ),
-        pytest.param(
-            "async+redis+sentinel://localhost:26379/mymaster",
-            {
-                "use_replicas": False,
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-            id="redis-sentinel",
-        ),
-        pytest.param(
-            "async+mongodb://localhost:37017/",
-            {},
-            lf("mongodb"),
-            marks=pytest.mark.mongodb,
-            id="mongodb",
-        ),
-        pytest.param(
-            "async+etcd://localhost:2379",
-            {},
-            lf("etcd"),
-            marks=[pytest.mark.etcd, pytest.mark.flaky],
-            id="etcd",
-        ),
-        pytest.param(
-            "async+valkey://localhost:12379",
-            {},
-            lf("valkey_basic"),
-            marks=pytest.mark.valkey,
-            id="valkey_basic",
-        ),
-        pytest.param(
-            "async+valkey+cluster://localhost:2001/",
-            {},
-            lf("valkey_cluster"),
-            marks=pytest.mark.valkey_cluster,
-            id="valkey-cluster",
-        ),
-    ],
+    "uri, args, fixture", ALL_STORAGES_ASYNC.values()
 )
 
 async_moving_window_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        pytest.param(
-            "async+memory://", {}, None, marks=pytest.mark.memory, id="in-memory"
-        ),
-        pytest.param(
-            "async+redis://localhost:7379",
-            {
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_basic"),
-            marks=pytest.mark.redis,
-            id="redis",
-        ),
-        pytest.param(
-            "async+redis+cluster://localhost:7001/",
-            {
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster",
-        ),
-        pytest.param(
-            "async+redis+cluster://:sekret@localhost:8400/",
-            {
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_auth_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster-auth",
-        ),
-        pytest.param(
-            "async+redis+cluster://localhost:8301",
-            {
-                "ssl": True,
-                "ssl_cert_reqs": "required",
-                "ssl_keyfile": "./tests/tls/client.key",
-                "ssl_certfile": "./tests/tls/client.crt",
-                "ssl_ca_certs": "./tests/tls/ca.crt",
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_ssl_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-ssl-cluster",
-        ),
-        pytest.param(
-            "async+redis+sentinel://localhost:26379/mymaster",
-            {
-                "use_replicas": False,
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-            id="redis-sentinel",
-        ),
-        pytest.param(
-            "async+mongodb://localhost:37017/",
-            {},
-            lf("mongodb"),
-            marks=pytest.mark.mongodb,
-            id="mongodb",
-        ),
-        pytest.param(
-            "async+valkey://localhost:12379",
-            {},
-            lf("valkey_basic"),
-            marks=pytest.mark.valkey,
-            id="valkey_basic",
-        ),
-        pytest.param(
-            "async+valkey+cluster://localhost:2001/",
-            {},
-            lf("valkey_cluster"),
-            marks=pytest.mark.valkey_cluster,
-            id="valkey-cluster",
-        ),
+        storage
+        for name, storage in ALL_STORAGES_ASYNC.items()
+        if not (name.startswith("memcached") or name.startswith("etcd"))
     ],
 )
 
 async_sliding_window_counter_storage = pytest.mark.parametrize(
     "uri, args, fixture",
     [
-        pytest.param(
-            "async+memory://", {}, None, marks=pytest.mark.memory, id="in-memory"
-        ),
-        pytest.param(
-            "async+redis://localhost:7379",
-            {"implementation": ASYNC_REDIS_IMPLEMENTATION},
-            lf("redis_basic"),
-            marks=pytest.mark.redis,
-            id="redis",
-        ),
-        pytest.param(
-            "async+memcached://localhost:22122",
-            {},
-            lf("memcached"),
-            marks=[pytest.mark.memcached, pytest.mark.flaky],
-            id="memcached",
-        ),
-        pytest.param(
-            "async+memcached://localhost:22122,localhost:22123",
-            {},
-            lf("memcached_cluster"),
-            marks=[pytest.mark.memcached, pytest.mark.flaky],
-            id="memcached-cluster",
-        ),
-        pytest.param(
-            "async+redis+cluster://localhost:7001/",
-            {"implementation": ASYNC_REDIS_IMPLEMENTATION},
-            lf("redis_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster",
-        ),
-        pytest.param(
-            "async+redis+cluster://:sekret@localhost:8400/",
-            {"implementation": ASYNC_REDIS_IMPLEMENTATION},
-            lf("redis_auth_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-cluster-auth",
-        ),
-        pytest.param(
-            "async+redis+cluster://localhost:8301",
-            {
-                "ssl": True,
-                "ssl_cert_reqs": "required",
-                "ssl_keyfile": "./tests/tls/client.key",
-                "ssl_certfile": "./tests/tls/client.crt",
-                "ssl_ca_certs": "./tests/tls/ca.crt",
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_ssl_cluster"),
-            marks=pytest.mark.redis_cluster,
-            id="redis-ssl-cluster",
-        ),
-        pytest.param(
-            "async+redis+sentinel://localhost:26379/mymaster",
-            {
-                "use_replicas": False,
-                "implementation": ASYNC_REDIS_IMPLEMENTATION,
-            },
-            lf("redis_sentinel"),
-            marks=pytest.mark.redis_sentinel,
-            id="redis-sentinel",
-        ),
-        pytest.param(
-            "async+mongodb://localhost:37017/",
-            {},
-            lf("mongodb"),
-            marks=pytest.mark.mongodb,
-            id="mongodb",
-        ),
-        pytest.param(
-            "async+valkey://localhost:12379",
-            {},
-            lf("valkey_basic"),
-            marks=pytest.mark.valkey,
-            id="valkey_basic",
-        ),
-        pytest.param(
-            "async+valkey+cluster://localhost:2001/",
-            {},
-            lf("valkey_cluster"),
-            marks=pytest.mark.valkey_cluster,
-            id="valkey-cluster",
-        ),
+        storage
+        for name, storage in ALL_STORAGES_ASYNC.items()
+        if not name.startswith("etcd")
     ],
 )
