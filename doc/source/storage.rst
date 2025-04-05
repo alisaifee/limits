@@ -55,7 +55,7 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
          :pypi:`redis` can be used instead of :pypi:`coredis` by setting
          :paramref:`limits.aio.storage.RedisClusterStorage.implementation` to ``redispy``
 
-   `Redis Server <https://redis.io/topics/cluster-tutorial>`_
+   `Redis Cluster <https://redis.io/topics/cluster-tutorial>`_
 
    .. program-output:: bash -c "cat ../../.github/workflows/compatibility.yml | grep -o -P 'LIMITS_REDIS_SERVER_VERSION=[\d\.]+' | cut -d = -f 2 | sort --version-sort | uniq"
 
