@@ -92,49 +92,64 @@ Test the limits
 Consume the limits
 ------------------
 
-.. code::
+.. code-block:: python-console
 
-    assert True == limiter.hit(one_per_minute, "test_namespace", "foo")
-    assert False == limiter.hit(one_per_minute, "test_namespace", "foo")
-    assert True == limiter.hit(one_per_minute, "test_namespace", "bar")
+    >>> limiter.hit(one_per_minute, "test_namespace", "foo")
+    True
+    >>> limiter.hit(one_per_minute, "test_namespace", "foo")
+    False
+    >>> limiter.hit(one_per_minute, "test_namespace", "bar")
+    True
 
-    assert True == limiter.hit(one_per_second, "test_namespace", "foo")
-    assert False == limiter.hit(one_per_second, "test_namespace", "foo")
-    time.sleep(1)
-    assert True == limiter.hit(one_per_second, "test_namespace", "foo")
+    >>> limiter.hit(one_per_second, "test_namespace", "foo")
+    True
+    >>> limiter.hit(one_per_second, "test_namespace", "foo")
+    False
+    >>> time.sleep(1)
+    >>> limiter.hit(one_per_second, "test_namespace", "foo")
+    True
 
 Check without consuming
 -----------------------
 
-.. code::
+.. code-block:: python-console
 
-    assert True == limiter.hit(one_per_second, "test_namespace", "foo")
-    while not limiter.test(one_per_second, "test_namespace", "foo"):
-        time.sleep(0.01)
-    assert True == limiter.hit(one_per_second, "test_namespace", "foo")
+    >>> limiter.hit(one_per_second, "test_namespace", "foo")
+    True
+    >>> while not limiter.test(one_per_second, "test_namespace", "foo"):
+    ...     time.sleep(0.01)
+    >>> limiter.hit(one_per_second, "test_namespace", "foo")
+    True
 
 Query available capacity and reset time
 -----------------------------------------
 
-.. code::
+.. code-block:: python-console
 
-   assert True == limiter.hit(one_per_minute, "test_namespace", "foo")
-   window = limiter.get_window_stats(one_per_minute, "test_namespace", "foo")
-   assert window.remaining == 0
-   assert False == limiter.hit(one_per_minute, "test_namespace", "foo")
-   time.sleep(window.reset_time - time.time())
-   assert True == limiter.hit(one_per_minute, "test_namespace", "foo")
+   >>> limiter.hit(one_per_minute, "test_namespace", "foo")
+   True
+   >>> window = limiter.get_window_stats(one_per_minute, "test_namespace", "foo")
+   >>> window.remaining
+   0
+   >>> limiter.hit(one_per_minute, "test_namespace", "foo")
+   False
+   >>> time.sleep(window.reset_time - time.time())
+   >>> limiter.hit(one_per_minute, "test_namespace", "foo")
+   True
 
 
 Clear a limit
 =============
 
-.. code::
+.. code-block:: python-console
 
-    assert True == limiter.hit(one_per_minute, "test_namespace", "foo")
-    assert False == limiter.hit(one_per_minute, "test_namespace", "foo")
-    limiter.clear(one_per_minute, "test_namespace", "foo")
-    assert True == limiter.hit(one_per_minute, "test_namespace", "foo")
+    >>> limiter.hit(one_per_minute, "test_namespace", "foo")
+    True
+    >>> limiter.hit(one_per_minute, "test_namespace", "foo")
+    False
+    >>> limiter.clear(one_per_minute, "test_namespace", "foo")
+    >>> limiter.hit(one_per_minute, "test_namespace", "foo")
+    True
 
 
 
