@@ -94,16 +94,14 @@ jobs:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   benchmark:
     needs: [lint]
+    if: github.repository_owner == 'alisaifee'
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     strategy:
       matrix:
         python-version: ["3.11"]
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+      COMMIT: ${{ github.sha }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache dependencies
@@ -117,11 +115,14 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Set up Node
+      uses: actions/setup-node@v4
     - name: Install dependencies
       run: |
         python -m pip install "pip<22"
         python -m pip install --upgrade setuptools wheel
         pip install --no-binary protobuf -r requirements/ci.txt
+        npm install -g netlify-cli
     - name: Benchmark
       env:
         CI: "True"
@@ -129,9 +130,6 @@ jobs:
         mkdir -p benchmarks
         py.test -m "benchmark" --benchmark-json=benchmarks/full.json
     - name: Split results
-      env:
-        BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-        COMMIT: ${{ github.sha }}
       run: |
         mv benchmarks/full.json benchmarks/full_raw.json
         jq '.benchmarks |= map(. + {name: (.name | sub("^test_"; "")), fullname: (.fullname | sub("^.*::test_"; ""))})' benchmarks/full_raw.json > benchmarks/full.json
@@ -146,24 +144,18 @@ jobs:
         cat benchmarks/full.json | jq --argjson sync true '.benchmarks |= map(select(.params.async==$sync))' > benchmarks/async.json
         cat benchmarks/summary.json | jq --argjson sync true '.benchmarks |= map(select(.params.async==$sync))' > benchmarks/async-summary.json
         rm benchmarks/full_raw.json
-        mkdir -p gh-pages/benchmark_results/${BRANCH_NAME}
-        mkdir -p gh-pages/benchmark_results/${COMMIT}
-        cp -r benchmarks/*.json gh-pages/benchmark_results/${BRANCH_NAME}
-        cp -r benchmarks/*.json gh-pages/benchmark_results/${COMMIT}
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
       with:
         name: benchmark
         path: benchmarks/*
-    - name: Upload benchmark results for gh-pages
-      id: gh-pages-upload
-      uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
-      with:
-        path: gh-pages/
-
-    - name: Deploy to Github Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+    - name: Deploy to Netlify
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      run: |
+        cp _netlify_headers benchmarks/_headers
+        netlify deploy --site ${{ secrets.NETLIFY_SITE_ID }} --alias $COMMIT --dir=benchmarks --message "Benchmarks for $COMMIT"
+        netlify deploy --site ${{ secrets.NETLIFY_SITE_ID }} --alias $BRANCH_NAME --dir=benchmarks --message "Benchmarks for $BRANCH_NAME"
   build_wheels:
     needs: [lint]
     name: Build wheel
