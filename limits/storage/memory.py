@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import bisect
 import threading
 import time
 from collections import Counter, defaultdict
@@ -56,9 +57,11 @@ class MemoryStorage(
     def __expire_events(self) -> None:
         for key in list(self.events.keys()):
             with self.locks[key]:
-                for event in list(self.events[key]):
-                    if event.expiry <= time.time() and event in self.events[key]:
-                        self.events[key].remove(event)
+                events = self.events.get(key, [])
+                oldest = bisect.bisect_left(
+                    events, -time.time(), key=lambda event: -event.expiry
+                )
+                self.events[key] = self.events[key][:oldest]
                 if not self.events.get(key, None):
                     self.locks.pop(key, None)
         for key in list(self.expirations.keys()):
@@ -151,7 +154,7 @@ class MemoryStorage(
             if entry and entry.atime >= timestamp - expiry:
                 return False
             else:
-                self.events[key][:0] = [Entry(expiry) for _ in range(amount)]
+                self.events[key][:0] = [Entry(expiry)] * amount
                 return True
 
     def get_expiry(self, key: str) -> float:
@@ -160,21 +163,6 @@ class MemoryStorage(
         """
 
         return self.expirations.get(key, time.time())
-
-    def get_num_acquired(self, key: str, expiry: int) -> int:
-        """
-        returns the number of entries already acquired
-
-        :param key: rate limit key to acquire an entry in
-        :param expiry: expiry of the entry
-        """
-        timestamp = time.time()
-
-        return (
-            len([k for k in self.events.get(key, []) if k.atime >= timestamp - expiry])
-            if self.events.get(key)
-            else 0
-        )
 
     def get_moving_window(self, key: str, limit: int, expiry: int) -> tuple[float, int]:
         """
@@ -186,13 +174,12 @@ class MemoryStorage(
         :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
-        acquired = self.get_num_acquired(key, expiry)
-
-        for item in self.events.get(key, [])[::-1]:
-            if item.atime >= timestamp - expiry:
-                return item.atime, acquired
-
-        return timestamp, acquired
+        if events := self.events.get(key, []):
+            oldest = bisect.bisect_left(
+                events, -(timestamp - expiry), key=lambda entry: -entry.atime
+            )
+            return events[oldest - 1].atime, oldest
+        return timestamp, 0
 
     def acquire_sliding_window_entry(
         self,
