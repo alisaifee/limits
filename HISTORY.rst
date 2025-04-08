@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v4.7.1
+------
+Release Date: 2025-04-08
+
+* Testing
+
+  * Fix incorrect benchmark for async test method
+
 v4.7
 ----
 Release Date: 2025-04-08
@@ -776,6 +784,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
