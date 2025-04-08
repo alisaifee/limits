@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 colors = {
     "bg0": " #fbf1c7",
     "bg1": " #ebdbb2",

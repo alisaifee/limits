@@ -1,17 +1,14 @@
 #
+from __future__ import annotations
 
 import os
 import sys
 from pathlib import Path
 
-from docutils import nodes
-from sphinx.application import Sphinx
-from sphinx.util.docutils import SphinxDirective
-
 sys.path.insert(0, os.path.abspath("../../"))
 sys.path.insert(0, os.path.abspath("./"))
 
-from theme_config import *
+from theme_config import *  # noqa
 
 import limits
 
@@ -31,14 +28,15 @@ if branch_from_env := os.environ.get("READTHEDOCS_VERSION", None):
     branch_from_env = "master" if branch_from_env == "latest" else branch_from_env
     benchmark_git_context = {
         "branch": branch_from_env,
-        "sha": os.environ.get("READTHEDOCS_GIT_COMMIT_HASH", "")
+        "sha": os.environ.get("READTHEDOCS_GIT_COMMIT_HASH", ""),
     }
 else:
     import limits._version
+
     git_info = limits._version.git_pieces_from_vcs("", os.path.abspath("../../"), False)
     benchmark_git_context = {
         "branch": git_info.get("branch", ""),
-        "sha": git_info.get("long", None)
+        "sha": git_info.get("long", None),
     }
 
 html_static_path = ["_static"]
@@ -49,18 +47,19 @@ html_css_files = [
 ]
 
 html_title = f"{project} <small><b style='color: var(--color-brand-primary)'>{{{release}}}</b></small>"
+
 try:
     ahead = int(ahead)
     if ahead > 0:
-        html_theme_options[
+        html_theme_options[  # noqa
             "announcement"
         ] = f"""
         This is a development version. The documentation for the latest version: <b>{release}</b> can be found <a href="/en/stable">here</a>
         """
         html_title = f"{project} <small><b style='color: var(--color-brand-primary)'>{{dev}}</b></small>"
-except:
+except ValueError:
     pass
-sys.path.append(str(Path('ext').resolve()))
+sys.path.append(str(Path("ext").resolve()))
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -94,7 +93,7 @@ autosectionlabel_prefix_document = True
 
 extlinks = {"pypi": ("https://pypi.org/project/%s", "%s")}
 
-copybutton_exclude = '.gp, .go'
+copybutton_exclude = ".gp, .go"
 
 intersphinx_mapping = {
     "python": ("http://docs.python.org/", None),
