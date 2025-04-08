@@ -1,0 +1,10 @@
+.benchmark-chart {
+    width: 100%;
+}
+.benchmark-details{
+    .benchmark-details-section {
+       thead > tr {
+           color: var(--color-purple);
+       }
+    }
+}

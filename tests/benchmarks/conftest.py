@@ -4,10 +4,29 @@ import pytest
 
 import limits
 
+STORAGE_INFO = {}
+
+
+@pytest.fixture(autouse=True, scope="session")
+def get_storage_info(redis_basic_client, memcached_client, mongodb_client) -> None:
+    redis_info = redis_basic_client.info()
+    memcached_info = memcached_client.stats()
+    mongodb_info = mongodb_client.server_info()
+    STORAGE_INFO["redis"] = redis_info
+    STORAGE_INFO["memcached"] = {
+        k.decode(): v.decode() if isinstance(v, bytes) else v
+        for k, v in memcached_info.items()
+    }
+    STORAGE_INFO["mongodb"] = mongodb_info
+
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_benchmark_generate_json(
-    config, benchmarks, include_data, machine_info, commit_info
+    config,
+    benchmarks,
+    include_data,
+    machine_info,
+    commit_info,
 ):
     for bench in benchmarks:
         for name, param in list(bench.params.items()):
@@ -37,4 +56,5 @@ def pytest_benchmark_generate_json(
                 scheme = limits.storage.storage_from_string(param).STORAGE_SCHEME[0]
                 bench.params["async"] = "async" in scheme
                 bench.params["storage_type"] = scheme.replace("async+", "")
+    machine_info.update(STORAGE_INFO)
     yield
