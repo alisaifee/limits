@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v4.7
+----
+Release Date: 2025-04-08
+
+* Documentation
+
+  * Add benchmarking results in documentation
+
 v4.6
 ----
 Release Date: 2025-04-03
@@ -768,6 +776,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
