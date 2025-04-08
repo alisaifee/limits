@@ -2,6 +2,11 @@
 
 import os
 import sys
+from pathlib import Path
+
+from docutils import nodes
+from sphinx.application import Sphinx
+from sphinx.util.docutils import SphinxDirective
 
 sys.path.insert(0, os.path.abspath("../../"))
 sys.path.insert(0, os.path.abspath("./"))
@@ -13,6 +18,7 @@ import limits
 project = "limits"
 description = "limits is a python library to perform rate limiting with commonly used storage backends"
 copyright = "2023, Ali-Akber Saifee"
+
 if ".post0.dev" in limits.__version__:
     version, ahead = limits.__version__.split(".post0.dev")
 else:
@@ -20,7 +26,22 @@ else:
 
 release = version
 
-html_static_path = ["./_static"]
+
+if branch_from_env := os.environ.get("READTHEDOCS_VERSION", None):
+    benchmark_git_context = {
+        "branch": branch_from_env,
+        "sha": os.environ.get("READTHEDOCS_GIT_COMMIT_HASH", "")
+    }
+else:
+    import limits._version
+    git_info = limits._version.git_pieces_from_vcs("", os.path.abspath("../../"), False)
+    benchmark_git_context = {
+        "branch": git_info.get("branch", ""),
+        "sha": git_info.get("long", None)
+    }
+
+html_static_path = ["_static"]
+
 html_css_files = [
     "custom.css",
     "https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;700&family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap",
@@ -38,6 +59,7 @@ try:
         html_title = f"{project} <small><b style='color: var(--color-brand-primary)'>{{dev}}</b></small>"
 except:
     pass
+sys.path.append(str(Path('ext').resolve()))
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -53,6 +75,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_inline_tabs",
     "sphinx_paramlinks",
+    "bench_chart",
 ]
 
 autodoc_default_options = {
@@ -70,6 +93,8 @@ autosectionlabel_prefix_document = True
 
 extlinks = {"pypi": ("https://pypi.org/project/%s", "%s")}
 
+copybutton_exclude = '.gp, .go'
+
 intersphinx_mapping = {
     "python": ("http://docs.python.org/", None),
     "coredis": ("https://coredis.readthedocs.io/en/latest/", None),
@@ -81,5 +106,3 @@ intersphinx_mapping = {
     "pymongo": ("https://pymongo.readthedocs.io/en/stable/", None),
     "valkey-py": ("https://valkey-py.readthedocs.io/en/latest/", None),
 }
-
-copybutton_exclude = '.gp, .go'

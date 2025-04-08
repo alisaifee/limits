@@ -100,7 +100,6 @@ jobs:
 
   benchmark:
     needs: [lint]
-    if: github.repository_owner == 'alisaifee'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -138,24 +137,22 @@ jobs:
     - name: Split results
       run: |
         mv benchmarks/full.json benchmarks/full_raw.json
-        jq '.benchmarks |= map(. + {name: (.name | sub("^test_"; "")), fullname: (.fullname | sub("^.*::test_"; ""))})' benchmarks/full_raw.json > benchmarks/full.json
-        jq '.benchmarks |= map(del(.stats.data))' benchmarks/full.json > benchmarks/summary.json
+        jq '.benchmarks |= map(. + {name: (.name | sub("^test_"; "")), fullname: (.fullname | sub("^.*::test_"; ""))})' benchmarks/full_raw.json > benchmarks/benchmark.json
+        jq '.benchmarks |= map(del(.stats.data))' benchmarks/benchmark.json > benchmarks/benchmark-summary.json
         storages=("memory" "redis" "memcached" "mongodb");
         for storage in "${storages[@]}"; do
-            cat benchmarks/full.json | jq --arg storage "$storage" '.benchmarks |= map(select(.params.storage_type==$storage))' > benchmarks/$storage.json
-            cat benchmarks/summary.json | jq --arg storage "$storage" '.benchmarks |= map(select(.params.storage_type==$storage))' > benchmarks/$storage-summary.json
+            cat benchmarks/benchmark.json | jq --arg storage "$storage" '.benchmarks |= map(select(.params.storage_type==$storage))' > benchmarks/benchmark-$storage.json
+            cat benchmarks/benchmark-summary.json | jq --arg storage "$storage" '.benchmarks |= map(select(.params.storage_type==$storage))' > benchmarks/benchmark-$storage-summary.json
         done
-        cat benchmarks/full.json | jq --argjson sync false '.benchmarks |= map(select(.params.async==$sync))' > benchmarks/sync.json
-        cat benchmarks/summary.json | jq --argjson sync false '.benchmarks |= map(select(.params.async==$sync))' > benchmarks/sync-summary.json
-        cat benchmarks/full.json | jq --argjson sync true '.benchmarks |= map(select(.params.async==$sync))' > benchmarks/async.json
-        cat benchmarks/summary.json | jq --argjson sync true '.benchmarks |= map(select(.params.async==$sync))' > benchmarks/async-summary.json
         rm benchmarks/full_raw.json
     - name: Upload benchmark results
+      if: github.repository_owner == 'alisaifee' && github.event_name == 'push'
       uses: actions/upload-artifact@v4
       with:
         name: benchmark
         path: benchmarks/*
     - name: Deploy to Netlify
+      if: github.repository_owner == 'alisaifee' && github.event_name == 'push'
       env:
         NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
       run: |

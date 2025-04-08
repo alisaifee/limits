@@ -37,6 +37,7 @@ For an overview of supported backends refer to :ref:`storage:storage backends`.
     quickstart
     strategies
     storage
+    performance
     async
     api
     custom-storage
