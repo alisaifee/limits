@@ -81,3 +81,5 @@ intersphinx_mapping = {
     "pymongo": ("https://pymongo.readthedocs.io/en/stable/", None),
     "valkey-py": ("https://valkey-py.readthedocs.io/en/latest/", None),
 }
+
+copybutton_exclude = '.gp, .go'
