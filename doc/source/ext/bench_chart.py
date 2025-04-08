@@ -122,9 +122,9 @@ def setup(app: Sphinx):
         static_path = os.path.join(here, "_static")
         if static_path not in app.config.html_static_path:
             app.config.html_static_path.append(static_path)
-        app.add_js_file("js/benchmark-chart.js")
+        app.add_js_file("js/benchmark-chart.js", type="module")
         app.add_js_file("js/benchmark-details.js", type="module")
-        app.add_js_file("js/benchmark-loader.js")
+        app.add_js_file("js/benchmark-loader.js", type="module")
         app.add_js_file("https://cdn.plot.ly/plotly-3.0.1.min.js")
         app.add_css_file("benchmark-chart.css")
 

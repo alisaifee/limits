@@ -1,10 +1,18 @@
 .benchmark-chart {
-    width: 100%;
+  width: 100%;
 }
-.benchmark-details{
-    .benchmark-details-section {
-       thead > tr {
-           color: var(--color-purple);
-       }
+.benchmark-details {
+  .benchmark-details-section {
+    thead > tr {
+      color: var(--color-purple);
     }
+  }
+}
+.benchmark-chart-error,
+.benchmark-details-error {
+  color: var(--color-red);
+  font-size: smaller;
+  padding: 2em;
+  text-align: center;
+  height: 5em;
 }

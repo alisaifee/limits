@@ -1,3 +1,5 @@
+import { render, html } from "https://unpkg.com/uhtml@3.2.1?module";
+import { fetchBenchmarkData } from "./benchmark-loader.js";
 const KNOWN_PARAMS = ["storage_type", "limit", "strategy", "async"];
 
 function getBenchmarkData(result, query) {
@@ -44,7 +46,7 @@ function formatRateLimit(str) {
 
 function nameTransform(benchmark, stripParams, query) {
   let name = benchmark.name;
-  params = benchmark.params;
+  let params = benchmark.params;
   name = name
     .replace(/\[.*?\]/, "")
     .replace("_async", "")
@@ -98,21 +100,6 @@ function getColorForStorage(storageType) {
 }
 
 function sortBenchmarksByParams(benchmarks, sortKeys) {
-  return benchmarks.sort((a, b) => {
-    for (const key of sortKeys) {
-      let valA = (a.params?.[key] || "").toLowerCase();
-      let valB = (b.params?.[key] || "").toLowerCase();
-      if (key == "limit") {
-        valA = parseInt(valA.split(" ")[0]);
-        valB = parseInt(valB.split(" ")[0]);
-      }
-      return valA < valB ? -1 : valA > valB ? 1 : 0;
-    }
-
-    return a.name.localeCompare(b.name);
-  });
-}
-function sortBenchmarksByParams(benchmarks, sortKeys) {
   return benchmarks.sort(function (a, b) {
     for (const key of sortKeys) {
       let valA = (a.params?.[key] || "").toLowerCase();
@@ -127,6 +114,7 @@ function sortBenchmarksByParams(benchmarks, sortKeys) {
     return a.name.localeCompare(b.name);
   });
 }
+
 let dispatched = new Set();
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -139,13 +127,28 @@ document.addEventListener("DOMContentLoaded", function () {
       chart.dataset.sortBy || '["storage_type", "limit"]',
     );
     if (!dispatched.has(source)) {
-      fetchBenchmarkData(`${source}.json`).then((result) => {
-        window.Benchmarks[source] = result;
-        event = new Event(`${source}-loaded`);
-        window.dispatchEvent(event);
-      });
+      fetchBenchmarkData(`${source}.json`)
+        .then((result) => {
+          window.Benchmarks[source] = result;
+          let event = new Event(`${source}-loaded`);
+          console.log("Happiness");
+          window.dispatchEvent(event);
+        })
+        .catch((error) => {
+          let event = new Event(`${source}-failed`);
+          console.log("Sadness");
+          window.dispatchEvent(event);
+        });
     }
     dispatched.add(source);
+    window.addEventListener(`${chart.dataset.source}-failed`, function () {
+      render(
+        chart,
+        html`
+          <div class="benchmark-chart-error">Benchmark data not available.</div>
+        `,
+      );
+    });
     window.addEventListener(`${chart.dataset.source}-loaded`, function () {
       let results = Benchmarks[chart.dataset.source];
       let unsorted = getBenchmarkData(results, query);
