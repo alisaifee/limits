@@ -28,6 +28,7 @@ release = version
 
 
 if branch_from_env := os.environ.get("READTHEDOCS_VERSION", None):
+    branch_from_env = "master" if branch_from_env == "latest" else branch_from_env
     benchmark_git_context = {
         "branch": branch_from_env,
         "sha": os.environ.get("READTHEDOCS_GIT_COMMIT_HASH", "")
