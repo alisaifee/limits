@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v4.7
+----
+Release Date: 2025-04-08
+
+* Documentation
+
+  * Add benchmarking results in documentation
+
 v4.6
 ----
 Release Date: 2025-04-03
