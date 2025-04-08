@@ -228,7 +228,7 @@ def test_test_async(event_loop, benchmark, strategy, uri, args, limit, fixture):
     seed_limit(strategy(storage), limit, event_loop)
     benchmark(
         functools.partial(
-            call_hit,
+            call_test,
             strategy,
             storage,
             limit,
