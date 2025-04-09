@@ -7,16 +7,13 @@ window.Benchmarks = new Map();
 
 function fetchBenchmarkData(filename) {
   let attempts = 0;
-
   function tryFetch() {
     if (attempts >= BENCHMARK_PATHS.length) {
-      return Promise.reject("All fetch attempts failed.");
+      return Promise.reject(new Error("All fetch attempts failed."));
     }
-
     const base = BENCHMARK_PATHS[attempts++];
     const url = base + filename;
-
-    // First send a HEAD request to quietly check existence
+    console.log(`Testing ${url}`);
     return fetch(url, { method: "HEAD" })
       .then((headRes) => {
         if (!headRes.ok) throw new Error("HEAD check failed");
@@ -30,3 +27,5 @@ function fetchBenchmarkData(filename) {
 
   return tryFetch();
 }
+
+export { fetchBenchmarkData };

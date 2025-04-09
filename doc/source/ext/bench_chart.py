@@ -13,10 +13,12 @@ if TYPE_CHECKING:
 
 here = os.path.dirname(os.path.abspath(__file__))
 
+
 def check_bool(value):
     if value.lower() in ["true", "false"]:
         return value.lower() == "true"
     return value
+
 
 def query(argument):
     if not argument.strip():
@@ -27,8 +29,9 @@ def query(argument):
         queries[key] = check_bool(value)
     return queries
 
+
 def filters(argument):
-    filters: dict[str, list|bool] = {}
+    filters: dict[str, list | bool] = {}
     for filter in argument.strip().split(","):
         if ":" in filter:
             source, value = filter.split(":")
@@ -37,8 +40,10 @@ def filters(argument):
             filters[filter] = True
     return filters
 
+
 def sortBy(argument):
     return [k.strip() for k in argument.split(",")] if argument else []
+
 
 class BenchmarkDetails(SphinxDirective):
     required_arguments = 0
@@ -47,6 +52,7 @@ class BenchmarkDetails(SphinxDirective):
         "source": str,
     }
     has_content = False
+
     def run(self):
         source = self.options.get("source", "benchmark-summary")
         html = f"""
@@ -58,6 +64,7 @@ class BenchmarkDetails(SphinxDirective):
 
         return [nodes.raw("", html, format="html")]
 
+
 class BenchmarkChart(SphinxDirective):
     required_arguments = 0
     final_argument_whitespace = False
@@ -68,6 +75,7 @@ class BenchmarkChart(SphinxDirective):
         "sort": sortBy,
     }
     has_content = False
+
     def run(self):
         source = self.options.get("source", "benchmark-summary")
         filters = self.options.get("filters", ["group"])
@@ -86,6 +94,7 @@ class BenchmarkChart(SphinxDirective):
 
         return [nodes.raw("", html, format="html")]
 
+
 def render_js_template(app) -> None:
     context = {
         "branch": app.config.benchmark_git_context.get("branch", ""),
@@ -103,19 +112,22 @@ def render_js_template(app) -> None:
         f.write(rendered_js)
     app.add_js_file("js/git_info.js")
 
+
 def setup(app: Sphinx):
     app.add_directive("benchmark-chart", BenchmarkChart)
     app.add_directive("benchmark-details", BenchmarkDetails)
     app.add_config_value("benchmark_git_context", default={}, rebuild="env")
+
     def add_assets(app, env) -> None:
         static_path = os.path.join(here, "_static")
         if static_path not in app.config.html_static_path:
             app.config.html_static_path.append(static_path)
-        app.add_js_file("js/benchmark-chart.js")
+        app.add_js_file("js/benchmark-chart.js", type="module")
         app.add_js_file("js/benchmark-details.js", type="module")
-        app.add_js_file("js/benchmark-loader.js")
+        app.add_js_file("js/benchmark-loader.js", type="module")
         app.add_js_file("https://cdn.plot.ly/plotly-3.0.1.min.js")
         app.add_css_file("benchmark-chart.css")
+
     app.config.templates_path += [os.path.join(here, "_templates")]
     app.connect("env-updated", add_assets)
     app.connect("builder-inited", render_js_template)
@@ -124,5 +136,4 @@ def setup(app: Sphinx):
         "version": "0.1",
         "parallel_read_safe": True,
         "parallel_write_safe": True,
-
     }
