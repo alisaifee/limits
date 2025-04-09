@@ -1,7 +1,7 @@
 .badges {
   display: flex;
   padding: 5px;
-  flex-direction: rootow;
+  flex-direction: row;
   justify-content: center;
 }
 .header-badge {
