@@ -20,23 +20,28 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200px;
   font-size: 1.2rem;
   font-weight: bold;
   color: var(--color-purple);
-  text-transform: uppercase;
   letter-spacing: 1px;
-  position: relative;
+  height: 200px;
+  animation: benchmark-chart-loading-animation;
+  animation-iteration-count: 10;
+  animation-duration: 2s;
 }
 
-body {
-  data-theme: dark;
+@keyframes benchmark-chart-loading-animation {
+  0% { opacity: 0 },
+  25% { opacity: 25% },
+  50% { opacity: 50% },
+  90% { opacity: 90% },
+  100% { opacity: 100% }
 }
 
 .plot-container {
-  filter: invert(100%) hue-rotate(180deg);
+  filter: invert(100%);
 }
 
 body[data-theme="light"] .plot-container {
-  filter: invert(0) hue-rotate(180deg);
+  filter: invert(0);
 }

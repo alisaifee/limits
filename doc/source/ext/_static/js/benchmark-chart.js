@@ -199,8 +199,19 @@ document.addEventListener("DOMContentLoaded", function () {
           return item;
         }),
         layout,
-        { responsive: true },
+        { responsive: true, displaylogo: false },
       );
+      let initial = true;
+      chart.on("plotly_afterplot", function () {
+        const { hash } = window.location;
+        if (hash && initial) {
+          initial = false;
+          const target = document.querySelector(hash);
+          if (target) {
+            setTimeout(function() { target.scrollIntoView({ behavior: "instant" }) }, 10);
+          }
+        }
+      });
     });
   });
 });
