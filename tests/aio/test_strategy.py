@@ -150,11 +150,16 @@ class TestAsyncMovingWindow:
     async def test_moving_window_huge_cost_async(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
-        many_per_min = RateLimitItemPerMinute(1_000_000)
-        await limiter.hit(many_per_min, cost=999_999)
-        assert not await limiter.hit(many_per_min, cost=2)
-        await limiter.clear(many_per_min)
-        assert await limiter.hit(many_per_min)
+        many_per_sec = RateLimitItemPerSecond(1_000_000, 2)
+        assert await limiter.hit(many_per_sec)
+        async with async_window(1, 1):
+            assert await limiter.hit(many_per_sec, cost=1_000_000-1)
+            assert not await limiter.test(many_per_sec)
+        assert await limiter.test(many_per_sec)
+        assert (await limiter.get_window_stats(many_per_sec)).remaining == 1
+        await limiter.clear(many_per_sec)
+        assert (await limiter.get_window_stats(many_per_sec)).remaining == 1_000_000
+
 
     async def test_test_moving_window(self, uri, args, fixture):
         storage = storage_from_string(uri, **args)
