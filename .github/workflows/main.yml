@@ -61,7 +61,7 @@ jobs:
             os: ubuntu-latest
             async_redis_implementation: "redispy"
           - python-version: "3.13"
-            marker: 'not benchmark and not (asyncio and memcached)'
+            marker: 'not benchmark'
             os: ubuntu-latest
     runs-on: "${{ matrix.os }}"
     steps:

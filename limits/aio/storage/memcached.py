@@ -4,26 +4,33 @@ import time
 import urllib.parse
 from collections.abc import Iterable
 from math import ceil, floor
+from typing import TYPE_CHECKING
 
-from deprecated.sphinx import versionadded
+from deprecated.sphinx import versionadded, versionchanged
 
 from limits.aio.storage.base import SlidingWindowCounterSupport, Storage
 from limits.storage.base import TimestampedSlidingWindow
-from limits.typing import EmcacheClientP, ItemP
+
+if TYPE_CHECKING:
+    import memcachio
 
 
 @versionadded(version="2.1")
+@versionchanged(
+    version="5.0",
+    reason="Switched to :pypi:`memcachio` for async memcached support",
+)
 class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingWindow):
     """
     Rate limit storage with memcached as backend.
 
-    Depends on :pypi:`emcache`
+    Depends on :pypi:`memcachio`
     """
 
     STORAGE_SCHEME = ["async+memcached"]
     """The storage scheme for memcached to be used in an async context"""
 
-    DEPENDENCIES = ["emcache"]
+    DEPENDENCIES = ["memcachio"]
 
     def __init__(
         self,
@@ -37,8 +44,8 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
-         directly to the constructor of :class:`emcache.Client`
-        :raise ConfigurationError: when :pypi:`emcache` is not available
+         directly to the constructor of :class:`memcachio.Client`
+        :raise ConfigurationError: when :pypi:`memcachio` is not available
         """
         parsed = urllib.parse.urlparse(uri)
         self.hosts = []
@@ -51,21 +58,21 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         self._options = options
         self._storage = None
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
-        self.dependency = self.dependencies["emcache"].module
+        self.dependency = self.dependencies["memcachio"].module
 
     @property
     def base_exceptions(
         self,
     ) -> type[Exception] | tuple[type[Exception], ...]:  # pragma: no cover
         return (
-            self.dependency.ClusterNoAvailableNodes,
-            self.dependency.CommandError,
+            self.dependency.errors.NoNodeAvailable,
+            self.dependency.errors.MemcachioConnectionError,
         )
 
-    async def get_storage(self) -> EmcacheClientP:
+    async def get_storage(self) -> memcachio.Client[bytes]:
         if not self._storage:
-            self._storage = await self.dependency.create_client(
-                [self.dependency.MemcachedHostAddress(h, p) for h, p in self.hosts],
+            self._storage = self.dependency.Client(
+                [(h, p) for h, p in self.hosts],
                 **self._options,
             )
         assert self._storage
@@ -75,19 +82,18 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         """
         :param key: the key to get the counter value for
         """
-        item = await (await self.get_storage()).get(key.encode("utf-8"))
-
+        item = (await self.get_many([key])).get(key.encode("utf-8"), None)
         return item and int(item.value) or 0
 
-    async def get_many(self, keys: Iterable[str]) -> dict[bytes, ItemP]:
+    async def get_many(
+        self, keys: Iterable[str]
+    ) -> dict[bytes, memcachio.MemcachedItem[bytes]]:
         """
         Return multiple counters at once
 
         :param keys: the keys to get the counter values for
         """
-        return await (await self.get_storage()).get_many(
-            [k.encode("utf-8") for k in keys]
-        )
+        return await (await self.get_storage()).get(*[k.encode("utf-8") for k in keys])
 
     async def clear(self, key: str) -> None:
         """
@@ -107,11 +113,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         """
         storage = await self.get_storage()
         limit_key = key.encode("utf-8")
-        try:
-            value = await storage.decrement(limit_key, amount, noreply=noreply) or 0
-        except self.dependency.NotFoundCommandError:
-            value = 0
-        return value
+        return await storage.decr(limit_key, amount, noreply=noreply) or 0
 
     async def incr(
         self,
@@ -132,34 +134,29 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         storage = await self.get_storage()
         limit_key = key.encode("utf-8")
         expire_key = self._expiration_key(key).encode()
-        value = None
-        try:
-            return await storage.increment(limit_key, amount) or amount
-        except self.dependency.NotFoundCommandError:
-            # Incrementation failed because the key doesn't exist
+        if (value := (await storage.incr(limit_key, amount))) is None:
             storage = await self.get_storage()
-            try:
-                await storage.add(limit_key, f"{amount}".encode(), exptime=ceil(expiry))
+            if await storage.add(limit_key, f"{amount}".encode(), expiry=ceil(expiry)):
                 if set_expiration_key:
                     await storage.set(
                         expire_key,
                         str(expiry + time.time()).encode("utf-8"),
-                        exptime=ceil(expiry),
+                        expiry=ceil(expiry),
                         noreply=False,
                     )
-                value = amount
-            except self.dependency.NotStoredStorageCommandError:
-                # Could not add the key, probably because a concurrent call has added it
+                return amount
+            else:
                 storage = await self.get_storage()
-                return await storage.increment(limit_key, amount) or amount
-            return value
+                return await storage.incr(limit_key, amount) or amount
+        return value
 
     async def get_expiry(self, key: str) -> float:
         """
         :param key: the key to get the expiry for
         """
         storage = await self.get_storage()
-        item = await storage.get(self._expiration_key(key).encode("utf-8"))
+        expiration_key = self._expiration_key(key).encode("utf-8")
+        item = (await storage.get(expiration_key)).get(expiration_key, None)
 
         return item and float(item.value) or time.time()
 

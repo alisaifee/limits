@@ -30,54 +30,6 @@ if TYPE_CHECKING:
     import redis
 
 
-class ItemP(Protocol):
-    value: bytes
-    flags: int | None
-    cas: int | None
-
-
-class EmcacheClientP(Protocol):
-    async def add(
-        self,
-        key: bytes,
-        value: bytes,
-        *,
-        flags: int = 0,
-        exptime: int = 0,
-        noreply: bool = False,
-    ) -> None: ...
-
-    async def get(self, key: bytes, return_flags: bool = False) -> ItemP | None: ...
-
-    async def get_many(self, keys: Iterable[bytes]) -> dict[bytes, ItemP]: ...
-
-    async def gets(self, key: bytes, return_flags: bool = False) -> ItemP | None: ...
-
-    async def increment(
-        self, key: bytes, value: int, *, noreply: bool = False
-    ) -> int | None: ...
-
-    async def decrement(
-        self, key: bytes, value: int, *, noreply: bool = False
-    ) -> int | None: ...
-
-    async def delete(self, key: bytes, *, noreply: bool = False) -> None: ...
-
-    async def set(
-        self,
-        key: bytes,
-        value: bytes,
-        *,
-        flags: int = 0,
-        exptime: int = 0,
-        noreply: bool = False,
-    ) -> None: ...
-
-    async def touch(
-        self, key: bytes, exptime: int, *, noreply: bool = False
-    ) -> None: ...
-
-
 class MemcachedClientP(Protocol):
     def add(
         self,
@@ -155,8 +107,6 @@ __all__ = [
     "Callable",
     "ClassVar",
     "Counter",
-    "EmcacheClientP",
-    "ItemP",
     "Literal",
     "MemcachedClientP",
     "MongoClient",

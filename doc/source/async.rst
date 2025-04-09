@@ -12,7 +12,7 @@ The following async storage backends are implemented:
   or `redis-py <https://redis-py.readthedocs.io>`_. Refer to
   :paramref:`limits.aio.storage.RedisStorage.implementation` for
   details on selecting the dependency)
-- Memcached (via `emcache <https://emcache.readthedocs.org>`_)
+- Memcached (via `memcachio <https://memcachio.readthedocs.org>`_)
 - MongoDB (via `motor <https://motor.readthedocs.org>`_)
 
 Quick start
