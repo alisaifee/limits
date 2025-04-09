@@ -207,7 +207,7 @@ Sliding Window
        :query: async=false,group=get-window-stats,strategy=sliding-window
        :sort: storage_type,limit
 
-.. tab:: Get Window (Async)
+.. tab:: Get Window Stats (Async)
 
     .. benchmark-chart::
        :source: benchmark-summary
