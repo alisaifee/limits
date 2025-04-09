@@ -208,7 +208,9 @@ document.addEventListener("DOMContentLoaded", function () {
           initial = false;
           const target = document.querySelector(hash);
           if (target) {
-            setTimeout(function() { target.scrollIntoView({ behavior: "instant" }) }, 10);
+            setTimeout(function () {
+              target.scrollIntoView({ behavior: "instant" });
+            }, 10);
           }
         }
       });

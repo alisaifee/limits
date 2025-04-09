@@ -31,11 +31,25 @@
 }
 
 @keyframes benchmark-chart-loading-animation {
-  0% { opacity: 0 },
-  25% { opacity: 25% },
-  50% { opacity: 50% },
-  90% { opacity: 90% },
-  100% { opacity: 100% }
+  0% {
+    opacity: 0;
+  }
+  ,
+  25% {
+    opacity: 25%;
+  }
+  ,
+  50% {
+    opacity: 50%;
+  }
+  ,
+  90% {
+    opacity: 90%;
+  }
+  ,
+  100% {
+    opacity: 100%;
+  }
 }
 
 .plot-container {
