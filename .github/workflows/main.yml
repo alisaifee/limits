@@ -25,7 +25,7 @@ jobs:
       run: |
         python -m pip install -U pip
         python -m pip install -U setuptools wheel
-        pip install -r requirements/ci.txt
+        pip install -U -r requirements/ci.txt
     - name: Lint with ruff
       run: |
         ruff check --select I limits tests
@@ -81,7 +81,7 @@ jobs:
       run: |
         python -m pip install -U pip
         python -m pip install -U setuptools wheel
-        pip install -r requirements/ci.txt
+        pip install -U -r requirements/ci.txt
     - name: Tests
       env:
         CI: "True"
@@ -126,7 +126,7 @@ jobs:
       run: |
         python -m pip install "pip<22"
         python -m pip install --upgrade setuptools wheel
-        pip install -r requirements/ci.txt
+        pip install -U -r requirements/ci.txt
         npm install -g netlify-cli
     - name: Benchmark
       env:
