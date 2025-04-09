@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v4.7.2
+------
+Release Date: 2025-04-09
+
+* Documentation
+
+  * Improve presentation of benchmark docs
+
 v4.7.1
 ------
 Release Date: 2025-04-08
