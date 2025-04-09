@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v4.7.1
+------
+Release Date: 2025-04-08
+
+* Testing
+
+  * Fix incorrect benchmark for async test method
+
 v4.7
 ----
 Release Date: 2025-04-08
