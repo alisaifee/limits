@@ -16,3 +16,27 @@
   text-align: center;
   height: 5em;
 }
+.benchmark-chart-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--color-purple);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+body {
+  data-theme: dark;
+}
+
+.plot-container {
+  filter: invert(100%) hue-rotate(180deg);
+}
+
+body[data-theme="light"] .plot-container {
+  filter: invert(0) hue-rotate(180deg);
+}

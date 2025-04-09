@@ -126,22 +126,29 @@ document.addEventListener("DOMContentLoaded", function () {
     let sortBy = JSON.parse(
       chart.dataset.sortBy || '["storage_type", "limit"]',
     );
+    render(
+      chart,
+      html`
+        <div class="benchmark-chart-loading">
+          <span>Loading</span>
+        </div>
+      `,
+    );
     if (!dispatched.has(source)) {
       fetchBenchmarkData(`${source}.json`)
         .then((result) => {
           window.Benchmarks[source] = result;
           let event = new Event(`${source}-loaded`);
-          console.log("Happiness");
           window.dispatchEvent(event);
         })
         .catch((error) => {
           let event = new Event(`${source}-failed`);
-          console.log("Sadness");
           window.dispatchEvent(event);
         });
     }
     dispatched.add(source);
     window.addEventListener(`${chart.dataset.source}-failed`, function () {
+      chart.querySelector(".benchmark-chart-loading")?.remove();
       render(
         chart,
         html`
@@ -150,6 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
       );
     });
     window.addEventListener(`${chart.dataset.source}-loaded`, function () {
+      chart.querySelector(".benchmark-chart-loading")?.remove();
       let results = Benchmarks[chart.dataset.source];
       let unsorted = getBenchmarkData(results, query);
       let data = sortBenchmarksByParams(
@@ -191,6 +199,7 @@ document.addEventListener("DOMContentLoaded", function () {
           return item;
         }),
         layout,
+        { responsive: true },
       );
     });
   });
