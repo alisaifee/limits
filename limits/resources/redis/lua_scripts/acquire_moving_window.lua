@@ -12,11 +12,14 @@ local entry = redis.call('lindex', KEYS[1], limit - amount)
 if entry and tonumber(entry) >= timestamp - expiry then
     return false
 end
-
+local entries = {}
 for i = 1, amount do
-    redis.call('lpush', KEYS[1], timestamp)
+    entries[i] = timestamp
 end
 
+for i=1,#entries,5000 do
+    redis.call('lpush', KEYS[1], unpack(entries, i, math.min(i+4999, #entries)))
+end
 redis.call('ltrim', KEYS[1], 0, limit - 1)
 redis.call('expire', KEYS[1], expiry)
 
