@@ -238,6 +238,7 @@ For example:
 - ``async+redis+cluster://localhost:7000,localhost:7001``
 - ``async+redis+sentinel://:sekret@localhost:26379/my-redis-service``
 - ``async+memcached://localhost:11211``
+- ``async+mongodb://localhost:27017``
 - ``async+memory://``
 
 For implementation details of currently supported async backends refer to :ref:`api:async storage`
