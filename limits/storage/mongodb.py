@@ -206,13 +206,13 @@ class MongoDBStorageBase(
         :return: (start of window, number of acquired entries)
         """
         timestamp = time.time()
-        result = list(
+        if result := list(
             self.windows.aggregate(
                 [
                     {"$match": {"_id": key}},
                     {
                         "$project": {
-                            "entries": {
+                            "filteredEntries": {
                                 "$filter": {
                                     "input": "$entries",
                                     "as": "entry",
@@ -221,21 +221,16 @@ class MongoDBStorageBase(
                             }
                         }
                     },
-                    {"$unwind": "$entries"},
                     {
-                        "$group": {
-                            "_id": "$_id",
-                            "min": {"$min": "$entries"},
-                            "count": {"$sum": 1},
+                        "$project": {
+                            "min": {"$min": "$filteredEntries"},
+                            "count": {"$size": "$filteredEntries"},
                         }
                     },
                 ]
             )
-        )
-
-        if result:
+        ):
             return result[0]["min"], result[0]["count"]
-
         return timestamp, 0
 
     def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:

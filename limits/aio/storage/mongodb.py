@@ -237,15 +237,16 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         :param int expiry: expiry of entry
         :return: (start of window, number of acquired entries)
         """
+
         timestamp = time.time()
-        if result := (
-            await self.database[self.__collection_mapping["windows"]]
+        if (
+            result := await self.database[self.__collection_mapping["windows"]]
             .aggregate(
                 [
                     {"$match": {"_id": key}},
                     {
                         "$project": {
-                            "entries": {
+                            "filteredEntries": {
                                 "$filter": {
                                     "input": "$entries",
                                     "as": "entry",
@@ -254,12 +255,10 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                             }
                         }
                     },
-                    {"$unwind": "$entries"},
                     {
-                        "$group": {
-                            "_id": "$_id",
-                            "min": {"$min": "$entries"},
-                            "count": {"$sum": 1},
+                        "$project": {
+                            "min": {"$min": "$filteredEntries"},
+                            "count": {"$size": "$filteredEntries"},
                         }
                     },
                 ]
