@@ -35,28 +35,12 @@ benchmark_all_storages = pytest.mark.parametrize(
         if name in {"memory", "redis", "memcached", "mongodb"}
     ],
 )
-benchmark_moving_window_storages = pytest.mark.parametrize(
-    "uri, args, fixture",
-    [
-        storage
-        for name, storage in ALL_STORAGES.items()
-        if name in {"memory", "redis", "mongodb"}
-    ],
-)
 benchmark_all_async_storages = pytest.mark.parametrize(
     "uri, args, fixture",
     [
         storage
         for name, storage in ALL_STORAGES_ASYNC.items()
         if name in {"memory", "redis", "memcached", "mongodb"}
-    ],
-)
-benchmark_moving_window_async_storages = pytest.mark.parametrize(
-    "uri, args, fixture",
-    [
-        storage
-        for name, storage in ALL_STORAGES_ASYNC.items()
-        if name in {"memory", "redis", "mongodb"}
     ],
 )
 
@@ -211,7 +195,7 @@ def test_get_window_stats_async(
     )
 
 
-@benchmark_moving_window_async_storages
+@benchmark_all_async_storages
 @benchmark_limits
 @pytest.mark.parametrize(
     "strategy",
