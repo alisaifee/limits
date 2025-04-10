@@ -16,10 +16,12 @@ project = "limits"
 description = "limits is a python library to perform rate limiting with commonly used storage backends"
 copyright = "2023, Ali-Akber Saifee"
 
+
 if ".post0.dev" in limits.__version__:
     version, ahead = limits.__version__.split(".post0.dev")
 else:
     version = limits.__version__
+    ahead = 0
 
 release = version
 
