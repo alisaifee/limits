@@ -57,11 +57,11 @@ class MemoryStorage(
     def __expire_events(self) -> None:
         for key in list(self.events.keys()):
             with self.locks[key]:
-                events = self.events.get(key, [])
-                oldest = bisect.bisect_left(
-                    events, -time.time(), key=lambda event: -event.expiry
-                )
-                self.events[key] = self.events[key][:oldest]
+                if events := self.events.get(key, []):
+                    oldest = bisect.bisect_left(
+                        events, -time.time(), key=lambda event: -event.expiry
+                    )
+                    self.events[key] = self.events[key][:oldest]
                 if not self.events.get(key, None):
                     self.locks.pop(key, None)
         for key in list(self.expirations.keys()):

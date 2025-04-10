@@ -62,25 +62,29 @@ class MemoryStorage(
         asyncio.ensure_future(self.__schedule_expiry())
 
     async def __expire_events(self) -> None:
-        now = time.time()
-        for key in list(self.events.keys()):
-            cutoff = await asyncio.to_thread(
-                lambda evts: bisect.bisect_left(
-                    evts, -now, key=lambda event: -event.expiry
-                ),
-                self.events[key],
-            )
-            async with self.locks[key]:
-                self.events[key] = self.events[key][:cutoff]
-                if not self.events.get(key, None):
-                    self.events.pop(key, None)
-                    self.locks.pop(key, None)
+        try:
+            now = time.time()
+            for key in list(self.events.keys()):
+                cutoff = await asyncio.to_thread(
+                    lambda evts: bisect.bisect_left(
+                        evts, -now, key=lambda event: -event.expiry
+                    ),
+                    self.events[key],
+                )
+                async with self.locks[key]:
+                    if self.events.get(key, []):
+                        self.events[key] = self.events[key][:cutoff]
+                    if not self.events.get(key, None):
+                        self.events.pop(key, None)
+                        self.locks.pop(key, None)
 
-        for key in list(self.expirations.keys()):
-            if self.expirations[key] <= time.time():
-                self.storage.pop(key, None)
-                self.expirations.pop(key, None)
-                self.locks.pop(key, None)
+            for key in list(self.expirations.keys()):
+                if self.expirations[key] <= time.time():
+                    self.storage.pop(key, None)
+                    self.expirations.pop(key, None)
+                    self.locks.pop(key, None)
+        except asyncio.CancelledError:
+            return
 
     async def __schedule_expiry(self) -> None:
         if not self.timer or self.timer.done():
@@ -268,3 +272,10 @@ class MemoryStorage(
         self.locks.clear()
 
         return num_items
+
+    def __del__(self) -> None:
+        try:
+            if self.timer and not self.timer.done():
+                self.timer.cancel()
+        except RuntimeError:  # noqa
+            pass
