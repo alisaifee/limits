@@ -151,7 +151,7 @@ class TestAsyncMovingWindow:
         storage = storage_from_string(uri, **args)
         limiter = MovingWindowRateLimiter(storage)
         million_per_2_seconds = RateLimitItemPerSecond(10_00_000, 2)
-        assert limiter.hit(million_per_2_seconds)
+        assert await limiter.hit(million_per_2_seconds)
         async with async_window(2, 1):
             assert await limiter.hit(million_per_2_seconds, cost=10_00_000 - 1)
         assert (await limiter.get_window_stats(million_per_2_seconds)).remaining == 1
