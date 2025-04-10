@@ -3,6 +3,22 @@
 Changelog
 =========
 
+v5.0.0rc1
+---------
+Release Date: 2025-04-09
+
+* Backward incompatible changes
+
+  * Dropped support for Fixed Window with Elastic Expiry strategy
+  * Dropped support for etcd
+  * Replaced async support for memached from :pypi:`emcache` to :pypi`:memcachio`
+
+* Performance
+
+  * Improved performance of in-memory moving window ``test`` and ``get_window_stats`` operations.
+  * Improved performance of redis moving window ``test`` and ``get_window_stats`` operations.
+  * Improved performance of mongodb moving window ``test`` and ``get_window_stats`` operations.
+
 v4.7.2
 ------
 Release Date: 2025-04-09
@@ -792,3 +808,4 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
