@@ -55,17 +55,21 @@ class MemoryStorage(
         self.timer.start()
 
     def __expire_events(self) -> None:
+        now = time.time()
+        # For each key, remove expired events from the front of the list.
         for key in list(self.events.keys()):
             with self.locks[key]:
-                if events := self.events.get(key, []):
-                    oldest = bisect.bisect_left(
-                        events, -time.time(), key=lambda event: -event.expiry
-                    )
-                    self.events[key] = self.events[key][:oldest]
-                if not self.events.get(key, None):
-                    self.locks.pop(key, None)
+                events = self.events.get(key, [])
+                # Find the first event with expiry greater than now
+                # (i.e., events with expiry <= now are expired)
+                idx = bisect.bisect_right(events, now, key=lambda event: event.expiry)
+                # Retain only the events that have not yet expired.
+                self.events[key] = events[idx:]
+            if not self.events.get(key):
+                self.locks.pop(key, None)
+        # Also check expirations in the storage counter.
         for key in list(self.expirations.keys()):
-            if self.expirations[key] <= time.time():
+            if self.expirations[key] <= now:
                 self.storage.pop(key, None)
                 self.expirations.pop(key, None)
                 self.locks.pop(key, None)
@@ -146,16 +150,18 @@ class MemoryStorage(
         with self.locks[key]:
             self.events.setdefault(key, [])
             timestamp = time.time()
-            try:
-                entry = self.events[key][limit - amount]
-            except IndexError:
-                entry = None
-
-            if entry and entry.atime >= timestamp - expiry:
-                return False
-            else:
-                self.events[key][:0] = [Entry(expiry)] * amount
-                return True
+            n = len(self.events[key])
+            # When using natural order, we check if we already have enough events in the window.
+            # We want to allow acquisition only if there are fewer than (limit - amount + 1) events.
+            threshold = limit - amount + 1
+            if n >= threshold:
+                # The candidate is the earliest event among the last "threshold" events.
+                candidate = self.events[key][n - threshold]
+                if candidate.atime >= timestamp - expiry:
+                    return False
+            # Append new entries at the end (natural order)
+            self.events[key].extend([Entry(expiry) for _ in range(amount)])
+            return True
 
     def get_expiry(self, key: str) -> float:
         """
@@ -175,10 +181,11 @@ class MemoryStorage(
         """
         timestamp = time.time()
         if events := self.events.get(key, []):
-            oldest = bisect.bisect_left(
-                events, -(timestamp - expiry), key=lambda entry: -entry.atime
-            )
-            return events[oldest - 1].atime, oldest
+            cutoff = timestamp - expiry
+            index = bisect.bisect_left(events, cutoff, key=lambda entry: entry.atime)
+            count = len(events) - index
+            start = events[index].atime if index < len(events) else timestamp
+            return start, count
         return timestamp, 0
 
     def acquire_sliding_window_entry(
