@@ -8,8 +8,8 @@
 -r storage/async-mongodb.txt
 -r storage/async-redis.txt
 -r storage/async-valkey.txt
+emcache>=1;python_version>="3.11" and python_version<"3.13.0"
 
-# Test related packages
 coverage
 hiro>0.1.6
 flaky

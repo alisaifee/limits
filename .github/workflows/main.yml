@@ -60,6 +60,10 @@ jobs:
             marker: 'not benchmark and (redis or redis_cluster or redis_sentinel) and asyncio'
             os: ubuntu-latest
             async_redis_implementation: "redispy"
+          - python-version: "3.12"
+            marker: 'not benchmark and (memcached and asyncio)'
+            os: ubuntu-latest
+            async_memcached_implementation: "emcache"
           - python-version: "3.13"
             marker: 'not benchmark'
             os: ubuntu-latest
@@ -86,6 +90,7 @@ jobs:
       env:
         CI: "True"
         ASYNC_REDIS_IMPLEMENTATION: "${{ matrix.async_redis_implementation }}"
+        ASYNC_MEMCACHED_IMPLEMENTATION: "${{ matrix.async_memcached_implementation }}"
       run: |
         py.test -m "${{ matrix.marker }}" --junitxml=junit.xml -o junit_family=legacy --cov-branch --max-runs=3
     - name: Upload coverage to Codecov
