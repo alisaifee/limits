@@ -20,7 +20,6 @@ benchmark_limits = pytest.mark.parametrize(
     "limit",
     [
         RateLimitItemPerMinute(500),
-        RateLimitItemPerMinute(1000),
         RateLimitItemPerDay(10000),
         RateLimitItemPerDay(100000),
     ],
@@ -110,7 +109,7 @@ def seed_limit(
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
-@pytest.mark.parametrize("percentage_full", [0, 10, 50, 90])
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 def test_hit(benchmark, strategy, uri, args, limit, percentage_full, fixture):
     storage = storage_from_string(uri, **args)
     seed_limit(strategy(storage), limit, percentage_full)
@@ -130,7 +129,7 @@ def test_hit(benchmark, strategy, uri, args, limit, percentage_full, fixture):
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
-@pytest.mark.parametrize("percentage_full", [0, 10, 50, 90])
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="get-window-stats")
 def test_get_window_stats(
     benchmark, strategy, uri, args, limit, percentage_full, fixture
@@ -153,7 +152,7 @@ def test_get_window_stats(
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
-@pytest.mark.parametrize("percentage_full", [0, 10, 50, 90])
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="test")
 def test_test(benchmark, strategy, uri, args, limit, percentage_full, fixture):
     storage = storage_from_string(uri, **args)
@@ -174,7 +173,7 @@ def test_test(benchmark, strategy, uri, args, limit, percentage_full, fixture):
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
-@pytest.mark.parametrize("percentage_full", [0, 10, 50, 90])
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="hit")
 def test_hit_async(
     event_loop, benchmark, strategy, uri, args, limit, percentage_full, fixture
@@ -203,7 +202,7 @@ def test_hit_async(
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
-@pytest.mark.parametrize("percentage_full", [0, 10, 50, 90])
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="get-window-stats")
 def test_get_window_stats_async(
     event_loop, benchmark, strategy, uri, args, limit, percentage_full, fixture
@@ -232,7 +231,7 @@ def test_get_window_stats_async(
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
-@pytest.mark.parametrize("percentage_full", [0, 10, 50, 90])
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="test")
 def test_test_async(
     event_loop, benchmark, strategy, uri, args, limit, percentage_full, fixture
