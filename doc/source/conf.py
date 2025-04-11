@@ -40,7 +40,13 @@ else:
         "branch": git_info.get("branch", ""),
         "sha": git_info.get("long", None),
     }
-
+benchmark_param_mapping = {
+    "percentage_full": {
+        "display": "Percentage Seeded",
+    },
+    "async": {"display": "Asyncio"},
+    "storage_type": {"display": "Storage"},
+}
 html_static_path = ["_static"]
 
 html_css_files = [

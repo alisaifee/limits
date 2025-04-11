@@ -15,50 +15,27 @@ please refer to :ref:`performance:benchmark run details`).
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=hit,async=false
+       :query: limit=500 per 1 minute,group=hit,percentage_full=0.5
        :sort: storage_type,strategy
-
-
-.. tab:: Hit (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=hit,async=true
-       :sort: storage_type,strategy
-
-
+       :filters: storage_type=,async=false
 
 .. tab:: Test
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=test,async=false
+       :query: limit=500 per 1 minute,group=test,percentage_full=0.5
        :sort: storage_type,strategy
-
-
-.. tab:: Test (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=test,async=true
-       :sort: storage_type,strategy
-
+       :filters: storage_type=,async=false
 
 
 .. tab:: Get Window Stats
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=get-window-stats,async=false
+       :query: limit=500 per 1 minute,group=get-window-stats,percentage_full=0.5
        :sort: storage_type,strategy
+       :filters: storage_type=,async=false
 
-
-.. tab:: Get Window Stats (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=get-window-stats,async=true
-       :sort: storage_type,strategy
 
 
 Performance implication of limit sizes
@@ -78,47 +55,26 @@ Fixed Window
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: async=false,group=hit,strategy=fixed-window
+       :query: group=hit,strategy=fixed-window
        :sort: storage_type,limit
-
-
-.. tab::  Hit (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=hit,strategy=fixed-window
-       :sort: storage_type,limit
-
+       :filters: percentage_full=0.5,storage_type=,async=false
 
 .. tab:: Test
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: async=false,group=test,strategy=fixed-window
+       :query: group=test,strategy=fixed-window
        :sort: storage_type,limit
-
-
-.. tab:: Test (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=test,strategy=fixed-window
-       :sort: storage_type,limit
+       :filters: percentage_full=0.5,storage_type=,async=false
 
 
 .. tab:: Get Window Stats
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: async=false,group=get-window-stats,strategy=fixed-window
+       :query: group=get-window-stats,strategy=fixed-window
        :sort: storage_type,limit
-
-.. tab:: Get Window Stats (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=get-window-stats,strategy=fixed-window
-       :sort: storage_type,limit
+       :filters: percentage_full=0.5,storage_type=,async=false
 
 Moving Window
 ~~~~~~~~~~~~~
@@ -127,45 +83,28 @@ Moving Window
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: async=false,group=hit,strategy=moving-window
+       :query: group=hit,strategy=moving-window
        :sort: storage_type,limit
+       :filters: percentage_full=0.5,storage_type=,async=false
 
-.. tab:: Hit (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=hit,strategy=moving-window
-       :sort: storage_type,limit
 
 
 .. tab:: Test
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: async=false,group=test,strategy=moving-window
+       :query: group=test,strategy=moving-window
        :sort: storage_type,limit
-
-.. tab:: Test (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=test,strategy=moving-window
-       :sort: storage_type,limit
+       :filters: percentage_full=0.5,storage_type=,async=false
 
 
 .. tab:: Get Window Stats
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: async=false,group=get-window-stats,strategy=moving-window
+       :query: group=get-window-stats,strategy=moving-window
        :sort: storage_type,limit
-
-.. tab:: Get Window Stats (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=get-window-stats,strategy=moving-window
-       :sort: storage_type,limit
+       :filters: percentage_full=0.5,storage_type=,async=false
 
 
 Sliding Window
@@ -175,45 +114,25 @@ Sliding Window
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: async=false,group=hit,strategy=sliding-window
+       :query: group=hit,strategy=sliding-window
        :sort: storage_type,limit
-
-.. tab:: Hit (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=hit,strategy=sliding-window
-       :sort: storage_type,limit
+       :filters: percentage_full=0.5,storage_type=,async=true
 
 .. tab:: Test
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: async=false,group=test,strategy=sliding-window
+       :query: group=test,strategy=sliding-window
        :sort: storage_type,limit
-
-.. tab:: Test (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=test,strategy=sliding-window
-       :sort: storage_type,limit
-
+       :filters: percentage_full=0.5,storage_type=,async=false
 
 .. tab:: Get Window Stats
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: async=false,group=get-window-stats,strategy=sliding-window
+       :query: group=get-window-stats,strategy=sliding-window
        :sort: storage_type,limit
-
-.. tab:: Get Window Stats (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=get-window-stats,strategy=sliding-window
-       :sort: storage_type,limit
-
+       :filters: percentage_full=0.5,storage_type=,async=false
 
 Benchmark run details
 ---------------------
