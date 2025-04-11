@@ -18,7 +18,7 @@ function getBenchmarkData(result, query) {
         let value = entry[1];
         if (
           key != "group" &&
-          value != "" &&
+          !(value === "") && // i.e. any.
           benchmark.params[key] != null &&
           benchmark.params[key] != value
         ) {
@@ -55,6 +55,8 @@ function formatParam(key, str) {
         days: "day",
       };
     return num + "/" + (umap[u] || u);
+  } else if (key === "percentage_full") {
+    return `${str}% Seeded`;
   }
   return str;
 }
@@ -300,7 +302,10 @@ document.addEventListener("DOMContentLoaded", function () {
             showlegend: true,
             legendgroup: legendKeyFunc(benchmark, legendGroupKey),
             legendgrouptitle: {
-              text: legendKeyFunc(benchmark, legendGroupKey),
+              text: formatParam(
+                legendGroupKey,
+                legendKeyFunc(benchmark, legendGroupKey),
+              ),
             },
           })),
           {

@@ -15,7 +15,7 @@ please refer to :ref:`performance:benchmark run details`).
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=hit,percentage_full=0.5
+       :query: limit=500 per 1 minute,group=hit,percentage_full=50
        :sort: storage_type,strategy
        :filters: storage_type=,async=false
 
@@ -23,7 +23,7 @@ please refer to :ref:`performance:benchmark run details`).
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=test,percentage_full=0.5
+       :query: limit=500 per 1 minute,group=test,percentage_full=50
        :sort: storage_type,strategy
        :filters: storage_type=,async=false
 
@@ -32,7 +32,7 @@ please refer to :ref:`performance:benchmark run details`).
 
     .. benchmark-chart::
        :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=get-window-stats,percentage_full=0.5
+       :query: limit=500 per 1 minute,group=get-window-stats,percentage_full=50
        :sort: storage_type,strategy
        :filters: storage_type=,async=false
 
@@ -57,7 +57,7 @@ Fixed Window
        :source: benchmark-summary
        :query: group=hit,strategy=fixed-window
        :sort: storage_type,limit
-       :filters: percentage_full=0.5,storage_type=,async=false
+       :filters: percentage_full=50,storage_type=,async=false
 
 .. tab:: Test
 
@@ -65,7 +65,7 @@ Fixed Window
        :source: benchmark-summary
        :query: group=test,strategy=fixed-window
        :sort: storage_type,limit
-       :filters: percentage_full=0.5,storage_type=,async=false
+       :filters: percentage_full=50,storage_type=,async=false
 
 
 .. tab:: Get Window Stats
@@ -74,7 +74,7 @@ Fixed Window
        :source: benchmark-summary
        :query: group=get-window-stats,strategy=fixed-window
        :sort: storage_type,limit
-       :filters: percentage_full=0.5,storage_type=,async=false
+       :filters: percentage_full=50,storage_type=,async=false
 
 Moving Window
 ~~~~~~~~~~~~~
@@ -85,7 +85,7 @@ Moving Window
        :source: benchmark-summary
        :query: group=hit,strategy=moving-window
        :sort: storage_type,limit
-       :filters: percentage_full=0.5,storage_type=,async=false
+       :filters: percentage_full=50,storage_type=,async=false
 
 
 
@@ -95,7 +95,7 @@ Moving Window
        :source: benchmark-summary
        :query: group=test,strategy=moving-window
        :sort: storage_type,limit
-       :filters: percentage_full=0.5,storage_type=,async=false
+       :filters: percentage_full=50,storage_type=,async=false
 
 
 .. tab:: Get Window Stats
@@ -104,7 +104,7 @@ Moving Window
        :source: benchmark-summary
        :query: group=get-window-stats,strategy=moving-window
        :sort: storage_type,limit
-       :filters: percentage_full=0.5,storage_type=,async=false
+       :filters: percentage_full=50,storage_type=,async=false
 
 
 Sliding Window
@@ -116,7 +116,7 @@ Sliding Window
        :source: benchmark-summary
        :query: group=hit,strategy=sliding-window
        :sort: storage_type,limit
-       :filters: percentage_full=0.5,storage_type=,async=true
+       :filters: percentage_full=50,storage_type=,async=false
 
 .. tab:: Test
 
@@ -124,7 +124,7 @@ Sliding Window
        :source: benchmark-summary
        :query: group=test,strategy=sliding-window
        :sort: storage_type,limit
-       :filters: percentage_full=0.5,storage_type=,async=false
+       :filters: percentage_full=50,storage_type=,async=false
 
 .. tab:: Get Window Stats
 
@@ -132,7 +132,7 @@ Sliding Window
        :source: benchmark-summary
        :query: group=get-window-stats,strategy=sliding-window
        :sort: storage_type,limit
-       :filters: percentage_full=0.5,storage_type=,async=false
+       :filters: percentage_full=50,storage_type=,async=false
 
 Benchmark run details
 ---------------------
