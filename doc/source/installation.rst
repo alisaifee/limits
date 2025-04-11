@@ -81,7 +81,7 @@ along with the package using the following extras:
 
    .. versionadded:: 4.2
       :pypi:`redis` if installed can be used instead of :pypi:`coredis` by setting
-      :paramref:`~limits.aio.storage.Redis.implementation` to ``redispy``.
+      :paramref:`~limits.aio.storage.RedisStorage.implementation` to ``redispy``.
       See :class:`limits.aio.storage.RedisStorage` for more details.
 
 
@@ -94,6 +94,11 @@ along with the package using the following extras:
    Includes:
 
    .. literalinclude:: ../../requirements/storage/async-memcached.txt
+
+   .. versionchanged:: 5.0
+      :pypi:`emcache` if installed can be used instead of the new default
+      :pypi:`memcachio` by setting :paramref:`~limits.aio.storage.MemcachedStorage.implementation`
+      to ``emcache``.
 
 .. tab:: MongoDB
 
