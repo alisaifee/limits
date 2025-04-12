@@ -19,15 +19,6 @@ services:
       - type: bind
         source: /tmp/
         target: /sockets/
-  memcached-sasl:
-    image: "memcached:${LIMITS_MEMCACHED_SERVER_VERSION:-latest}"
-    command: -S -Y /auth/memcached_auth.txt
-    ports:
-      - 22124:11211
-    volumes:
-      - type: bind
-        source: ./tests/data
-        target: /auth/
   # redis sentinel
   redis-sentinel-master:
     image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"

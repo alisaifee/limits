@@ -213,13 +213,6 @@ def memcached_cluster_client(docker_services):
 
 
 @pytest.fixture(scope="session")
-def memcached_sasl_client(docker_services):
-    docker_services.start("memcached-sasl")
-    ci_delay()
-    return pymemcache.Client(("localhost", 22124))
-
-
-@pytest.fixture(scope="session")
 def memcached_uds_client(docker_services):
     if platform.system().lower() == "darwin":
         pytest.skip("Fixture not supported on OSX")
@@ -267,14 +260,6 @@ def memcached_uds(memcached_uds_client):
     memcached_uds_client.flush_all()
 
     return memcached_uds_client
-
-
-@pytest.fixture
-def memcached_sasl(memcached_sasl_client):
-    memcached_sasl_client.set("no-key", "user password")
-    memcached_sasl_client.flush_all()
-
-    return memcached_sasl_client
 
 
 @pytest.fixture

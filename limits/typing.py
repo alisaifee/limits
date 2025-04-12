@@ -107,7 +107,6 @@ __all__ = [
     "Callable",
     "ClassVar",
     "Counter",
-    "Iterable",
     "Literal",
     "MemcachedClientP",
     "MongoClient",

@@ -13,9 +13,6 @@ from pytest_lazy_fixtures import lf
 from limits.limits import RateLimitItem
 
 ASYNC_REDIS_IMPLEMENTATION = os.environ.get("ASYNC_REDIS_IMPLEMENTATION", "coredis")
-ASYNC_MEMCACHED_IMPLEMENTATION = os.environ.get(
-    "ASYNC_MEMCACHED_IMPLEMENTATION", "memcachio"
-)
 
 
 def fixed_start(fn):
@@ -182,30 +179,17 @@ ALL_STORAGES_ASYNC = {
     ),
     "memcached": pytest.param(
         "async+memcached://localhost:22122",
-        {
-            "implementation": ASYNC_MEMCACHED_IMPLEMENTATION,
-        },
+        {},
         lf("memcached"),
         marks=[pytest.mark.memcached, pytest.mark.flaky],
         id="memcached",
     ),
     "memcached-cluster": pytest.param(
         "async+memcached://localhost:22122,localhost:22123",
-        {
-            "implementation": ASYNC_MEMCACHED_IMPLEMENTATION,
-        },
+        {},
         lf("memcached_cluster"),
         marks=[pytest.mark.memcached, pytest.mark.flaky],
         id="memcached-cluster",
-    ),
-    "memcached-sasl": pytest.param(
-        "async+memcached://user:password@localhost:22124",
-        {
-            "implementation": ASYNC_MEMCACHED_IMPLEMENTATION,
-        },
-        lf("memcached_sasl"),
-        marks=[pytest.mark.memcached, pytest.mark.flaky],
-        id="memcached-sasl",
     ),
     "redis-cluster": pytest.param(
         "async+redis+cluster://localhost:7001/",
