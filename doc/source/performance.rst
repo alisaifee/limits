@@ -6,59 +6,54 @@ differs in both throughput and storage cost characteristics.
 
 Performance by storage and strategy
 -----------------------------------
-Below you will find benchmarks for each strategy and storage when using
-a rate limit of ``500/minute``. (For details about the benchmarking environment
-please refer to :ref:`performance:benchmark run details`).
+Below you will find benchmarks for each strategy and storage giving
+a high level overview of the performance.
 
 
-.. tab:: Hit
+.. dropdown:: Benchmark parameters
 
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=hit,async=false
-       :sort: storage_type,strategy
+   - 100 unique virtual users (i.e. unique rate limit keys)
+   - A rate limit of ``500/minute``
+   - Each virtual user's limit was pre-seeded to be 50% full.
 
+   See :ref:`performance:benchmark run details` for information on the benchmarking
+   environment.
 
-.. tab:: Hit (Async)
+.. tab-set::
 
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=hit,async=true
-       :sort: storage_type,strategy
+    .. tab-item:: Hit
 
+       Performance of :meth:`~limits.strategies.RateLimiter.hit`
+       by storage & strategy.
 
-
-.. tab:: Test
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=test,async=false
-       :sort: storage_type,strategy
+       .. benchmark-chart::
+          :source: benchmark-summary
+          :query: limit=500 per 1 minute,group=hit,percentage_full=50
+          :sort: storage_type,strategy
+          :filters: storage_type=,strategy=,async=false
 
 
-.. tab:: Test (Async)
+    .. tab-item:: Test
 
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=test,async=true
-       :sort: storage_type,strategy
+       Performance of :meth:`~limits.strategies.RateLimiter.test`
+       by storage & strategy.
 
+       .. benchmark-chart::
+          :source: benchmark-summary
+          :query: limit=500 per 1 minute,group=test,percentage_full=50
+          :sort: storage_type,strategy
+          :filters: storage_type=,strategy=,async=false
 
+    .. tab-item:: Get Window Stats
 
-.. tab:: Get Window Stats
+       Performance of :meth:`~limits.strategies.RateLimiter.get_window_stats`
+       by storage & strategy.
 
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=get-window-stats,async=false
-       :sort: storage_type,strategy
-
-
-.. tab:: Get Window Stats (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: limit=500 per 1 minute,group=get-window-stats,async=true
-       :sort: storage_type,strategy
+       .. benchmark-chart::
+          :source: benchmark-summary
+          :query: limit=500 per 1 minute,group=get-window-stats,percentage_full=50
+          :sort: storage_type,strategy
+          :filters: storage_type=,strategy=,async=false
 
 
 Performance implication of limit sizes
@@ -71,148 +66,58 @@ requests within the window.
 
 The following benchmarks demonstrate the implications when using various limits.
 
-Fixed Window
-~~~~~~~~~~~~
+.. dropdown:: Benchmark parameters
 
-.. tab::  Hit
+  - 100 unique virtual users
+  - Rate limits of
 
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=false,group=hit,strategy=fixed-window
-       :sort: storage_type,limit
+    - ``500/minute``
+    - ``10000/day``
+    - ``100000/day``
+  - Each virtual user's limit was pre-seeded to be:
 
+    - 5% full.
+    - 50% full.
+    - 90% full.
 
-.. tab::  Hit (Async)
+  See :ref:`performance:benchmark run details` for information on the benchmarking
+  environment.
 
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=hit,strategy=fixed-window
-       :sort: storage_type,limit
+.. tab-set::
 
+   .. tab-item::  Hit
 
-.. tab:: Test
+      Performance of :meth:`~limits.strategies.RateLimiter.hit`
+      with various rate limits
 
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=false,group=test,strategy=fixed-window
-       :sort: storage_type,limit
+      .. benchmark-chart::
+         :source: benchmark-summary
+         :query: group=hit
+         :sort: storage_type,limit
+         :filters: strategy=,percentage_full=50,storage_type=,async=false
 
+   .. tab-item:: Test
 
-.. tab:: Test (Async)
+      Performance of :meth:`~limits.strategies.RateLimiter.test`
+      with various rate limits
 
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=test,strategy=fixed-window
-       :sort: storage_type,limit
-
-
-.. tab:: Get Window Stats
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=false,group=get-window-stats,strategy=fixed-window
-       :sort: storage_type,limit
-
-.. tab:: Get Window Stats (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=get-window-stats,strategy=fixed-window
-       :sort: storage_type,limit
-
-Moving Window
-~~~~~~~~~~~~~
-
-.. tab:: Hit
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=false,group=hit,strategy=moving-window
-       :sort: storage_type,limit
-
-.. tab:: Hit (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=hit,strategy=moving-window
-       :sort: storage_type,limit
+      .. benchmark-chart::
+         :source: benchmark-summary
+         :query: group=test
+         :sort: storage_type,limit
+         :filters: strategy=,percentage_full=50,storage_type=,async=false
 
 
-.. tab:: Test
+   .. tab-item:: Get Window Stats
 
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=false,group=test,strategy=moving-window
-       :sort: storage_type,limit
+      Performance of :meth:`~limits.strategies.RateLimiter.get_window_stats`
+      with various rate limits
 
-.. tab:: Test (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=test,strategy=moving-window
-       :sort: storage_type,limit
-
-
-.. tab:: Get Window Stats
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=false,group=get-window-stats,strategy=moving-window
-       :sort: storage_type,limit
-
-.. tab:: Get Window Stats (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=get-window-stats,strategy=moving-window
-       :sort: storage_type,limit
-
-
-Sliding Window
-~~~~~~~~~~~~~~
-
-.. tab:: Hit
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=false,group=hit,strategy=sliding-window
-       :sort: storage_type,limit
-
-.. tab:: Hit (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=hit,strategy=sliding-window
-       :sort: storage_type,limit
-
-.. tab:: Test
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=false,group=test,strategy=sliding-window
-       :sort: storage_type,limit
-
-.. tab:: Test (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=test,strategy=sliding-window
-       :sort: storage_type,limit
-
-
-.. tab:: Get Window Stats
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=false,group=get-window-stats,strategy=sliding-window
-       :sort: storage_type,limit
-
-.. tab:: Get Window Stats (Async)
-
-    .. benchmark-chart::
-       :source: benchmark-summary
-       :query: async=true,group=get-window-stats,strategy=sliding-window
-       :sort: storage_type,limit
+      .. benchmark-chart::
+         :source: benchmark-summary
+         :query: group=get-window-stats
+         :sort: storage_type,limit
+         :filters: strategy=,percentage_full=50,storage_type=,async=false
 
 
 Benchmark run details
