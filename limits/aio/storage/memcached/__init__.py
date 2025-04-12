@@ -85,18 +85,6 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         """
         await self.bridge.clear(key)
 
-    async def decr(self, key: str, amount: int = 1, noreply: bool = False) -> int:
-        """
-        decrements the counter for a given rate limit key
-
-        retursn 0 if the key doesn't exist or if noreply is set to True
-
-        :param key: the key to decrement
-        :param amount: the number to decrement by
-        :param noreply: set to True to ignore the memcached response
-        """
-        return await self.bridge.decr(key, amount, noreply=noreply)
-
     async def incr(
         self,
         key: str,
@@ -166,7 +154,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
                 # Another hit won the race condition: revert the increment and refuse this hit
                 # Limitation: during high concurrency at the end of the window,
                 # the counter is shifted and cannot be decremented, so less requests than expected are allowed.
-                await self.decr(current_key, amount, noreply=True)
+                await self.bridge.decr(current_key, amount, noreply=True)
                 return False
             return True
 

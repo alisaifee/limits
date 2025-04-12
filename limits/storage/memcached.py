@@ -153,6 +153,8 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         Return multiple counters at once
 
         :param keys: the keys to get the counter values for
+
+        :meta private:
         """
         return self.storage.get_many(keys)
 
