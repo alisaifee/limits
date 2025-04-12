@@ -6,11 +6,12 @@ import random
 import pytest
 
 import limits.aio.strategies
-from limits import RateLimitItemPerDay, RateLimitItemPerMinute
+from limits import RateLimitItem, RateLimitItemPerDay, RateLimitItemPerMinute
 from limits.storage import storage_from_string
 from limits.strategies import (
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
+    RateLimiter,
     SlidingWindowCounterRateLimiter,
 )
 from tests.utils import ALL_STORAGES, ALL_STORAGES_ASYNC
@@ -19,7 +20,6 @@ benchmark_limits = pytest.mark.parametrize(
     "limit",
     [
         RateLimitItemPerMinute(500),
-        RateLimitItemPerMinute(1000),
         RateLimitItemPerDay(10000),
         RateLimitItemPerDay(100000),
     ],
@@ -80,12 +80,21 @@ def call_get_window_stats(strategy, storage, limit, event_loop=None):
         event_loop.run_until_complete(call)
 
 
-def seed_limit(limiter, limit, event_loop=None):
-    for uid in range(100):
-        call = limiter.hit(limit, uid, cost=int(limit.amount / 2))
-
-        if isinstance(limiter, limits.aio.strategies.RateLimiter):
-            event_loop.run_until_complete(call)
+def seed_limit(
+    limiter: RateLimiter | limits.aio.strategies.RateLimiter,
+    limit: RateLimitItem,
+    percentage_full: float,
+    event_loop=None,
+):
+    if percentage_full > 0:
+        for uid in range(100):
+            clear_call = limiter.storage.clear(limit.key_for(uid))
+            call = limiter.hit(
+                limit, uid, cost=int(limit.amount * percentage_full / 100.0)
+            )
+            if isinstance(limiter, limits.aio.strategies.RateLimiter):
+                event_loop.run_until_complete(clear_call)
+                event_loop.run_until_complete(call)
 
 
 @benchmark_all_storages
@@ -100,10 +109,12 @@ def seed_limit(limiter, limit, event_loop=None):
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
-def test_hit(benchmark, strategy, uri, args, limit, fixture):
-    benchmark.extra_info["async"] = False
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
+def test_hit(benchmark, strategy, uri, args, limit, percentage_full, fixture):
+    storage = storage_from_string(uri, **args)
+    seed_limit(strategy(storage), limit, percentage_full)
     benchmark(
-        functools.partial(call_hit, strategy, storage_from_string(uri, **args), limit)
+        functools.partial(call_hit, strategy, storage_from_string(uri, **args), limit),
     )
 
 
@@ -118,11 +129,16 @@ def test_hit(benchmark, strategy, uri, args, limit, fixture):
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="get-window-stats")
-def test_get_window_stats(benchmark, strategy, uri, args, limit, fixture):
+def test_get_window_stats(
+    benchmark, strategy, uri, args, limit, percentage_full, fixture
+):
     storage = storage_from_string(uri, **args)
-    seed_limit(strategy(storage), limit)
-    benchmark(functools.partial(call_get_window_stats, strategy, storage, limit))
+    seed_limit(strategy(storage), limit, percentage_full)
+    benchmark(
+        functools.partial(call_get_window_stats, strategy, storage, limit),
+    )
 
 
 @benchmark_all_storages
@@ -136,11 +152,14 @@ def test_get_window_stats(benchmark, strategy, uri, args, limit, fixture):
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="test")
-def test_test(benchmark, strategy, uri, args, limit, fixture):
+def test_test(benchmark, strategy, uri, args, limit, percentage_full, fixture):
     storage = storage_from_string(uri, **args)
-    seed_limit(strategy(storage), limit)
-    benchmark(functools.partial(call_test, strategy, storage, limit))
+    seed_limit(strategy(storage), limit, percentage_full)
+    benchmark(
+        functools.partial(call_test, strategy, storage, limit),
+    )
 
 
 @benchmark_all_async_storages
@@ -154,16 +173,21 @@ def test_test(benchmark, strategy, uri, args, limit, fixture):
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="hit")
-def test_hit_async(event_loop, benchmark, strategy, uri, args, limit, fixture):
+def test_hit_async(
+    event_loop, benchmark, strategy, uri, args, limit, percentage_full, fixture
+):
+    storage = storage_from_string(uri, **args)
+    seed_limit(strategy(storage), limit, percentage_full, event_loop)
     benchmark(
         functools.partial(
             call_hit,
             strategy,
-            storage_from_string(uri, **args),
+            storage,
             limit,
             event_loop,
-        )
+        ),
     )
 
 
@@ -178,12 +202,13 @@ def test_hit_async(event_loop, benchmark, strategy, uri, args, limit, fixture):
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="get-window-stats")
 def test_get_window_stats_async(
-    event_loop, benchmark, strategy, uri, args, limit, fixture
+    event_loop, benchmark, strategy, uri, args, limit, percentage_full, fixture
 ):
     storage = storage_from_string(uri, **args)
-    seed_limit(strategy(storage), limit, event_loop)
+    seed_limit(strategy(storage), limit, percentage_full, event_loop)
     benchmark(
         functools.partial(
             call_get_window_stats,
@@ -191,7 +216,7 @@ def test_get_window_stats_async(
             storage,
             limit,
             event_loop,
-        )
+        ),
     )
 
 
@@ -206,10 +231,13 @@ def test_get_window_stats_async(
     ],
     ids=["fixed-window", "sliding-window", "moving-window"],
 )
+@pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="test")
-def test_test_async(event_loop, benchmark, strategy, uri, args, limit, fixture):
+def test_test_async(
+    event_loop, benchmark, strategy, uri, args, limit, percentage_full, fixture
+):
     storage = storage_from_string(uri, **args)
-    seed_limit(strategy(storage), limit, event_loop)
+    seed_limit(strategy(storage), limit, percentage_full, event_loop)
     benchmark(
         functools.partial(
             call_test,
@@ -217,5 +245,5 @@ def test_test_async(event_loop, benchmark, strategy, uri, args, limit, fixture):
             storage,
             limit,
             event_loop,
-        )
+        ),
     )

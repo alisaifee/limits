@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
 from typing import TYPE_CHECKING
 
 from docutils import nodes
@@ -31,13 +32,14 @@ def query(argument):
 
 
 def filters(argument):
-    filters: dict[str, list | bool] = {}
+    filters: dict[str, dict[str, str | bool]] = {}
     for filter in argument.strip().split(","):
-        if ":" in filter:
-            source, value = filter.split(":")
-            filters.setdefault(source, []).append(value)
+        source, default = filter.split("=")
+        if ":" in source:
+            source, label = source.split(":")
         else:
-            filters[filter] = True
+            source, label = source, source
+        filters[source] = {"label": label, "default": check_bool(default)}
     return filters
 
 
@@ -66,7 +68,6 @@ class BenchmarkDetails(SphinxDirective):
 
 
 class BenchmarkChart(SphinxDirective):
-    required_arguments = 0
     final_argument_whitespace = False
     option_spec = {
         "source": str,
@@ -78,17 +79,18 @@ class BenchmarkChart(SphinxDirective):
 
     def run(self):
         source = self.options.get("source", "benchmark-summary")
-        filters = self.options.get("filters", ["group"])
+        filters = self.options.get("filters", {})
         query = self.options.get("query", {})
         sortBy = self.options.get("sort", [])
-
         html = f"""
                 <div
                     class='benchmark-chart'
                     data-source='{source}'
                     data-filters='{json.dumps(filters)}'
                     data-query='{json.dumps(query)}'
-                    data-sortBy='{json.dumps(sortBy)}'>
+                    data-sort-by='{json.dumps(sortBy)}'
+                    data-chart-id='{uuid.uuid4().hex}'
+                    data-param-mapping='{json.dumps(self.env.config.benchmark_param_mapping)}'>
                 </div>
                 """
 
@@ -117,6 +119,7 @@ def setup(app: Sphinx):
     app.add_directive("benchmark-chart", BenchmarkChart)
     app.add_directive("benchmark-details", BenchmarkDetails)
     app.add_config_value("benchmark_git_context", default={}, rebuild="env")
+    app.add_config_value("benchmark_param_mapping", default={}, rebuild="env")
 
     def add_assets(app, env) -> None:
         static_path = os.path.join(here, "_static")
