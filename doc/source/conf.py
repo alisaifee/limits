@@ -39,7 +39,15 @@ else:
         "branch": git_info.get("branch", ""),
         "sha": git_info.get("long", None)
     }
-
+benchmark_param_mapping = {
+    "percentage_full": {
+        "display": "Percentage Seeded",
+        "info": "Percentage of rate limit already filled before the benchmark is run",
+    },
+    "async": {"display": "Asyncio", "info": "Using asyncio storage implementation"},
+    "storage_type": {"display": "Storage", "info": "Storage Backend"},
+    "strategy": {"display": "Strategy", "info": "Rate Limiting Strategy"},
+}
 html_static_path = ["_static"]
 
 html_css_files = [
@@ -73,6 +81,7 @@ extensions = [
     "sphinxext.opengraph",
     "sphinxcontrib.programoutput",
     "sphinx_copybutton",
+    "sphinx_design",
     "sphinx_inline_tabs",
     "sphinx_paramlinks",
     "bench_chart",

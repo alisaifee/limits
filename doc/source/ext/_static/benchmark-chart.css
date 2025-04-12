@@ -1,3 +1,11 @@
+.plot-container {
+  filter: invert(100%);
+}
+
+body[data-theme="light"] .plot-container {
+  filter: invert(0);
+}
+
 .benchmark-chart {
   width: 100%;
 }
@@ -34,28 +42,56 @@
   0% {
     opacity: 0;
   }
-  ,
   25% {
-    opacity: 25%;
+    opacity: 0.25;
   }
-  ,
   50% {
-    opacity: 50%;
+    opacity: 0.5;
   }
-  ,
   90% {
-    opacity: 90%;
+    opacity: 0.9;
   }
-  ,
   100% {
-    opacity: 100%;
+    opacity: 1;
+  }
+}
+.benchmark-filters {
+  padding-top: 1em;
+  padding-bottom: 1em;
+  display: flex;
+  justify-content: flex-end;
+}
+.benchmark-filter-dropdowns {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  margin-top: 2em;
+  flex-direction: row;
+  @media only screen and (max-width: 800px) {
+    flex-basis: min-content;
+  }
+  @media only screen and (max-width: 400px) {
+    flex-basis: max-content;
+    flex-direction: column;
   }
 }
 
-.plot-container {
-  filter: invert(100%);
+.benchmark-filter {
+  display: flex;
+  flex-direction: row;
+  gap: 0.25em;
+  padding: 0.25em;
 }
 
-body[data-theme="light"] .plot-container {
-  filter: invert(0);
+.benchmark-filter label {
+  font-size: small;
+  font-weight: bold;
+}
+
+.benchmark-filter select {
+  font-size: small;
+  border: 1px solid;
+  border-radius: 0.4em;
+}
+.benchmark-filter input[type="checkbox"] {
 }
