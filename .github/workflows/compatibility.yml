@@ -45,8 +45,6 @@ jobs:
             marker: "memcached"
           - service_version: "LIMITS_MEMCACHED_SERVER_VERSION=1.5.16"
             marker: "memcached"
-          - service_version: "LIMITS_MEMCACHED_SERVER_VERSION=1.4.34"
-            marker: "memcached"
           - service_version: "LIMITS_VALKEY_SERVER_VERSION=7.2"
             marker: "valkey"
           - service_version: "LIMITS_VALKEY_SERVER_VERSION=8.0"
