@@ -277,9 +277,10 @@ document.addEventListener("DOMContentLoaded", function () {
           getBenchmarkData(results, queryFilter),
           sortBy,
         );
-        let legendGroupKey = Object.entries(queryFilter).find(
-          (entry) => entry[1] === "",
-        )?.[0];
+        let legendGroupKey =
+          queryFilter?.storage_type == ""
+            ? "storage_type"
+            : Object.entries(queryFilter).find((entry) => entry[1] === "")?.[0];
         Plotly.newPlot(
           chartTarget,
           data.map((benchmark) => ({

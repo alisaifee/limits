@@ -12,12 +12,12 @@ a high level overview of the performance.
 
 .. dropdown:: Benchmark parameters
 
-  - 100 unique "users"
-  - A rate limit of ``500/minute``
-  - Each "user's" limit was pre-seeded to be 50% full.
+   - 100 unique virtual users (i.e. unique rate limit keys)
+   - A rate limit of ``500/minute``
+   - Each virtual user's limit was pre-seeded to be 50% full.
 
-  See :ref:`performance:benchmark run details` for information on the benchmarking
-  environment.
+   See :ref:`performance:benchmark run details` for information on the benchmarking
+   environment.
 
 .. tab-set::
 
@@ -68,56 +68,56 @@ The following benchmarks demonstrate the implications when using various limits.
 
 .. dropdown:: Benchmark parameters
 
-   - 100 unique "users"
-   - Rate limits of
+  - 100 unique virtual users
+  - Rate limits of
 
-     - ``500/minute``
-     - ``10000/day``
-     - ``100000/day``
-   - Each "user's" limit was pre-seeded to be:
+    - ``500/minute``
+    - ``10000/day``
+    - ``100000/day``
+  - Each virtual user's limit was pre-seeded to be:
 
-     - 5% full.
-     - 50% full.
-     - 90% full.
+    - 5% full.
+    - 50% full.
+    - 90% full.
 
   See :ref:`performance:benchmark run details` for information on the benchmarking
   environment.
 
 .. tab-set::
 
-    .. tab-item::  Hit
+   .. tab-item::  Hit
 
-       Performance of :meth:`~limits.strategies.RateLimiter.hit`
-       with various rate limits
+      Performance of :meth:`~limits.strategies.RateLimiter.hit`
+      with various rate limits
 
-        .. benchmark-chart::
-           :source: benchmark-summary
-           :query: group=hit
-           :sort: storage_type,limit
-           :filters: strategy=,percentage_full=50,storage_type=,async=false
+      .. benchmark-chart::
+         :source: benchmark-summary
+         :query: group=hit
+         :sort: storage_type,limit
+         :filters: strategy=,percentage_full=50,storage_type=,async=false
 
-    .. tab-item:: Test
+   .. tab-item:: Test
 
-       Performance of :meth:`~limits.strategies.RateLimiter.test`
-       with various rate limits
+      Performance of :meth:`~limits.strategies.RateLimiter.test`
+      with various rate limits
 
-        .. benchmark-chart::
-           :source: benchmark-summary
-           :query: group=test
-           :sort: storage_type,limit
-           :filters: strategy=,percentage_full=50,storage_type=,async=false
+      .. benchmark-chart::
+         :source: benchmark-summary
+         :query: group=test
+         :sort: storage_type,limit
+         :filters: strategy=,percentage_full=50,storage_type=,async=false
 
 
-    .. tab-item:: Get Window Stats
+   .. tab-item:: Get Window Stats
 
-       Performance of :meth:`~limits.strategies.RateLimiter.get_window_stats`
-       with various rate limits
+      Performance of :meth:`~limits.strategies.RateLimiter.get_window_stats`
+      with various rate limits
 
-        .. benchmark-chart::
-           :source: benchmark-summary
-           :query: group=get-window-stats
-           :sort: storage_type,limit
-           :filters: strategy=,percentage_full=50,storage_type=,async=false
+      .. benchmark-chart::
+         :source: benchmark-summary
+         :query: group=get-window-stats
+         :sort: storage_type,limit
+         :filters: strategy=,percentage_full=50,storage_type=,async=false
 
 
 Benchmark run details
