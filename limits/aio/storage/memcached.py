@@ -93,7 +93,10 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         """
         :param key: the key to clear rate limits for
         """
-        await (await self.get_storage()).delete(key.encode("utf-8"))
+        try:
+            await (await self.get_storage()).delete(key.encode("utf-8"))
+        except self.dependency.NotFoundCommandError:
+            pass
 
     async def decr(self, key: str, amount: int = 1, noreply: bool = False) -> int:
         """
