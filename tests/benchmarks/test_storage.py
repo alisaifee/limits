@@ -43,6 +43,7 @@ benchmark_all_async_storages = pytest.mark.parametrize(
         if name in {"memory", "redis", "memcached", "mongodb"}
     ],
 )
+USERS_COUNT = 100
 
 
 @pytest.fixture(autouse=True)
@@ -57,7 +58,7 @@ def ensure_supported(strategy, uri):
 
 
 def call_hit(strategy, storage, limit, event_loop=None):
-    uid = int(random.random() * 100)
+    uid = int(random.random() * USERS_COUNT)
     call = strategy(storage).hit(limit, uid)
 
     if isinstance(storage, limits.aio.storage.Storage):
@@ -65,7 +66,7 @@ def call_hit(strategy, storage, limit, event_loop=None):
 
 
 def call_test(strategy, storage, limit, event_loop=None):
-    uid = int(random.random() * 100)
+    uid = int(random.random() * USERS_COUNT)
     call = strategy(storage).test(limit, uid)
 
     if isinstance(storage, limits.aio.storage.Storage):
@@ -73,11 +74,21 @@ def call_test(strategy, storage, limit, event_loop=None):
 
 
 def call_get_window_stats(strategy, storage, limit, event_loop=None):
-    uid = int(random.random() * 100)
+    uid = int(random.random() * USERS_COUNT)
     call = strategy(storage).get_window_stats(limit, uid)
 
     if isinstance(storage, limits.aio.storage.Storage):
         event_loop.run_until_complete(call)
+
+
+def calculate_rounds(
+    limit: RateLimitItem,
+    percentage_full: float,
+):
+    max_capacity_remaining = int(
+        (limit.amount * (100 - percentage_full) / 100) * USERS_COUNT
+    )
+    return min(2000, max_capacity_remaining)
 
 
 def seed_limit(
@@ -87,7 +98,7 @@ def seed_limit(
     event_loop=None,
 ):
     if percentage_full > 0:
-        for uid in range(100):
+        for uid in range(USERS_COUNT):
             clear_call = limiter.storage.clear(limit.key_for(uid))
             call = limiter.hit(
                 limit, uid, cost=int(limit.amount * percentage_full / 100.0)
@@ -113,8 +124,9 @@ def seed_limit(
 def test_hit(benchmark, strategy, uri, args, limit, percentage_full, fixture):
     storage = storage_from_string(uri, **args)
     seed_limit(strategy(storage), limit, percentage_full)
-    benchmark(
+    benchmark.pedantic(
         functools.partial(call_hit, strategy, storage_from_string(uri, **args), limit),
+        rounds=calculate_rounds(limit, percentage_full),
     )
 
 
@@ -136,8 +148,9 @@ def test_get_window_stats(
 ):
     storage = storage_from_string(uri, **args)
     seed_limit(strategy(storage), limit, percentage_full)
-    benchmark(
+    benchmark.pedantic(
         functools.partial(call_get_window_stats, strategy, storage, limit),
+        rounds=calculate_rounds(limit, percentage_full),
     )
 
 
@@ -157,8 +170,9 @@ def test_get_window_stats(
 def test_test(benchmark, strategy, uri, args, limit, percentage_full, fixture):
     storage = storage_from_string(uri, **args)
     seed_limit(strategy(storage), limit, percentage_full)
-    benchmark(
+    benchmark.pedantic(
         functools.partial(call_test, strategy, storage, limit),
+        rounds=calculate_rounds(limit, percentage_full),
     )
 
 
@@ -180,7 +194,7 @@ def test_hit_async(
 ):
     storage = storage_from_string(uri, **args)
     seed_limit(strategy(storage), limit, percentage_full, event_loop)
-    benchmark(
+    benchmark.pedantic(
         functools.partial(
             call_hit,
             strategy,
@@ -188,6 +202,7 @@ def test_hit_async(
             limit,
             event_loop,
         ),
+        rounds=calculate_rounds(limit, percentage_full),
     )
 
 
@@ -209,7 +224,7 @@ def test_get_window_stats_async(
 ):
     storage = storage_from_string(uri, **args)
     seed_limit(strategy(storage), limit, percentage_full, event_loop)
-    benchmark(
+    benchmark.pedantic(
         functools.partial(
             call_get_window_stats,
             strategy,
@@ -217,6 +232,7 @@ def test_get_window_stats_async(
             limit,
             event_loop,
         ),
+        rounds=calculate_rounds(limit, percentage_full),
     )
 
 
@@ -238,7 +254,7 @@ def test_test_async(
 ):
     storage = storage_from_string(uri, **args)
     seed_limit(strategy(storage), limit, percentage_full, event_loop)
-    benchmark(
+    benchmark.pedantic(
         functools.partial(
             call_test,
             strategy,
@@ -246,4 +262,5 @@ def test_test_async(
             limit,
             event_loop,
         ),
+        rounds=calculate_rounds(limit, percentage_full),
     )
