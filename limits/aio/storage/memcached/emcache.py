@@ -42,7 +42,10 @@ class EmcacheBridge(MemcachedBridge):
         return {k: int(item.value) if item else 0 for k, item in results.items()}
 
     async def clear(self, key: str) -> None:
-        await (await self.get_storage()).delete(key.encode("utf-8"))
+        try:
+            await (await self.get_storage()).delete(key.encode("utf-8"))
+        except self.dependency.NotFoundCommandError:
+            pass
 
     async def decr(self, key: str, amount: int = 1, noreply: bool = False) -> int:
         storage = await self.get_storage()
