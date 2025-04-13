@@ -3,6 +3,18 @@
 Changelog
 =========
 
+v4.7.3
+------
+Release Date: 2025-04-12
+
+* Documentation
+
+  * Expand benchmark results to included preseeded limits
+
+* Bug Fix
+
+  * Handle clearing missing key with memcache + async
+
 v4.7.2
 ------
 Release Date: 2025-04-09
@@ -792,6 +804,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
