@@ -389,6 +389,7 @@ class BenchmarkChart {
           ticksuffix: " ms",
           tickformat: ",.2f",
         },
+        xaxis: { automargin: true },
         title: comparing
           ? {
               text: `Comparing against: ${this.currentCompare}`,
