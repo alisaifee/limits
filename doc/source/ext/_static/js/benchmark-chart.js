@@ -62,10 +62,11 @@ class BenchmarkChartUtils {
       return num + "/" + (umap[u] || u);
     } else if (key === "percentage_full") {
       return `${str}% Seeded`;
+    } else if (key === "strategy") {
+      return str.replaceAll("-", " ").replace(/\b\w/g, s => s.toUpperCase());
     }
     return str;
   }
-
   static nameTransform(benchmark, stripParams, query) {
     let name = benchmark.name;
     let params = benchmark.params;
@@ -197,6 +198,16 @@ class BenchmarkChart {
       html`
         <div class="benchmark-chart-error">Benchmark data not available.</div>
       `,
+    );
+  }
+  chartTitle(query) {
+    let selectedFilters = Object.entries(query).filter(
+      (entry) => entry[1] != null && entry[1] != "" && !this.query.hasOwnProperty(entry[0]),
+    );
+    return selectedFilters.reduce(
+      (title, entry) =>
+        (title += ` ${title != "" ? "/" : ""} ${BenchmarkChartUtils.formatParam(entry[0], entry[1])}`),
+      "",
     );
   }
   renderCompare() {
@@ -346,16 +357,20 @@ class BenchmarkChart {
       queryFilter?.storage_type == ""
         ? "storage_type"
         : Object.entries(queryFilter).find((entry) => entry[1] === "")?.[0];
+
     function legendKeyFunc(benchmark, key) {
       return key === "group" ? benchmark.group : benchmark.params[key];
     }
-
+    let title = this.chartTitle(queryFilter);
+    if(comparing){
+        title = `${title} (Compared with: ${this.currentCompare})`;
+    }
     Plotly.newPlot(
       this.chartTarget,
       data.map((benchmark) => ({
         type: "box",
         name: BenchmarkChartUtils.nameTransform(benchmark, true, queryFilter),
-        opacity: benchmark.forComparison ? 0.75 : comparing ? 0.5 : 1,
+        opacity: benchmark.forComparison ? 0.25 : comparing ? 0.75 : 1,
         y: benchmark.stats.data || [
           benchmark.stats.min * 1e3,
           benchmark.stats.q1 * 1e3,
@@ -368,7 +383,7 @@ class BenchmarkChart {
         line: { width: 1 },
         marker: {
           color: benchmark.forComparison
-            ? "#39FF14"
+            ? "light-grey"
             : BenchmarkChartUtils.getColorForStorage(
                 benchmark.params.storage_type,
               ),
@@ -390,12 +405,10 @@ class BenchmarkChart {
           tickformat: ",.2f",
         },
         xaxis: { automargin: true },
-        title: comparing
-          ? {
-              text: `Comparing against: ${this.currentCompare}`,
-              font: { color: "39FF14" },
-            }
-          : {},
+        title: {
+          text: title,
+          font: { color: "light-grey" },
+        },
       },
       {
         responsive: true,
