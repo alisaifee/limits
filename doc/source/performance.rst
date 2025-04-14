@@ -78,7 +78,7 @@ The following benchmarks demonstrate the implications when using various limits.
 
     - 5% full.
     - 50% full.
-    - 90% full.
+    - 95% full.
 
   See :ref:`performance:benchmark run details` for information on the benchmarking
   environment.
