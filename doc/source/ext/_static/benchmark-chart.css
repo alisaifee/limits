@@ -1,11 +1,3 @@
-.plot-container {
-  filter: invert(100%);
-}
-
-body[data-theme="light"] .plot-container {
-  filter: invert(0);
-}
-
 .benchmark-chart {
   width: 100%;
 }
@@ -94,4 +86,9 @@ body[data-theme="light"] .plot-container {
   border-radius: 0.4em;
 }
 .benchmark-filter input[type="checkbox"] {
+}
+
+.compare-dropdowns {
+  display: flex;
+  justify-content: flex-end;
 }

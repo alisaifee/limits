@@ -104,7 +104,7 @@ def calculate_rounds(
     max_capacity_remaining = int(
         (limit.amount * (100 - percentage_full) / 100) * USERS_COUNT
     )
-    return min(2000, max_capacity_remaining)
+    return min(500, max_capacity_remaining)
 
 
 def seed_limit(
