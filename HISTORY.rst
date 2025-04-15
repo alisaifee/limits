@@ -3,6 +3,20 @@
 Changelog
 =========
 
+v5.0.0rc2
+---------
+Release Date: 2025-04-15
+
+* Compatibility
+
+  * Add back emcache as a non default implementation for memcached + asyncio
+  * Remove support for memcached < 1.5
+
+* Documentation
+
+  * Improve presentation of benchmark documentation
+
+
 v5.0.0rc1
 ---------
 Release Date: 2025-04-09
@@ -820,3 +834,4 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
