@@ -380,7 +380,7 @@ class BenchmarkChart {
     }
     let title = this.chartTitle(queryFilter);
     if (comparing) {
-      title = `${title}<br>Compared with: ${this.currentCompare}`;
+      title = `${title}<br><b style='color: var(--color-yellow)'>Compared with: ${this.currentCompare}</b>`;
     }
     Plotly.newPlot(
       this.chartTarget,
@@ -421,6 +421,8 @@ class BenchmarkChart {
           exponentformat: "none",
           ticksuffix: " ms",
           tickformat: ",.2f",
+          type: "log",
+          autorange: true,
         },
         xaxis: { automargin: true },
         title: {
