@@ -207,5 +207,6 @@ Links
 =====
 
 * `Documentation <http://limits.readthedocs.org/en/latest>`_
+* `Benchmarks <http://limits.readthedocs.org/en/latest/performance.html>`_
 * `Changelog <http://limits.readthedocs.org/en/stable/changelog.html>`_
 
