@@ -11,6 +11,12 @@ function getReleases() {
 }
 
 getReleases().then((response) => {
-  const releases = Object.entries(response.releases).map((entry) => entry[0]);
-  window.LATEST_RELEASES = releases.slice(-5).reverse();
+  const releases = Object.entries(response.releases)
+    .filter(
+      (entry) =>
+        !entry[1].yanked &&
+        /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(entry[0]),
+    )
+    .map((entry) => entry[0]);
+  window.LATEST_RELEASES = releases.slice(-3).reverse();
 });
