@@ -12,7 +12,7 @@ window.Benchmarks = {};
 let currentLoader = new BenchmarkLoader();
 let compareLoaders = {};
 
-class BenchmarkChartUtils {
+class Utils {
   static getBenchmarkData(result, query) {
     let benchmarks = result.benchmarks;
     return benchmarks.filter(function (benchmark) {
@@ -63,7 +63,9 @@ class BenchmarkChartUtils {
     } else if (key === "percentage_full") {
       return `${str}% Seeded`;
     } else if (key === "strategy") {
-      return str.replaceAll("-", " ").replace(/\b\w/g, s => s.toUpperCase());
+      return str.replaceAll("-", " ").replace(/\b\w/g, (s) => s.toUpperCase());
+    } else if (key === "async") {
+      return str == true ? "asyncio" : "sync";
     }
     return str;
   }
@@ -76,9 +78,9 @@ class BenchmarkChartUtils {
       .replaceAll("_", "-");
     name = name.replace(benchmark.group, "");
     let queryParam = Object.entries(query).map((entry) => entry[0]);
-    let additional = BenchmarkChartUtils.getRemainingGroups(benchmark, query);
+    let additional = Utils.getRemainingGroups(benchmark, query);
     Object.entries(additional).forEach((param) => {
-      let value = BenchmarkChartUtils.formatParam(param[0], param[1]);
+      let value = Utils.formatParam(param[0], param[1]);
       if (name) {
         name += ` - ${value}`;
       } else {
@@ -103,24 +105,19 @@ class BenchmarkChartUtils {
     });
     return additional;
   }
-
+  static color(name) {
+    return window
+      .getComputedStyle(document.body)
+      .getPropertyValue(`--color-${name}`);
+  }
   static getColorForStorage(storageType) {
     const storageColorMap = {
-      memory: window
-        .getComputedStyle(document.body)
-        .getPropertyValue("--color-purple"),
-      mongodb: window
-        .getComputedStyle(document.body)
-        .getPropertyValue("--color-yellow"),
-      memcached: window
-        .getComputedStyle(document.body)
-        .getPropertyValue("--color-blue"),
-      redis: window
-        .getComputedStyle(document.body)
-        .getPropertyValue("--color-red"),
+      memory: this.color("purple"),
+      mongodb: this.color("mongodb"),
+      memcached: this.color("blue"),
+      redis: this.color("redis"),
     };
 
-    // Fallback color if an unknown storageType appears
     return storageColorMap[storageType] || "#7f7f7f"; // gray
   }
 
@@ -153,6 +150,7 @@ class BenchmarkChartUtils {
 class BenchmarkChart {
   constructor(node) {
     this.chart = node;
+    this.title = this.chart.dataset.title;
     this.source = this.chart.dataset.source;
     this.filters = JSON.parse(this.chart.dataset.filters);
     this.query = JSON.parse(this.chart.dataset.query);
@@ -202,13 +200,21 @@ class BenchmarkChart {
   }
   chartTitle(query) {
     let selectedFilters = Object.entries(query).filter(
-      (entry) => entry[1] != null && entry[1] != "" && !this.query.hasOwnProperty(entry[0]),
+      (entry) =>
+        entry[1] != null &&
+        entry[1] != "" &&
+        !this.query.hasOwnProperty(entry[0]),
     );
-    return selectedFilters.reduce(
+    let derivedTitle = selectedFilters.reduce(
       (title, entry) =>
-        (title += ` ${title != "" ? "/" : ""} ${BenchmarkChartUtils.formatParam(entry[0], entry[1])}`),
+        (title += `${title == "" ? "" : ", "}${Utils.formatParam(entry[0], entry[1])}`),
       "",
     );
+    if (this.title != "") {
+      return `${this.title}<br>${derivedTitle}`;
+    } else {
+      return derivedTitle;
+    }
   }
   renderCompare() {
     const compareTargets = ["master", "stable", "4.x"]
@@ -216,25 +222,32 @@ class BenchmarkChart {
       .filter((element) => element != window.GITBRANCH);
     let self = this;
     const compareDropdown = html`
-      <div class="compare" title="Compare against another release or branch">
-        <label for="compare-select">
+      <div
+        class="compare-filter"
+        title="Compare against another release or branch"
+      >
+        <label>
           Compare with
           <select
             onchange=${(e) => {
               const value = e.target.value;
               self.currentCompare = value;
+
               if (value !== "") {
-                BenchmarkChartUtils.fetchComparisonData(
-                  self.source,
-                  value,
-                ).then(function (comparisonData) {
-                  self.currentComparisonData = comparisonData;
-                  self.renderChartWithFilters();
-                });
+                Utils.fetchComparisonData(self.source, value).then(
+                  function (comparisonData) {
+                    self.currentComparisonData = comparisonData;
+                    self.renderChartWithFilters();
+                  },
+                );
               } else {
                 self.currentComparisonData = null;
                 self.renderChartWithFilters();
               }
+              let event = new Event("benchmark-compare-changed");
+              event.compare = self.currentCompare;
+              event.source = self;
+              window.dispatchEvent(event);
             }}
           >
             <option value=""></option>
@@ -252,9 +265,16 @@ class BenchmarkChart {
         </label>
       </div>
     `;
+    window.addEventListener("benchmark-compare-changed", function (event) {
+      let select = self.compareTarget.getElementsByTagName("select")[0];
+      if (event.source != self && select.value != event.compare) {
+        select.value = event.compare;
+        select.dispatchEvent(new Event("change"));
+      }
+    });
     render(
       this.compareTarget,
-      html`<div class="compare-dropdowns">${compareDropdown}</div>`,
+      html`<div class="compare-dropdown">${compareDropdown}</div>`,
     );
   }
   renderDropdowns() {
@@ -333,25 +353,22 @@ class BenchmarkChart {
   }
   renderChartWithFilters() {
     const queryFilter = { ...this.query, ...this.currentFilters };
-    let data = BenchmarkChartUtils.sortBenchmarksByParams(
-      BenchmarkChartUtils.getBenchmarkData(this.results, queryFilter),
+    let data = Utils.sortBenchmarksByParams(
+      Utils.getBenchmarkData(this.results, queryFilter),
       this.sortBy,
     );
     let comparisonData = [];
     let comparing = false;
     if (this.currentComparisonData?.benchmarks) {
-      comparisonData = BenchmarkChartUtils.sortBenchmarksByParams(
-        BenchmarkChartUtils.getBenchmarkData(
-          this.currentComparisonData,
-          queryFilter,
-        ),
+      comparisonData = Utils.sortBenchmarksByParams(
+        Utils.getBenchmarkData(this.currentComparisonData, queryFilter),
         this.sortBy,
       );
       comparisonData.forEach((benchmark) => {
         benchmark.forComparison = true;
       });
       comparing = true;
-      data = data.concat(comparisonData);
+      data = comparisonData.concat(data);
     }
     let legendGroupKey =
       queryFilter?.storage_type == ""
@@ -362,41 +379,42 @@ class BenchmarkChart {
       return key === "group" ? benchmark.group : benchmark.params[key];
     }
     let title = this.chartTitle(queryFilter);
-    if(comparing){
-        title = `${title} (Compared with: ${this.currentCompare})`;
+    if (comparing) {
+      title = `${title}<br>Compared with: ${this.currentCompare}`;
     }
     Plotly.newPlot(
       this.chartTarget,
-      data.map((benchmark) => ({
-        type: "box",
-        name: BenchmarkChartUtils.nameTransform(benchmark, true, queryFilter),
-        opacity: benchmark.forComparison ? 0.25 : comparing ? 0.75 : 1,
-        y: benchmark.stats.data || [
-          benchmark.stats.min * 1e3,
-          benchmark.stats.q1 * 1e3,
-          benchmark.stats.median * 1e3,
-          benchmark.stats.q3 * 1e3,
-          benchmark.stats.max * 1e3,
-        ],
-        boxmean: true,
-        boxpoints: false,
-        line: { width: 1 },
-        marker: {
-          color: benchmark.forComparison
-            ? "light-grey"
-            : BenchmarkChartUtils.getColorForStorage(
-                benchmark.params.storage_type,
-              ),
-        },
-        showlegend: !benchmark.forComparison,
-        legendgroup: legendKeyFunc(benchmark, legendGroupKey),
-        legendgrouptitle: {
-          text: BenchmarkChartUtils.formatParam(
-            legendGroupKey,
-            legendKeyFunc(benchmark, legendGroupKey),
-          ),
-        },
-      })),
+      data.map((benchmark) => {
+        let name = Utils.nameTransform(benchmark, true, queryFilter);
+        return {
+          type: "box",
+          name: name,
+          opacity: benchmark.forComparison ? 0.5 : comparing ? 0.75 : 1,
+          y: benchmark.stats.data || [
+            benchmark.stats.min * 1e3,
+            benchmark.stats.q1 * 1e3,
+            benchmark.stats.median * 1e3,
+            benchmark.stats.q3 * 1e3,
+            benchmark.stats.max * 1e3,
+          ],
+          boxmean: true,
+          boxpoints: false,
+          line: { width: 1 },
+          marker: {
+            color: benchmark.forComparison
+              ? Utils.color("yellow")
+              : Utils.getColorForStorage(benchmark.params.storage_type),
+          },
+          showlegend: !benchmark.forComparison,
+          legendgroup: legendKeyFunc(benchmark, legendGroupKey),
+          legendgrouptitle: {
+            text: Utils.formatParam(
+              legendGroupKey,
+              legendKeyFunc(benchmark, legendGroupKey),
+            ),
+          },
+        };
+      }),
       {
         yaxis: {
           title: { text: "Time (ms)" },
@@ -407,7 +425,12 @@ class BenchmarkChart {
         xaxis: { automargin: true },
         title: {
           text: title,
-          font: { color: "light-grey" },
+        },
+        paper_bgcolor: Utils.color("background-secondary"),
+        plot_bgcolor: Utils.color("background-secondary"),
+        font: {
+          family: "Fira Sans",
+          color: Utils.color("fg"),
         },
       },
       {
@@ -420,10 +443,7 @@ class BenchmarkChart {
     this.chart.innerHTML = "";
     this.chart.querySelector(".benchmark-chart-loading")?.remove();
     this.results = currentLoader.sources[this.source];
-    this.allBenchmarks = BenchmarkChartUtils.getBenchmarkData(
-      this.results,
-      this.query,
-    );
+    this.allBenchmarks = Utils.getBenchmarkData(this.results, this.query);
     this.currentFilters = Object.fromEntries(
       Object.entries(this.filters).map(([key, value]) => {
         return typeof value.default === "boolean"

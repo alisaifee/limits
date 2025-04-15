@@ -68,6 +68,11 @@
   }
 }
 
+.compare-dropdown {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .benchmark-filter {
   display: flex;
   flex-direction: row;
@@ -75,20 +80,15 @@
   padding: 0.25em;
 }
 
-.benchmark-filter label {
+.benchmark-filter label,
+.compare-filter label {
   font-size: small;
   font-weight: bold;
 }
 
-.benchmark-filter select {
+.benchmark-filter select,
+.compare-filter select {
   font-size: small;
   border: 1px solid;
   border-radius: 0.4em;
-}
-.benchmark-filter input[type="checkbox"] {
-}
-
-.compare-dropdowns {
-  display: flex;
-  justify-content: flex-end;
 }

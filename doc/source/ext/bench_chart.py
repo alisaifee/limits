@@ -70,6 +70,7 @@ class BenchmarkDetails(SphinxDirective):
 class BenchmarkChart(SphinxDirective):
     final_argument_whitespace = False
     option_spec = {
+        "title": str,
         "source": str,
         "query": query,
         "filters": filters,
@@ -78,6 +79,7 @@ class BenchmarkChart(SphinxDirective):
     has_content = False
 
     def run(self):
+        title = self.options.get("title", "")
         source = self.options.get("source", "benchmark-summary")
         filters = self.options.get("filters", {})
         query = self.options.get("query", {})
@@ -85,6 +87,7 @@ class BenchmarkChart(SphinxDirective):
         html = f"""
                 <div
                     class='benchmark-chart'
+                    data-title='{title}'
                     data-source='{source}'
                     data-filters='{json.dumps(filters)}'
                     data-query='{json.dumps(query)}'

@@ -1,3 +1,4 @@
+===========
 Performance
 ===========
 
@@ -5,7 +6,7 @@ The performance of each rate-limiting strategy and storage backend
 differs in both throughput and storage cost characteristics.
 
 Performance by storage and strategy
------------------------------------
+===================================
 Below you will find benchmarks for each strategy and storage giving
 a high level overview of the performance.
 
@@ -57,14 +58,13 @@ a high level overview of the performance.
 
 
 Performance implication of limit sizes
---------------------------------------
+======================================
 
-Though for :ref:`strategies:fixed window` and :ref:`strategies:sliding window counter` both the
-storage cost and performance of operations remains constant when the limit window and size varies,
-this is not true for :ref:`strategies:moving window` which maintains a complete log of successful
-requests within the window.
-
-The following benchmarks demonstrate the implications when using various limits.
+For :ref:`strategies:fixed window` and :ref:`strategies:sliding window counter` both the
+storage cost and performance of operations remains mostly constant when the limit window and size
+varies. This is not always true for :ref:`strategies:moving window` which maintains a complete log of successful
+requests within the rate limit window.  This has both a cost and computation implication depending
+on the limit size and load.
 
 .. dropdown:: Benchmark parameters
 
@@ -83,44 +83,137 @@ The following benchmarks demonstrate the implications when using various limits.
   See :ref:`performance:benchmark run details` for information on the benchmarking
   environment.
 
-.. tab-set::
+.. tab:: Fixed Window
 
-   .. tab-item::  Hit
+       .. tab::  Hit
 
-      Performance of :meth:`~limits.strategies.RateLimiter.hit`
-      with various rate limits
+          Performance of :meth:`limits.strategies.FixedWindowRateLimiter.hit`
+          with different rate limits and storages and with each rate limit
+          pre-seeded to different percentages to show the implications of limit size.
 
-      .. benchmark-chart::
-         :source: benchmark-summary
-         :query: group=hit
-         :sort: storage_type,limit
-         :filters: strategy=,percentage_full=50,storage_type=,async=false
+          .. benchmark-chart::
+             :title: Fixed Window (hit)
+             :source: benchmark-summary
+             :query: group=hit,strategy=fixed-window
+             :sort: strategy,storage_type,limit
+             :filters: percentage_full=95,storage_type=,limit=,async=false
 
-   .. tab-item:: Test
+       .. tab:: Test
 
-      Performance of :meth:`~limits.strategies.RateLimiter.test`
-      with various rate limits
-
-      .. benchmark-chart::
-         :source: benchmark-summary
-         :query: group=test
-         :sort: storage_type,limit
-         :filters: strategy=,percentage_full=50,storage_type=,async=false
+          Performance of :meth:`limits.strategies.FixedWindowRateLimiter.test`
+          with different rate limits and storages and with each rate limit
+          pre-seeded to different percentages to show the implications of limit size.
 
 
-   .. tab-item:: Get Window Stats
+          .. benchmark-chart::
+             :title: Fixed Window (test)
+             :source: benchmark-summary
+             :query: group=test,strategy=fixed-window
+             :sort: strategy,storage_type,limit
+             :filters: percentage_full=95,storage_type=,limit=,async=false
 
-      Performance of :meth:`~limits.strategies.RateLimiter.get_window_stats`
-      with various rate limits
 
-      .. benchmark-chart::
-         :source: benchmark-summary
-         :query: group=get-window-stats
-         :sort: storage_type,limit
-         :filters: strategy=,percentage_full=50,storage_type=,async=false
+       .. tab:: Get Window Stats
+
+          Performance of :meth:`limits.strategies.FixedWindowRateLimiter.get_window_stats`
+          with different rate limits and storages and with each rate limit
+          pre-seeded to different percentages to show the implications of limit size.
+
+          .. benchmark-chart::
+             :title: Fixed Window (test)
+             :source: benchmark-summary
+             :query: group=get-window-stats,strategy=fixed-window
+             :sort: strategy,storage_type,limit
+             :filters: percentage_full=95,storage_type=,limit=,async=false
+
+.. tab:: Sliding Window Counter
+
+       .. tab::  Hit
+
+          Performance of :meth:`limits.strategies.SlidingWindowCounterRateLimiter.hit`
+          with different rate limits and storages and with each rate limit
+          pre-seeded to different percentages to show the implications of limit size.
+
+          .. benchmark-chart::
+             :title: Sliding Window Counter (hit)
+             :source: benchmark-summary
+             :query: group=hit,strategy=sliding-window
+             :sort: strategy,storage_type,limit
+             :filters: percentage_full=95,storage_type=,limit=,async=false
+
+       .. tab:: Test
+
+          Performance of :meth:`limits.strategies.SlidingWindowCounterRateLimiter.test`
+          with different rate limits and storages and with each rate limit
+          pre-seeded to different percentages to show the implications of limit size.
+
+
+          .. benchmark-chart::
+             :title: Sliding Window Counter (test)
+             :source: benchmark-summary
+             :query: group=test,strategy=sliding-window
+             :sort: strategy,storage_type,limit
+             :filters: percentage_full=95,storage_type=,limit=,async=false
+
+
+       .. tab:: Get Window Stats
+
+          Performance of :meth:`limits.strategies.SlidingWindowCounterRateLimiter.get_window_stats`
+          with different rate limits and storages and with each rate limit
+          pre-seeded to different percentages to show the implications of limit size.
+
+          .. benchmark-chart::
+             :title: Sliding Window Counter (get_window_stats)
+             :source: benchmark-summary
+             :query: group=get-window-stats,strategy=sliding-window
+             :sort: strategy,storage_type,limit
+             :filters: percentage_full=95,storage_type=,limit=,async=false
+
+.. tab:: Moving Window
+
+       .. tab::  Hit
+
+          Performance of :meth:`limits.strategies.MovingWindowRateLimiter.hit`
+          with different rate limits and storages and with each rate limit
+          pre-seeded to different percentages to show the implications of limit size.
+
+          .. benchmark-chart::
+             :title: Moving Window (hit)
+             :source: benchmark-summary
+             :query: group=hit,strategy=moving-window
+             :sort: strategy,storage_type,limit
+             :filters: percentage_full=95,storage_type=,limit=,async=false
+
+       .. tab:: Test
+
+          Performance of :meth:`limits.strategies.MovingWindowRateLimiter.test`
+          with different rate limits and storages and with each rate limit
+          pre-seeded to different percentages to show the implications of limit size.
+
+
+          .. benchmark-chart::
+             :title: Moving Window (test)
+             :source: benchmark-summary
+             :query: group=test,strategy=moving-window
+             :sort: strategy,storage_type,limit
+             :filters: percentage_full=95,storage_type=,limit=,async=false
+
+
+       .. tab:: Get Window Stats
+
+          Performance of :meth:`limits.strategies.MovingWindowRateLimiter.get_window_stats`
+          with different rate limits and storages and with each rate limit
+          pre-seeded to different percentages to show the implications of limit size.
+
+          .. benchmark-chart::
+             :title: Moving Window (get_window_stats)
+             :source: benchmark-summary
+             :query: group=get-window-stats,strategy=moving-window
+             :sort: strategy,storage_type,limit
+             :filters: percentage_full=95,storage_type=,limit=,async=false
 
 
 Benchmark run details
----------------------
+=====================
 .. benchmark-details::
    :source: benchmark-summary

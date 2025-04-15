@@ -26,6 +26,10 @@ colors = {
     "blue2": " #076678",
     "purple": " #b16286",
     "purple2": " #8f3f71",
+    "redis": "#D82C20",
+    "mongodb": "#00ED64",
+    "memcached": "",
+
 }
 
 html_theme = "furo"
@@ -44,6 +48,9 @@ html_theme_options = {
         "color-aqua": colors["aqua2"],
         "color-blue": colors["blue2"],
         "color-purple": colors["purple2"],
+        "color-redis": colors["redis"],
+        "color-mongodb": colors["mongodb"],
+        "color-memcached": colors["memcached"],
     },
     "dark_css_variables": {
         "color-brand-primary": colors["purple"],
@@ -63,6 +70,9 @@ html_theme_options = {
         "color-aqua": colors["aqua"],
         "color-blue": colors["blue"],
         "color-purple": colors["purple"],
+        "color-redis": colors["redis"],
+        "color-mongodb": colors["mongodb"],
+        "color-memcached": colors["memcached"],
     },
 }
 
