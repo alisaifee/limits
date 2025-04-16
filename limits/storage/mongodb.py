@@ -101,6 +101,7 @@ class MongoDBStorageBase(
     def __initialize_database(self) -> None:
         self.counters.create_index("expireAt", expireAfterSeconds=0)
         self.windows.create_index("expireAt", expireAfterSeconds=0)
+        self.windows.create_index("entries")
 
     def reset(self) -> int | None:
         """
