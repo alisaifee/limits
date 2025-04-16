@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.13"]
     env:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
       COMMIT: ${{ github.sha }}
