@@ -3,35 +3,24 @@
 Changelog
 =========
 
-v5.0.0rc2
----------
+v5.0.0
+------
 Release Date: 2025-04-15
-
-* Compatibility
-
-  * Add back emcache as a non default implementation for memcached + asyncio
-  * Remove support for memcached < 1.5
-
-* Documentation
-
-  * Improve presentation of benchmark documentation
-
-
-v5.0.0rc1
----------
-Release Date: 2025-04-09
 
 * Backward incompatible changes
 
   * Dropped support for Fixed Window with Elastic Expiry strategy
   * Dropped support for etcd
-  * Replaced async support for memached from :pypi:`emcache` to :pypi`:memcachio`
+  * Changed the default implementation for async+memached from :pypi:`emcache`
+    to :pypi`:memcachio`
 
 * Performance
 
-  * Improved performance of in-memory moving window ``test`` and ``get_window_stats`` operations.
-  * Improved performance of redis moving window ``test`` and ``get_window_stats`` operations.
+  * Improved performance of redis moving window ``test`` and ``get_window_stats`` operations
+    especially when dealing with large rate limits.
   * Improved performance of mongodb moving window ``test`` and ``get_window_stats`` operations.
+  * Improved performance of in-memory moving window ``test`` and ``get_window_stats`` operations.
+  * Reduced load on event loop when expiring limits with async in-memory implementations
 
 v4.7.3
 ------
@@ -834,4 +823,5 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
