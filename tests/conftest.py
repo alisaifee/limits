@@ -288,7 +288,7 @@ def memcached_cluster(memcached_cluster_client):
 def redis_basic(redis_basic_client):
     redis_basic_client.flushall()
 
-    return redis_basic
+    return redis_basic_client
 
 
 @pytest.fixture
@@ -337,14 +337,14 @@ def redis_ssl_cluster(redis_ssl_cluster_client):
 def redis_sentinel(redis_sentinel_client):
     redis_sentinel_client.master_for("mymaster").flushall()
 
-    return redis_sentinel
+    return redis_sentinel_client.master_for("mymaster")
 
 
 @pytest.fixture
 def redis_sentinel_auth(redis_sentinel_auth_client):
     redis_sentinel_auth_client.master_for("mymaster").flushall()
 
-    return redis_sentinel_auth_client
+    return redis_sentinel_auth_client.master_for("mymaster")
 
 
 @pytest.fixture
