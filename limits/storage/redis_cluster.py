@@ -56,6 +56,7 @@ class RedisClusterStorage(RedisStorage):
     def __init__(
         self,
         uri: str,
+        key_prefix: str = RedisStorage.PREFIX,
         wrap_exceptions: bool = False,
         **options: float | str | bool,
     ) -> None:
@@ -65,6 +66,7 @@ class RedisClusterStorage(RedisStorage):
 
          If the uri scheme is ``valkey+cluster`` the implementation used will be from
          :pypi:`valkey`.
+        :param key_prefix: the prefix for each key created in redis
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
@@ -86,6 +88,7 @@ class RedisClusterStorage(RedisStorage):
             host, port = loc.split(":")
             cluster_hosts.append((host, int(port)))
 
+        self.key_prefix = key_prefix
         self.storage = None
         self.target_server = "valkey" if uri.startswith("valkey") else "redis"
         merged_options = {**self.DEFAULT_OPTIONS, **parsed_auth, **options}
@@ -108,8 +111,8 @@ class RedisClusterStorage(RedisStorage):
         """
         Redis Clusters are sharded and deleting across shards
         can't be done atomically. Because of this, this reset loops over all
-        keys that are prefixed with ``self.PREFIX`` and calls delete on them,
-        one at a time.
+        keys that are prefixed with :paramref:`RedisClusterStorage.prefix` and
+        calls delete on them one at a time.
 
         .. warning::
          This operation was not tested with extremely large data sets.
