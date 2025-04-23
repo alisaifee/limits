@@ -3,6 +3,16 @@
 Changelog
 =========
 
+v5.1.0
+------
+Release Date: 2025-04-23
+
+* Features
+
+  * Expose ``key_prefix`` constructor argument for all redis storage
+    implementations to simplify customizing the prefix used for all
+    keys created in redis.
+
 v5.0.0
 ------
 Release Date: 2025-04-15
@@ -823,5 +833,6 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
