@@ -68,6 +68,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         self,
         uri: str,
         connection_pool: redis.connection.ConnectionPool | None = None,
+        key_prefix: str = PREFIX,
         wrap_exceptions: bool = False,
         **options: float | str | bool,
     ) -> None:
@@ -82,6 +83,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
          :pypi:`valkey`.
         :param connection_pool: if provided, the redis client is initialized with
          the connection pool and any other params passed as :paramref:`options`
+        :param key_prefix: the prefix for each key created in redis
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
@@ -89,6 +91,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         :raise ConfigurationError: when the :pypi:`redis` library is not available
         """
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
+        self.key_prefix = key_prefix
         self.target_server = "valkey" if uri.startswith("valkey") else "redis"
         self.dependency = self.dependencies[self.target_server].module
 
@@ -165,7 +168,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         return f"{self._current_window_key(key)}/-1"
 
     def prefixed_key(self, key: str) -> str:
-        return f"{self.PREFIX}:{key}"
+        return f"{self.key_prefix}:{key}"
 
     def get_moving_window(self, key: str, limit: int, expiry: int) -> tuple[float, int]:
         """
@@ -301,7 +304,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     def reset(self) -> int | None:
         """
         This function calls a Lua Script to delete keys prefixed with
-        ``self.PREFIX`` in blocks of 5000.
+        :paramref:`RedisStorage.key_prefix` in blocks of 5000.
 
         .. warning::
            This operation was designed to be fast, but was not tested

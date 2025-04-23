@@ -51,6 +51,8 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         "valkey": Version("6.0"),
     }
     MODE: Literal["BASIC", "CLUSTER", "SENTINEL"] = "BASIC"
+    PREFIX = "LIMITS"
+
     bridge: RedisBridge
     storage_exceptions: tuple[Exception, ...]
     target_server: Literal["redis", "valkey"]
@@ -60,6 +62,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         uri: str,
         wrap_exceptions: bool = False,
         implementation: Literal["redispy", "coredis", "valkey"] = "coredis",
+        key_prefix: str = PREFIX,
         **options: float | str | bool,
     ) -> None:
         """
@@ -86,6 +89,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
          - ``redispy``: :class:`redis.asyncio.client.Redis`
          - ``valkey``: :class:`valkey.asyncio.client.Valkey`
 
+        :param key_prefix: the prefix for each key created in redis
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`coredis.Redis` or :class:`redis.asyncio.client.Redis`
         :raise ConfigurationError: when the redis library is not available
@@ -97,12 +101,18 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         super().__init__(uri, wrap_exceptions=wrap_exceptions)
         self.options = options
         if self.target_server == "valkey" or implementation == "valkey":
-            self.bridge = ValkeyBridge(uri, self.dependencies["valkey"].module)
+            self.bridge = ValkeyBridge(
+                uri, self.dependencies["valkey"].module, key_prefix
+            )
         else:
             if implementation == "redispy":
-                self.bridge = RedispyBridge(uri, self.dependencies["redis"].module)
+                self.bridge = RedispyBridge(
+                    uri, self.dependencies["redis"].module, key_prefix
+                )
             else:
-                self.bridge = CoredisBridge(uri, self.dependencies["coredis"].module)
+                self.bridge = CoredisBridge(
+                    uri, self.dependencies["coredis"].module, key_prefix
+                )
         self.configure_bridge()
         self.bridge.register_scripts()
 
@@ -228,7 +238,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     async def reset(self) -> int | None:
         """
         This function calls a Lua Script to delete keys prefixed with
-        ``self.PREFIX`` in blocks of 5000.
+        :paramref:`RedisStorage.key_prefix` in blocks of 5000.
 
         .. warning:: This operation was designed to be fast, but was not tested
            on a large production based system. Be careful with its usage as it
@@ -270,6 +280,7 @@ class RedisClusterStorage(RedisStorage):
         uri: str,
         wrap_exceptions: bool = False,
         implementation: Literal["redispy", "coredis", "valkey"] = "coredis",
+        key_prefix: str = RedisStorage.PREFIX,
         **options: float | str | bool,
     ) -> None:
         """
@@ -285,6 +296,7 @@ class RedisClusterStorage(RedisStorage):
          - ``coredis``: :class:`coredis.RedisCluster`
          - ``redispy``: :class:`redis.asyncio.cluster.RedisCluster`
          - ``valkey``: :class:`valkey.asyncio.cluster.ValkeyCluster`
+        :param key_prefix: the prefix for each key created in redis
         :param options: all remaining keyword arguments are passed
          directly to the constructor of :class:`coredis.RedisCluster` or
          :class:`redis.asyncio.RedisCluster`
@@ -295,6 +307,7 @@ class RedisClusterStorage(RedisStorage):
             uri,
             wrap_exceptions=wrap_exceptions,
             implementation=implementation,
+            key_prefix=key_prefix,
             **options,
         )
 
@@ -305,8 +318,8 @@ class RedisClusterStorage(RedisStorage):
         """
         Redis Clusters are sharded and deleting across shards
         can't be done atomically. Because of this, this reset loops over all
-        keys that are prefixed with ``self.PREFIX`` and calls delete on them,
-        one at a time.
+        keys that are prefixed with :paramref:`RedisClusterStorage.key_prefix`
+        and calls delete on them one at a time.
 
         .. warning:: This operation was not tested with extremely large data sets.
            On a large production based system, care should be taken with its
@@ -356,6 +369,7 @@ class RedisSentinelStorage(RedisStorage):
         uri: str,
         wrap_exceptions: bool = False,
         implementation: Literal["redispy", "coredis", "valkey"] = "coredis",
+        key_prefix: str = RedisStorage.PREFIX,
         service_name: str | None = None,
         use_replicas: bool = True,
         sentinel_kwargs: dict[str, float | str | bool] | None = None,
@@ -374,6 +388,7 @@ class RedisSentinelStorage(RedisStorage):
          - ``coredis``: :class:`coredis.sentinel.Sentinel`
          - ``redispy``: :class:`redis.asyncio.sentinel.Sentinel`
          - ``valkey``: :class:`valkey.asyncio.sentinel.Sentinel`
+        :param key_prefix: the prefix for each key created in redis
         :param service_name: sentinel service name (if not provided in `uri`)
         :param use_replicas: Whether to use replicas for read only operations
         :param sentinel_kwargs: optional arguments to pass as
@@ -393,6 +408,7 @@ class RedisSentinelStorage(RedisStorage):
             uri,
             wrap_exceptions=wrap_exceptions,
             implementation=implementation,
+            key_prefix=key_prefix,
             **options,
         )
 

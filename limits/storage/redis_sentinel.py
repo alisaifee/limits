@@ -45,6 +45,7 @@ class RedisSentinelStorage(RedisStorage):
         service_name: str | None = None,
         use_replicas: bool = True,
         sentinel_kwargs: dict[str, float | str | bool] | None = None,
+        key_prefix: str = RedisStorage.PREFIX,
         wrap_exceptions: bool = False,
         **options: float | str | bool,
     ) -> None:
@@ -59,6 +60,7 @@ class RedisSentinelStorage(RedisStorage):
         :param use_replicas: Whether to use replicas for read only operations
         :param sentinel_kwargs: kwargs to pass as
          :attr:`sentinel_kwargs` to :class:`redis.sentinel.Sentinel`
+        :param key_prefix: the prefix for each key created in redis
         :param wrap_exceptions: Whether to wrap storage exceptions in
          :exc:`limits.errors.StorageError` before raising it.
         :param options: all remaining keyword arguments are passed
@@ -87,6 +89,7 @@ class RedisSentinelStorage(RedisStorage):
         for loc in parsed.netloc[sep:].split(","):
             host, port = loc.split(":")
             sentinel_configuration.append((host, int(port)))
+        self.key_prefix = key_prefix
         self.service_name = (
             parsed.path.replace("/", "") if parsed.path else service_name
         )

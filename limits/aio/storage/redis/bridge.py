@@ -8,7 +8,6 @@ from limits.util import get_package_data
 
 
 class RedisBridge(ABC):
-    PREFIX = "LIMITS"
     RES_DIR = "resources/redis/lua_scripts"
 
     SCRIPT_MOVING_WINDOW = get_package_data(f"{RES_DIR}/moving_window.lua")
@@ -26,18 +25,20 @@ class RedisBridge(ABC):
         self,
         uri: str,
         dependency: ModuleType,
+        key_prefix: str,
     ) -> None:
         self.uri = uri
         self.parsed_uri = urllib.parse.urlparse(self.uri)
         self.dependency = dependency
         self.parsed_auth = {}
+        self.key_prefix = key_prefix
         if self.parsed_uri.username:
             self.parsed_auth["username"] = self.parsed_uri.username
         if self.parsed_uri.password:
             self.parsed_auth["password"] = self.parsed_uri.password
 
     def prefixed_key(self, key: str) -> str:
-        return f"{self.PREFIX}:{key}"
+        return f"{self.key_prefix}:{key}"
 
     @abstractmethod
     def register_scripts(self) -> None: ...
