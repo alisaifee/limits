@@ -3,6 +3,17 @@
 Changelog
 =========
 
+v5.2.0
+------
+Release Date: 2025-05-16
+
+* Bug Fix
+
+  * Fix incorrect behavior of the ``clear`` method for sliding window
+    counter which effectively did not clear the sliding window for
+    redis, memcached & in memory storage implementations.
+    `Issue 276 <https://github.com/alisaifee/limits/issues/276>`_
+
 v5.1.0
 ------
 Release Date: 2025-04-23
@@ -833,6 +844,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
