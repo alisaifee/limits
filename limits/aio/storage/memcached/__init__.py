@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import time
 from math import floor
 
@@ -166,6 +167,11 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         return await self._get_sliding_window_info(
             previous_key, current_key, expiry, now
         )
+
+    async def clear_sliding_window(self, key: str, expiry: int) -> None:
+        now = time.time()
+        previous_key, current_key = self.sliding_window_keys(key, expiry, now)
+        await asyncio.gather(self.clear(previous_key), self.clear(current_key))
 
     async def _get_sliding_window_info(
         self, previous_key: str, current_key: str, expiry: int, now: float

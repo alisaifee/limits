@@ -200,6 +200,12 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             )
         return 0, 0.0, 0, 0.0
 
+    def clear_sliding_window(self, key: str, expiry: int) -> None:
+        previous_key = self._previous_window_key(key)
+        current_key = self._current_window_key(key)
+        self.clear(previous_key)
+        self.clear(current_key)
+
     def incr(
         self,
         key: str,

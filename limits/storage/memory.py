@@ -237,6 +237,12 @@ class MemoryStorage(
         previous_key, current_key = self.sliding_window_keys(key, expiry, now)
         return self._get_sliding_window_info(previous_key, current_key, expiry, now)
 
+    def clear_sliding_window(self, key: str, expiry: int) -> None:
+        now = time.time()
+        previous_key, current_key = self.sliding_window_keys(key, expiry, now)
+        self.clear(previous_key)
+        self.clear(current_key)
+
     def check(self) -> bool:
         """
         check if storage is healthy

@@ -167,7 +167,11 @@ class SlidingWindowCounterSupport(ABC):
     """
 
     def __init_subclass__(cls, **kwargs: Any) -> None:  # type: ignore[explicit-any]
-        for method in {"acquire_sliding_window_entry", "get_sliding_window"}:
+        for method in {
+            "acquire_sliding_window_entry",
+            "get_sliding_window",
+            "clear_sliding_window",
+        }:
             setattr(
                 cls,
                 method,
@@ -206,6 +210,16 @@ class SlidingWindowCounterSupport(ABC):
           - current window TTL
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def clear_sliding_window(self, key: str, expiry: int) -> None:
+        """
+        Resets the rate limit key(s) for the sliding window
+
+        :param key: the key to clear rate limits for
+        :param expiry: the rate limit expiry, needed to compute the key in some implemenations
+        """
+        ...
 
 
 class TimestampedSlidingWindow:

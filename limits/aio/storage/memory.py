@@ -241,6 +241,12 @@ class MemoryStorage(
             previous_key, current_key, expiry, now
         )
 
+    async def clear_sliding_window(self, key: str, expiry: int) -> None:
+        now = time.time()
+        previous_key, current_key = self.sliding_window_keys(key, expiry, now)
+        await self.clear(current_key)
+        await self.clear(previous_key)
+
     async def _get_sliding_window_info(
         self,
         previous_key: str,

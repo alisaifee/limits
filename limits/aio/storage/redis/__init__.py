@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from deprecated.sphinx import versionadded, versionchanged
 from packaging.version import Version
 
@@ -218,6 +220,11 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         previous_key = self._previous_window_key(key)
         current_key = self._current_window_key(key)
         return await self.bridge.get_sliding_window(previous_key, current_key, expiry)
+
+    async def clear_sliding_window(self, key: str, expiry: int) -> None:
+        previous_key = self._previous_window_key(key)
+        current_key = self._current_window_key(key)
+        await asyncio.gather(self.clear(previous_key), self.clear(current_key))
 
     async def get_expiry(self, key: str) -> float:
         """

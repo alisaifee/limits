@@ -284,6 +284,11 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
 
         return WindowStats(now + min(previous_reset_in, current_reset_in), remaining)
 
+    def clear(self, item: RateLimitItem, *identifiers: str) -> None:
+        return cast(SlidingWindowCounterSupport, self.storage).clear_sliding_window(
+            item.key_for(*identifiers), item.get_expiry()
+        )
+
 
 KnownStrategy = (
     type[SlidingWindowCounterRateLimiter]

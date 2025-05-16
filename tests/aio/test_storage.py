@@ -133,6 +133,9 @@ class TestBaseStorage:
             ) -> tuple[int, float, int, float]:
                 pass
 
+            async def clear_sliding_window(self, key: str, expiry: int) -> None:
+                pass
+
         storage = storage_from_string("async+mystorage+sliding://")
         assert isinstance(storage, MyStorage)
         SlidingWindowCounterRateLimiter(storage)
@@ -372,6 +375,9 @@ class TestStorageErrors:
         ) -> tuple[int, float, int, float]:
             raise self.MyError()
 
+        async def clear_sliding_window(self, key: str, expiry: int) -> None:
+            raise self.MyError()
+
     def assert_exception(self, exc, wrap_exceptions):
         if wrap_exceptions:
             assert isinstance(exc, StorageError)
@@ -442,6 +448,14 @@ class TestStorageErrors:
     async def test_get_sliding_window_exception(self, wrap_exceptions):
         with pytest.raises(Exception) as exc:
             await self.MyStorage(wrap_exceptions=wrap_exceptions).get_sliding_window(
+                "", 1
+            )
+
+        self.assert_exception(exc.value, wrap_exceptions)
+
+    async def test_clear_sliding_window_exception(self, wrap_exceptions):
+        with pytest.raises(Exception) as exc:
+            await self.MyStorage(wrap_exceptions=wrap_exceptions).clear_sliding_window(
                 "", 1
             )
 

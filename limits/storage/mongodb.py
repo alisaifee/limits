@@ -470,6 +470,9 @@ class MongoDBStorageBase(
         )
         return cast(bool, result["_acquired"])
 
+    def clear_sliding_window(self, key: str, expiry: int) -> None:
+        return self.clear(key)
+
     def __del__(self) -> None:
         if self.storage:
             self.storage.close()

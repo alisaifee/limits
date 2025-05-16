@@ -282,6 +282,12 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
         previous_key, current_key = self.sliding_window_keys(key, expiry, now)
         return self._get_sliding_window_info(previous_key, current_key, expiry, now)
 
+    def clear_sliding_window(self, key: str, expiry: int) -> None:
+        now = time.time()
+        previous_key, current_key = self.sliding_window_keys(key, expiry, now)
+        self.clear(previous_key)
+        self.clear(current_key)
+
     def _get_sliding_window_info(
         self, previous_key: str, current_key: str, expiry: int, now: float
     ) -> tuple[int, float, int, float]:

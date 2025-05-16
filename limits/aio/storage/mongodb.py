@@ -513,5 +513,8 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             )
         return 0, 0.0, 0, 0.0
 
+    async def clear_sliding_window(self, key: str, expiry: int) -> None:
+        return await self.clear(key)
+
     def __del__(self) -> None:
         self.storage and self.storage.close()
