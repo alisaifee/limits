@@ -29,7 +29,6 @@ colors = {
     "redis": "#D82C20",
     "mongodb": "#00ED64",
     "memcached": "",
-
 }
 
 html_theme = "furo"
