@@ -191,6 +191,8 @@ class TestAsyncSlidingWindow:
         assert (await limiter.get_window_stats(limit)).reset_time == pytest.approx(
             start + 2, 1e-2
         )
+        await limiter.clear(limit)
+        assert 10 == (await limiter.get_window_stats(limit)).remaining
 
     @pytest.mark.flaky
     async def test_sliding_window_counter_total_reset(self, uri, args, fixture):
