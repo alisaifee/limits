@@ -3,6 +3,17 @@
 Changelog
 =========
 
+v5.3.0
+------
+Release Date: 2025-06-13
+
+* Bug Fix
+
+  * Fix race condition during expiration of in-memory
+    moving window limits that resulted in incorrectly removing
+    unexpired entries.
+    `Issue 277 <https://github.com/alisaifee/limits/issues/277>`_
+
 v5.2.0
 ------
 Release Date: 2025-05-16
@@ -844,6 +855,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
