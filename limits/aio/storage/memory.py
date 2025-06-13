@@ -65,13 +65,13 @@ class MemoryStorage(
         try:
             now = time.time()
             for key in list(self.events.keys()):
-                cutoff = await asyncio.to_thread(
-                    lambda evts: bisect.bisect_left(
-                        evts, -now, key=lambda event: -event.expiry
-                    ),
-                    self.events[key],
-                )
                 async with self.locks[key]:
+                    cutoff = await asyncio.to_thread(
+                        lambda evts: bisect.bisect_left(
+                            evts, -now, key=lambda event: -event.expiry
+                        ),
+                        self.events[key],
+                    )
                     if self.events.get(key, []):
                         self.events[key] = self.events[key][:cutoff]
                     if not self.events.get(key, None):
