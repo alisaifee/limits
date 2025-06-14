@@ -32,6 +32,8 @@ class RateLimiter(metaclass=ABCMeta):
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
         :param cost: The cost of this hit, default 1
+
+        :return: True if ``cost`` could be deducted from the rate limit without exceeding it
         """
         raise NotImplementedError
 
@@ -44,6 +46,8 @@ class RateLimiter(metaclass=ABCMeta):
         :param identifiers: variable list of strings to uniquely identify this
           instance of the limit
         :param cost: The expected cost to be consumed, default 1
+
+        :return: True if the rate limit is not depleted
         """
         raise NotImplementedError
 
@@ -86,7 +90,8 @@ class MovingWindowRateLimiter(RateLimiter):
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
         :param cost: The cost of this hit, default 1
-        :return: (reset time, remaining)
+
+        :return: True if ``cost`` could be deducted from the rate limit without exceeding it
         """
 
         return cast(MovingWindowSupport, self.storage).acquire_entry(
@@ -101,6 +106,8 @@ class MovingWindowRateLimiter(RateLimiter):
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
         :param cost: The expected cost to be consumed, default 1
+
+        :return: True if the rate limit is not depleted
         """
 
         return (
@@ -142,6 +149,8 @@ class FixedWindowRateLimiter(RateLimiter):
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
         :param cost: The cost of this hit, default 1
+
+        :return: True if ``cost`` could be deducted from the rate limit without exceeding it
         """
 
         return (
@@ -161,6 +170,8 @@ class FixedWindowRateLimiter(RateLimiter):
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
         :param cost: The expected cost to be consumed, default 1
+
+        :return: True if the rate limit is not depleted
         """
 
         return self.storage.get(item.key_for(*identifiers)) < item.amount - cost + 1
@@ -216,6 +227,8 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
         :param cost: The cost of this hit, default 1
+
+        :return: True if ``cost`` could be deducted from the rate limit without exceeding it
         """
         return cast(
             SlidingWindowCounterSupport, self.storage
@@ -234,6 +247,8 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
         :param identifiers: variable list of strings to uniquely identify this
          instance of the limit
         :param cost: The expected cost to be consumed, default 1
+
+        :return: True if the rate limit is not depleted
         """
         previous_count, previous_expires_in, current_count, _ = cast(
             SlidingWindowCounterSupport, self.storage
