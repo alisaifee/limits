@@ -93,7 +93,7 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
 
         return granularity_string.lower() in {
             cls.GRANULARITY.name,
-            f"{cls.GRANULARITY.name}s", # allow plurals like days, hours etc.
+            f"{cls.GRANULARITY.name}s",  # allow plurals like days, hours etc.
         }
 
     def get_expiry(self) -> int:
