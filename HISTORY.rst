@@ -3,6 +3,22 @@
 Changelog
 =========
 
+v5.4.0
+------
+Release Date: 2025-06-16
+
+* Feature
+
+  * Relax regular expression used in ``limits.parse`` and
+    ``limits.parse_many`` to capture any granularity instead of
+    just the hardcoded ones so that custom rate limits can
+    also be extracted using the utility functions.
+    `Issue 279 <https://github.com/alisaifee/limits/issues/279>`_
+
+* Compatibility
+
+  * Add redis 8.0 to CI
+
 v5.3.0
 ------
 Release Date: 2025-06-13
@@ -855,6 +871,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
