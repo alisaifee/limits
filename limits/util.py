@@ -22,8 +22,10 @@ SINGLE_EXPR = re.compile(
     r"""
     \s*([0-9]+)
     \s*(/|\s*per\s*)
-    \s*([0-9]+)
-    *\s*(hour|minute|second|day|month|year)s?\s*""",
+    \s*([0-9]+)?
+    \s*([a-zA-Z]+)
+    \s*
+    """,
     re.IGNORECASE | re.VERBOSE,
 )
 EXPR = re.compile(

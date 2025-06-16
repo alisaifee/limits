@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from limits import RateLimitItemPerMinute, limits
+from limits import RateLimitItemPerMinute, limits, parse, parse_many
 
 
 class TestLimits:
@@ -45,3 +45,15 @@ class TestLimits:
         mapping[self.OtherFakeLimit(1, 2)] += 1
 
         assert len(mapping) == 3
+
+    def test_parse_custom_limit(self):
+        item = parse("1/fake")
+        assert item == self.FakeLimit(1, 1)
+        item = parse("5/10 fake")
+        assert item == self.FakeLimit(5, 10)
+        items = parse_many("1/fake,10/minute,10 per 10 fakes")
+        assert items == [
+            self.FakeLimit(1, 1),
+            RateLimitItemPerMinute(10, 1),
+            self.FakeLimit(10, 10),
+        ]
