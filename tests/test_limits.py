@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from limits import limits
+from limits import RateLimitItemPerMinute, limits
 
 
 class TestLimits:
@@ -33,6 +33,7 @@ class TestLimits:
         assert item == self.FakeLimit(1, 1)
         assert item != self.FakeLimit(1, 2)
         assert item != self.FakeLimit(2, 1)
+        assert item != RateLimitItemPerMinute(1, 1)
         assert item != "someething else"
 
     def test_hashabilty(self):
