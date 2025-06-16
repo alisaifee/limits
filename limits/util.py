@@ -23,7 +23,7 @@ SINGLE_EXPR = re.compile(
     \s*([0-9]+)
     \s*(/|\s*per\s*)
     \s*([0-9]+)?
-    \s*([a-zA-Z]+)
+    \s*([a-z]+)
     \s*
     """,
     re.IGNORECASE | re.VERBOSE,
