@@ -3,6 +3,16 @@
 Changelog
 =========
 
+v5.5.0
+------
+Release Date: 2025-08-05
+
+* Compatibility
+
+  * Relax upper bound of ``packaging`` requirement
+  * Increase upper bound of ``coredis`` requirement
+  * Increase upper bound of ``redis`` requirement
+
 v5.4.0
 ------
 Release Date: 2025-06-16
@@ -871,6 +881,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
