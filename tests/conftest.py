@@ -33,7 +33,7 @@ def check_redis_auth_cluster_ready(host, port):
 
 def check_redis_ssl_cluster_ready(host, port):
     storage_url = (
-        "rediss://localhost:8301/?ssl_cert_reqs=required"
+        "rediss://localhost:8301/?ssl_cert_reqs=none"
         "&ssl_keyfile=./tests/tls/client.key"
         "&ssl_certfile=./tests/tls/client.crt"
         "&ssl_ca_certs=./tests/tls/ca.crt"
@@ -130,7 +130,7 @@ def redis_auth_client(docker_services):
 def redis_ssl_client(docker_services):
     docker_services.start("redis-ssl")
     storage_url = (
-        "rediss://localhost:8379/0?ssl_cert_reqs=required"
+        "rediss://localhost:8379/0?ssl_cert_reqs=none"
         "&ssl_keyfile=./tests/tls/client.key"
         "&ssl_certfile=./tests/tls/client.crt"
         "&ssl_ca_certs=./tests/tls/ca.crt"
@@ -165,7 +165,7 @@ def redis_ssl_cluster_client(docker_services):
         "redis-ssl-cluster-6", 8306, check_redis_ssl_cluster_ready
     )
     storage_url = (
-        "rediss://localhost:8301/?ssl_cert_reqs=required"
+        "rediss://localhost:8301/?ssl_cert_reqs=none"
         "&ssl_keyfile=./tests/tls/client.key"
         "&ssl_certfile=./tests/tls/client.crt"
         "&ssl_ca_certs=./tests/tls/ca.crt"

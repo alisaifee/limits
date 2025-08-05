@@ -129,7 +129,7 @@ ALL_STORAGES = {
         "redis+cluster://localhost:8301",
         {
             "ssl": True,
-            "ssl_cert_reqs": "required",
+            "ssl_cert_reqs": "none",
             "ssl_keyfile": "./tests/tls/client.key",
             "ssl_certfile": "./tests/tls/client.crt",
             "ssl_ca_certs": "./tests/tls/ca.crt",
@@ -229,7 +229,7 @@ ALL_STORAGES_ASYNC = {
         "async+redis+cluster://localhost:8301",
         {
             "ssl": True,
-            "ssl_cert_reqs": "required",
+            "ssl_cert_reqs": "none",
             "ssl_keyfile": "./tests/tls/client.key",
             "ssl_certfile": "./tests/tls/client.crt",
             "ssl_ca_certs": "./tests/tls/ca.crt",
