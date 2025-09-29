@@ -3,6 +3,17 @@
 Changelog
 =========
 
+v5.6.0
+------
+Release Date: 2025-09-29
+
+* Development
+
+  * Move all project metadata to pyproject
+  * Use uv for development
+  * Use hatch for package build
+  * Remove versioneer for versioning
+
 v5.5.0
 ------
 Release Date: 2025-08-05
@@ -881,6 +892,7 @@ v1.0.0
 Release Date: 2015-01-08
 
 * Initial import of common rate limiting code from `Flask-Limiter <https://github.com/alisaifee/flask-limiter>`_
+
 
 
 
