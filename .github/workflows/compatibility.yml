@@ -54,26 +54,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Cache dependencies
-      uses: actions/cache@v4
+    - name: Install uv and Python
+      uses: astral-sh/setup-uv@v6
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
-    - name: Install dependencies
+        enable-cache: true
+        python-version: ${{ matrix.python-version }}
+    - name: Setup uv venv
       run: |
-        python -m pip install -U pip
-        python -m pip install -U setuptools wheel
-        pip install -U -r requirements/ci.txt
+        uv sync --locked --all-extras --group ci
     - name: Tests
       env:
         CI: "True"
         ASYNC_REDIS_IMPLEMENTATION: "${{ matrix.async_redis_implementation }}"
       run: |
         eval "export ${{ matrix.service_version }}"
-        py.test -m "${{ matrix.marker }} and not benchmark" --cov-report=xml --cov-branch --max-runs=3
+        uv run py.test -m "${{ matrix.marker }} and not benchmark" --cov-report=xml --cov-branch --max-runs=3

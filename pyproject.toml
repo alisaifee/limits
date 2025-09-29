@@ -1,10 +1,126 @@
-[tool.versioneer]
-VCS = "git"
-style = "pep440-pre"
-versionfile_source = "limits/_version.py"
-versionfile_build = "limits/_version.py"
-parentdir_prefix = "limits-"
-tag_prefix = ""
+[build-system]
+build-backend = "hatchling.build"
+requires = [
+  "hatchling>=1.14.0",
+  "hatch-vcs>=0.4.0",
+]
+
+[project]
+name="limits"
+readme = "README.rst"
+authors = [{ name = "Ali-Akber Saifee", email = "ali@indydevs.org"}]
+maintainers = [{ name = "Ali-Akber Saifee", email = "ali@indydevs.org"}]
+requires-python = ">=3.10"
+description = "Rate limiting utilities"
+license="MIT"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "deprecated>=1.2",
+  "packaging>=21",
+  "typing_extensions",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://limits.readthedocs.org"
+Source =  "https://github.com/alisaifee/limits"
+Documentation = "https://limits.readthedocs.org"
+
+[project.optional-dependencies]
+redis = [
+  "redis>3,!=4.5.2,!=4.5.3,<7.0.0"
+]
+rediscluster = [
+  "redis>=4.2.0,!=4.5.2,!=4.5.3"
+]
+memcached = [
+  "pymemcache>3,<5.0.0"
+]
+mongodb = [
+  "pymongo>4.1,<5"
+]
+valkey = [
+  "valkey>=6"
+]
+"async-redis" = [
+  "coredis>=3.4.0,<6"
+]
+"async-memcached" = [
+  "memcachio>=0.3"
+]
+"async-mongodb" = [
+  "motor>=3,<4"
+]
+"async-valkey" = [
+  "valkey>=6"
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"
+
+[tool.hatch.build.targets.wheel]
+packages = ["limits"]
+
+[tool.hatch.build.hooks.vcs]
+version-file = "limits/_version.py"
+
+[dependency-groups]
+test = [
+  "emcache>=1;python_version>='3.11' and python_version<'3.13.0'",
+  "coverage",
+  "hiro>0.1.6",
+  "flaky",
+  "lovely-pytest-docker",
+  "pytest<9",
+  "pytest-asyncio<0.27",
+  "pytest-benchmark[histogram]",
+  "pytest-cov",
+  "pytest-lazy-fixtures",
+  "pytest-mock",
+  "PyYAML",
+]
+
+dev = [
+  "ruff",
+  "mypy",
+  "types-deprecated",
+  "wheel",
+  {include-group = "test"},
+]
+
+ci = [
+  {include-group = "dev"},
+
+]
+
+docs = [
+  "furo==2025.7.19",
+  "Sphinx>=4,<9",
+  "sphinx-autobuild==2024.10.3",
+  "sphinx-copybutton==0.5.2",
+  "sphinx-design==0.6.1",
+  "sphinx-inline-tabs==2023.4.21",
+  "sphinxext-opengraph==0.13.0",
+  "sphinx-paramlinks==0.6.0",
+  "sphinxcontrib-programoutput==0.17",
+]
 
 [tool.ruff]
 line-length = 88

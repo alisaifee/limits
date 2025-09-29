@@ -10,30 +10,22 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
     - uses: actions/checkout@v4
-    - name: Cache dependencies
-      uses: actions/cache@v4
+    - name: Install uv and Python
+      uses: astral-sh/setup-uv@v6
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
+        enable-cache: true
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Setup uv venv
       run: |
-        python -m pip install -U pip
-        python -m pip install -U setuptools wheel
-        pip install -U -r requirements/ci.txt
+        uv sync --locked --all-extras --group ci
     - name: Lint with ruff
       run: |
-        ruff check --select I limits tests
-        ruff format --check limits tests
-        ruff check limits tests
+        uv run ruff check --select I limits tests
+        uv run ruff format --check limits tests
+        uv run ruff check limits tests
     - name: Check types
       run: |
-        mypy limits
+        uv run mypy limits
   test:
     strategy:
       fail-fast: false
@@ -70,29 +62,21 @@ jobs:
     runs-on: "${{ matrix.os }}"
     steps:
     - uses: actions/checkout@v4
-    - name: Cache dependencies
-      uses: actions/cache@v4
+    - name: Install uv and Python
+      uses: astral-sh/setup-uv@v6
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
+        enable-cache: true
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Setup uv venv
       run: |
-        python -m pip install -U pip
-        python -m pip install -U setuptools wheel
-        pip install -U -r requirements/ci.txt
+        uv sync --locked --all-extras --group ci
     - name: Tests
       env:
         CI: "True"
         ASYNC_REDIS_IMPLEMENTATION: "${{ matrix.async_redis_implementation }}"
         ASYNC_MEMCACHED_IMPLEMENTATION: "${{ matrix.async_memcached_implementation }}"
       run: |
-        py.test -m "${{ matrix.marker }}" --junitxml=junit.xml -o junit_family=legacy --cov-branch --max-runs=3
+        uv run py.test -m "${{ matrix.marker }}" --junitxml=junit.xml -o junit_family=legacy --cov-branch --max-runs=3
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       env:
@@ -114,30 +98,25 @@ jobs:
       COMMIT: ${{ github.sha }}
     steps:
     - uses: actions/checkout@v4
-    - name: Cache dependencies
-      uses: actions/cache@v4
+    - name: Install uv and Python
+      uses: astral-sh/setup-uv@v6
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
+        enable-cache: true
         python-version: ${{ matrix.python-version }}
+    - name: Setup uv venv
+      run: |
+        uv sync --locked --all-extras --group ci
     - name: Set up Node
       uses: actions/setup-node@v4
     - name: Install dependencies
       run: |
-        python -m pip install -U pip
-        pip install -U -r requirements/ci.txt
         npm install -g netlify-cli
     - name: Benchmark
       env:
         CI: "True"
       run: |
         mkdir -p benchmarks
-        py.test -m "benchmark" --benchmark-json=benchmarks/full.json
+        uv run pytest -m "benchmark" --benchmark-json=benchmarks/full.json
     - name: Split results
       run: |
         mv benchmarks/full.json benchmarks/full_raw.json
@@ -171,10 +150,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+      - name: Setup uv venv
+        run: |
+          uv sync --locked --all-extras --group ci
       - name: Build wheels
         run: |
-          python -m pip install build
-          python -m build --wheel
+          uv build --wheel
       - uses: actions/upload-artifact@v4
         with:
           name: wheels
@@ -187,9 +173,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+      - name: Setup uv venv
+        run: |
+          uv sync --locked --all-extras --group ci
       - name: Build sdist
         run: |
-          pipx run build --sdist
+          uv build --sdist
       - uses: actions/upload-artifact@v4
         with:
           name: src_dist

@@ -1,5 +1,6 @@
 *.pyc
 *.log
+limits/_version.py
 cover/*
 .mypy_cache/*
 .coverage*
