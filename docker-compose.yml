@@ -52,7 +52,7 @@ services:
     ports:
       - '6383:6383'
   redis-sentinel:
-    image: 'bitnami/redis-sentinel:${LIMITS_REDIS_SERVER_VERSION:-latest}'
+    image: 'bitnamilegacy/redis-sentinel:${LIMITS_REDIS_SERVER_VERSION:-latest}'
     depends_on: [redis-sentinel-slave]
     environment:
       - REDIS_MASTER_HOST=${HOST_IP}
@@ -60,7 +60,7 @@ services:
     ports:
       - '26379:26379'
   redis-sentinel-auth:
-    image: 'bitnami/redis-sentinel:${LIMITS_REDIS_SERVER_VERSION:-latest}'
+    image: 'bitnamilegacy/redis-sentinel:${LIMITS_REDIS_SERVER_VERSION:-latest}'
     depends_on: [redis-sentinel-slave-auth]
     environment:
       - REDIS_MASTER_HOST=${HOST_IP}
