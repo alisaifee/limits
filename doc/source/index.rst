@@ -58,7 +58,7 @@ To get started
 
    $ git clone https://github.com/alisaifee/limits.git
    $ cd limits
-   $ pip install -r requirements/dev.txt
+   $ uv sync --all-extras --group dev
 
 Since `limits` integrates with various backend storages, local development and running tests
 requires a working `docker & docker-compose installation <https://docs.docker.com/compose/gettingstarted/>`_.
@@ -68,7 +68,7 @@ so as to not incur the overhead of starting up on each test run. To run the test
 
 .. code:: console
 
-   $ pytest
+   $ uv run pytest
 
 Once you're done - you will probably want to clean up the docker containers:
 
