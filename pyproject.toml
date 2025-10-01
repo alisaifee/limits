@@ -139,3 +139,6 @@ typing-modules = ["limits.typing"]
 [tool.ruff.lint.isort]
 required-imports = ["from __future__ import annotations"]
 
+[[tool.mypy.overrides]]
+module = "limits.aio.storage.memcached.emcache"
+ignore_errors = true
