@@ -90,7 +90,7 @@ test = [
   "flaky",
   "lovely-pytest-docker",
   "pytest<9",
-  "pytest-asyncio<0.27",
+  "pytest-asyncio",
   "pytest-benchmark[histogram]",
   "pytest-cov",
   "pytest-lazy-fixtures",
