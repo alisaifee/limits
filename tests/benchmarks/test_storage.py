@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import functools
 import random
 
@@ -189,9 +190,8 @@ def test_test(benchmark, strategy, uri, args, limit, percentage_full, fixture):
 )
 @pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="hit")
-def test_hit_async(
-    event_loop, benchmark, strategy, uri, args, limit, percentage_full, fixture
-):
+def test_hit_async(benchmark, strategy, uri, args, limit, percentage_full, fixture):
+    event_loop = asyncio.new_event_loop()
     storage = storage_from_string(uri, **args)
     seed_limit(strategy(storage), limit, percentage_full, event_loop)
     benchmark.pedantic(
@@ -220,8 +220,9 @@ def test_hit_async(
 @pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="get-window-stats")
 def test_get_window_stats_async(
-    event_loop, benchmark, strategy, uri, args, limit, percentage_full, fixture
+    benchmark, strategy, uri, args, limit, percentage_full, fixture
 ):
+    event_loop = asyncio.new_event_loop()
     storage = storage_from_string(uri, **args)
     seed_limit(strategy(storage), limit, percentage_full, event_loop)
     benchmark.pedantic(
@@ -249,9 +250,8 @@ def test_get_window_stats_async(
 )
 @pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="test")
-def test_test_async(
-    event_loop, benchmark, strategy, uri, args, limit, percentage_full, fixture
-):
+def test_test_async(benchmark, strategy, uri, args, limit, percentage_full, fixture):
+    event_loop = asyncio.new_event_loop()
     storage = storage_from_string(uri, **args)
     seed_limit(strategy(storage), limit, percentage_full, event_loop)
     benchmark.pedantic(
