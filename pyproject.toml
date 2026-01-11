@@ -42,7 +42,7 @@ Documentation = "https://limits.readthedocs.org"
 
 [project.optional-dependencies]
 redis = [
-  "redis>3,!=4.5.2,!=4.5.3,<7.0.0"
+  "redis>3,!=4.5.2,!=4.5.3,<8.0.0"
 ]
 rediscluster = [
   "redis>=4.2.0,!=4.5.2,!=4.5.3"
