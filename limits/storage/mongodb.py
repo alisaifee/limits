@@ -156,34 +156,34 @@ class MongoDBStorageBase(
             seconds=expiry
         )
 
-        return int(
-            self.counters.find_one_and_update(
-                {"_id": key},
-                [
-                    {
-                        "$set": {
-                            "count": {
-                                "$cond": {
-                                    "if": {"$lt": ["$expireAt", "$$NOW"]},
-                                    "then": amount,
-                                    "else": {"$add": ["$count", amount]},
-                                }
-                            },
-                            "expireAt": {
-                                "$cond": {
-                                    "if": {"$lt": ["$expireAt", "$$NOW"]},
-                                    "then": expiration,
-                                    "else": "$expireAt",
-                                }
-                            },
-                        }
-                    },
-                ],
-                upsert=True,
-                projection=["count"],
-                return_document=self.lib.ReturnDocument.AFTER,
-            )["count"]
-        )
+        if response := self.counters.find_one_and_update(
+            {"_id": key},
+            [
+                {
+                    "$set": {
+                        "count": {
+                            "$cond": {
+                                "if": {"$lt": ["$expireAt", "$$NOW"]},
+                                "then": amount,
+                                "else": {"$add": ["$count", amount]},
+                            }
+                        },
+                        "expireAt": {
+                            "$cond": {
+                                "if": {"$lt": ["$expireAt", "$$NOW"]},
+                                "then": expiration,
+                                "else": "$expireAt",
+                            }
+                        },
+                    }
+                },
+            ],
+            upsert=True,
+            projection=["count"],
+            return_document=self.lib.ReturnDocument.AFTER,
+        ):
+            return int(response["count"])
+        return 0
 
     def check(self) -> bool:
         """
@@ -468,7 +468,7 @@ class MongoDBStorageBase(
             return_document=self.lib.ReturnDocument.AFTER,
             upsert=True,
         )
-        return cast(bool, result["_acquired"])
+        return cast(bool, result["_acquired"] if result else False)
 
     def clear_sliding_window(self, key: str, expiry: int) -> None:
         return self.clear(key)
