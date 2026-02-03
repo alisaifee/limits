@@ -107,6 +107,7 @@ dev = [
 ]
 
 ci = [
+  "redis!=7.1", # issues with async redis cluster (https://github.com/redis/redis-py/issues/3935)
   {include-group = "dev"},
 
 ]
