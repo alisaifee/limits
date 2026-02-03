@@ -103,6 +103,7 @@ dev = [
   "mypy",
   "types-deprecated",
   "wheel",
+  "hatch",
   {include-group = "test"},
 ]
 
