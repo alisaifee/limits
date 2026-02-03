@@ -74,13 +74,15 @@ class RedisClusterStorage(RedisStorage):
         :raise ConfigurationError: when the :pypi:`redis` library is not
          available or if the redis cluster cannot be reached.
         """
-        parsed = urllib.parse.urlparse(uri)
+
+        safe_uri = RedisClusterStorage.encode_password_in_url(uri)
+        parsed = urllib.parse.urlparse(safe_uri)
         parsed_auth: dict[str, float | str | bool] = {}
 
         if parsed.username:
-            parsed_auth["username"] = parsed.username
+            parsed_auth["username"] = urllib.parse.unquote(parsed.username)
         if parsed.password:
-            parsed_auth["password"] = parsed.password
+            parsed_auth["password"] = urllib.parse.unquote(parsed.password)
 
         sep = parsed.netloc.find("@") + 1
         cluster_hosts = []
@@ -126,3 +128,36 @@ class RedisClusterStorage(RedisStorage):
             keys = node.keys(prefix)
             count += sum([node.delete(k.decode("utf-8")) for k in keys])
         return count
+
+    @staticmethod
+    def encode_password_in_url(url: str) -> str:
+        """
+        Encode the password part in the URL, handling unencoded special characters (such as #).
+
+        URL format: scheme://[username:password@]host:port[/path]
+        """
+        scheme_end = url.find("://")
+        if scheme_end == -1:
+            return url
+
+        scheme = url[:scheme_end]
+        rest = url[scheme_end + 3 :]
+
+        at_pos = rest.rfind("@")
+        if at_pos == -1:
+            return url
+
+        auth_part = rest[:at_pos]  # username:password
+        host_part = rest[at_pos + 1 :]  # host:port/path
+
+        colon_pos = auth_part.find(":")
+        if colon_pos == -1:
+            return url
+
+        username = auth_part[:colon_pos]
+        password = auth_part[colon_pos + 1 :]
+
+        encoded_username = urllib.parse.quote(username, safe="")
+        encoded_password = urllib.parse.quote(password, safe="")
+
+        return f"{scheme}://{encoded_username}:{encoded_password}@{host_part}"
