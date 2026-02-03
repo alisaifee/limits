@@ -3,6 +3,14 @@
 Changelog
 =========
 
+v5.7.0
+------
+Release Date: 2026-02-03
+
+* Compatibility
+
+  * Relax extras constraints for redis (<8)
+
 v5.6.0
 ------
 Release Date: 2025-09-29
