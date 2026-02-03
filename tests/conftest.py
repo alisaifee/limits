@@ -287,6 +287,7 @@ def memcached_cluster(memcached_cluster_client):
 @pytest.fixture
 def redis_basic(redis_basic_client):
     redis_basic_client.flushall()
+    redis_basic_client.script_flush()
 
     return redis_basic_client
 
@@ -294,6 +295,7 @@ def redis_basic(redis_basic_client):
 @pytest.fixture
 def redis_ssl(redis_ssl_client):
     redis_ssl_client.flushall()
+    redis_ssl_client.script_flush()
 
     return redis_ssl_client
 
@@ -301,6 +303,7 @@ def redis_ssl(redis_ssl_client):
 @pytest.fixture
 def redis_auth(redis_auth_client):
     redis_auth_client.flushall()
+    redis_auth_client.script_flush()
 
     return redis_auth_client
 
@@ -308,6 +311,7 @@ def redis_auth(redis_auth_client):
 @pytest.fixture
 def redis_uds(redis_uds_client):
     redis_uds_client.flushall()
+    redis_uds_client.script_flush()
 
     return redis_uds_client
 
@@ -315,6 +319,7 @@ def redis_uds(redis_uds_client):
 @pytest.fixture
 def redis_cluster(redis_cluster_client):
     redis_cluster_client.flushall()
+    redis_cluster_client.script_flush()
 
     return redis_cluster_client
 
@@ -322,6 +327,7 @@ def redis_cluster(redis_cluster_client):
 @pytest.fixture
 def redis_auth_cluster(redis_auth_cluster_client):
     redis_auth_cluster_client.flushall()
+    redis_auth_cluster_client.script_flush()
 
     return redis_auth_cluster_client
 
@@ -329,6 +335,7 @@ def redis_auth_cluster(redis_auth_cluster_client):
 @pytest.fixture
 def redis_ssl_cluster(redis_ssl_cluster_client):
     redis_ssl_cluster_client.flushall()
+    redis_ssl_cluster_client.script_flush()
 
     return redis_ssl_cluster_client
 
@@ -336,6 +343,7 @@ def redis_ssl_cluster(redis_ssl_cluster_client):
 @pytest.fixture
 def redis_sentinel(redis_sentinel_client):
     redis_sentinel_client.master_for("mymaster").flushall()
+    redis_sentinel_client.master_for("mymaster").script_flush()
 
     return redis_sentinel_client.master_for("mymaster")
 
@@ -343,6 +351,7 @@ def redis_sentinel(redis_sentinel_client):
 @pytest.fixture
 def redis_sentinel_auth(redis_sentinel_auth_client):
     redis_sentinel_auth_client.master_for("mymaster").flushall()
+    redis_sentinel_auth_client.master_for("mymaster").script_flush()
 
     return redis_sentinel_auth_client.master_for("mymaster")
 
