@@ -122,7 +122,7 @@ docs = [
   "sphinx-inline-tabs==2023.4.21",
   "sphinxext-opengraph==0.13.0",
   "sphinx-paramlinks==0.6.0",
-  "sphinxcontrib-programoutput==0.17",
+  "sphinxcontrib-programoutput==0.18",
 ]
 
 [tool.ruff]
