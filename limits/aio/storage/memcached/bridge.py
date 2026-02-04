@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import urllib
 from abc import ABC, abstractmethod
 from types import ModuleType
 
+from limits._storage_scheme import parse_storage_uri
 from limits.typing import Iterable
 
 
@@ -15,15 +15,10 @@ class MemcachedBridge(ABC):
         **options: float | str | bool,
     ) -> None:
         self.uri = uri
-        self.parsed_uri = urllib.parse.urlparse(self.uri)
+        self.parsed_uri = parse_storage_uri(uri)
         self.dependency = dependency
-        self.hosts = []
+        self.hosts = self.parsed_uri.locations
         self.options = options
-
-        sep = self.parsed_uri.netloc.strip().find("@") + 1
-        for loc in self.parsed_uri.netloc.strip()[sep:].split(","):
-            host, port = loc.split(":")
-            self.hosts.append((host, int(port)))
 
         if self.parsed_uri.username:
             self.options["username"] = self.parsed_uri.username

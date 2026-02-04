@@ -104,16 +104,16 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         self.options = options
         if self.target_server == "valkey" or implementation == "valkey":
             self.bridge = ValkeyBridge(
-                uri, self.dependencies["valkey"].module, key_prefix
+                uri, self.dependencies["valkey"].module, key_prefix, **options
             )
         else:
             if implementation == "redispy":
                 self.bridge = RedispyBridge(
-                    uri, self.dependencies["redis"].module, key_prefix
+                    uri, self.dependencies["redis"].module, key_prefix, **options
                 )
             else:
                 self.bridge = CoredisBridge(
-                    uri, self.dependencies["coredis"].module, key_prefix
+                    uri, self.dependencies["coredis"].module, key_prefix, **options
                 )
         self.configure_bridge()
         self.bridge.register_scripts()

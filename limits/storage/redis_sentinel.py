@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import urllib.parse
 from typing import TYPE_CHECKING
 
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
+from limits._storage_scheme import parse_storage_uri
 from limits.errors import ConfigurationError
 from limits.storage.redis import RedisStorage
 from limits.typing import RedisClient
@@ -73,25 +73,23 @@ class RedisSentinelStorage(RedisStorage):
             uri, wrap_exceptions=wrap_exceptions, **options
         )
 
-        parsed = urllib.parse.urlparse(uri)
+        storage_uri_options = parse_storage_uri(uri)
         sentinel_configuration = []
         sentinel_options = sentinel_kwargs.copy() if sentinel_kwargs else {}
 
         parsed_auth: dict[str, float | str | bool] = {}
 
-        if parsed.username:
-            parsed_auth["username"] = parsed.username
-        if parsed.password:
-            parsed_auth["password"] = parsed.password
+        if username := options.get("username", storage_uri_options.username):
+            parsed_auth["username"] = username
+        if password := options.get("password", storage_uri_options.password):
+            parsed_auth["password"] = password
 
-        sep = parsed.netloc.find("@") + 1
-
-        for loc in parsed.netloc[sep:].split(","):
-            host, port = loc.split(":")
-            sentinel_configuration.append((host, int(port)))
+        sentinel_configuration.extend(storage_uri_options.locations)
         self.key_prefix = key_prefix
         self.service_name = (
-            parsed.path.replace("/", "") if parsed.path else service_name
+            storage_uri_options.path.replace("/", "")
+            if storage_uri_options.path
+            else service_name
         )
 
         if self.service_name is None:

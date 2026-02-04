@@ -32,14 +32,10 @@ class RedispyBridge(RedisBridge):
 
         connection_options = options.copy()
 
-        sep = self.parsed_uri.netloc.find("@") + 1
-
-        for loc in self.parsed_uri.netloc[sep:].split(","):
-            host, port = loc.split(":")
-            sentinel_configuration.append((host, int(port)))
+        sentinel_configuration.extend(self.options_from_uri.locations)
         service_name = (
-            self.parsed_uri.path.replace("/", "")
-            if self.parsed_uri.path
+            self.options_from_uri.path.replace("/", "")
+            if self.options_from_uri.path
             else service_name
         )
 
@@ -63,23 +59,30 @@ class RedispyBridge(RedisBridge):
                 connection_pool=connection_pool, **options
             )
         else:
-            self.storage = self.dependency.asyncio.Redis.from_url(self.uri, **options)
+            if self.options_from_uri.empty:
+                self.storage = self.dependency.asyncio.Redis(**options)
+            else:
+                self.storage = self.dependency.asyncio.Redis.from_url(
+                    self.uri, **options
+                )
 
         self.connection_getter = lambda _: self.storage
 
     def use_cluster(self, **options: str | float | bool) -> None:
-        sep = self.parsed_uri.netloc.find("@") + 1
         cluster_hosts = []
 
-        for loc in self.parsed_uri.netloc[sep:].split(","):
-            host, port = loc.split(":")
+        for host, port in self.options_from_uri.locations:
             cluster_hosts.append(
                 self.dependency.asyncio.cluster.ClusterNode(host=host, port=int(port))
             )
 
         self.storage = self.dependency.asyncio.RedisCluster(
-            startup_nodes=cluster_hosts,
-            **{**self.DEFAULT_CLUSTER_OPTIONS, **self.parsed_auth, **options},
+            **{
+                **self.DEFAULT_CLUSTER_OPTIONS,
+                **{"startup_nodes": cluster_hosts},
+                **self.parsed_auth,
+                **options,
+            },
         )
         self.connection_getter = lambda _: self.storage
 

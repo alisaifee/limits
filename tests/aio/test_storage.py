@@ -170,12 +170,12 @@ class TestBaseStorage:
             id="redis-uds",
         ),
         pytest.param(
-            "async+redis+unix://:password/tmp/limits.redis.sock",
+            "async+redis+unix://:sekret@/tmp/limits.redis-auth.sock",
             {},
             RedisStorage,
-            lf("redis_uds"),
+            lf("redis_uds_auth"),
             marks=pytest.mark.redis,
-            id="redis-uds-auth",
+            id="redis-uds-auth-password-from-param",
         ),
         pytest.param(
             "async+memcached://localhost:22122",
@@ -226,12 +226,12 @@ class TestBaseStorage:
             id="redis-cluster",
         ),
         pytest.param(
-            "async+redis+cluster://:sekret@localhost:8400/",
-            {},
+            "async+redis+cluster://localhost:8400/",
+            {"password": "sekret"},
             RedisClusterStorage,
             lf("redis_auth_cluster"),
             marks=pytest.mark.redis_cluster,
-            id="redis-cluster-auth",
+            id="redis-cluster-auth-password-from-param",
         ),
         pytest.param(
             "async+mongodb://localhost:37017/",
@@ -245,7 +245,9 @@ class TestBaseStorage:
 )
 class TestConcreteStorages:
     async def test_storage_string(self, uri, args, expected_instance, fixture):
-        assert isinstance(storage_from_string(uri, **args), expected_instance)
+        storage = storage_from_string(uri, **args)
+        assert isinstance(storage, expected_instance)
+        assert await storage.check()
 
     @async_fixed_start
     async def test_expiry_incr(self, uri, args, expected_instance, fixture):

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, cast
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
+from limits._storage_scheme import parse_storage_uri
 from limits.typing import Literal, RedisClient
 
 from ..util import get_package_data
@@ -96,17 +97,27 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         self.dependency = self.dependencies[self.target_server].module
 
         uri = uri.replace(f"{self.target_server}+unix", "unix")
+        storage_uri_options = parse_storage_uri(uri)
+        parsed_auth = {}
+        if username := options.get("username", storage_uri_options.username):
+            parsed_auth["username"] = username
+        if password := options.get("password", storage_uri_options.password):
+            parsed_auth["password"] = password
 
+        merged_options = {
+            **parsed_auth,
+            **options,
+        }
         if not connection_pool:
-            self.storage = self.dependency.from_url(uri, **options)
+            self.storage = self.dependency.from_url(uri, **merged_options)
         else:
             if self.target_server == "redis":
                 self.storage = self.dependency.Redis(
-                    connection_pool=connection_pool, **options
+                    connection_pool=connection_pool, **merged_options
                 )
             else:
                 self.storage = self.dependency.Valkey(
-                    connection_pool=connection_pool, **options
+                    connection_pool=connection_pool, **merged_options
                 )
         self.initialize_storage(uri)
 
