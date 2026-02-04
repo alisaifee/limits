@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from deprecated.sphinx import versionadded
 
 from limits import errors
-from limits.storage.registry import StorageRegistry
+from limits._storage_scheme import StorageRegistry
 from limits.typing import (
     Any,
     Awaitable,

@@ -9,6 +9,7 @@ import urllib
 
 import limits  # noqa
 
+from .._storage_scheme import SCHEMES
 from ..errors import ConfigurationError
 from ..typing import TypeAlias, cast
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
@@ -18,7 +19,6 @@ from .mongodb import MongoDBStorage, MongoDBStorageBase
 from .redis import RedisStorage
 from .redis_cluster import RedisClusterStorage
 from .redis_sentinel import RedisSentinelStorage
-from .registry import SCHEMES
 
 StorageTypes: TypeAlias = "Storage | limits.aio.storage.Storage"
 

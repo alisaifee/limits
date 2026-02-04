@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import urllib
 from abc import ABC, abstractmethod
 from types import ModuleType
 
+from limits._storage_scheme import parse_storage_uri
 from limits.util import get_package_data
 
 
@@ -26,16 +26,17 @@ class RedisBridge(ABC):
         uri: str,
         dependency: ModuleType,
         key_prefix: str,
+        **options: float | str | bool,
     ) -> None:
         self.uri = uri
-        self.parsed_uri = urllib.parse.urlparse(self.uri)
+        self.options_from_uri = parse_storage_uri(self.uri)
         self.dependency = dependency
         self.parsed_auth = {}
         self.key_prefix = key_prefix
-        if self.parsed_uri.username:
-            self.parsed_auth["username"] = self.parsed_uri.username
-        if self.parsed_uri.password:
-            self.parsed_auth["password"] = self.parsed_uri.password
+        if username := options.get("username", self.options_from_uri.username):
+            self.parsed_auth["username"] = username
+        if password := options.get("password", self.options_from_uri.password):
+            self.parsed_auth["password"] = password
 
     def prefixed_key(self, key: str) -> str:
         return f"{self.key_prefix}:{key}"

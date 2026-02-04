@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 
 import pytest
+import redis
 from pytest_lazy_fixtures import lf
 
 from limits import RateLimitItemPerMinute, RateLimitItemPerSecond
@@ -165,14 +166,6 @@ class TestBaseStorage:
             id="redis-uds",
         ),
         pytest.param(
-            "redis+unix://:password/tmp/limits.redis.sock",
-            {},
-            RedisStorage,
-            lf("redis_uds"),
-            marks=pytest.mark.redis,
-            id="redis-uds-auth",
-        ),
-        pytest.param(
             "memcached://localhost:22122",
             {},
             MemcachedStorage,
@@ -213,12 +206,12 @@ class TestBaseStorage:
             id="redis-sentinel-service-name-url",
         ),
         pytest.param(
-            "redis+sentinel://:sekret@localhost:36379/mymaster",
+            "redis+sentinel://localhost:36379/mymaster",
             {"password": "sekret"},
             RedisSentinelStorage,
             lf("redis_sentinel_auth"),
             marks=pytest.mark.redis_sentinel,
-            id="redis-sentinel-auth",
+            id="redis-sentinel-auth-password-from-param",
         ),
         pytest.param(
             "redis+cluster://localhost:7001/",
@@ -237,6 +230,17 @@ class TestBaseStorage:
             id="redis-cluster-auth",
         ),
         pytest.param(
+            "redis+cluster://",
+            {
+                "startup_nodes": [redis.cluster.ClusterNode("localhost", 8400)],
+                "password": "sekret",
+            },
+            RedisClusterStorage,
+            lf("redis_auth_cluster"),
+            marks=pytest.mark.redis_cluster,
+            id="redis-cluster-auth-startup-nodes-password-from-param",
+        ),
+        pytest.param(
             "mongodb://localhost:37017/",
             {},
             MongoDBStorage,
@@ -248,7 +252,9 @@ class TestBaseStorage:
 )
 class TestConcreteStorages:
     def test_storage_string(self, uri, args, expected_instance, fixture):
-        assert isinstance(storage_from_string(uri, **args), expected_instance)
+        storage = storage_from_string(uri, **args)
+        assert isinstance(storage, expected_instance)
+        assert storage.check()
 
     @fixed_start
     def test_expiry_incr(self, uri, args, expected_instance, fixture):

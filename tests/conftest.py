@@ -117,6 +117,15 @@ def redis_uds_client(docker_services):
 
     return redis.from_url("unix:///tmp/limits.redis.sock")
 
+@pytest.fixture(scope="session")
+def redis_uds_auth_client(docker_services):
+    if platform.system().lower() == "darwin":
+        pytest.skip("Fixture not supported on OSX")
+    docker_services.start("redis-uds-auth")
+    ci_delay()
+
+    return redis.from_url("unix:///tmp/limits.redis-auth.sock", password="sekret")
+
 
 @pytest.fixture(scope="session")
 def redis_auth_client(docker_services):
@@ -310,6 +319,12 @@ def redis_uds(redis_uds_client):
     redis_uds_client.flushall()
 
     return redis_uds_client
+
+@pytest.fixture
+def redis_uds_auth(redis_uds_auth_client):
+    redis_uds_auth_client.flushall()
+
+    return redis_uds_auth_client
 
 
 @pytest.fixture

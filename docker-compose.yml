@@ -210,6 +210,13 @@ services:
       - type: bind
         source: /tmp/
         target: /sockets/
+  redis-uds-auth:
+    image: "redis:${LIMITS_REDIS_SERVER_VERSION:-latest}"
+    command: sh -c "test ${HOST_OS} = \"Darwin\" && exit || redis-server --port 0 --requirepass sekret --unixsocket /sockets/limits.redis-auth.sock --unixsocketperm 777"
+    volumes:
+      - type: bind
+        source: /tmp/
+        target: /sockets/
   mongodb:
     image: "mongo:${LIMITS_MONGODB_SERVER_VERSION:-latest}"
     ports:

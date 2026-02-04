@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import urllib
-
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
+from limits._storage_scheme import parse_storage_uri
 from limits.storage.redis import RedisStorage
 
 
@@ -74,34 +73,30 @@ class RedisClusterStorage(RedisStorage):
         :raise ConfigurationError: when the :pypi:`redis` library is not
          available or if the redis cluster cannot be reached.
         """
-        parsed = urllib.parse.urlparse(uri)
-        parsed_auth: dict[str, float | str | bool] = {}
+        storage_uri_options = parse_storage_uri(uri)
+        parsed_auth = {}
+        if username := options.get("username", storage_uri_options.username):
+            parsed_auth["username"] = username
+        if password := options.get("password", storage_uri_options.password):
+            parsed_auth["password"] = password
 
-        if parsed.username:
-            parsed_auth["username"] = parsed.username
-        if parsed.password:
-            parsed_auth["password"] = parsed.password
-
-        sep = parsed.netloc.find("@") + 1
-        cluster_hosts = []
-        for loc in parsed.netloc[sep:].split(","):
-            host, port = loc.split(":")
-            cluster_hosts.append((host, int(port)))
+        cluster_hosts = storage_uri_options.locations
 
         self.key_prefix = key_prefix
         self.storage = None
         self.target_server = "valkey" if uri.startswith("valkey") else "redis"
-        merged_options = {**self.DEFAULT_OPTIONS, **parsed_auth, **options}
         self.dependency = self.dependencies[self.target_server].module
         startup_nodes = [self.dependency.cluster.ClusterNode(*c) for c in cluster_hosts]
+        merged_options = {
+            **self.DEFAULT_OPTIONS,
+            **{"startup_nodes": startup_nodes},
+            **parsed_auth,
+            **options,
+        }
         if self.target_server == "redis":
-            self.storage = self.dependency.cluster.RedisCluster(
-                startup_nodes=startup_nodes, **merged_options
-            )
+            self.storage = self.dependency.cluster.RedisCluster(**merged_options)
         else:
-            self.storage = self.dependency.cluster.ValkeyCluster(
-                startup_nodes=startup_nodes, **merged_options
-            )
+            self.storage = self.dependency.cluster.ValkeyCluster(**merged_options)
 
         assert self.storage
         self.initialize_storage(uri)

@@ -3,11 +3,11 @@ from __future__ import annotations
 import inspect
 import threading
 import time
-import urllib.parse
 from collections.abc import Iterable
 from math import ceil, floor
 from types import ModuleType
 
+from limits._storage_scheme import parse_storage_uri
 from limits.errors import ConfigurationError
 from limits.storage.base import (
     SlidingWindowCounterSupport,
@@ -54,19 +54,12 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
          one hosts specified)
         :raise ConfigurationError: when :pypi:`pymemcache` is not available
         """
-        parsed = urllib.parse.urlparse(uri)
-        self.hosts = []
-
-        for loc in parsed.netloc.strip().split(","):
-            if not loc:
-                continue
-            host, port = loc.split(":")
-            self.hosts.append((host, int(port)))
+        storage_uri_options = parse_storage_uri(uri)
+        self.hosts: list[tuple[str, int]] | list[str]
+        if storage_uri_options.path:
+            self.hosts = [storage_uri_options.path]
         else:
-            # filesystem path to UDS
-
-            if parsed.path and not parsed.netloc and not parsed.port:
-                self.hosts = [parsed.path]  # type: ignore
+            self.hosts = storage_uri_options.locations
 
         self.dependency = self.dependencies["pymemcache"].module
         self.library = str(options.pop("library", "pymemcache.client"))
@@ -74,7 +67,7 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
             options.pop("cluster_library", "pymemcache.client.hash")
         )
         self.client_getter = cast(
-            Callable[[ModuleType, list[tuple[str, int]]], MemcachedClientP],
+            Callable[[ModuleType, list[tuple[str, int]] | list[str]], MemcachedClientP],
             options.pop("client_getter", self.get_client),
         )
         self.options = options
