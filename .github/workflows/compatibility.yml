@@ -6,6 +6,9 @@ on:
     tags: ['*']
   schedule:
   - cron: 0 23 * * *
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
