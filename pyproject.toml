@@ -89,7 +89,7 @@ test = [
   "hiro>0.1.6",
   "flaky",
   "lovely-pytest-docker",
-  "pytest<9",
+  "pytest<10",
   "pytest-asyncio",
   "pytest-benchmark[histogram]",
   "pytest-cov",
