@@ -63,8 +63,8 @@ def parse_storage_uri(uri: str) -> StorageURIOptions:
                 if hostname is None or port is None:
                     raise ConfigurationError(f"Missing host or port in location {loc}")
                 locations.append((hostname, port))
-    except ValueError:
-        raise ConfigurationError(f"Unable to parse storage uri {uri}")
+    except ValueError as err:
+        raise ConfigurationError(f"Unable to parse storage uri {uri}") from err
     return StorageURIOptions(
         parsed.scheme,
         parsed.username,
