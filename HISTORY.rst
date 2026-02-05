@@ -3,6 +3,18 @@
 Changelog
 =========
 
+v5.8.0
+------
+Release Date: 2026-02-04
+
+* Bug Fix
+
+  * Allow explicit keyword arguments for storage options for
+    username & password for storages that support it.
+  * Allow explicitly specifying `startup_nodes` through keyword
+    arguments for all redis cluster storages.
+  * Support IPv6 addresses in cluster locators in storage uri
+
 v5.7.0
 ------
 Release Date: 2026-02-03
