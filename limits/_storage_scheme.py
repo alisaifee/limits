@@ -4,6 +4,8 @@ import dataclasses
 import urllib.parse
 from abc import ABCMeta
 
+from limits.errors import ConfigurationError
+
 SCHEMES: dict[str, StorageRegistry] = {}
 
 
@@ -53,10 +55,16 @@ def parse_storage_uri(uri: str) -> StorageURIOptions:
     parsed = urllib.parse.urlparse(uri)
     sep = parsed.netloc.find("@") + 1
     locations = []
-    if parsed.netloc[sep:]:
-        for loc in parsed.netloc[sep:].split(","):
-            host, port = loc.split(":")
-            locations.append((host, int(port)))
+    try:
+        if parsed.netloc[sep:]:
+            for loc in parsed.netloc[sep:].split(","):
+                sub = urllib.parse.urlparse(f"fake://{loc.strip()}")
+                hostname, port = sub.hostname, sub.port
+                if hostname is None or port is None:
+                    raise ConfigurationError(f"Missing host or port in location {loc}")
+                locations.append((hostname, port))
+    except ValueError:
+        raise ConfigurationError(f"Unable to parse storage uri {uri}")
     return StorageURIOptions(
         parsed.scheme,
         parsed.username,
