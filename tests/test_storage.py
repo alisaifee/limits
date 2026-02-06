@@ -166,6 +166,14 @@ class TestBaseStorage:
             id="redis-uds",
         ),
         pytest.param(
+            "redis+unix://:sekret@/tmp/limits.redis-auth.sock",
+            {},
+            RedisStorage,
+            lf("redis_uds_auth"),
+            marks=pytest.mark.redis,
+            id="redis-uds-auth",
+        ),
+        pytest.param(
             "memcached://localhost:22122",
             {},
             MemcachedStorage,
