@@ -76,6 +76,9 @@ source = "vcs"
 version_scheme = "no-guess-dev"
 local_scheme = "no-local-version"
 
+[tool.hatch.build.targets.sdist]
+include = ["limits/**/*"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["limits"]
 
