@@ -2142,15 +2142,15 @@ wheels = [
 
 [[package]]
 name = "sphinxcontrib-programoutput"
-version = "0.18"
+version = "0.19"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "sphinx", version = "8.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3f/c0/834af2290f8477213ec0dd60e90104f5644aa0c37b1a0d6f0a2b5efe03c4/sphinxcontrib_programoutput-0.18.tar.gz", hash = "sha256:09e68b6411d937a80b6085f4fdeaa42e0dc5555480385938465f410589d2eed8", size = 26333, upload-time = "2024-12-06T20:38:36.959Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5b/c3/670084aead0328cb06d6802d6bd9e382f69e93e79a06c278a0447171a1ea/sphinxcontrib_programoutput-0.19.tar.gz", hash = "sha256:787ca068b7e1205ed492ea20a23a8e599c3b4edb8c43bacf564e5ec7c30c7dad", size = 27534, upload-time = "2026-02-20T19:17:42.217Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/2c/7aec6e0580f666d4f61474a50c4995a98abfff27d827f0e7bc8c4fa528f5/sphinxcontrib_programoutput-0.18-py3-none-any.whl", hash = "sha256:8a651bc85de69a808a064ff0e48d06c12b9347da4fe5fdb1e94914b01e1b0c36", size = 20346, upload-time = "2024-12-06T20:38:22.406Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/90/c9d63522a83dd0cc488646179b31638799901d91e6ff856341fb3f31be9a/sphinxcontrib_programoutput-0.19-py3-none-any.whl", hash = "sha256:95ff4219ecee64bebf4fc6d2339cb1c2f313258b9999143e54839d83ae32afd1", size = 20818, upload-time = "2026-02-20T19:17:40.98Z" },
 ]
 
 [[package]]
