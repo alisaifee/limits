@@ -2322,11 +2322,11 @@ wheels = [
 
 [[package]]
 name = "types-deprecated"
-version = "1.3.1.20260408"
+version = "1.3.1.20260508"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1a/db/076de3e81b106d3cec17aec9640ab1b2d02f29bad441de280459c161ce65/types_deprecated-1.3.1.20260408.tar.gz", hash = "sha256:62d6a86d0cc754c14bb2de31162d069b1c6a07ce11ee65e5258f8f75308eb3a3", size = 8524, upload-time = "2026-04-08T04:26:39.894Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7a/3e/9cd21c9292ea64682f1533d315d429c7e35617e168fd54b90e22d530178c/types_deprecated-1.3.1.20260508.tar.gz", hash = "sha256:a03c378da8fd83e2d5715fcdab204cfed1cfccf09766163390333684bb8413c8", size = 8566, upload-time = "2026-05-08T04:46:13.754Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/53/d0/d3258379deb749d949c3c72313981c9d2cceec518b87dcf506f022f5d49f/types_deprecated-1.3.1.20260408-py3-none-any.whl", hash = "sha256:b64e1eab560d4fa9394a27a3099211344b0e0f2f3ac8026d825c86e70d65cdd5", size = 9079, upload-time = "2026-04-08T04:26:38.752Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/9f/d05eefc9d26aa2aa2d07f3cde9a909b569370324acfd8403ff7bee466419/types_deprecated-1.3.1.20260508-py3-none-any.whl", hash = "sha256:02de536e9a57fc5fdff09ecfdaae3099a000764597ec4c03b343db4f09adbb37", size = 9059, upload-time = "2026-05-08T04:46:12.686Z" },
 ]
 
 [[package]]
