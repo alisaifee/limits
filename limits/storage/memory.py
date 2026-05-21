@@ -38,6 +38,7 @@ class MemoryStorage(
         self.locks: defaultdict[str, threading.RLock] = defaultdict(threading.RLock)
         self.expirations: dict[str, float] = {}
         self.events: dict[str, list[Entry]] = {}
+        self._timer_lock = threading.Lock()
         self.timer: threading.Timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **_)
@@ -46,11 +47,13 @@ class MemoryStorage(
         state = self.__dict__.copy()
         del state["timer"]
         del state["locks"]
+        del state["_timer_lock"]
         return state
 
     def __setstate__(self, state: dict[str, limits.typing.Any]) -> None:  # type: ignore[explicit-any]
         self.__dict__.update(state)
         self.locks = defaultdict(threading.RLock)
+        self._timer_lock = threading.Lock()
         self.timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
 
@@ -71,9 +74,10 @@ class MemoryStorage(
                 self.locks.pop(key, None)
 
     def __schedule_expiry(self) -> None:
-        if not self.timer.is_alive():
-            self.timer = threading.Timer(0.01, self.__expire_events)
-            self.timer.start()
+        with self._timer_lock:
+            if not self.timer.is_alive():
+                self.timer = threading.Timer(0.01, self.__expire_events)
+                self.timer.start()
 
     @property
     def base_exceptions(
