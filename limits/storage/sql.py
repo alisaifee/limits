@@ -25,7 +25,6 @@ from limits.storage.base import (
     Storage,
 )
 
-
 def _as_utc(dt: datetime) -> datetime:
     """Return dt as a UTC-aware datetime, attaching UTC if it is naive."""
     if dt.tzinfo is None:

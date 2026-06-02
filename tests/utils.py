@@ -168,6 +168,7 @@ ALL_STORAGES = {
     ),
     "sqlite": pytest.param(
         "sqlite:///:memory:",
+        {},
         None,
         marks=pytest.mark.sqlite,
         id="sqlite",
