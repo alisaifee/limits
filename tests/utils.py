@@ -167,9 +167,9 @@ ALL_STORAGES = {
         id="valkey-cluster",
     ),
     "sqlite": pytest.param(
-        "sqlite:///:memory:",
+        "sqlite:////tmp/limits_sql_test.db",
         {},
-        None,
+        lf("sqlite"),
         marks=pytest.mark.sqlite,
         id="sqlite",
     ),

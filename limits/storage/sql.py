@@ -13,6 +13,7 @@ from sqlalchemy import (
     Table,
     and_,
     create_engine,
+    event,
     func,
     select,
     text,
@@ -66,6 +67,16 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         self.fixed_sliding_window_table_name = fixed_sliding_window_table_name
         self.metadata = MetaData()
         self.engine = create_engine(uri)
+        if uri.startswith("sqlite"):
+            # Force every transaction to start as IMMEDIATE
+            @event.listens_for(self.engine, "connect")
+            def disable_autocommit(dbapi_connection, connection_record):
+                dbapi_connection.isolation_level = None
+
+            @event.listens_for(self.engine, "begin")
+            def force_immediate(conn):
+                conn.exec_driver_sql("BEGIN IMMEDIATE")
+
         # Table for moving window
         self.moving_window_table = Table(
             self.moving_window_table_name,
@@ -116,9 +127,9 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         updated_count = 0
         with self.engine.begin() as conn:
             row = conn.execute(
-                self.fixed_and_sliding_window_table.select().where(
-                    and_(self.fixed_and_sliding_window_table.c.key == key)
-                )
+                self.fixed_and_sliding_window_table.select()
+                .where(and_(self.fixed_and_sliding_window_table.c.key == key))
+                .with_for_update()
             ).first()
             current_timestamp = datetime.now(timezone.utc)
             if not row:
@@ -212,10 +223,12 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             # Count existing entries within the window
             existing_count = (
                 conn.scalar(
-                    select(func.sum(self.moving_window_table.c.amount)).where(
+                    select(func.sum(self.moving_window_table.c.amount))
+                    .where(
                         (self.moving_window_table.c.key == key)
                         & (self.moving_window_table.c.timestamp >= cutoff_time)
                     )
+                    .with_for_update()
                 )
                 or 0
             )
@@ -264,11 +277,13 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         success = False
         with self.engine.begin() as conn:
             row = conn.execute(
-                self.fixed_and_sliding_window_table.select().where(
+                self.fixed_and_sliding_window_table.select()
+                .where(
                     and_(
                         self.fixed_and_sliding_window_table.c.key == key
                     )  # Only one row for each key should exist
                 )
+                .with_for_update()
             ).first()
             current_timestamp = datetime.now(timezone.utc)
             if not row:
