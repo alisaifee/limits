@@ -68,6 +68,9 @@ valkey = [
 "async-valkey" = [
   "valkey>=6"
 ]
+sql = [
+    "sqlalchemy>=2.0.50",
+]
 
 [tool.hatch.version]
 source = "vcs"
