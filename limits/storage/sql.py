@@ -25,6 +25,7 @@ from limits.storage.base import (
     Storage,
 )
 
+
 def _as_utc(dt: datetime) -> datetime:
     """Return dt as a UTC-aware datetime, attaching UTC if it is naive."""
     if dt.tzinfo is None:
@@ -32,9 +33,7 @@ def _as_utc(dt: datetime) -> datetime:
     return dt
 
 
-class SqlStorage(
-    Storage, MovingWindowSupport, SlidingWindowCounterSupport
-):
+class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     """
     Rate limit storage with SQL as backend.
 
@@ -114,7 +113,7 @@ class SqlStorage(
                 return float(datetime.now(timezone.utc).timestamp())
 
     def incr(self, key: str, expiry: int, amount: int = 1) -> int:
-        updated_count = None
+        updated_count = 0
         with self.engine.begin() as conn:
             row = conn.execute(
                 self.fixed_and_sliding_window_table.select().where(
@@ -211,12 +210,15 @@ class SqlStorage(
                 )
             )
             # Count existing entries within the window
-            existing_count = conn.scalar(
-                select(func.sum(self.moving_window_table.c.amount)).where(
-                    (self.moving_window_table.c.key == key)
-                    & (self.moving_window_table.c.timestamp >= cutoff_time)
+            existing_count = (
+                conn.scalar(
+                    select(func.sum(self.moving_window_table.c.amount)).where(
+                        (self.moving_window_table.c.key == key)
+                        & (self.moving_window_table.c.timestamp >= cutoff_time)
+                    )
                 )
-            ) or 0
+                or 0
+            )
             # Check if adding the new entry would exceed the limit
             if existing_count + amount > limit:
                 return False
@@ -236,8 +238,9 @@ class SqlStorage(
             current_time = datetime.now(timezone.utc)
             cutoff_time = current_time - timedelta(seconds=expiry)
             result = conn.execute(
-                select(func.min(self.moving_window_table.c.timestamp),
-                       func.sum(self.moving_window_table.c.amount)
+                select(
+                    func.min(self.moving_window_table.c.timestamp),
+                    func.sum(self.moving_window_table.c.amount),
                 ).where(
                     (self.moving_window_table.c.key == key)
                     & (self.moving_window_table.c.timestamp >= cutoff_time)
@@ -245,7 +248,12 @@ class SqlStorage(
             ).first()
             if result:
                 earliest_timestamp, existing_count = result
-                return _as_utc(earliest_timestamp).timestamp() if earliest_timestamp else current_time.timestamp(), existing_count or 0
+                return (
+                    _as_utc(earliest_timestamp).timestamp()
+                    if earliest_timestamp
+                    else current_time.timestamp(),
+                    existing_count or 0,
+                )
             else:
                 return current_time.timestamp(), 0
 
@@ -281,14 +289,20 @@ class SqlStorage(
                 # set current count to amount
                 # set previous count to current count of the last window if last window expired less than expiry seconds ago, otherwise set previous count to 0
                 row_expiry = _as_utc(row.expiry_timestamp)
-                expiry_timestamp = row_expiry + timedelta(seconds=(1 + (current_timestamp - row_expiry).total_seconds()//expiry)*expiry)
+                expiry_timestamp = row_expiry + timedelta(
+                    seconds=(
+                        1 + (current_timestamp - row_expiry).total_seconds() // expiry
+                    )
+                    * expiry
+                )
                 previous_count = (
-                    min(limit, row.current_count) # use min to be safe
+                    min(limit, row.current_count)  # use min to be safe
                     if current_timestamp - row_expiry < timedelta(seconds=expiry)
                     else 0
                 )
                 weight = (
-                    expiry - (current_timestamp - row_expiry).total_seconds() % expiry) / expiry
+                    expiry - (current_timestamp - row_expiry).total_seconds() % expiry
+                ) / expiry
                 new_count = int(floor(amount + weight * previous_count))
                 success = new_count <= limit
                 if success:
@@ -306,9 +320,16 @@ class SqlStorage(
                 # calculate weight of the previous count and add it to the current count to check if it exceeds the limit, if not increment current count by amount
                 row_expiry = _as_utc(row.expiry_timestamp)
                 weight = (
-                    expiry - ((current_timestamp - (row_expiry - timedelta(seconds=expiry))).total_seconds())
+                    expiry
+                    - (
+                        (
+                            current_timestamp - (row_expiry - timedelta(seconds=expiry))
+                        ).total_seconds()
+                    )
                 ) / expiry
-                new_count = int(floor(row.current_count + amount + weight * row.previous_count))
+                new_count = int(
+                    floor(row.current_count + amount + weight * row.previous_count)
+                )
                 success = new_count <= limit
                 if success:
                     conn.execute(
@@ -335,17 +356,29 @@ class SqlStorage(
                     # within the current window, calculate TTLs
                     current_ttl = (row_expiry - current_timestamp).total_seconds()
                     current_count = row.current_count
-                    prev_ttl = expiry - (current_timestamp - (row_expiry - timedelta(seconds=expiry))).total_seconds()
+                    prev_ttl = (
+                        expiry
+                        - (
+                            current_timestamp - (row_expiry - timedelta(seconds=expiry))
+                        ).total_seconds()
+                    )
                     prev_count = row.previous_count
                 elif row_expiry <= current_timestamp:
                     # last window has expired, calculate new expiry, current_ttl is based on this new expiry.
                     # prev_ttl is expiry minus time elapsed since prev window expiry
                     # current count will be 0, set previous count to current count of the last window if last window expired less than expiry seconds ago, otherwise 0
-                    expiry_timestamp = row_expiry + timedelta(seconds=(1 + (
-                                current_timestamp - row_expiry).total_seconds() // expiry) * expiry)
+                    expiry_timestamp = row_expiry + timedelta(
+                        seconds=(
+                            1
+                            + (current_timestamp - row_expiry).total_seconds() // expiry
+                        )
+                        * expiry
+                    )
                     current_ttl = (expiry_timestamp - current_timestamp).total_seconds()
                     current_count = 0
-                    prev_ttl = expiry - ((current_timestamp - row_expiry).total_seconds() % expiry)
+                    prev_ttl = expiry - (
+                        (current_timestamp - row_expiry).total_seconds() % expiry
+                    )
                     prev_count = (
                         row.current_count
                         if current_timestamp - row_expiry < timedelta(seconds=expiry)
