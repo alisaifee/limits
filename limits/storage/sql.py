@@ -4,27 +4,12 @@ from datetime import datetime, timedelta, timezone
 from math import floor
 from typing import Tuple
 
-from sqlalchemy import (
-    TIMESTAMP,
-    Column,
-    Integer,
-    MetaData,
-    String,
-    Table,
-    and_,
-    create_engine,
-    event,
-    func,
-    select,
-    text,
-)
-from sqlalchemy.exc import SQLAlchemyError
-
 from limits.storage.base import (
     MovingWindowSupport,
     SlidingWindowCounterSupport,
     Storage,
 )
+from limits.util import get_dependency
 
 
 def _as_utc(dt: datetime) -> datetime:
@@ -63,57 +48,69 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         **options: int | str | bool,
     ):
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **options)
+        self.lib = self.dependencies["sqlalchemy"].module
+        self.lib_errors, _ = get_dependency("sqlalchemy.exc")
         self.moving_window_table_name = moving_window_table_name
         self.fixed_sliding_window_table_name = fixed_sliding_window_table_name
-        self.metadata = MetaData()
-        self.engine = create_engine(uri)
+        self.metadata = self.lib.MetaData()
+        self.engine = self.lib.create_engine(uri)
         if uri.startswith("sqlite"):
             # Force every transaction to start as IMMEDIATE
-            @event.listens_for(self.engine, "connect")
+            @self.lib.event.listens_for(self.engine, "connect")
             def disable_autocommit(dbapi_connection, connection_record):
                 dbapi_connection.isolation_level = None
 
-            @event.listens_for(self.engine, "begin")
+            @self.lib.event.listens_for(self.engine, "begin")
             def force_immediate(conn):
                 conn.exec_driver_sql("BEGIN IMMEDIATE")
 
         # Table for moving window
-        self.moving_window_table = Table(
+        self.moving_window_table = self.lib.Table(
             self.moving_window_table_name,
             self.metadata,
-            Column("id", Integer, primary_key=True, autoincrement=True),
-            Column("key", String(255), nullable=False, index=True),
-            Column("timestamp", TIMESTAMP(timezone=True), nullable=False, index=True),
-            Column("amount", Integer, nullable=False),
+            self.lib.Column(
+                "id", self.lib.Integer, primary_key=True, autoincrement=True
+            ),
+            self.lib.Column("key", self.lib.String(255), nullable=False, index=True),
+            self.lib.Column(
+                "timestamp",
+                self.lib.TIMESTAMP(timezone=True),
+                nullable=False,
+                index=True,
+            ),
+            self.lib.Column("amount", self.lib.Integer, nullable=False),
         )
         # Table for fixed and sliding window
-        self.fixed_and_sliding_window_table = Table(
+        self.fixed_and_sliding_window_table = self.lib.Table(
             self.fixed_sliding_window_table_name,
             self.metadata,
-            Column("key", String(255), primary_key=True, index=True),
-            Column("current_count", Integer, nullable=False),
-            Column("previous_count", Integer, nullable=True),
+            self.lib.Column("key", self.lib.String(255), primary_key=True, index=True),
+            self.lib.Column("current_count", self.lib.Integer, nullable=False),
+            self.lib.Column("previous_count", self.lib.Integer, nullable=True),
             # previous count is only for sliding window
-            Column(
-                "expiry_timestamp", TIMESTAMP(timezone=True), nullable=False, index=True
+            self.lib.Column(
+                "expiry_timestamp",
+                self.lib.TIMESTAMP(timezone=True),
+                nullable=False,
+                index=True,
             ),
         )
         with self.engine.begin() as conn:
             self.metadata.create_all(conn)
 
     @property
-    def base_exceptions(self) -> type[SQLAlchemyError]:
-        return SQLAlchemyError
+    def base_exceptions(self) -> type[Exception]:
+        return self.lib_errors.SQLAlchemyError
 
     def check(self):
         with self.engine.connect() as conn:
-            return bool(conn.execute(text("SELECT 1")).scalar_one() == 1)
+            return bool(conn.execute(self.lib.text("SELECT 1")).scalar_one() == 1)
 
     def get_expiry(self, key: str):
         """Get the expiry timestamp for a given key from the fixed/sliding window table."""
         with self.engine.begin() as conn:
             query = self.fixed_and_sliding_window_table.select().where(
-                and_(self.fixed_and_sliding_window_table.c.key == key)
+                self.lib.and_(self.fixed_and_sliding_window_table.c.key == key)
             )
             result = conn.execute(query).first()
             if result and result.expiry_timestamp:
@@ -128,7 +125,7 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         with self.engine.begin() as conn:
             row = conn.execute(
                 self.fixed_and_sliding_window_table.select()
-                .where(and_(self.fixed_and_sliding_window_table.c.key == key))
+                .where(self.lib.and_(self.fixed_and_sliding_window_table.c.key == key))
                 .with_for_update()
             ).first()
             current_timestamp = datetime.now(timezone.utc)
@@ -149,7 +146,9 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                 expiry_timestamp = current_timestamp + timedelta(seconds=expiry)
                 conn.execute(
                     self.fixed_and_sliding_window_table.update()
-                    .where(and_(self.fixed_and_sliding_window_table.c.key == key))
+                    .where(
+                        self.lib.and_(self.fixed_and_sliding_window_table.c.key == key)
+                    )
                     .values(
                         current_count=amount,
                         previous_count=0,
@@ -162,7 +161,9 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                 new_count = row.current_count + amount
                 conn.execute(
                     self.fixed_and_sliding_window_table.update()
-                    .where(and_(self.fixed_and_sliding_window_table.c.key == key))
+                    .where(
+                        self.lib.and_(self.fixed_and_sliding_window_table.c.key == key)
+                    )
                     .values(current_count=new_count)
                 )
                 updated_count = new_count
@@ -173,7 +174,7 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         with self.engine.begin() as conn:
             current_timestamp = datetime.now(timezone.utc)
             query = self.fixed_and_sliding_window_table.select().where(
-                and_(
+                self.lib.and_(
                     self.fixed_and_sliding_window_table.c.key == key,
                     self.fixed_and_sliding_window_table.c.expiry_timestamp
                     > current_timestamp,
@@ -196,12 +197,12 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         with self.engine.begin() as conn:
             conn.execute(
                 self.fixed_and_sliding_window_table.delete().where(
-                    and_(self.fixed_and_sliding_window_table.c.key == key)
+                    self.lib.and_(self.fixed_and_sliding_window_table.c.key == key)
                 )
             )
             conn.execute(
                 self.moving_window_table.delete().where(
-                    and_(self.moving_window_table.c.key == key)
+                    self.lib.and_(self.moving_window_table.c.key == key)
                 )
             )
 
@@ -223,7 +224,9 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             # Count existing entries within the window
             existing_count = (
                 conn.scalar(
-                    select(func.sum(self.moving_window_table.c.amount))
+                    self.lib.select(
+                        self.lib.func.sum(self.moving_window_table.c.amount)
+                    )
                     .where(
                         (self.moving_window_table.c.key == key)
                         & (self.moving_window_table.c.timestamp >= cutoff_time)
@@ -251,9 +254,9 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             current_time = datetime.now(timezone.utc)
             cutoff_time = current_time - timedelta(seconds=expiry)
             result = conn.execute(
-                select(
-                    func.min(self.moving_window_table.c.timestamp),
-                    func.sum(self.moving_window_table.c.amount),
+                self.lib.select(
+                    self.lib.func.min(self.moving_window_table.c.timestamp),
+                    self.lib.func.sum(self.moving_window_table.c.amount),
                 ).where(
                     (self.moving_window_table.c.key == key)
                     & (self.moving_window_table.c.timestamp >= cutoff_time)
@@ -279,7 +282,7 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             row = conn.execute(
                 self.fixed_and_sliding_window_table.select()
                 .where(
-                    and_(
+                    self.lib.and_(
                         self.fixed_and_sliding_window_table.c.key == key
                     )  # Only one row for each key should exist
                 )
@@ -323,7 +326,11 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                 if success:
                     conn.execute(
                         self.fixed_and_sliding_window_table.update()
-                        .where(and_(self.fixed_and_sliding_window_table.c.key == key))
+                        .where(
+                            self.lib.and_(
+                                self.fixed_and_sliding_window_table.c.key == key
+                            )
+                        )
                         .values(
                             current_count=amount,
                             previous_count=previous_count,
@@ -349,7 +356,11 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                 if success:
                     conn.execute(
                         self.fixed_and_sliding_window_table.update()
-                        .where(and_(self.fixed_and_sliding_window_table.c.key == key))
+                        .where(
+                            self.lib.and_(
+                                self.fixed_and_sliding_window_table.c.key == key
+                            )
+                        )
                         .values(current_count=row.current_count + amount)
                     )
 
@@ -361,7 +372,7 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         with self.engine.begin() as conn:
             row = conn.execute(
                 self.fixed_and_sliding_window_table.select().where(
-                    and_(self.fixed_and_sliding_window_table.c.key == key)
+                    self.lib.and_(self.fixed_and_sliding_window_table.c.key == key)
                 )
             ).first()
             if row:
@@ -412,7 +423,7 @@ class SqlStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         with self.engine.begin() as conn:
             conn.execute(
                 self.fixed_and_sliding_window_table.delete().where(
-                    and_(self.fixed_and_sliding_window_table.c.key == key)
+                    self.lib.and_(self.fixed_and_sliding_window_table.c.key == key)
                 )
             )
 
