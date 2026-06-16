@@ -91,7 +91,8 @@ class TestAsyncGCRA:
         assert not await limiter.hit(limit, "key")
         stats = await limiter.get_window_stats(limit, "key")
         assert stats.remaining == 0
-        assert stats.reset_time - time.time() == pytest.approx(0.2, abs=0.1)
+        reset_in = stats.reset_time - time.time()
+        assert 0 <= reset_in <= 0.25
         time.sleep(0.25)
         assert await limiter.hit(limit, "key")
 
