@@ -5,7 +5,12 @@ import asyncio
 from deprecated.sphinx import versionadded, versionchanged
 from packaging.version import Version
 
-from limits.aio.storage import MovingWindowSupport, SlidingWindowCounterSupport, Storage
+from limits.aio.storage import (
+    GCRASupport,
+    MovingWindowSupport,
+    SlidingWindowCounterSupport,
+    Storage,
+)
 from limits.aio.storage.redis.bridge import RedisBridge
 from limits.aio.storage.redis.coredis import CoredisBridge
 from limits.aio.storage.redis.redispy import RedispyBridge
@@ -29,7 +34,9 @@ from limits.typing import Literal
         " ``async+valkey`` schema"
     ),
 )
-class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
+class RedisStorage(
+    Storage, GCRASupport, MovingWindowSupport, SlidingWindowCounterSupport
+):
     """
     Rate limit storage with redis as backend.
 
@@ -200,6 +207,24 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         :return: (previous count, previous TTL, current count, current TTL)
         """
         return await self.bridge.get_moving_window(key, limit, expiry)
+
+    async def acquire_gcra_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+        burst: int = 1,
+    ) -> bool:
+        return await self.bridge.acquire_gcra_entry(key, limit, expiry, amount, burst)
+
+    async def get_gcra_window(
+        self, key: str, limit: int, expiry: int, burst: int = 1
+    ) -> tuple[float, int]:
+        return await self.bridge.get_gcra_window(key, limit, expiry, burst)
+
+    async def clear_gcra_window(self, key: str) -> None:
+        await self.bridge.clear_gcra_window(key)
 
     async def acquire_sliding_window_entry(
         self,

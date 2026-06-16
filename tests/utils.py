@@ -303,3 +303,23 @@ async_moving_window_storage = pytest.mark.parametrize(
 async_sliding_window_counter_storage = pytest.mark.parametrize(
     "uri, args, fixture", ALL_STORAGES_ASYNC.values()
 )
+
+
+gcra_storage = pytest.mark.parametrize(
+    "uri, args, fixture",
+    [
+        storage
+        for name, storage in ALL_STORAGES.items()
+        if name in {"memory", "redis", "redis-cluster", "redis-sentinel", "valkey"}
+    ],
+)
+
+
+async_gcra_storage = pytest.mark.parametrize(
+    "uri, args, fixture",
+    [
+        storage
+        for name, storage in ALL_STORAGES_ASYNC.items()
+        if name in {"memory", "redis", "redis-cluster", "redis-sentinel", "valkey"}
+    ],
+)

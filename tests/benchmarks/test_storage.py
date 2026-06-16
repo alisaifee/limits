@@ -11,6 +11,7 @@ from limits import RateLimitItem, RateLimitItemPerDay, RateLimitItemPerMinute
 from limits.storage import storage_from_string
 from limits.strategies import (
     FixedWindowRateLimiter,
+    GCRARateLimiter,
     MovingWindowRateLimiter,
     RateLimiter,
     SlidingWindowCounterRateLimiter,
@@ -118,8 +119,9 @@ def seed_limit(
         FixedWindowRateLimiter,
         SlidingWindowCounterRateLimiter,
         MovingWindowRateLimiter,
+        GCRARateLimiter,
     ],
-    ids=["fixed-window", "sliding-window", "moving-window"],
+    ids=["fixed-window", "sliding-window", "moving-window", "gcra"],
 )
 @pytest.mark.parametrize("percentage_full", [5, 50, 95])
 def test_hit(benchmark, strategy, uri, args, limit, percentage_full, fixture):
@@ -139,8 +141,9 @@ def test_hit(benchmark, strategy, uri, args, limit, percentage_full, fixture):
         FixedWindowRateLimiter,
         SlidingWindowCounterRateLimiter,
         MovingWindowRateLimiter,
+        GCRARateLimiter,
     ],
-    ids=["fixed-window", "sliding-window", "moving-window"],
+    ids=["fixed-window", "sliding-window", "moving-window", "gcra"],
 )
 @pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="get-window-stats")
@@ -163,8 +166,9 @@ def test_get_window_stats(
         FixedWindowRateLimiter,
         SlidingWindowCounterRateLimiter,
         MovingWindowRateLimiter,
+        GCRARateLimiter,
     ],
-    ids=["fixed-window", "sliding-window", "moving-window"],
+    ids=["fixed-window", "sliding-window", "moving-window", "gcra"],
 )
 @pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="test")
@@ -185,8 +189,9 @@ def test_test(benchmark, strategy, uri, args, limit, percentage_full, fixture):
         limits.aio.strategies.FixedWindowRateLimiter,
         limits.aio.strategies.SlidingWindowCounterRateLimiter,
         limits.aio.strategies.MovingWindowRateLimiter,
+        limits.aio.strategies.GCRARateLimiter,
     ],
-    ids=["fixed-window", "sliding-window", "moving-window"],
+    ids=["fixed-window", "sliding-window", "moving-window", "gcra"],
 )
 @pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="hit")
@@ -214,8 +219,9 @@ def test_hit_async(benchmark, strategy, uri, args, limit, percentage_full, fixtu
         limits.aio.strategies.FixedWindowRateLimiter,
         limits.aio.strategies.SlidingWindowCounterRateLimiter,
         limits.aio.strategies.MovingWindowRateLimiter,
+        limits.aio.strategies.GCRARateLimiter,
     ],
-    ids=["fixed-window", "sliding-window", "moving-window"],
+    ids=["fixed-window", "sliding-window", "moving-window", "gcra"],
 )
 @pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="get-window-stats")
@@ -245,8 +251,9 @@ def test_get_window_stats_async(
         limits.aio.strategies.FixedWindowRateLimiter,
         limits.aio.strategies.SlidingWindowCounterRateLimiter,
         limits.aio.strategies.MovingWindowRateLimiter,
+        limits.aio.strategies.GCRARateLimiter,
     ],
-    ids=["fixed-window", "sliding-window", "moving-window"],
+    ids=["fixed-window", "sliding-window", "moving-window", "gcra"],
 )
 @pytest.mark.parametrize("percentage_full", [5, 50, 95])
 @pytest.mark.benchmark(group="test")

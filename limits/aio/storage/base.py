@@ -168,6 +168,71 @@ class MovingWindowSupport(ABC):
         raise NotImplementedError
 
 
+class GCRASupport(ABC):
+    """
+    Abstract base class for storages that support
+    the :ref:`strategies:gcra` strategy.
+    """
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:  # type: ignore[explicit-any]
+        for method in {
+            "acquire_gcra_entry",
+            "get_gcra_window",
+            "clear_gcra_window",
+        }:
+            setattr(
+                cls,
+                method,
+                _wrap_errors(getattr(cls, method)),
+            )
+        super().__init_subclass__(**kwargs)
+
+    @abstractmethod
+    async def acquire_gcra_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+        burst: int = 1,
+    ) -> bool:
+        """
+        Acquire an entry if the theoretical arrival time is within the burst
+        tolerance.
+
+        :param key: rate limit key to acquire an entry in
+        :param limit: amount of entries allowed over the expiry period
+        :param expiry: expiry period of the limit
+        :param amount: the number of entries to acquire
+        :param burst: the maximum amount that can be acquired immediately
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_gcra_window(
+        self, key: str, limit: int, expiry: int, burst: int = 1
+    ) -> tuple[float, int]:
+        """
+        Return the next reset time and remaining burst capacity for the GCRA
+        limit.
+
+        :param key: rate limit key
+        :param limit: amount of entries allowed over the expiry period
+        :param expiry: expiry period of the limit
+        :param burst: the maximum amount that can be acquired immediately
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def clear_gcra_window(self, key: str) -> None:
+        """
+        Resets the GCRA rate limit key.
+
+        :param key: the key to clear rate limits for
+        """
+        ...
+
+
 class SlidingWindowCounterSupport(ABC):
     """
     Abstract base class for async storages that support

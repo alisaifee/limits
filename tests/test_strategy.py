@@ -14,12 +14,14 @@ from limits.storage import storage_from_string
 from limits.storage.base import TimestampedSlidingWindow
 from limits.strategies import (
     FixedWindowRateLimiter,
+    GCRARateLimiter,
     MovingWindowRateLimiter,
     SlidingWindowCounterRateLimiter,
 )
 from tests.utils import (
     all_storage,
     fixed_start,
+    gcra_storage,
     moving_window_storage,
     sliding_window_counter_storage,
     timestamp_based_key_ttl,
@@ -74,6 +76,65 @@ class TestFixedWindow:
         assert limiter.hit(limit)
         assert not limiter.test(limit)
         assert not limiter.hit(limit)
+
+
+@gcra_storage
+class TestGCRA:
+    def test_gcra_default_burst(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = GCRARateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        assert all(limiter.hit(limit, "key") for _ in range(10))
+        assert not limiter.hit(limit, "key")
+        stats = limiter.get_window_stats(limit, "key")
+        assert stats.remaining == 0
+        assert stats.reset_time - time.time() == pytest.approx(0.2, abs=0.1)
+        time.sleep(0.25)
+        assert limiter.hit(limit, "key")
+
+    def test_gcra_custom_burst(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = GCRARateLimiter(storage, burst=3)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        assert all(limiter.hit(limit, "key") for _ in range(3))
+        assert not limiter.hit(limit, "key")
+        assert not limiter.hit(limit, "other", cost=4)
+
+    def test_gcra_multiple_cost(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = GCRARateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        assert not limiter.hit(limit, "too-much", cost=11)
+        assert limiter.hit(limit, "key", cost=5)
+        assert limiter.get_window_stats(limit, "key").remaining == 5
+        assert not limiter.test(limit, "key", cost=6)
+        assert not limiter.hit(limit, "key", cost=6)
+        assert limiter.hit(limit, "key", cost=5)
+        assert limiter.get_window_stats(limit, "key").remaining == 0
+
+    def test_gcra_test_does_not_consume(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = GCRARateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        assert limiter.test(limit, "key", cost=10)
+        assert limiter.test(limit, "key", cost=10)
+        assert limiter.hit(limit, "key", cost=10)
+        assert not limiter.test(limit, "key")
+
+    def test_gcra_clear(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = GCRARateLimiter(storage, burst=3)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        assert limiter.hit(limit, "key", cost=3)
+        assert not limiter.hit(limit, "key")
+        limiter.clear(limit, "key")
+        assert limiter.get_window_stats(limit, "key").remaining == 3
+        assert limiter.hit(limit, "key", cost=3)
 
 
 @sliding_window_counter_storage

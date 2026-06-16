@@ -4,10 +4,11 @@ import bisect
 import threading
 import time
 from collections import Counter, defaultdict
-from math import floor
+from math import ceil, floor
 
 import limits.typing
 from limits.storage.base import (
+    GCRASupport,
     MovingWindowSupport,
     SlidingWindowCounterSupport,
     Storage,
@@ -22,7 +23,11 @@ class Entry:
 
 
 class MemoryStorage(
-    Storage, MovingWindowSupport, SlidingWindowCounterSupport, TimestampedSlidingWindow
+    Storage,
+    GCRASupport,
+    MovingWindowSupport,
+    SlidingWindowCounterSupport,
+    TimestampedSlidingWindow,
 ):
     """
     rate limit storage using :class:`collections.Counter`
@@ -38,6 +43,7 @@ class MemoryStorage(
         self.locks: defaultdict[str, threading.RLock] = defaultdict(threading.RLock)
         self.expirations: dict[str, float] = {}
         self.events: dict[str, list[Entry]] = {}
+        self.gcra: dict[str, float] = {}
         self.timer: threading.Timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
         super().__init__(uri, wrap_exceptions=wrap_exceptions, **_)
@@ -64,6 +70,10 @@ class MemoryStorage(
                     self.events[key] = self.events[key][:oldest]
                 if not self.events.get(key, None):
                     self.locks.pop(key, None)
+        for key in list(self.gcra.keys()):
+            if self.gcra[key] <= time.time():
+                self.gcra.pop(key, None)
+                self.locks.pop(key, None)
         for key in list(self.expirations.keys()):
             if self.expirations[key] <= time.time():
                 self.storage.pop(key, None)
@@ -130,6 +140,7 @@ class MemoryStorage(
         self.storage.pop(key, None)
         self.expirations.pop(key, None)
         self.events.pop(key, None)
+        self.gcra.pop(key, None)
         self.locks.pop(key, None)
 
     def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
@@ -180,6 +191,47 @@ class MemoryStorage(
             )
             return events[oldest - 1].atime, oldest
         return timestamp, 0
+
+    def acquire_gcra_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+        burst: int = 1,
+    ) -> bool:
+        if amount > burst:
+            return False
+
+        emission_interval = expiry / limit
+        tolerance = burst * emission_interval
+        now = time.time()
+        with self.locks[key]:
+            tat = max(self.gcra.get(key, now), now)
+            new_tat = tat + amount * emission_interval
+            if new_tat - tolerance > now:
+                return False
+            self.gcra[key] = new_tat
+            self.__schedule_expiry()
+            return True
+
+    def get_gcra_window(
+        self, key: str, limit: int, expiry: int, burst: int = 1
+    ) -> tuple[float, int]:
+        emission_interval = expiry / limit
+        tolerance = (burst - 1) * emission_interval
+        now = time.time()
+        tat = self.gcra.get(key, now)
+        if tat <= now:
+            return now, burst
+
+        used = min(burst, ceil((tat - now) / emission_interval))
+        remaining = max(0, burst - used)
+        reset = now if remaining else tat - tolerance
+        return reset, remaining
+
+    def clear_gcra_window(self, key: str) -> None:
+        self.gcra.pop(key, None)
 
     def acquire_sliding_window_entry(
         self,
@@ -251,9 +303,10 @@ class MemoryStorage(
         return True
 
     def reset(self) -> int | None:
-        num_items = max(len(self.storage), len(self.events))
+        num_items = max(len(self.storage), len(self.events), len(self.gcra))
         self.storage.clear()
         self.expirations.clear()
         self.events.clear()
+        self.gcra.clear()
         self.locks.clear()
         return num_items

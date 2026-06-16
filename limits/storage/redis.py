@@ -9,7 +9,7 @@ from packaging.version import Version
 from limits.typing import Literal, RedisClient
 
 from ..util import get_package_data
-from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
+from .base import GCRASupport, MovingWindowSupport, SlidingWindowCounterSupport, Storage
 
 if TYPE_CHECKING:
     import redis
@@ -22,7 +22,9 @@ if TYPE_CHECKING:
         " if :paramref:`uri` has the ``valkey://`` schema"
     ),
 )
-class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
+class RedisStorage(
+    Storage, GCRASupport, MovingWindowSupport, SlidingWindowCounterSupport
+):
     """
     Rate limit storage with redis as backend.
 
@@ -50,6 +52,8 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     )
     SCRIPT_CLEAR_KEYS = get_package_data(f"{RES_DIR}/clear_keys.lua")
     SCRIPT_INCR_EXPIRE = get_package_data(f"{RES_DIR}/incr_expire.lua")
+    SCRIPT_GCRA_WINDOW = get_package_data(f"{RES_DIR}/gcra_window.lua")
+    SCRIPT_ACQUIRE_GCRA = get_package_data(f"{RES_DIR}/acquire_gcra.lua")
 
     SCRIPT_SLIDING_WINDOW = get_package_data(f"{RES_DIR}/sliding_window.lua")
     SCRIPT_ACQUIRE_SLIDING_WINDOW = get_package_data(
@@ -58,6 +62,8 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
 
     lua_moving_window: redis.commands.core.Script
     lua_acquire_moving_window: redis.commands.core.Script
+    lua_gcra_window: redis.commands.core.Script
+    lua_acquire_gcra: redis.commands.core.Script
     lua_sliding_window: redis.commands.core.Script
     lua_acquire_sliding_window: redis.commands.core.Script
 
@@ -133,6 +139,12 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         self.lua_incr_expire = self.get_connection().register_script(
             self.SCRIPT_INCR_EXPIRE
         )
+        self.lua_gcra_window = self.get_connection().register_script(
+            self.SCRIPT_GCRA_WINDOW
+        )
+        self.lua_acquire_gcra = self.get_connection().register_script(
+            self.SCRIPT_ACQUIRE_GCRA
+        )
         self.lua_sliding_window = self.get_connection().register_script(
             self.SCRIPT_SLIDING_WINDOW
         )
@@ -185,6 +197,35 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             return float(window[0]), window[1]
 
         return timestamp, 0
+
+    def get_gcra_window(
+        self, key: str, limit: int, expiry: int, burst: int = 1
+    ) -> tuple[float, int]:
+        key = self.prefixed_key(key)
+        timestamp = time.time()
+        if window := self.lua_gcra_window([key], [timestamp, limit, expiry, burst]):
+            return float(window[0]), int(window[1])
+
+        return timestamp, burst
+
+    def acquire_gcra_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+        burst: int = 1,
+    ) -> bool:
+        key = self.prefixed_key(key)
+        timestamp = time.time()
+        acquired = self.lua_acquire_gcra(
+            [key], [timestamp, limit, expiry, amount, burst]
+        )
+
+        return bool(acquired)
+
+    def clear_gcra_window(self, key: str) -> None:
+        self.clear(key)
 
     def get_sliding_window(
         self, key: str, expiry: int

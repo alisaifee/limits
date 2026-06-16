@@ -10,7 +10,7 @@ from math import floor, inf
 
 from deprecated.sphinx import versionadded
 
-from limits.storage.base import SlidingWindowCounterSupport
+from limits.storage.base import GCRASupport, SlidingWindowCounterSupport
 
 from .limits import RateLimitItem
 from .storage import MovingWindowSupport, Storage, StorageTypes
@@ -191,6 +191,60 @@ class FixedWindowRateLimiter(RateLimiter):
         return WindowStats(reset, remaining)
 
 
+class GCRARateLimiter(RateLimiter):
+    """
+    Reference: :ref:`strategies:gcra`
+    """
+
+    def __init__(self, storage: StorageTypes, burst: int | None = None):
+        if not hasattr(storage, "get_gcra_window") or not hasattr(
+            storage, "acquire_gcra_entry"
+        ):
+            raise NotImplementedError(
+                "GCRARateLimiting is not implemented for storage "
+                f"of type {storage.__class__}"
+            )
+        if burst is not None and burst < 1:
+            raise ValueError("burst must be at least 1")
+        self.burst = burst
+        super().__init__(storage)
+
+    def _burst(self, item: RateLimitItem) -> int:
+        return self.burst or item.amount
+
+    def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
+        return cast(GCRASupport, self.storage).acquire_gcra_entry(
+            item.key_for(*identifiers),
+            item.amount,
+            item.get_expiry(),
+            amount=cost,
+            burst=self._burst(item),
+        )
+
+    def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
+        _, remaining = cast(GCRASupport, self.storage).get_gcra_window(
+            item.key_for(*identifiers),
+            item.amount,
+            item.get_expiry(),
+            burst=self._burst(item),
+        )
+        return remaining >= cost
+
+    def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
+        reset, remaining = cast(GCRASupport, self.storage).get_gcra_window(
+            item.key_for(*identifiers),
+            item.amount,
+            item.get_expiry(),
+            burst=self._burst(item),
+        )
+        return WindowStats(reset, remaining)
+
+    def clear(self, item: RateLimitItem, *identifiers: str) -> None:
+        return cast(GCRASupport, self.storage).clear_gcra_window(
+            item.key_for(*identifiers)
+        )
+
+
 @versionadded(version="4.1")
 class SlidingWindowCounterRateLimiter(RateLimiter):
     """
@@ -309,10 +363,12 @@ KnownStrategy = (
     type[SlidingWindowCounterRateLimiter]
     | type[FixedWindowRateLimiter]
     | type[MovingWindowRateLimiter]
+    | type[GCRARateLimiter]
 )
 
 STRATEGIES: dict[str, KnownStrategy] = {
     "sliding-window-counter": SlidingWindowCounterRateLimiter,
     "fixed-window": FixedWindowRateLimiter,
     "moving-window": MovingWindowRateLimiter,
+    "gcra": GCRARateLimiter,
 }
