@@ -115,6 +115,19 @@ Scenario 2:
 - Since the weighted count is below the limit, the request is allowed.
 
 
+GCRA
+----
+`GCRA <https://limits.readthedocs.io/en/latest/strategies.html#gcra>`_
+
+The Generic Cell Rate Algorithm tracks a theoretical arrival time for each
+rate limit key. Requests are accepted when that theoretical arrival time is
+within the configured burst tolerance, then the theoretical arrival time is
+advanced by the request cost multiplied by the continuous refill interval.
+
+By default, the burst tolerance is the rate limit amount. A smaller immediate
+burst can be configured by passing ``burst`` to ``GCRARateLimiter``.
+
+
 Storage backends
 ================
 
@@ -152,6 +165,10 @@ Initialize a rate limiter with a strategy
    strategy = strategies.FixedWindowRateLimiter(backend)
    # or sliding window
    strategy = strategies.SlidingWindowCounterRateLimiter(backend)
+   # or GCRA
+   strategy = strategies.GCRARateLimiter(backend)
+   # or GCRA with a smaller burst tolerance
+   strategy = strategies.GCRARateLimiter(backend, burst=10)
 
 
 Initialize a rate limit

@@ -16,7 +16,9 @@ Install the package with pip:
 
    Includes
 
-   .. literalinclude:: ../../requirements/storage/redis.txt
+   .. code:: text
+
+      redis>3,!=4.5.2,!=4.5.3,<8.0.0
 
 .. tab:: RedisCluster
 
@@ -26,7 +28,9 @@ Install the package with pip:
 
    Includes
 
-   .. literalinclude:: ../../requirements/storage/rediscluster.txt
+   .. code:: text
+
+      redis>=4.2.0,!=4.5.2,!=4.5.3
 
 .. tab:: Memcached
 
@@ -36,7 +40,9 @@ Install the package with pip:
 
    Includes
 
-   .. literalinclude:: ../../requirements/storage/memcached.txt
+   .. code:: text
+
+      pymemcache>3,<5.0.0
 
 .. tab:: MongoDB
 
@@ -46,7 +52,9 @@ Install the package with pip:
 
    Includes:
 
-   .. literalinclude:: ../../requirements/storage/mongodb.txt
+   .. code:: text
+
+      pymongo>4.1,<5
 
 .. tab:: Valkey
 
@@ -56,7 +64,9 @@ Install the package with pip:
 
    Includes:
 
-   .. literalinclude:: ../../requirements/storage/valkey.txt
+   .. code:: text
+
+      valkey>=6
 
 More details around the specifics of each storage backend can be
 found in :ref:`storage`
@@ -77,7 +87,9 @@ along with the package using the following extras:
 
    Includes:
 
-   .. literalinclude:: ../../requirements/storage/async-redis.txt
+   .. code:: text
+
+      coredis>=3.4.0,<6
 
    .. versionadded:: 4.2
       :pypi:`redis` if installed can be used instead of :pypi:`coredis` by setting
@@ -93,7 +105,9 @@ along with the package using the following extras:
 
    Includes:
 
-   .. literalinclude:: ../../requirements/storage/async-memcached.txt
+   .. code:: text
+
+      memcachio>=0.3
 
    .. versionchanged:: 5.0
       :pypi:`emcache` if installed can be used instead of the new default
@@ -108,7 +122,9 @@ along with the package using the following extras:
 
    Includes:
 
-   .. literalinclude:: ../../requirements/storage/async-mongodb.txt
+   .. code:: text
+
+      motor>=3,<4
 
 .. tab:: Valkey
 
@@ -118,6 +134,8 @@ along with the package using the following extras:
 
    Includes:
 
-   .. literalinclude:: ../../requirements/storage/async-valkey.txt
+   .. code:: text
+
+      valkey>=6
 
 

@@ -21,6 +21,8 @@ Creating a custom backend requires:
        the methods from :class:`~limits.storage.MovingWindowSupport`
     #. If the storage can support the :ref:`strategies:sliding window counter` strategy – additionally implementing
        the methods from :class:`~limits.storage.SlidingWindowCounterSupport`
+    #. If the storage can support the :ref:`strategies:gcra` strategy – additionally implementing
+       the methods from :class:`~limits.storage.GCRASupport`
     #. Providing naming *schemes* that can be used to look up the custom storage in the storage registry.
        (Refer to :ref:`storage:storage scheme` for more details)
 
@@ -34,7 +36,12 @@ variables which result in the classes getting registered with the **limits** sto
     import time
     from urllib.parse import urlparse
     from typing import Tuple, Type, Union
-    from limits.storage import Storage, MovingWindowSupport, SlidingWindowCounterSupport
+    from limits.storage import (
+        GCRASupport,
+        MovingWindowSupport,
+        SlidingWindowCounterSupport,
+        Storage,
+    )
 
     class BasicStorage(Storage):
         """A simple fixed-window storage backend."""
@@ -66,7 +73,9 @@ variables which result in the classes getting registered with the **limits** sto
         def clear(self, key: str) -> None:
             pass
 
-    class AdvancedStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
+    class AdvancedStorage(
+        Storage, GCRASupport, MovingWindowSupport, SlidingWindowCounterSupport
+    ):
         """A more advanced storage backend supporting all rate-limiting strategies."""
         STORAGE_SCHEME = ["advanceddatabase"]
 
@@ -109,6 +118,23 @@ variables which result in the classes getting registered with the **limits** sto
 
         def get_sliding_window(self, key: str, expiry: int) -> Tuple[int, float, int, float]:
             return (0, expiry / 2, 0, expiry)
+
+        def clear_sliding_window(self, key: str, expiry: int) -> None:
+            pass
+
+        # --- GCRA Support ---
+        def acquire_gcra_entry(
+            self, key: str, limit: int, expiry: int, amount: int = 1, burst: int = 1
+        ) -> bool:
+            return True
+
+        def get_gcra_window(
+            self, key: str, limit: int, expiry: int, burst: int = 1
+        ) -> Tuple[float, int]:
+            return (time.time(), burst)
+
+        def clear_gcra_window(self, key: str) -> None:
+            pass
 
 Once the above implementations are declared, you can look them up
 using the :ref:`api:storage factory function` in the following manner::

@@ -25,11 +25,15 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    Dependency versions:
 
-   .. literalinclude:: ../../requirements/storage/redis.txt
+   .. code:: text
+
+      redis>3,!=4.5.2,!=4.5.3,<8.0.0
 
    Dependency versions (async):
 
-   .. literalinclude:: ../../requirements/storage/async-redis.txt
+   .. code:: text
+
+      coredis>=3.4.0,<6
 
    .. note::
      .. versionadded:: 4.2
@@ -44,11 +48,15 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    Dependency versions:
 
-   .. literalinclude:: ../../requirements/storage/rediscluster.txt
+   .. code:: text
+
+      redis>=4.2.0,!=4.5.2,!=4.5.3
 
    Dependency versions (async):
 
-   .. literalinclude:: ../../requirements/storage/async-redis.txt
+   .. code:: text
+
+      coredis>=3.4.0,<6
 
    .. note::
       .. versionadded:: 4.2
@@ -63,11 +71,15 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    Dependency versions:
 
-   .. literalinclude:: ../../requirements/storage/memcached.txt
+   .. code:: text
+
+      pymemcache>3,<5.0.0
 
    Dependency versions (async):
 
-   .. literalinclude:: ../../requirements/storage/async-memcached.txt
+   .. code:: text
+
+      memcachio>=0.3
 
    `Memcached <https://memcached.org/>`_
 
@@ -77,11 +89,15 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    Dependency versions:
 
-   .. literalinclude:: ../../requirements/storage/mongodb.txt
+   .. code:: text
+
+      pymongo>4.1,<5
 
    Dependency versions (async):
 
-   .. literalinclude:: ../../requirements/storage/async-mongodb.txt
+   .. code:: text
+
+      motor>=3,<4
 
    `MongoDB <https://www.mongodb.com/>`_
 
@@ -91,11 +107,15 @@ the results in `github <https://github.com/alisaifee/limits/actions/workflows/co
 
    Dependency versions:
 
-   .. literalinclude:: ../../requirements/storage/valkey.txt
+   .. code:: text
+
+      valkey>=6
 
    Dependency versions (async):
 
-   .. literalinclude:: ../../requirements/storage/async-valkey.txt
+   .. code:: text
+
+      valkey>=6
 
    `Valkey <https://www.valkey.io/>`_
 
