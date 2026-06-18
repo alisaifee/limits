@@ -16,6 +16,8 @@ class RedisBridge(ABC):
     )
     SCRIPT_CLEAR_KEYS = get_package_data(f"{RES_DIR}/clear_keys.lua")
     SCRIPT_INCR_EXPIRE = get_package_data(f"{RES_DIR}/incr_expire.lua")
+    SCRIPT_GCRA_WINDOW = get_package_data(f"{RES_DIR}/gcra_window.lua")
+    SCRIPT_ACQUIRE_GCRA = get_package_data(f"{RES_DIR}/acquire_gcra.lua")
     SCRIPT_SLIDING_WINDOW = get_package_data(f"{RES_DIR}/sliding_window.lua")
     SCRIPT_ACQUIRE_SLIDING_WINDOW = get_package_data(
         f"{RES_DIR}/acquire_sliding_window.lua"
@@ -83,6 +85,24 @@ class RedisBridge(ABC):
     async def get_moving_window(
         self, key: str, limit: int, expiry: int
     ) -> tuple[float, int]: ...
+
+    @abstractmethod
+    async def get_gcra_window(
+        self, key: str, limit: int, expiry: int, burst: int = 1
+    ) -> tuple[float, int]: ...
+
+    @abstractmethod
+    async def acquire_gcra_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+        burst: int = 1,
+    ) -> bool: ...
+
+    @abstractmethod
+    async def clear_gcra_window(self, key: str) -> None: ...
 
     @abstractmethod
     async def get_sliding_window(

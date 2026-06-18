@@ -52,6 +52,11 @@ def pytest_benchmark_generate_json(
                         | limits.aio.strategies.SlidingWindowCounterRateLimiter
                     ):
                         bench.params[name] = "sliding-window"
+                    case (
+                        limits.strategies.GCRARateLimiter
+                        | limits.aio.strategies.GCRARateLimiter
+                    ):
+                        bench.params[name] = "gcra"
             if name == "uri":
                 scheme = limits.storage.storage_from_string(param).STORAGE_SCHEME[0]
                 bench.params["async"] = "async" in scheme

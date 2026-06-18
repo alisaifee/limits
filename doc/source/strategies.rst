@@ -17,6 +17,11 @@ TL;DR: How to choose a strategy
   smooths transitions between time periods with less overhead than a full moving window,
   though it may trade off some precision near bucket boundaries.
 
+- **GCRA:**
+  Use when a continuous refill rate and explicit burst tolerance are needed. This
+  strategy stores constant-size state and handles weighted hits without storing one
+  entry per unit of cost.
+
 Fixed Window
 ============
 
@@ -132,3 +137,30 @@ Suppose:
 
 
 
+
+
+GCRA
+====
+
+The Generic Cell Rate Algorithm (GCRA) tracks a theoretical arrival time for
+each rate limit key. A request is allowed when that theoretical arrival time is
+within the configured burst tolerance. If allowed, the theoretical arrival time
+is advanced by the request cost multiplied by the emission interval.
+
+The emission interval is calculated as:
+
+.. math::
+
+    T = \frac{T_{\text{exp}}}{N}
+
+Where :math:`T_{\text{exp}}` is the rate limit period and :math:`N` is the
+allowed amount for that period.
+
+By default, the burst tolerance is the rate limit amount. For example, a limit
+of ``100000 per month`` can accept a burst of ``100000`` immediately and then
+refills continuously at one unit every 25.92 seconds. A smaller burst can be
+configured by passing ``burst`` to :class:`limits.strategies.GCRARateLimiter`.
+
+This strategy is not equivalent to a moving window. After a full burst is
+accepted, GCRA starts refilling immediately, while a moving window waits for
+older request timestamps to leave the rolling window.

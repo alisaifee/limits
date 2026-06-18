@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -33,12 +34,22 @@ if branch_from_env := os.environ.get("READTHEDOCS_VERSION", None):
         "sha": os.environ.get("READTHEDOCS_GIT_COMMIT_HASH", ""),
     }
 else:
-    import limits._version
+    repository_root = Path(__file__).resolve().parents[2]
 
-    git_info = limits._version.git_pieces_from_vcs("", os.path.abspath("../../"), False)
+    def git_info(*args: str) -> str:
+        try:
+            return subprocess.check_output(
+                ["git", *args],
+                cwd=repository_root,
+                text=True,
+                stderr=subprocess.DEVNULL,
+            ).strip()
+        except (OSError, subprocess.CalledProcessError):
+            return ""
+
     benchmark_git_context = {
-        "branch": git_info.get("branch", ""),
-        "sha": git_info.get("long", None),
+        "branch": git_info("branch", "--show-current"),
+        "sha": git_info("rev-parse", "HEAD"),
     }
 benchmark_param_mapping = {
     "percentage_full": {

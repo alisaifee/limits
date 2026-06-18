@@ -66,6 +66,19 @@ Initialize a rate limiter
         from limits import strategies
         limiter = strategies.SlidingWindowCounterRateLimiter(limits_storage)
 
+.. tab:: With the GCRA strategy
+
+    .. caution:: If the storage used does not support the GCRA
+       strategy, :exc:`NotImplementedError` will be raised
+
+    .. code::
+
+        from limits import strategies
+        limiter = strategies.GCRARateLimiter(limits_storage)
+        limiter_with_smaller_burst = strategies.GCRARateLimiter(
+            limits_storage, burst=10
+        )
+
 Describe the rate limit
 =======================
 

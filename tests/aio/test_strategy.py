@@ -7,6 +7,7 @@ import pytest
 
 from limits.aio.strategies import (
     FixedWindowRateLimiter,
+    GCRARateLimiter,
     MovingWindowRateLimiter,
     SlidingWindowCounterRateLimiter,
 )
@@ -20,6 +21,7 @@ from limits.storage.base import TimestampedSlidingWindow
 from tests.utils import (
     async_all_storage,
     async_fixed_start,
+    async_gcra_storage,
     async_moving_window_storage,
     async_sliding_window_counter_storage,
     async_window,
@@ -75,6 +77,67 @@ class TestAsyncFixedWindow:
         assert await limiter.hit(limit)
         assert not await limiter.test(limit)
         assert not await limiter.hit(limit)
+
+
+@pytest.mark.asyncio
+@async_gcra_storage
+class TestAsyncGCRA:
+    async def test_gcra_default_burst(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = GCRARateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        assert all([await limiter.hit(limit, "key") for _ in range(10)])
+        assert not await limiter.hit(limit, "key")
+        stats = await limiter.get_window_stats(limit, "key")
+        assert stats.remaining == 0
+        reset_in = stats.reset_time - time.time()
+        assert 0 <= reset_in <= 0.25
+        time.sleep(0.25)
+        assert await limiter.hit(limit, "key")
+
+    async def test_gcra_custom_burst(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = GCRARateLimiter(storage, burst=3)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        assert all([await limiter.hit(limit, "key") for _ in range(3)])
+        assert not await limiter.hit(limit, "key")
+        assert not await limiter.hit(limit, "other", cost=4)
+
+    async def test_gcra_multiple_cost(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = GCRARateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        assert not await limiter.hit(limit, "too-much", cost=11)
+        assert await limiter.hit(limit, "key", cost=5)
+        assert (await limiter.get_window_stats(limit, "key")).remaining == 5
+        assert not await limiter.test(limit, "key", cost=6)
+        assert not await limiter.hit(limit, "key", cost=6)
+        assert await limiter.hit(limit, "key", cost=5)
+        assert (await limiter.get_window_stats(limit, "key")).remaining == 0
+
+    async def test_gcra_test_does_not_consume(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = GCRARateLimiter(storage)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        assert await limiter.test(limit, "key", cost=10)
+        assert await limiter.test(limit, "key", cost=10)
+        assert await limiter.hit(limit, "key", cost=10)
+        assert not await limiter.test(limit, "key")
+
+    async def test_gcra_clear(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = GCRARateLimiter(storage, burst=3)
+        limit = RateLimitItemPerSecond(10, 2)
+
+        assert await limiter.hit(limit, "key", cost=3)
+        assert not await limiter.hit(limit, "key")
+        await limiter.clear(limit, "key")
+        assert (await limiter.get_window_stats(limit, "key")).remaining == 3
+        assert await limiter.hit(limit, "key", cost=3)
 
 
 @pytest.mark.asyncio

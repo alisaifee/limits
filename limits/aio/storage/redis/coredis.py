@@ -83,6 +83,8 @@ class CoredisBridge(RedisBridge):
 
     lua_moving_window: coredis.commands.Script[bytes]
     lua_acquire_moving_window: coredis.commands.Script[bytes]
+    lua_gcra_window: coredis.commands.Script[bytes]
+    lua_acquire_gcra: coredis.commands.Script[bytes]
     lua_sliding_window: coredis.commands.Script[bytes]
     lua_acquire_sliding_window: coredis.commands.Script[bytes]
     lua_clear_keys: coredis.commands.Script[bytes]
@@ -104,6 +106,12 @@ class CoredisBridge(RedisBridge):
         )
         self.lua_incr_expire = self.get_connection().register_script(
             self.SCRIPT_INCR_EXPIRE
+        )
+        self.lua_gcra_window = self.get_connection().register_script(
+            self.SCRIPT_GCRA_WINDOW
+        )
+        self.lua_acquire_gcra = self.get_connection().register_script(
+            self.SCRIPT_ACQUIRE_GCRA
         )
         self.lua_sliding_window = self.get_connection().register_script(
             self.SCRIPT_SLIDING_WINDOW
@@ -140,6 +148,37 @@ class CoredisBridge(RedisBridge):
         if window:
             return float(window[0]), window[1]  # type: ignore
         return timestamp, 0
+
+    async def get_gcra_window(
+        self, key: str, limit: int, expiry: int, burst: int = 1
+    ) -> tuple[float, int]:
+        key = self.prefixed_key(key)
+        timestamp = time.time()
+        window = await self.lua_gcra_window.execute(
+            [key], [timestamp, limit, expiry, burst]
+        )
+        if window:
+            return float(window[0]), int(window[1])  # type: ignore
+        return timestamp, burst
+
+    async def acquire_gcra_entry(
+        self,
+        key: str,
+        limit: int,
+        expiry: int,
+        amount: int = 1,
+        burst: int = 1,
+    ) -> bool:
+        key = self.prefixed_key(key)
+        timestamp = time.time()
+        acquired = await self.lua_acquire_gcra.execute(
+            [key], [timestamp, limit, expiry, amount, burst]
+        )
+
+        return bool(acquired)
+
+    async def clear_gcra_window(self, key: str) -> None:
+        await self.clear(key)
 
     async def get_sliding_window(
         self, previous_key: str, current_key: str, expiry: int
