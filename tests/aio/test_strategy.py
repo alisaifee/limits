@@ -10,6 +10,7 @@ from limits.aio.strategies import (
     MovingWindowRateLimiter,
     SlidingWindowCounterRateLimiter,
 )
+from limits.aio.storage import MemoryStorage as AsyncMemoryStorage
 from limits.limits import (
     RateLimitItemPerHour,
     RateLimitItemPerMinute,
@@ -25,6 +26,30 @@ from tests.utils import (
     async_window,
     timestamp_based_key_ttl,
 )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "strategy_cls",
+    [
+        FixedWindowRateLimiter,
+        MovingWindowRateLimiter,
+        SlidingWindowCounterRateLimiter,
+    ],
+)
+@pytest.mark.parametrize("cost", [-1])
+async def test_invalid_cost_is_rejected(strategy_cls, cost):
+    storage = AsyncMemoryStorage()
+    limiter = strategy_cls(storage)
+    limit = RateLimitItemPerSecond(2, 1)
+
+    with pytest.raises(ValueError, match="cost must be greater than or equal to 0"):
+        await limiter.test(limit, "invalid-cost", cost=cost)
+
+    with pytest.raises(ValueError, match="cost must be greater than or equal to 0"):
+        await limiter.hit(limit, "invalid-cost", cost=cost)
+
+    assert (await limiter.get_window_stats(limit, "invalid-cost")).remaining == 2
 
 
 @pytest.mark.asyncio

@@ -23,6 +23,11 @@ class RateLimiter(ABC):
         assert isinstance(storage, Storage)
         self.storage: Storage = storage
 
+    @staticmethod
+    def _validate_cost(cost: int) -> None:
+        if cost < 0:
+            raise ValueError("cost must be greater than or equal to 0")
+
     @abstractmethod
     async def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
         """
@@ -96,6 +101,7 @@ class MovingWindowRateLimiter(RateLimiter):
         :return: True if ``cost`` could be deducted from the rate limit without exceeding it
         """
 
+        self._validate_cost(cost)
         return await cast(MovingWindowSupport, self.storage).acquire_entry(
             item.key_for(*identifiers), item.amount, item.get_expiry(), amount=cost
         )
@@ -111,6 +117,7 @@ class MovingWindowRateLimiter(RateLimiter):
 
         :return: True if the rate limit is not depleted
         """
+        self._validate_cost(cost)
         res = await cast(MovingWindowSupport, self.storage).get_moving_window(
             item.key_for(*identifiers),
             item.amount,
@@ -156,6 +163,7 @@ class FixedWindowRateLimiter(RateLimiter):
         :return: True if ``cost`` could be deducted from the rate limit without exceeding it
         """
 
+        self._validate_cost(cost)
         return (
             await self.storage.incr(
                 item.key_for(*identifiers),
@@ -177,6 +185,7 @@ class FixedWindowRateLimiter(RateLimiter):
         :return: True if the rate limit is not depleted
         """
 
+        self._validate_cost(cost)
         return (
             await self.storage.get(item.key_for(*identifiers)) < item.amount - cost + 1
         )
@@ -240,6 +249,7 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
 
         :return: True if ``cost`` could be deducted from the rate limit without exceeding it
         """
+        self._validate_cost(cost)
         return await cast(
             SlidingWindowCounterSupport, self.storage
         ).acquire_sliding_window_entry(
@@ -261,6 +271,7 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
         :return: True if the rate limit is not depleted
         """
 
+        self._validate_cost(cost)
         previous_count, previous_expires_in, current_count, _ = await cast(
             SlidingWindowCounterSupport, self.storage
         ).get_sliding_window(item.key_for(*identifiers), item.get_expiry())
