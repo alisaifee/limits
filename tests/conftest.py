@@ -373,6 +373,14 @@ def mongodb(mongodb_client):
 
 
 @pytest.fixture
+def sqlite():
+    db_path = "/tmp/limits_sql_test.db"
+    if os.path.exists(db_path):
+        os.remove(db_path)
+    return f"sqlite:///{db_path}"
+
+
+@pytest.fixture
 def valkey_basic(valkey_basic_client):
     valkey_basic_client.flushall()
 

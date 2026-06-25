@@ -166,6 +166,13 @@ ALL_STORAGES = {
         marks=pytest.mark.valkey_cluster,
         id="valkey-cluster",
     ),
+    "sqlite": pytest.param(
+        "sqlite:////tmp/limits_sql_test.db",
+        {},
+        lf("sqlite"),
+        marks=pytest.mark.sqlite,
+        id="sqlite",
+    ),
 }
 ALL_STORAGES_ASYNC = {
     "memory": pytest.param(
