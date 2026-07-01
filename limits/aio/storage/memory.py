@@ -10,6 +10,7 @@ from deprecated.sphinx import versionadded
 
 import limits.typing
 from limits.aio.storage.base import (
+    ConcurrencyLimitSupport,
     MovingWindowSupport,
     SlidingWindowCounterSupport,
     Storage,
@@ -25,7 +26,11 @@ class Entry:
 
 @versionadded(version="2.1")
 class MemoryStorage(
-    Storage, MovingWindowSupport, SlidingWindowCounterSupport, TimestampedSlidingWindow
+    Storage,
+    MovingWindowSupport,
+    SlidingWindowCounterSupport,
+    ConcurrencyLimitSupport,
+    TimestampedSlidingWindow,
 ):
     """
     rate limit storage using :class:`collections.Counter`

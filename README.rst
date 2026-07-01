@@ -33,6 +33,9 @@ All strategies support the follow methods:
 - `test <https://limits.readthedocs.io/en/stable/api.html#limits.strategies.RateLimiter.test>`_: check if a request is allowed.
 - `get_window_stats <https://limits.readthedocs.io/en/stable/api.html#limits.strategies.RateLimiter.get_window_stats>`_: retrieve remaining quota and reset time.
 
+The Concurrency Limit strategy additionally exposes a ``release`` method to hand back an
+acquired slot once the in-flight request or task completes.
+
 Fixed Window
 ------------
 `Fixed Window <https://limits.readthedocs.io/en/latest/strategies.html#fixed-window>`_
@@ -113,6 +116,25 @@ Scenario 2:
 - ``weight = (60 - 40) / 60 ≈ 0.33``.
 - ``weighted_count = floor(8 + (4 * 0.33)) = floor(8 + 1.32) = 9``.
 - Since the weighted count is below the limit, the request is allowed.
+
+Concurrency Limit
+-----------------
+`Concurrency Limit <https://limits.readthedocs.io/en/latest/strategies.html#concurrency-limit>`_
+
+This strategy bounds the number of requests that are *in-flight at the same time* rather
+than the number allowed within a time period. A slot is acquired with ``hit`` and held
+until it is handed back with ``release``, making it a good fit for limiting concurrent
+workers, connections or seats.
+
+For example, with a concurrency limit of 3:
+
+- Three requests call ``hit`` and acquire all 3 slots. The resource is now at capacity.
+- A fourth request calls ``hit`` and is rejected without consuming a slot.
+- One of the in-flight requests calls ``release``, freeing a slot, and a subsequent
+  ``hit`` can acquire it.
+
+Each acquired slot carries a safety expiry so that slots leaked by callers that never
+release are eventually reclaimed.
 
 
 Storage backends

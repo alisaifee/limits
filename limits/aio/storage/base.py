@@ -232,3 +232,33 @@ class SlidingWindowCounterSupport(ABC):
         :param expiry: the rate limit expiry, needed to compute the key in some implemenations
         """
         ...
+
+
+class ConcurrencyLimitSupport(ABC):
+    """
+    Abstract base class for storages that support
+    the :ref:`strategies:concurrency limit` strategy.
+    """
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:  # type: ignore[explicit-any]
+        for method in {
+            "decr",
+        }:
+            setattr(
+                cls,
+                method,
+                _wrap_errors(getattr(cls, method)),
+            )
+        super().__init_subclass__(**kwargs)
+
+    @abstractmethod
+    async def decr(self, key: str, amount: int = 1) -> int:
+        """
+        decrements the counter for a given rate limit key. The counter is
+        floored at zero so that a release can never take it below the number
+        of currently held slots.
+
+        :param key: the key to decrement
+        :param amount: the number to decrement by
+        """
+        raise NotImplementedError

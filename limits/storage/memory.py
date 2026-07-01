@@ -8,6 +8,7 @@ from math import floor
 
 import limits.typing
 from limits.storage.base import (
+    ConcurrencyLimitSupport,
     MovingWindowSupport,
     SlidingWindowCounterSupport,
     Storage,
@@ -22,7 +23,11 @@ class Entry:
 
 
 class MemoryStorage(
-    Storage, MovingWindowSupport, SlidingWindowCounterSupport, TimestampedSlidingWindow
+    Storage,
+    MovingWindowSupport,
+    SlidingWindowCounterSupport,
+    ConcurrencyLimitSupport,
+    TimestampedSlidingWindow,
 ):
     """
     rate limit storage using :class:`collections.Counter`

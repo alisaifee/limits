@@ -6,6 +6,7 @@ from math import ceil
 import pytest
 
 from limits.aio.strategies import (
+    ConcurrencyLimitRateLimiter,
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
     SlidingWindowCounterRateLimiter,
@@ -19,6 +20,7 @@ from limits.storage import storage_from_string
 from limits.storage.base import TimestampedSlidingWindow
 from tests.utils import (
     async_all_storage,
+    async_concurrency_limiter_storage,
     async_fixed_start,
     async_moving_window_storage,
     async_sliding_window_counter_storage,
@@ -359,3 +361,76 @@ class TestAsyncSlidingWindow:
         assert await limiter.hit(limit)
         assert not await limiter.test(limit)
         assert not await limiter.hit(limit)
+
+
+@pytest.mark.asyncio
+@async_concurrency_limiter_storage
+class TestAsyncConcurrencyLimit:
+    async def test_concurrency_limit(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert all([await limiter.hit(limit) for _ in range(10)])
+        assert not await limiter.hit(limit)
+        assert (await limiter.get_window_stats(limit)).remaining == 0
+        # releasing a slot frees capacity for exactly one more concurrent hit
+        await limiter.release(limit)
+        assert (await limiter.get_window_stats(limit)).remaining == 1
+        assert await limiter.hit(limit)
+        assert not await limiter.hit(limit)
+
+    async def test_concurrency_limit_empty_stats(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert (await limiter.get_window_stats(limit)).remaining == 10
+
+    async def test_concurrency_limit_multiple_cost(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert not await limiter.hit(limit, "k1", cost=11)
+        assert await limiter.hit(limit, "k2", cost=5)
+        assert (await limiter.get_window_stats(limit, "k2")).remaining == 5
+        assert not await limiter.test(limit, "k2", cost=6)
+        assert not await limiter.hit(limit, "k2", cost=6)
+        # a rejected hit must not consume any slots
+        assert (await limiter.get_window_stats(limit, "k2")).remaining == 5
+        await limiter.release(limit, "k2", cost=5)
+        assert (await limiter.get_window_stats(limit, "k2")).remaining == 10
+
+    async def test_test_concurrency_limit(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(2)
+        assert await limiter.test(limit)
+        assert await limiter.hit(limit)
+        assert await limiter.test(limit)
+        assert await limiter.hit(limit)
+        # limit reached: neither test nor hit may pass
+        assert not await limiter.test(limit)
+        assert not await limiter.hit(limit)
+        # test() must not consume slots, so a release always makes room again
+        await limiter.release(limit)
+        assert await limiter.test(limit)
+
+    async def test_concurrency_limit_release_floors_at_zero(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(5)
+        assert await limiter.hit(limit)
+        # releasing more than is held can never take remaining above the limit
+        await limiter.release(limit, cost=10)
+        assert (await limiter.get_window_stats(limit)).remaining == 5
+        assert all([await limiter.hit(limit) for _ in range(5)])
+        assert not await limiter.hit(limit)
+
+    async def test_concurrency_limit_clear(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(5)
+        assert all([await limiter.hit(limit) for _ in range(5)])
+        assert not await limiter.hit(limit)
+        await limiter.clear(limit)
+        assert (await limiter.get_window_stats(limit)).remaining == 5
+        assert await limiter.hit(limit)
