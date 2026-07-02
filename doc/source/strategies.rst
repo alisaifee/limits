@@ -17,6 +17,12 @@ TL;DR: How to choose a strategy
   smooths transitions between time periods with less overhead than a full moving window,
   though it may trade off some precision near bucket boundaries.
 
+- **Concurrency Limit:**
+  Use when you need to bound the number of requests or tasks running *at the same
+  time* (in-flight concurrency) rather than the number allowed within a time period.
+  Unlike the window based strategies, slots are held until they are explicitly
+  released.
+
 Fixed Window
 ============
 
@@ -129,6 +135,38 @@ Suppose:
    clock intervals), while others adjust buckets dynamically based on the first hit.
    This difference can allow an attacker to bypass limits during the initial sampling
    period. The affected implementations are ``memcached`` and ``in-memory``.
+
+
+Concurrency Limit
+=================
+
+Unlike the window based strategies above, the concurrency limit does not bound the
+number of requests over a period of time; it bounds the number of requests (or tasks)
+that are **in-flight simultaneously**. A slot is acquired with
+:meth:`~limits.strategies.ConcurrencyLimitRateLimiter.hit` and held until it is given
+back with :meth:`~limits.strategies.ConcurrencyLimitRateLimiter.release`. This is a good
+fit for protecting a resource with a limited number of concurrent workers, connections
+or seats.
+
+For example, with a concurrency limit of 3:
+
+- A request calls ``hit`` and acquires slot 1 of 3. It starts processing.
+- Two more requests call ``hit`` and acquire slots 2 and 3. The resource is now at
+  capacity.
+- A fourth request calls ``hit``. Since all 3 slots are held, it is rejected and no slot
+  is consumed.
+- One of the first three requests finishes and calls ``release``, freeing a slot. A
+  subsequent ``hit`` can now acquire it.
+
+Because a caller may fail to release a slot (for example if the process crashes), each
+acquired slot carries a safety expiry derived from the rate limit's period so that
+leaked slots are eventually reclaimed.
+
+.. note::
+   The concurrency limit requires a storage backend that supports decrementing a
+   counter (:class:`~limits.storage.base.ConcurrencyLimitSupport`). Instantiating
+   :class:`~limits.strategies.ConcurrencyLimitRateLimiter` with an unsupported storage
+   raises :exc:`NotImplementedError`.
 
 
 
