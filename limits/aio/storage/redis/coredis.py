@@ -114,9 +114,7 @@ class CoredisBridge(RedisBridge):
 
     async def incr(self, key: str, expiry: int, amount: int = 1) -> int:
         key = self.prefixed_key(key)
-        if (value := await self.get_connection().incrby(key, amount)) == amount:
-            await self.get_connection().expire(key, expiry)
-        return value
+        return cast(int, await self.lua_incr_expire.execute([key], [expiry, amount]))
 
     async def get(self, key: str) -> int:
         key = self.prefixed_key(key)
