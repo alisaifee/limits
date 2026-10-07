@@ -10,7 +10,7 @@ from limits.limits import (
     RateLimitItemPerMinute,
     RateLimitItemPerSecond,
 )
-from limits.storage import storage_from_string
+from limits.storage import MemoryStorage, storage_from_string
 from limits.storage.base import TimestampedSlidingWindow
 from limits.strategies import (
     FixedWindowRateLimiter,
@@ -25,6 +25,29 @@ from tests.utils import (
     timestamp_based_key_ttl,
     window,
 )
+
+
+@pytest.mark.parametrize(
+    "strategy_cls",
+    [
+        FixedWindowRateLimiter,
+        MovingWindowRateLimiter,
+        SlidingWindowCounterRateLimiter,
+    ],
+)
+@pytest.mark.parametrize("cost", [-1])
+def test_invalid_cost_is_rejected(strategy_cls, cost):
+    storage = MemoryStorage()
+    limiter = strategy_cls(storage)
+    limit = RateLimitItemPerSecond(2, 1)
+
+    with pytest.raises(ValueError, match="cost must be greater than or equal to 0"):
+        limiter.test(limit, "invalid-cost", cost=cost)
+
+    with pytest.raises(ValueError, match="cost must be greater than or equal to 0"):
+        limiter.hit(limit, "invalid-cost", cost=cost)
+
+    assert limiter.get_window_stats(limit, "invalid-cost").remaining == 2
 
 
 @all_storage
