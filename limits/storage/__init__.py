@@ -12,7 +12,12 @@ import limits
 from .._storage_scheme import SCHEMES
 from ..errors import ConfigurationError
 from ..typing import TypeAlias, cast
-from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
+from .base import (
+    MovingWindowSupport,
+    SlidingWindowCounterSupport,
+    Storage,
+    TokenBucketSupport,
+)
 from .memcached import MemcachedStorage
 from .memory import MemoryStorage
 from .mongodb import MongoDBStorage, MongoDBStorageBase
@@ -76,5 +81,6 @@ __all__ = [
     "RedisStorage",
     "SlidingWindowCounterSupport",
     "Storage",
+    "TokenBucketSupport",
     "storage_from_string",
 ]

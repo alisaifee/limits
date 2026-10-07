@@ -10,6 +10,7 @@ from limits.aio.storage.base import (
     MovingWindowSupport,
     SlidingWindowCounterSupport,
     Storage,
+    TokenBucketSupport,
 )
 from limits.typing import (
     ClassVar,
@@ -28,7 +29,9 @@ R = TypeVar("R")
     version="3.14.0",
     reason="Added option to select custom collection names for windows & counters",
 )
-class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
+class MongoDBStorage(
+    Storage, MovingWindowSupport, SlidingWindowCounterSupport, TokenBucketSupport
+):
     """
     Rate limit storage with MongoDB as backend.
 
@@ -48,6 +51,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         database_name: str = "limits",
         counter_collection_name: str = "counters",
         window_collection_name: str = "windows",
+        token_bucket_collection_name: str = "token_buckets",
         wrap_exceptions: bool = False,
         **options: float | str | bool,
     ) -> None:
@@ -86,6 +90,7 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         self.__collection_mapping = {
             "counters": counter_collection_name,
             "windows": window_collection_name,
+            "token_buckets": token_bucket_collection_name,
         }
         self.__indices_created = False
 
@@ -108,6 +113,9 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                 self.database[self.__collection_mapping["windows"]].create_index(
                     "expireAt", expireAfterSeconds=0
                 ),
+                self.database[self.__collection_mapping["token_buckets"]].create_index(
+                    "expireAt", expireAfterSeconds=0
+                ),
             )
         self.__indices_created = True
 
@@ -121,11 +129,15 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
                     {}
                 ),
                 self.database[self.__collection_mapping["windows"]].count_documents({}),
+                self.database[
+                    self.__collection_mapping["token_buckets"]
+                ].count_documents({}),
             )
         )
         await asyncio.gather(
             self.database[self.__collection_mapping["counters"]].drop(),
             self.database[self.__collection_mapping["windows"]].drop(),
+            self.database[self.__collection_mapping["token_buckets"]].drop(),
         )
 
         return cast(int, num_keys)
@@ -141,6 +153,9 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             self.database[self.__collection_mapping["windows"]].find_one_and_delete(
                 {"_id": key}
             ),
+            self.database[
+                self.__collection_mapping["token_buckets"]
+            ].find_one_and_delete({"_id": key}),
         )
 
     async def get_expiry(self, key: str) -> float:
@@ -520,6 +535,125 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
 
     async def clear_sliding_window(self, key: str, expiry: int) -> None:
         return await self.clear(key)
+
+    async def acquire_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int, amount: int = 1
+    ) -> bool:
+        """
+        :param key: rate limit key to acquire tokens from
+        :param capacity: the maximum number of tokens the bucket can hold
+        :param rate: the refill rate in tokens per second
+        :param expiry: the safety expiry of the bucket in seconds
+        :param amount: the number of tokens to consume
+        """
+        if amount > capacity:
+            return False
+        await self.create_indices()
+        expiry_ms = expiry * 1000
+        result = await self.database[
+            self.__collection_mapping["token_buckets"]
+        ].find_one_and_update(
+            {"_id": key},
+            [
+                # Refill based on elapsed time; a new or expired bucket is full.
+                {
+                    "$set": {
+                        "_refilled": {
+                            "$let": {
+                                "vars": {
+                                    "base_tokens": {
+                                        "$cond": {
+                                            "if": {"$lt": ["$expireAt", "$$NOW"]},
+                                            "then": capacity,
+                                            "else": "$tokens",
+                                        }
+                                    },
+                                    "base_ts": {
+                                        "$cond": {
+                                            "if": {"$lt": ["$expireAt", "$$NOW"]},
+                                            "then": "$$NOW",
+                                            "else": "$ts",
+                                        }
+                                    },
+                                },
+                                "in": {
+                                    "$min": [
+                                        capacity,
+                                        {
+                                            "$add": [
+                                                "$$base_tokens",
+                                                {
+                                                    "$multiply": [
+                                                        {
+                                                            "$max": [
+                                                                0,
+                                                                {
+                                                                    "$divide": [
+                                                                        {
+                                                                            "$subtract": [
+                                                                                "$$NOW",
+                                                                                "$$base_ts",
+                                                                            ]
+                                                                        },
+                                                                        1000,
+                                                                    ]
+                                                                },
+                                                            ]
+                                                        },
+                                                        rate,
+                                                    ]
+                                                },
+                                            ]
+                                        },
+                                    ]
+                                },
+                            }
+                        }
+                    }
+                },
+                # Consume the tokens if enough are available; record the outcome.
+                {
+                    "$set": {
+                        "_acquired": {"$gte": ["$_refilled", amount]},
+                        "tokens": {
+                            "$cond": {
+                                "if": {"$gte": ["$_refilled", amount]},
+                                "then": {"$subtract": ["$_refilled", amount]},
+                                "else": "$_refilled",
+                            }
+                        },
+                        "ts": "$$NOW",
+                        "expireAt": {"$add": ["$$NOW", expiry_ms]},
+                    }
+                },
+                {"$unset": ["_refilled"]},
+            ],
+            return_document=self.proxy_dependency.module.ReturnDocument.AFTER,
+            upsert=True,
+        )
+
+        return cast(bool, result["_acquired"] if result else False)
+
+    async def get_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int
+    ) -> tuple[float, float]:
+        """
+        :param key: rate limit key
+        :param capacity: the maximum number of tokens the bucket can hold
+        :param rate: the refill rate in tokens per second
+        :param expiry: the safety expiry of the bucket in seconds
+        """
+        now = datetime.datetime.now(datetime.timezone.utc)
+        now_ts = now.timestamp()
+        doc = await self.database[self.__collection_mapping["token_buckets"]].find_one(
+            {"_id": key, "expireAt": {"$gte": now}}
+        )
+        if not doc or "tokens" not in doc:
+            return float(capacity), now_ts
+        ts = doc["ts"].replace(tzinfo=datetime.timezone.utc).timestamp()
+        elapsed = max(0.0, now_ts - ts)
+
+        return min(float(capacity), float(doc["tokens"]) + elapsed * rate), now_ts
 
     def __del__(self) -> None:
         self.storage and self.storage.close()

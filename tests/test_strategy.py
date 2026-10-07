@@ -16,6 +16,7 @@ from limits.strategies import (
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
     SlidingWindowCounterRateLimiter,
+    TokenBucketRateLimiter,
 )
 from tests.utils import (
     all_storage,
@@ -23,6 +24,7 @@ from tests.utils import (
     moving_window_storage,
     sliding_window_counter_storage,
     timestamp_based_key_ttl,
+    token_bucket_storage,
     window,
 )
 
@@ -340,3 +342,86 @@ class TestMovingWindow:
         assert limiter.hit(limit)
         assert not limiter.test(limit)
         assert not limiter.hit(limit)
+
+
+@token_bucket_storage
+class TestTokenBucket:
+    def test_token_bucket_starts_full(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert all(limiter.hit(limit) for _ in range(10))
+        assert not limiter.hit(limit)
+        assert limiter.get_window_stats(limit).remaining == 0
+
+    def test_token_bucket_empty_stats(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        stats = limiter.get_window_stats(limit)
+        assert stats.remaining == 10
+        assert stats.reset_time == pytest.approx(time.time(), abs=1)
+
+    def test_token_bucket_cost_exceeds_capacity(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert not limiter.hit(limit, "k1", cost=11)
+        # a rejected over-capacity hit must not consume anything
+        assert limiter.get_window_stats(limit, "k1").remaining == 10
+
+    def test_token_bucket_multiple_cost(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert limiter.hit(limit, "k2", cost=5)
+        assert limiter.get_window_stats(limit, "k2").remaining == 5
+        assert not limiter.test(limit, "k2", cost=6)
+        assert not limiter.hit(limit, "k2", cost=6)
+        # the rejected hit consumed nothing
+        assert limiter.get_window_stats(limit, "k2").remaining == 5
+
+    def test_token_bucket_test_non_consuming(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(2)
+        assert limiter.test(limit)
+        assert limiter.test(limit)
+        # test() never consumed, so both hits still succeed
+        assert limiter.hit(limit)
+        assert limiter.hit(limit)
+        assert not limiter.test(limit)
+        assert not limiter.hit(limit)
+
+    def test_token_bucket_clear(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(5)
+        assert all(limiter.hit(limit) for _ in range(5))
+        assert not limiter.hit(limit)
+        limiter.clear(limit)
+        assert limiter.get_window_stats(limit).remaining == 5
+        assert limiter.hit(limit)
+
+    @pytest.mark.flaky
+    def test_token_bucket_refill(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        # capacity 10, expiry 2s => refill rate 5 tokens/sec
+        limit = RateLimitItemPerSecond(10, 2)
+        assert all(limiter.hit(limit) for _ in range(10))
+        assert not limiter.hit(limit)
+        time.sleep(1)  # ~5 tokens refilled
+        granted = sum(1 for _ in range(10) if limiter.hit(limit))
+        assert 3 <= granted <= 7
+
+    @pytest.mark.flaky
+    def test_token_bucket_refill_capped(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        # capacity 5, refill rate 5 tokens/sec => full refill after 1s
+        limit = RateLimitItemPerSecond(5)
+        assert all(limiter.hit(limit) for _ in range(5))
+        time.sleep(1.2)  # well past a full refill; must cap at capacity
+        granted = sum(1 for _ in range(10) if limiter.hit(limit))
+        assert granted == 5

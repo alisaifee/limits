@@ -114,6 +114,28 @@ Scenario 2:
 - ``weighted_count = floor(8 + (4 * 0.33)) = floor(8 + 1.32) = 9``.
 - Since the weighted count is below the limit, the request is allowed.
 
+Token Bucket
+------------
+`Token Bucket <https://limits.readthedocs.io/en/latest/strategies.html#token-bucket>`_
+
+This strategy models each resource as a bucket holding up to ``limit`` tokens that
+refills continuously at ``limit / expiry`` tokens per second. Each request removes a
+token; if the bucket is empty the request is rejected without consuming anything. Since
+tokens accrue continuously instead of resetting on a fixed boundary, the bucket allows
+short bursts up to its capacity while holding the long-run average to the configured
+rate.
+
+For example, with a rate limit of 10 requests per minute (capacity 10, refill ≈ 0.167
+tokens/second):
+
+- A burst of 10 requests at **00:00:00** drains the full bucket and is allowed.
+- An 11th request at **00:00:01** is rejected: only ~0.167 tokens have refilled.
+- By **00:00:30** roughly 5 tokens have refilled, so up to 5 more requests are allowed.
+- The bucket never refills beyond its capacity of 10.
+
+Token bucket is supported by the in-memory, redis (including cluster, sentinel and
+valkey) and mongodb storages.
+
 
 Storage backends
 ================
@@ -152,6 +174,8 @@ Initialize a rate limiter with a strategy
    strategy = strategies.FixedWindowRateLimiter(backend)
    # or sliding window
    strategy = strategies.SlidingWindowCounterRateLimiter(backend)
+   # or token bucket
+   strategy = strategies.TokenBucketRateLimiter(backend)
 
 
 Initialize a rate limit

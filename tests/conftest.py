@@ -368,6 +368,7 @@ def redis_sentinel_auth(redis_sentinel_auth_client):
 def mongodb(mongodb_client):
     mongodb_client.limits.windows.drop()
     mongodb_client.limits.counters.drop()
+    mongodb_client.limits.token_buckets.drop()
 
     return mongodb_client
 

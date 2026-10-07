@@ -9,10 +9,23 @@ from packaging.version import Version
 from limits.typing import ClassVar, Literal, RedisClient
 
 from ..util import get_package_data
-from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
+from .base import (
+    MovingWindowSupport,
+    SlidingWindowCounterSupport,
+    Storage,
+    TokenBucketSupport,
+)
 
 if TYPE_CHECKING:
     import redis
+
+
+def _as_float(value: bytes | str | float | int) -> float:
+    """Coerce a redis hash field (which may come back as ``bytes``) to a float."""
+    if isinstance(value, (bytes, bytearray)):
+        value = value.decode()
+
+    return float(value)
 
 
 @versionchanged(
@@ -22,7 +35,9 @@ if TYPE_CHECKING:
         " if :paramref:`uri` has the ``valkey://`` schema"
     ),
 )
-class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
+class RedisStorage(
+    Storage, MovingWindowSupport, SlidingWindowCounterSupport, TokenBucketSupport
+):
     """
     Rate limit storage with redis as backend.
 
@@ -58,11 +73,15 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     SCRIPT_ACQUIRE_SLIDING_WINDOW = get_package_data(
         f"{RES_DIR}/acquire_sliding_window.lua"
     )
+    SCRIPT_ACQUIRE_TOKEN_BUCKET = get_package_data(
+        f"{RES_DIR}/acquire_token_bucket.lua"
+    )
 
     lua_moving_window: redis.commands.core.Script
     lua_acquire_moving_window: redis.commands.core.Script
     lua_sliding_window: redis.commands.core.Script
     lua_acquire_sliding_window: redis.commands.core.Script
+    lua_acquire_token_bucket: redis.commands.core.Script
 
     PREFIX = "LIMITS"
     target_server: Literal["redis", "valkey"]
@@ -141,6 +160,9 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         )
         self.lua_acquire_sliding_window = self.get_connection().register_script(
             self.SCRIPT_ACQUIRE_SLIDING_WINDOW
+        )
+        self.lua_acquire_token_bucket = self.get_connection().register_script(
+            self.SCRIPT_ACQUIRE_TOKEN_BUCKET
         )
 
     def get_connection(self, readonly: bool = False) -> RedisClient:
@@ -285,6 +307,44 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             [previous_key, current_key], [limit, expiry, amount]
         )
         return bool(acquired)
+
+    def acquire_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int, amount: int = 1
+    ) -> bool:
+        """
+        :param key: rate limit key to acquire tokens from
+        :param capacity: the maximum number of tokens the bucket can hold
+        :param rate: the refill rate in tokens per second
+        :param expiry: the safety expiry of the bucket in seconds
+        :param amount: the number of tokens to consume
+        """
+        if amount > capacity:
+            return False
+        key = self.prefixed_key(key)
+        now = time.time()
+        acquired = self.lua_acquire_token_bucket(
+            [key], [now, capacity, rate, expiry, amount]
+        )
+
+        return bool(acquired)
+
+    def get_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int
+    ) -> tuple[float, float]:
+        """
+        :param key: rate limit key
+        :param capacity: the maximum number of tokens the bucket can hold
+        :param rate: the refill rate in tokens per second
+        :param expiry: the safety expiry of the bucket in seconds
+        """
+        key = self.prefixed_key(key)
+        now = time.time()
+        tokens_raw, ts_raw = self.get_connection(True).hmget(key, ["tokens", "ts"])
+        if tokens_raw is None or ts_raw is None:
+            return float(capacity), now
+        elapsed = max(0.0, now - _as_float(ts_raw))
+
+        return min(float(capacity), _as_float(tokens_raw) + elapsed * rate), now
 
     def get_expiry(self, key: str) -> float:
         """

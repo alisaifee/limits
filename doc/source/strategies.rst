@@ -17,6 +17,11 @@ TL;DR: How to choose a strategy
   smooths transitions between time periods with less overhead than a full moving window,
   though it may trade off some precision near bucket boundaries.
 
+- **Token Bucket:**
+  Use when you want to allow short bursts up to a fixed capacity while enforcing a
+  steady average rate. Tokens replenish continuously rather than resetting on window
+  boundaries, which avoids the edge-of-window bursts of the fixed window.
+
 Fixed Window
 ============
 
@@ -129,6 +134,40 @@ Suppose:
    clock intervals), while others adjust buckets dynamically based on the first hit.
    This difference can allow an attacker to bypass limits during the initial sampling
    period. The affected implementations are ``memcached`` and ``in-memory``.
+
+
+Token Bucket
+============
+.. versionadded:: 5.9
+
+This strategy models each resource as a bucket that holds up to ``limit`` tokens and
+refills continuously at ``limit / expiry`` tokens per second. Each request removes
+``cost`` tokens; if fewer than ``cost`` tokens are available the request is rejected and
+no tokens are removed. Because tokens accrue continuously rather than resetting on a
+fixed boundary, the bucket permits bursts up to its capacity while holding the long-run
+average to the configured rate.
+
+A bucket starts full, so the first ``limit`` requests are allowed immediately. After the
+bucket empties it refills gradually: with a rate limit of ``10 requests per minute`` a
+token becomes available roughly every 6 seconds.
+
+For example, with a rate limit of ``10 requests per minute`` (capacity 10, refill
+≈ 0.167 tokens/second):
+
+- At **00:00:00**, a burst of 10 requests drains the full bucket. All are allowed.
+- At **00:00:01**, an 11th request arrives. Only ~0.167 tokens have refilled, so it is
+  rejected without consuming anything.
+- At **00:00:30**, ~5 tokens have refilled, so up to 5 requests are allowed before the
+  bucket is empty again.
+- At **00:01:00**, the bucket has refilled to its capacity of 10 (never more).
+
+.. note::
+   The token bucket requires a storage backend that can atomically refill and consume
+   the bucket (:class:`~limits.storage.base.TokenBucketSupport`). It is supported by the
+   in-memory, redis (including redis cluster, sentinel and valkey) and mongodb storages.
+   ``memcached`` does not support it, and instantiating
+   :class:`~limits.strategies.TokenBucketRateLimiter` with an unsupported storage raises
+   :exc:`NotImplementedError`.
 
 
 

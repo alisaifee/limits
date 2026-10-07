@@ -5,7 +5,12 @@ import asyncio
 from deprecated.sphinx import versionadded, versionchanged
 from packaging.version import Version
 
-from limits.aio.storage import MovingWindowSupport, SlidingWindowCounterSupport, Storage
+from limits.aio.storage import (
+    MovingWindowSupport,
+    SlidingWindowCounterSupport,
+    Storage,
+    TokenBucketSupport,
+)
 from limits.aio.storage.redis.bridge import RedisBridge
 from limits.aio.storage.redis.coredis import CoredisBridge
 from limits.aio.storage.redis.redispy import RedispyBridge
@@ -29,7 +34,9 @@ from limits.typing import ClassVar, Literal
         " ``async+valkey`` schema"
     ),
 )
-class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
+class RedisStorage(
+    Storage, MovingWindowSupport, SlidingWindowCounterSupport, TokenBucketSupport
+):
     """
     Rate limit storage with redis as backend.
 
@@ -213,6 +220,18 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
         return await self.bridge.acquire_sliding_window_entry(
             previous_key, current_key, limit, expiry, amount
         )
+
+    async def acquire_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int, amount: int = 1
+    ) -> bool:
+        return await self.bridge.acquire_token_bucket(
+            key, capacity, rate, expiry, amount
+        )
+
+    async def get_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int
+    ) -> tuple[float, float]:
+        return await self.bridge.get_token_bucket(key, capacity, rate, expiry)
 
     async def get_sliding_window(
         self, key: str, expiry: int

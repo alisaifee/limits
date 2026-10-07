@@ -20,6 +20,9 @@ class RedisBridge(ABC):
     SCRIPT_ACQUIRE_SLIDING_WINDOW = get_package_data(
         f"{RES_DIR}/acquire_sliding_window.lua"
     )
+    SCRIPT_ACQUIRE_TOKEN_BUCKET = get_package_data(
+        f"{RES_DIR}/acquire_token_bucket.lua"
+    )
 
     def __init__(
         self,
@@ -40,6 +43,14 @@ class RedisBridge(ABC):
 
     def prefixed_key(self, key: str) -> str:
         return f"{self.key_prefix}:{key}"
+
+    @staticmethod
+    def _as_float(value: bytes | str | float | int) -> float:
+        """Coerce a redis hash field (which may come back as ``bytes``) to a float."""
+        if isinstance(value, (bytes, bytearray)):
+            value = value.decode()
+
+        return float(value)
 
     @abstractmethod
     def register_scripts(self) -> None: ...
@@ -107,6 +118,21 @@ class RedisBridge(ABC):
         expiry: int,
         amount: int = 1,
     ) -> bool: ...
+
+    @abstractmethod
+    async def acquire_token_bucket(
+        self,
+        key: str,
+        capacity: int,
+        rate: float,
+        expiry: int,
+        amount: int = 1,
+    ) -> bool: ...
+
+    @abstractmethod
+    async def get_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int
+    ) -> tuple[float, float]: ...
 
     @abstractmethod
     async def get_expiry(self, key: str) -> float: ...

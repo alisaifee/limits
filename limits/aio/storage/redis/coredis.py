@@ -85,6 +85,7 @@ class CoredisBridge(RedisBridge):
     lua_acquire_moving_window: coredis.commands.Script[bytes]
     lua_sliding_window: coredis.commands.Script[bytes]
     lua_acquire_sliding_window: coredis.commands.Script[bytes]
+    lua_acquire_token_bucket: coredis.commands.Script[bytes]
     lua_clear_keys: coredis.commands.Script[bytes]
     lua_incr_expire: coredis.commands.Script[bytes]
     connection_getter: Callable[[bool], AsyncCoRedisClient]
@@ -110,6 +111,9 @@ class CoredisBridge(RedisBridge):
         )
         self.lua_acquire_sliding_window = self.get_connection().register_script(
             self.SCRIPT_ACQUIRE_SLIDING_WINDOW
+        )
+        self.lua_acquire_token_bucket = self.get_connection().register_script(
+            self.SCRIPT_ACQUIRE_TOKEN_BUCKET
         )
 
     async def incr(self, key: str, expiry: int, amount: int = 1) -> int:
@@ -181,6 +185,33 @@ class CoredisBridge(RedisBridge):
             [previous_key, current_key], [limit, expiry, amount]
         )
         return bool(acquired)
+
+    async def acquire_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int, amount: int = 1
+    ) -> bool:
+        if amount > capacity:
+            return False
+        key = self.prefixed_key(key)
+        now = time.time()
+        acquired = await self.lua_acquire_token_bucket.execute(
+            [key], [now, capacity, rate, expiry, amount]
+        )
+
+        return bool(acquired)
+
+    async def get_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int
+    ) -> tuple[float, float]:
+        key = self.prefixed_key(key)
+        now = time.time()
+        tokens_raw, ts_raw = await self.get_connection(readonly=True).hmget(
+            key, ["tokens", "ts"]
+        )
+        if tokens_raw is None or ts_raw is None:
+            return float(capacity), now
+        elapsed = max(0.0, now - self._as_float(ts_raw))
+
+        return min(float(capacity), self._as_float(tokens_raw) + elapsed * rate), now
 
     async def get_expiry(self, key: str) -> float:
         key = self.prefixed_key(key)

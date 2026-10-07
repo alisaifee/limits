@@ -287,6 +287,17 @@ sliding_window_counter_storage = pytest.mark.parametrize(
     "uri, args, fixture", ALL_STORAGES.values()
 )
 
+# Storages that support the token bucket strategy (everything except memcached,
+# which has no scripting / compare-and-swap primitive to acquire atomically).
+token_bucket_storage = pytest.mark.parametrize(
+    "uri, args, fixture",
+    [
+        storage
+        for name, storage in ALL_STORAGES.items()
+        if not name.startswith("memcached")
+    ],
+)
+
 async_all_storage = pytest.mark.parametrize(
     "uri, args, fixture", ALL_STORAGES_ASYNC.values()
 )
@@ -302,4 +313,14 @@ async_moving_window_storage = pytest.mark.parametrize(
 
 async_sliding_window_counter_storage = pytest.mark.parametrize(
     "uri, args, fixture", ALL_STORAGES_ASYNC.values()
+)
+
+# Storages that support the token bucket strategy (everything except memcached).
+async_token_bucket_storage = pytest.mark.parametrize(
+    "uri, args, fixture",
+    [
+        storage
+        for name, storage in ALL_STORAGES_ASYNC.items()
+        if not name.startswith("memcached")
+    ],
 )

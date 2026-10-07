@@ -233,3 +233,57 @@ class SlidingWindowCounterSupport(ABC):
         :param expiry: the rate limit expiry, needed to compute the key in some implemenations
         """
         ...
+
+
+class TokenBucketSupport(ABC):
+    """
+    Abstract base class for storages that support
+    the :ref:`strategies:token bucket` strategy.
+    """
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:  # type: ignore[explicit-any]
+        for method in {
+            "acquire_token_bucket",
+            "get_token_bucket",
+        }:
+            setattr(
+                cls,
+                method,
+                _wrap_errors(getattr(cls, method)),
+            )
+        super().__init_subclass__(**kwargs)
+
+    @abstractmethod
+    async def acquire_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int, amount: int = 1
+    ) -> bool:
+        """
+        Atomically refill the bucket based on the elapsed time since the last
+        refill and, if at least ``amount`` tokens are available, consume them.
+
+        :param key: rate limit key to acquire tokens from
+        :param capacity: the maximum number of tokens the bucket can hold
+        :param rate: the refill rate in tokens per second
+        :param expiry: the safety expiry of the bucket in seconds
+        :param amount: the number of tokens to consume
+        :return: True if ``amount`` tokens were consumed, False otherwise
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int
+    ) -> tuple[float, float]:
+        """
+        Return the (refilled but not consumed) state of the bucket without
+        mutating it. Used by
+        :meth:`~limits.aio.strategies.TokenBucketRateLimiter.test` and
+        :meth:`~limits.aio.strategies.TokenBucketRateLimiter.get_window_stats`.
+
+        :param key: rate limit key
+        :param capacity: the maximum number of tokens the bucket can hold
+        :param rate: the refill rate in tokens per second
+        :param expiry: the safety expiry of the bucket in seconds
+        :return: a tuple of ``(current tokens after refill, current timestamp)``
+        """
+        raise NotImplementedError

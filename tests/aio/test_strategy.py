@@ -10,6 +10,7 @@ from limits.aio.strategies import (
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
     SlidingWindowCounterRateLimiter,
+    TokenBucketRateLimiter,
 )
 from limits.limits import (
     RateLimitItemPerHour,
@@ -23,6 +24,7 @@ from tests.utils import (
     async_fixed_start,
     async_moving_window_storage,
     async_sliding_window_counter_storage,
+    async_token_bucket_storage,
     async_window,
     timestamp_based_key_ttl,
 )
@@ -360,3 +362,87 @@ class TestAsyncSlidingWindow:
         assert await limiter.hit(limit)
         assert not await limiter.test(limit)
         assert not await limiter.hit(limit)
+
+
+@pytest.mark.asyncio
+@async_token_bucket_storage
+class TestAsyncTokenBucket:
+    async def test_token_bucket_starts_full(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert all([await limiter.hit(limit) for _ in range(10)])
+        assert not await limiter.hit(limit)
+        assert (await limiter.get_window_stats(limit)).remaining == 0
+
+    async def test_token_bucket_empty_stats(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        stats = await limiter.get_window_stats(limit)
+        assert stats.remaining == 10
+        assert stats.reset_time == pytest.approx(time.time(), abs=1)
+
+    async def test_token_bucket_cost_exceeds_capacity(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert not await limiter.hit(limit, "k1", cost=11)
+        # a rejected over-capacity hit must not consume anything
+        assert (await limiter.get_window_stats(limit, "k1")).remaining == 10
+
+    async def test_token_bucket_multiple_cost(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert await limiter.hit(limit, "k2", cost=5)
+        assert (await limiter.get_window_stats(limit, "k2")).remaining == 5
+        assert not await limiter.test(limit, "k2", cost=6)
+        assert not await limiter.hit(limit, "k2", cost=6)
+        # the rejected hit consumed nothing
+        assert (await limiter.get_window_stats(limit, "k2")).remaining == 5
+
+    async def test_token_bucket_test_non_consuming(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(2)
+        assert await limiter.test(limit)
+        assert await limiter.test(limit)
+        # test() never consumed, so both hits still succeed
+        assert await limiter.hit(limit)
+        assert await limiter.hit(limit)
+        assert not await limiter.test(limit)
+        assert not await limiter.hit(limit)
+
+    async def test_token_bucket_clear(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        limit = RateLimitItemPerMinute(5)
+        assert all([await limiter.hit(limit) for _ in range(5)])
+        assert not await limiter.hit(limit)
+        await limiter.clear(limit)
+        assert (await limiter.get_window_stats(limit)).remaining == 5
+        assert await limiter.hit(limit)
+
+    @pytest.mark.flaky
+    async def test_token_bucket_refill(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        # capacity 10, expiry 2s => refill rate 5 tokens/sec
+        limit = RateLimitItemPerSecond(10, 2)
+        assert all([await limiter.hit(limit) for _ in range(10)])
+        assert not await limiter.hit(limit)
+        time.sleep(1)  # ~5 tokens refilled
+        granted = sum([1 for _ in range(10) if await limiter.hit(limit)])
+        assert 3 <= granted <= 7
+
+    @pytest.mark.flaky
+    async def test_token_bucket_refill_capped(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = TokenBucketRateLimiter(storage)
+        # capacity 5, refill rate 5 tokens/sec => full refill after 1s
+        limit = RateLimitItemPerSecond(5)
+        assert all([await limiter.hit(limit) for _ in range(5)])
+        time.sleep(1.2)  # well past a full refill; must cap at capacity
+        granted = sum([1 for _ in range(10) if await limiter.hit(limit)])
+        assert granted == 5

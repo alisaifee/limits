@@ -10,7 +10,7 @@ from math import floor, inf
 
 from deprecated.sphinx import versionadded
 
-from limits.storage.base import SlidingWindowCounterSupport
+from limits.storage.base import SlidingWindowCounterSupport, TokenBucketSupport
 
 from .limits import RateLimitItem
 from .storage import MovingWindowSupport, Storage, StorageTypes
@@ -305,14 +305,99 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
         )
 
 
+@versionadded(version="5.9")
+class TokenBucketRateLimiter(RateLimiter):
+    """
+    Reference: :ref:`strategies:token bucket`
+    """
+
+    def __init__(self, storage: StorageTypes):
+        if not (
+            hasattr(storage, "acquire_token_bucket")
+            and hasattr(storage, "get_token_bucket")
+        ):
+            raise NotImplementedError(
+                "TokenBucketRateLimiting is not implemented for storage "
+                f"of type {storage.__class__}"
+            )
+        super().__init__(storage)
+
+    def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
+        """
+        Consume ``cost`` tokens from the bucket if enough are available.
+
+        The bucket starts full (``item.amount`` tokens) and refills continuously
+        at ``item.amount / item.get_expiry()`` tokens per second up to its
+        capacity. A rejected hit consumes nothing.
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :param cost: The number of tokens to consume, default 1
+
+        :return: True if ``cost`` tokens were available and consumed
+        """
+
+        return cast(TokenBucketSupport, self.storage).acquire_token_bucket(
+            item.key_for(*identifiers),
+            item.amount,
+            item.amount / item.get_expiry(),
+            item.get_expiry(),
+            amount=cost,
+        )
+
+    def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
+        """
+        Check whether ``cost`` tokens are currently available without consuming.
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :param cost: The number of tokens to test for, default 1
+
+        :return: True if at least ``cost`` tokens are available
+        """
+        tokens, _ = cast(TokenBucketSupport, self.storage).get_token_bucket(
+            item.key_for(*identifiers),
+            item.amount,
+            item.amount / item.get_expiry(),
+            item.get_expiry(),
+        )
+
+        return tokens >= cost
+
+    def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
+        """
+        Query the remaining tokens and the time until the bucket is full again.
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :return: (reset time, remaining)
+        """
+        rate = item.amount / item.get_expiry()
+        tokens, now = cast(TokenBucketSupport, self.storage).get_token_bucket(
+            item.key_for(*identifiers),
+            item.amount,
+            rate,
+            item.get_expiry(),
+        )
+        remaining = floor(tokens)
+        reset = now + (item.amount - tokens) / rate
+
+        return WindowStats(reset, remaining)
+
+
 KnownStrategy = (
     type[SlidingWindowCounterRateLimiter]
     | type[FixedWindowRateLimiter]
     | type[MovingWindowRateLimiter]
+    | type[TokenBucketRateLimiter]
 )
 
 STRATEGIES: dict[str, KnownStrategy] = {
     "sliding-window-counter": SlidingWindowCounterRateLimiter,
     "fixed-window": FixedWindowRateLimiter,
     "moving-window": MovingWindowRateLimiter,
+    "token-bucket": TokenBucketRateLimiter,
 }

@@ -12,6 +12,7 @@ from limits.storage.base import (
     SlidingWindowCounterSupport,
     Storage,
     TimestampedSlidingWindow,
+    TokenBucketSupport,
 )
 from limits.typing import ClassVar
 
@@ -23,7 +24,11 @@ class Entry:
 
 
 class MemoryStorage(
-    Storage, MovingWindowSupport, SlidingWindowCounterSupport, TimestampedSlidingWindow
+    Storage,
+    MovingWindowSupport,
+    SlidingWindowCounterSupport,
+    TokenBucketSupport,
+    TimestampedSlidingWindow,
 ):
     """
     rate limit storage using :class:`collections.Counter`
@@ -39,6 +44,10 @@ class MemoryStorage(
         self.locks: defaultdict[str, threading.RLock] = defaultdict(threading.RLock)
         self.expirations: dict[str, float] = {}
         self.events: dict[str, list[Entry]] = {}
+        #: (tokens, last_refill_ts) per key for the token bucket strategy; kept
+        #: separate from the int ``storage`` counter so the two never collide.
+        self.token_buckets: dict[str, tuple[float, float]] = {}
+        self.token_bucket_expirations: dict[str, float] = {}
         self._timer_lock = threading.Lock()
         self.timer: threading.Timer = threading.Timer(0.01, self.__expire_events)
         self.timer.start()
@@ -72,6 +81,12 @@ class MemoryStorage(
             if self.expirations[key] <= time.time():
                 self.storage.pop(key, None)
                 self.expirations.pop(key, None)
+                self.locks.pop(key, None)
+        for key in list(self.token_bucket_expirations.keys()):
+            if self.token_bucket_expirations[key] <= time.time():
+                with self.locks[key]:
+                    self.token_buckets.pop(key, None)
+                    self.token_bucket_expirations.pop(key, None)
                 self.locks.pop(key, None)
 
     def __schedule_expiry(self) -> None:
@@ -135,6 +150,8 @@ class MemoryStorage(
         self.storage.pop(key, None)
         self.expirations.pop(key, None)
         self.events.pop(key, None)
+        self.token_buckets.pop(key, None)
+        self.token_bucket_expirations.pop(key, None)
         self.locks.pop(key, None)
 
     def acquire_entry(self, key: str, limit: int, expiry: int, amount: int = 1) -> bool:
@@ -161,6 +178,60 @@ class MemoryStorage(
             else:
                 self.events[key][:0] = [Entry(expiry)] * amount
                 return True
+
+    def _refilled_tokens(
+        self, key: str, capacity: int, rate: float, now: float
+    ) -> float:
+        """
+        Return the number of tokens available at ``now`` after refilling, without
+        consuming or persisting anything. Must be called while holding the key lock.
+        """
+        stored = self.token_buckets.get(key)
+        if stored is None or self.token_bucket_expirations.get(key, 0.0) <= now:
+            return float(capacity)
+        tokens, last_refill = stored
+        elapsed = max(0.0, now - last_refill)
+
+        return min(float(capacity), tokens + elapsed * rate)
+
+    def acquire_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int, amount: int = 1
+    ) -> bool:
+        """
+        :param key: rate limit key to acquire tokens from
+        :param capacity: the maximum number of tokens the bucket can hold
+        :param rate: the refill rate in tokens per second
+        :param expiry: the safety expiry of the bucket in seconds
+        :param amount: the number of tokens to consume
+        """
+        if amount > capacity:
+            return False
+
+        self.__schedule_expiry()
+        with self.locks[key]:
+            now = time.time()
+            tokens = self._refilled_tokens(key, capacity, rate, now)
+            allowed = tokens >= amount
+            if allowed:
+                tokens -= amount
+            self.token_buckets[key] = (tokens, now)
+            self.token_bucket_expirations[key] = now + expiry
+
+            return allowed
+
+    def get_token_bucket(
+        self, key: str, capacity: int, rate: float, expiry: int
+    ) -> tuple[float, float]:
+        """
+        :param key: rate limit key
+        :param capacity: the maximum number of tokens the bucket can hold
+        :param rate: the refill rate in tokens per second
+        :param expiry: the safety expiry of the bucket in seconds
+        """
+        with self.locks[key]:
+            now = time.time()
+
+            return self._refilled_tokens(key, capacity, rate, now), now
 
     def get_expiry(self, key: str) -> float:
         """
@@ -256,9 +327,11 @@ class MemoryStorage(
         return True
 
     def reset(self) -> int | None:
-        num_items = max(len(self.storage), len(self.events))
+        num_items = max(len(self.storage), len(self.events), len(self.token_buckets))
         self.storage.clear()
         self.expirations.clear()
         self.events.clear()
+        self.token_buckets.clear()
+        self.token_bucket_expirations.clear()
         self.locks.clear()
         return num_items
