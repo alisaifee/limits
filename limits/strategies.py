@@ -10,7 +10,7 @@ from math import floor, inf
 
 from deprecated.sphinx import versionadded
 
-from limits.storage.base import SlidingWindowCounterSupport
+from limits.storage.base import ConcurrencyLimitSupport, SlidingWindowCounterSupport
 
 from .limits import RateLimitItem
 from .storage import MovingWindowSupport, Storage, StorageTypes
@@ -305,14 +305,97 @@ class SlidingWindowCounterRateLimiter(RateLimiter):
         )
 
 
+@versionadded(version="5.9")
+class ConcurrencyLimitRateLimiter(RateLimiter):
+    """
+    Reference: :ref:`strategies:concurrency limit`
+    """
+
+    def __init__(self, storage: StorageTypes):
+        if not hasattr(storage, "decr"):
+            raise NotImplementedError(
+                "ConcurrencyLimiting is not implemented for storage "
+                f"of type {storage.__class__}"
+            )
+        super().__init__(storage)
+
+    def hit(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
+        """
+        Acquire ``cost`` concurrency slots if doing so does not exceed the
+        limit. Slots are held until :meth:`release` is called (a safety expiry
+        of ``item.get_expiry()`` guards against slots leaked by callers that
+        never release).
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :param cost: The number of slots to acquire, default 1
+
+        :return: True if the slots could be acquired without exceeding the limit
+        """
+        key = item.key_for(*identifiers)
+
+        if self.storage.incr(key, item.get_expiry(), amount=cost) <= item.amount:
+            return True
+        # Overshot the limit: roll back the slots we just acquired.
+        cast(ConcurrencyLimitSupport, self.storage).decr(key, amount=cost)
+
+        return False
+
+    def release(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> None:
+        """
+        Release ``cost`` concurrency slots previously acquired with
+        :meth:`hit`. The underlying counter is floored at zero.
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :param cost: The number of slots to release, default 1
+        """
+        cast(ConcurrencyLimitSupport, self.storage).decr(
+            item.key_for(*identifiers), amount=cost
+        )
+
+    def test(self, item: RateLimitItem, *identifiers: str, cost: int = 1) -> bool:
+        """
+        Check whether ``cost`` slots could be acquired without consuming them.
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :param cost: The number of slots to test for, default 1
+
+        :return: True if there is room for ``cost`` more concurrent slots
+        """
+
+        return self.storage.get(item.key_for(*identifiers)) + cost <= item.amount
+
+    def get_window_stats(self, item: RateLimitItem, *identifiers: str) -> WindowStats:
+        """
+        Query the safety reset time and remaining number of concurrency slots.
+
+        :param item: The rate limit item
+        :param identifiers: variable list of strings to uniquely identify this
+         instance of the limit
+        :return: (reset time, remaining)
+        """
+        key = item.key_for(*identifiers)
+        remaining = max(0, item.amount - self.storage.get(key))
+        reset = self.storage.get_expiry(key)
+
+        return WindowStats(reset, remaining)
+
+
 KnownStrategy = (
     type[SlidingWindowCounterRateLimiter]
     | type[FixedWindowRateLimiter]
     | type[MovingWindowRateLimiter]
+    | type[ConcurrencyLimitRateLimiter]
 )
 
 STRATEGIES: dict[str, KnownStrategy] = {
     "sliding-window-counter": SlidingWindowCounterRateLimiter,
     "fixed-window": FixedWindowRateLimiter,
     "moving-window": MovingWindowRateLimiter,
+    "concurrency-limit": ConcurrencyLimitRateLimiter,
 }

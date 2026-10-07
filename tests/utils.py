@@ -287,6 +287,12 @@ sliding_window_counter_storage = pytest.mark.parametrize(
     "uri, args, fixture", ALL_STORAGES.values()
 )
 
+# Storages that support the concurrency limit strategy (i.e. expose ``decr``).
+concurrency_limiter_storage = pytest.mark.parametrize(
+    "uri, args, fixture",
+    [storage for name, storage in ALL_STORAGES.items() if name in {"memory"}],
+)
+
 async_all_storage = pytest.mark.parametrize(
     "uri, args, fixture", ALL_STORAGES_ASYNC.values()
 )
@@ -302,4 +308,10 @@ async_moving_window_storage = pytest.mark.parametrize(
 
 async_sliding_window_counter_storage = pytest.mark.parametrize(
     "uri, args, fixture", ALL_STORAGES_ASYNC.values()
+)
+
+# Storages that support the concurrency limit strategy (i.e. expose ``decr``).
+async_concurrency_limiter_storage = pytest.mark.parametrize(
+    "uri, args, fixture",
+    [storage for name, storage in ALL_STORAGES_ASYNC.items() if name in {"memory"}],
 )

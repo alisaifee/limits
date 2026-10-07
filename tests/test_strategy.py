@@ -13,12 +13,14 @@ from limits.limits import (
 from limits.storage import storage_from_string
 from limits.storage.base import TimestampedSlidingWindow
 from limits.strategies import (
+    ConcurrencyLimitRateLimiter,
     FixedWindowRateLimiter,
     MovingWindowRateLimiter,
     SlidingWindowCounterRateLimiter,
 )
 from tests.utils import (
     all_storage,
+    concurrency_limiter_storage,
     fixed_start,
     moving_window_storage,
     sliding_window_counter_storage,
@@ -340,3 +342,75 @@ class TestMovingWindow:
         assert limiter.hit(limit)
         assert not limiter.test(limit)
         assert not limiter.hit(limit)
+
+
+@concurrency_limiter_storage
+class TestConcurrencyLimit:
+    def test_concurrency_limit(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert all(limiter.hit(limit) for _ in range(10))
+        assert not limiter.hit(limit)
+        assert limiter.get_window_stats(limit).remaining == 0
+        # releasing a slot frees capacity for exactly one more concurrent hit
+        limiter.release(limit)
+        assert limiter.get_window_stats(limit).remaining == 1
+        assert limiter.hit(limit)
+        assert not limiter.hit(limit)
+
+    def test_concurrency_limit_empty_stats(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert limiter.get_window_stats(limit).remaining == 10
+
+    def test_concurrency_limit_multiple_cost(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(10)
+        assert not limiter.hit(limit, "k1", cost=11)
+        assert limiter.hit(limit, "k2", cost=5)
+        assert limiter.get_window_stats(limit, "k2").remaining == 5
+        assert not limiter.test(limit, "k2", cost=6)
+        assert not limiter.hit(limit, "k2", cost=6)
+        # a rejected hit must not consume any slots
+        assert limiter.get_window_stats(limit, "k2").remaining == 5
+        limiter.release(limit, "k2", cost=5)
+        assert limiter.get_window_stats(limit, "k2").remaining == 10
+
+    def test_test_concurrency_limit(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(2)
+        assert limiter.test(limit)
+        assert limiter.hit(limit)
+        assert limiter.test(limit)
+        assert limiter.hit(limit)
+        # limit reached: neither test nor hit may pass
+        assert not limiter.test(limit)
+        assert not limiter.hit(limit)
+        # test() must not consume slots, so a release always makes room again
+        limiter.release(limit)
+        assert limiter.test(limit)
+
+    def test_concurrency_limit_release_floors_at_zero(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(5)
+        assert limiter.hit(limit)
+        # releasing more than is held can never take remaining above the limit
+        limiter.release(limit, cost=10)
+        assert limiter.get_window_stats(limit).remaining == 5
+        assert all(limiter.hit(limit) for _ in range(5))
+        assert not limiter.hit(limit)
+
+    def test_concurrency_limit_clear(self, uri, args, fixture):
+        storage = storage_from_string(uri, **args)
+        limiter = ConcurrencyLimitRateLimiter(storage)
+        limit = RateLimitItemPerMinute(5)
+        assert all(limiter.hit(limit) for _ in range(5))
+        assert not limiter.hit(limit)
+        limiter.clear(limit)
+        assert limiter.get_window_stats(limit).remaining == 5
+        assert limiter.hit(limit)
