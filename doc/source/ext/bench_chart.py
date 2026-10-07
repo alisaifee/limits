@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from docutils import nodes
 from sphinx.util.docutils import SphinxDirective
@@ -38,7 +38,7 @@ def filters(argument):
         if ":" in source:
             source, label = source.split(":")
         else:
-            source, label = source, source
+            label = source
         filters[source] = {"label": label, "default": check_bool(default)}
     return filters
 
@@ -50,7 +50,7 @@ def sortBy(argument):
 class BenchmarkDetails(SphinxDirective):
     required_arguments = 0
     final_argument_whitespace = False
-    option_spec = {
+    option_spec: ClassVar[dict[str, object]] = {
         "source": str,
     }
     has_content = False
@@ -69,7 +69,7 @@ class BenchmarkDetails(SphinxDirective):
 
 class BenchmarkChart(SphinxDirective):
     final_argument_whitespace = False
-    option_spec = {
+    option_spec: ClassVar[dict[str, object]] = {
         "title": str,
         "source": str,
         "query": query,

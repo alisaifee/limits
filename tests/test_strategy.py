@@ -34,8 +34,8 @@ class TestFixedWindow:
         storage = storage_from_string(uri, **args)
         limiter = FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
-        with window(1) as (start, end):
-            assert all([limiter.hit(limit) for _ in range(0, 10)])
+        with window(1) as (start, _end):
+            assert all(limiter.hit(limit) for _ in range(10))
         assert not limiter.hit(limit)
         assert limiter.get_window_stats(limit).remaining == 0
         assert limiter.get_window_stats(limit).reset_time == pytest.approx(
@@ -90,8 +90,8 @@ class TestSlidingWindow:
                 # Must wait a full period for memcached.
                 time.sleep(1)
                 next_second_from_now = ceil(time.time())
-        with window(1) as (start, end):
-            assert all([limiter.hit(limit) for _ in range(0, 10)])
+        with window(1) as (start, _end):
+            assert all(limiter.hit(limit) for _ in range(10))
         assert not limiter.hit(limit)
         assert limiter.get_window_stats(limit).remaining == 0
         if isinstance(storage, TimestampedSlidingWindow):
@@ -307,7 +307,7 @@ class TestMovingWindow:
             assert limiter.hit(limit, "k2")
 
         # 5 more succeed since there were only 5 in the last 2 seconds
-        assert all([limiter.hit(limit, "k2") for i in range(5)])
+        assert all(limiter.hit(limit, "k2") for i in range(5))
         assert limiter.get_window_stats(limit, "k2")[1] == 0
         assert not limiter.hit(limit, "k2", cost=2)
 

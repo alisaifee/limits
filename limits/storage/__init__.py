@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import urllib
 
-import limits  # noqa
+import limits
 
 from .._storage_scheme import SCHEMES
 from ..errors import ConfigurationError

@@ -5,6 +5,7 @@ from packaging.version import Version
 
 from limits._storage_scheme import parse_storage_uri
 from limits.storage.redis import RedisStorage
+from limits.typing import ClassVar
 
 
 @versionchanged(
@@ -39,15 +40,15 @@ class RedisClusterStorage(RedisStorage):
     starts with ``valkey+cluster://``).
     """
 
-    STORAGE_SCHEME = ["redis+cluster", "valkey+cluster"]
+    STORAGE_SCHEME: ClassVar[list[str]] = ["redis+cluster", "valkey+cluster"]
     """The storage scheme for redis cluster"""
 
-    DEFAULT_OPTIONS: dict[str, float | str | bool] = {
+    DEFAULT_OPTIONS: ClassVar[dict[str, float | str | bool]] = {
         "max_connections": 1000,
     }
     "Default options passed to the :class:`~redis.cluster.RedisCluster`"
 
-    DEPENDENCIES = {
+    DEPENDENCIES: ClassVar[dict[str, Version | None] | list[str]] = {
         "redis": Version("4.2.0"),
         "valkey": Version("6.0"),
     }
@@ -89,7 +90,7 @@ class RedisClusterStorage(RedisStorage):
         startup_nodes = [self.dependency.cluster.ClusterNode(*c) for c in cluster_hosts]
         merged_options = {
             **self.DEFAULT_OPTIONS,
-            **{"startup_nodes": startup_nodes},
+            "startup_nodes": startup_nodes,
             **parsed_auth,
             **options,
         }

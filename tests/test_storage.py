@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from typing import ClassVar
 
 import pytest
 import redis
@@ -34,7 +35,7 @@ class TestBaseStorage:
 
     def test_pluggable_storage_fixed_only(self):
         class MyStorage(Storage):
-            STORAGE_SCHEME = ["mystorage+fixed"]
+            STORAGE_SCHEME: ClassVar[list[str]] = ["mystorage+fixed"]
 
             @property
             def base_exceptions(self):
@@ -67,7 +68,7 @@ class TestBaseStorage:
 
     def test_pluggable_storage_moving_window(self):
         class MyStorage(Storage, MovingWindowSupport):
-            STORAGE_SCHEME = ["mystorage+moving"]
+            STORAGE_SCHEME: ClassVar[list[str]] = ["mystorage+moving"]
 
             @property
             def base_exceptions(self):
@@ -103,7 +104,7 @@ class TestBaseStorage:
 
     def test_pluggable_storage_sliding_window_counter(self):
         class MyStorage(Storage, SlidingWindowCounterSupport):
-            STORAGE_SCHEME = ["mystorage+sliding"]
+            STORAGE_SCHEME: ClassVar[list[str]] = ["mystorage+sliding"]
 
             @property
             def base_exceptions(self):
@@ -344,7 +345,7 @@ class TestConcreteStorages:
 @pytest.mark.parametrize("wrap_exceptions", (True, False))
 class TestStorageErrors:
     class MyStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
-        STORAGE_SCHEME = ["mystorage"]
+        STORAGE_SCHEME: ClassVar[list[str]] = ["mystorage"]
 
         class MyError(Exception):
             pass

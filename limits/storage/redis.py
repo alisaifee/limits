@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, cast
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
-from limits.typing import Literal, RedisClient
+from limits.typing import ClassVar, Literal, RedisClient
 
 from ..util import get_package_data
 from .base import MovingWindowSupport, SlidingWindowCounterSupport, Storage
@@ -30,7 +30,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     ``valkey://``)
     """
 
-    STORAGE_SCHEME = [
+    STORAGE_SCHEME: ClassVar[list[str]] = [
         "redis",
         "rediss",
         "redis+unix",
@@ -40,7 +40,10 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     ]
     """The storage scheme for redis"""
 
-    DEPENDENCIES = {"redis": Version("3.0"), "valkey": Version("6.0")}
+    DEPENDENCIES: ClassVar[dict[str, Version | None] | list[str]] = {
+        "redis": Version("3.0"),
+        "valkey": Version("6.0"),
+    }
 
     RES_DIR = "resources/redis/lua_scripts"
 

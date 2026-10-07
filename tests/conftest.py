@@ -17,7 +17,7 @@ import valkey
 def check_redis_cluster_ready(host, port):
     try:
         return redis.Redis(host, port).cluster("info")["cluster_state"] == "ok"
-    except Exception:
+    except (redis.exceptions.RedisError, OSError):
         return False
 
 
@@ -27,7 +27,7 @@ def check_redis_auth_cluster_ready(host, port):
             redis.Redis(host, port, password="sekret").cluster("info")["cluster_state"]
             == "ok"
         )
-    except Exception:
+    except (redis.exceptions.RedisError, OSError):
         return False
 
 
@@ -42,7 +42,7 @@ def check_redis_ssl_cluster_ready(host, port):
         return (
             redis.Redis.from_url(storage_url).cluster("info")["cluster_state"] == "ok"
         )
-    except Exception:
+    except (redis.exceptions.RedisError, OSError):
         return False
 
 
@@ -84,7 +84,7 @@ def host_ip_env():
     try:
         s.connect(("10.255.255.255", 1))
         ip = s.getsockname()[0]
-    except Exception:
+    except OSError:
         ip = "127.0.0.1"
     finally:
         s.close()

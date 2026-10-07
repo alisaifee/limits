@@ -11,6 +11,7 @@ from limits.typing import (
     Any,
     Awaitable,
     Callable,
+    ClassVar,
     P,
     R,
     cast,
@@ -40,19 +41,19 @@ class Storage(LazyDependency, metaclass=StorageRegistry):
     Base class to extend when implementing an async storage backend.
     """
 
-    STORAGE_SCHEME: list[str] | None
+    STORAGE_SCHEME: ClassVar[list[str] | None] = None
     """The storage schemes to register against this implementation"""
 
     def __init_subclass__(cls, **kwargs: Any) -> None:  # type:ignore[explicit-any]
         super().__init_subclass__(**kwargs)
-        for method in {
+        for method in (
             "incr",
             "get",
             "get_expiry",
             "check",
             "reset",
             "clear",
-        }:
+        ):
             setattr(cls, method, _wrap_errors(getattr(cls, method)))
         super().__init_subclass__(**kwargs)
 
@@ -130,10 +131,10 @@ class MovingWindowSupport(ABC):
     """
 
     def __init_subclass__(cls, **kwargs: Any) -> None:  # type: ignore[explicit-any]
-        for method in {
+        for method in (
             "acquire_entry",
             "get_moving_window",
-        }:
+        ):
             setattr(
                 cls,
                 method,
@@ -175,11 +176,11 @@ class SlidingWindowCounterSupport(ABC):
     """
 
     def __init_subclass__(cls, **kwargs: Any) -> None:  # type: ignore[explicit-any]
-        for method in {
+        for method in (
             "acquire_sliding_window_entry",
             "get_sliding_window",
             "clear_sliding_window",
-        }:
+        ):
             setattr(
                 cls,
                 method,

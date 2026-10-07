@@ -17,6 +17,7 @@ from limits.storage.base import (
 from limits.typing import (
     Any,
     Callable,
+    ClassVar,
     MemcachedClientP,
     P,
     R,
@@ -32,9 +33,9 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
     Depends on :pypi:`pymemcache`.
     """
 
-    STORAGE_SCHEME = ["memcached"]
+    STORAGE_SCHEME: ClassVar[list[str]] = ["memcached"]
     """The storage scheme for memcached"""
-    DEPENDENCIES = ["pymemcache"]
+    DEPENDENCIES: ClassVar[list[str]] = ["pymemcache"]
 
     def __init__(
         self,

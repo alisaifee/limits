@@ -87,7 +87,6 @@ class EmcacheBridge(MemcachedBridge):
         item = await storage.get(self._expiration_key(key).encode("utf-8"))
 
         return item and float(item.value) or time.time()
-        pass
 
     @property
     def base_exceptions(

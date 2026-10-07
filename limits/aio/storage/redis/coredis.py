@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING, cast
 
 from limits.aio.storage.redis.bridge import RedisBridge
 from limits.errors import ConfigurationError
-from limits.typing import AsyncCoRedisClient, Callable
+from limits.typing import AsyncCoRedisClient, Callable, ClassVar
 
 if TYPE_CHECKING:
     import coredis
 
 
 class CoredisBridge(RedisBridge):
-    DEFAULT_CLUSTER_OPTIONS: dict[str, float | str | bool] = {
+    DEFAULT_CLUSTER_OPTIONS: ClassVar[dict[str, float | str | bool]] = {
         "max_connections": 1000,
     }
     "Default options passed to :class:`coredis.RedisCluster`"
@@ -74,7 +74,7 @@ class CoredisBridge(RedisBridge):
         self.storage = self.dependency.RedisCluster(
             **{
                 **self.DEFAULT_CLUSTER_OPTIONS,
-                **{"startup_nodes": cluster_hosts},
+                "startup_nodes": cluster_hosts,
                 **self.parsed_auth,
                 **options,
             },

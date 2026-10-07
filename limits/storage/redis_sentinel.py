@@ -1,17 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from deprecated.sphinx import versionchanged
 from packaging.version import Version
 
 from limits._storage_scheme import parse_storage_uri
 from limits.errors import ConfigurationError
 from limits.storage.redis import RedisStorage
-from limits.typing import RedisClient
-
-if TYPE_CHECKING:
-    pass
+from limits.typing import ClassVar, RedisClient
 
 
 @versionchanged(
@@ -29,10 +24,10 @@ class RedisSentinelStorage(RedisStorage):
     ``valkey+sentinel://``)
     """
 
-    STORAGE_SCHEME = ["redis+sentinel", "valkey+sentinel"]
+    STORAGE_SCHEME: ClassVar[list[str]] = ["redis+sentinel", "valkey+sentinel"]
     """The storage scheme for redis accessed via a redis sentinel installation"""
 
-    DEPENDENCIES = {
+    DEPENDENCIES: ClassVar[dict[str, Version | None] | list[str]] = {
         "redis": Version("3.0"),
         "redis.sentinel": Version("3.0"),
         "valkey": Version("6.0"),

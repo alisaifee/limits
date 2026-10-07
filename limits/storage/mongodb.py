@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from deprecated.sphinx import versionadded, versionchanged
 
 from limits.typing import (
+    ClassVar,
     MongoClient,
     MongoCollection,
     MongoDatabase,
@@ -26,7 +27,7 @@ class MongoDBStorageBase(
     Depends on :pypi:`pymongo`.
     """
 
-    DEPENDENCIES = ["pymongo"]
+    DEPENDENCIES: ClassVar[list[str]] = ["pymongo"]
 
     def __init__(
         self,
@@ -125,7 +126,11 @@ class MongoDBStorageBase(
         """
         counter = self.counters.find_one({"_id": key})
         return (
-            (counter["expireAt"] if counter else datetime.datetime.now())
+            (
+                counter["expireAt"]
+                if counter
+                else datetime.datetime.now(datetime.timezone.utc)
+            )
             .replace(tzinfo=datetime.timezone.utc)
             .timestamp()
         )
@@ -484,7 +489,7 @@ class MongoDBStorageBase(
     reason="Added option to select custom collection names for windows & counters",
 )
 class MongoDBStorage(MongoDBStorageBase):
-    STORAGE_SCHEME = ["mongodb", "mongodb+srv"]
+    STORAGE_SCHEME: ClassVar[list[str]] = ["mongodb", "mongodb+srv"]
 
     def _init_mongo_client(
         self, uri: str | None, **options: int | str | bool

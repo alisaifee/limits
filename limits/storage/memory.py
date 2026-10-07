@@ -13,6 +13,7 @@ from limits.storage.base import (
     Storage,
     TimestampedSlidingWindow,
 )
+from limits.typing import ClassVar
 
 
 class Entry:
@@ -31,7 +32,7 @@ class MemoryStorage(
 
     """
 
-    STORAGE_SCHEME = ["memory"]
+    STORAGE_SCHEME: ClassVar[list[str]] = ["memory"]
 
     def __init__(self, uri: str | None = None, wrap_exceptions: bool = False, **_: str):
         self.storage: limits.typing.Counter[str] = Counter()

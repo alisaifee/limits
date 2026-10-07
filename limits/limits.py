@@ -1,5 +1,3 @@
-""" """
-
 from __future__ import annotations
 
 from functools import total_ordering
@@ -7,7 +5,7 @@ from functools import total_ordering
 from limits.typing import ClassVar, NamedTuple, cast
 
 
-def safe_string(value: bytes | str | int | float) -> str:
+def safe_string(value: bytes | str | float) -> str:
     """
     normalize a byte/str/int or float to a str
     """
@@ -23,14 +21,14 @@ class Granularity(NamedTuple):
     name: str
 
 
-TIME_TYPES = dict(
-    day=Granularity(60 * 60 * 24, "day"),
-    month=Granularity(60 * 60 * 24 * 30, "month"),
-    year=Granularity(60 * 60 * 24 * 30 * 12, "year"),
-    hour=Granularity(60 * 60, "hour"),
-    minute=Granularity(60, "minute"),
-    second=Granularity(1, "second"),
-)
+TIME_TYPES = {
+    "day": Granularity(60 * 60 * 24, "day"),
+    "month": Granularity(60 * 60 * 24 * 30, "month"),
+    "year": Granularity(60 * 60 * 24 * 30 * 12, "year"),
+    "hour": Granularity(60 * 60, "hour"),
+    "minute": Granularity(60, "minute"),
+    "second": Granularity(1, "second"),
+}
 
 GRANULARITIES: dict[str, type[RateLimitItem]] = {}
 
@@ -67,7 +65,7 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
     :param namespace: category for the specific rate limit
     """
 
-    __slots__ = ["namespace", "amount", "multiples"]
+    __slots__ = ["amount", "multiples", "namespace"]
 
     GRANULARITY: ClassVar[Granularity]
     """
@@ -103,7 +101,7 @@ class RateLimitItem(metaclass=RateLimitItemMeta):
 
         return self.GRANULARITY.seconds * self.multiples
 
-    def key_for(self, *identifiers: bytes | str | int | float) -> str:
+    def key_for(self, *identifiers: bytes | str | float) -> str:
         """
         Constructs a key for the current limit and any additional
         identifiers provided.

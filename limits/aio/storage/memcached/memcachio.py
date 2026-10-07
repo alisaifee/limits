@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Iterable
 from math import ceil
 from types import ModuleType
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 from .bridge import MemcachedBridge
 

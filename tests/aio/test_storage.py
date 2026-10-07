@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import time
+from typing import ClassVar
 
 import pytest
 from pytest_lazy_fixtures import lf
@@ -30,7 +32,7 @@ from tests.utils import async_fixed_start
 class TestBaseStorage:
     async def test_pluggable_storage_fixed_only(self):
         class MyStorage(Storage):
-            STORAGE_SCHEME = ["async+mystorage+fixed"]
+            STORAGE_SCHEME: ClassVar[list[str]] = ["async+mystorage+fixed"]
 
             @property
             def base_exceptions(self):
@@ -63,7 +65,7 @@ class TestBaseStorage:
 
     async def test_pluggable_storage_moving_window(self):
         class MyStorage(Storage):
-            STORAGE_SCHEME = ["async+mystorage+moving"]
+            STORAGE_SCHEME: ClassVar[list[str]] = ["async+mystorage+moving"]
 
             @property
             def base_exceptions(self):
@@ -99,7 +101,7 @@ class TestBaseStorage:
 
     async def test_pluggable_storage_sliding_window_counter(self):
         class MyStorage(Storage, SlidingWindowCounterSupport):
-            STORAGE_SCHEME = ["async+mystorage+sliding"]
+            STORAGE_SCHEME: ClassVar[list[str]] = ["async+mystorage+sliding"]
 
             @property
             def base_exceptions(self):
@@ -254,7 +256,7 @@ class TestConcreteStorages:
         storage = storage_from_string(uri, **args)
         limit = RateLimitItemPerSecond(1)
         await storage.incr(limit.key_for(), limit.get_expiry())
-        time.sleep(1.1)
+        await asyncio.sleep(1.1)
         assert await storage.get(limit.key_for()) == 0
 
     @async_fixed_start
@@ -266,7 +268,7 @@ class TestConcreteStorages:
         assert await storage.acquire_entry(
             limit.key_for(), limit.amount, limit.get_expiry()
         )
-        time.sleep(1.1)
+        await asyncio.sleep(1.1)
         assert await storage.get(limit.key_for()) == 0
 
     @async_fixed_start
@@ -334,7 +336,7 @@ class TestConcreteStorages:
 @pytest.mark.parametrize("wrap_exceptions", (True, False))
 class TestStorageErrors:
     class MyStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
-        STORAGE_SCHEME = ["mystorage"]
+        STORAGE_SCHEME: ClassVar[list[str]] = ["mystorage"]
 
         class MyError(Exception):
             pass

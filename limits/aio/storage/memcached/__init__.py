@@ -12,7 +12,7 @@ from limits.aio.storage.memcached.bridge import MemcachedBridge
 from limits.aio.storage.memcached.emcache import EmcacheBridge
 from limits.aio.storage.memcached.memcachio import MemcachioBridge
 from limits.storage.base import TimestampedSlidingWindow
-from limits.typing import Literal
+from limits.typing import ClassVar, Literal
 
 
 @versionadded(version="2.1")
@@ -27,10 +27,10 @@ class MemcachedStorage(Storage, SlidingWindowCounterSupport, TimestampedSlidingW
     Depends on :pypi:`memcachio`
     """
 
-    STORAGE_SCHEME = ["async+memcached"]
+    STORAGE_SCHEME: ClassVar[list[str]] = ["async+memcached"]
     """The storage scheme for memcached to be used in an async context"""
 
-    DEPENDENCIES = {
+    DEPENDENCIES: ClassVar[dict[str, Version | None] | list[str]] = {
         "memcachio": Version("0.3"),
         "emcache": Version("0.0"),
     }

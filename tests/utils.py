@@ -52,7 +52,7 @@ def async_fixed_start(fn):
         start = time.time()
 
         while time.time() < math.ceil(start):
-            time.sleep(0.01)
+            await asyncio.sleep(0.01)
 
         return await fn(*a, **k)
 

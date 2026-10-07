@@ -136,7 +136,7 @@ class TestAsyncConcurrency:
             # Avoid testing the behaviour when the window is about to be reset
             ttl = timestamp_based_key_ttl(limit)
             if ttl < 1:
-                time.sleep(ttl)
+                await asyncio.sleep(ttl)
 
         key = uuid4().hex
         hits = []

@@ -12,6 +12,7 @@ from limits.aio.storage.base import (
     Storage,
 )
 from limits.typing import (
+    ClassVar,
     ParamSpec,
     TypeVar,
     cast,
@@ -34,12 +35,12 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     Depends on :pypi:`motor`
     """
 
-    STORAGE_SCHEME = ["async+mongodb", "async+mongodb+srv"]
+    STORAGE_SCHEME: ClassVar[list[str]] = ["async+mongodb", "async+mongodb+srv"]
     """
     The storage scheme for MongoDB for use in an async context
     """
 
-    DEPENDENCIES = ["motor.motor_asyncio", "pymongo"]
+    DEPENDENCIES: ClassVar[list[str]] = ["motor.motor_asyncio", "pymongo"]
 
     def __init__(
         self,
@@ -150,7 +151,11 @@ class MongoDBStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
             {"_id": key}
         )
         return (
-            (counter["expireAt"] if counter else datetime.datetime.now())
+            (
+                counter["expireAt"]
+                if counter
+                else datetime.datetime.now(datetime.timezone.utc)
+            )
             .replace(tzinfo=datetime.timezone.utc)
             .timestamp()
         )

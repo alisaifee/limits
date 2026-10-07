@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import time
 from math import ceil
 
@@ -36,7 +37,7 @@ class TestAsyncFixedWindow:
         limiter = FixedWindowRateLimiter(storage)
         limit = RateLimitItemPerSecond(10, 2)
         async with async_window(1) as (start, _):
-            assert all([await limiter.hit(limit) for _ in range(0, 10)])
+            assert all([await limiter.hit(limit) for _ in range(10)])
         assert not await limiter.hit(limit)
         assert (await limiter.get_window_stats(limit)).remaining == 0
         assert (await limiter.get_window_stats(limit)).reset_time == pytest.approx(
@@ -85,9 +86,9 @@ class TestAsyncMovingWindow:
         limiter = MovingWindowRateLimiter(storage)
         limit = RateLimitItemPerMinute(2)
         assert await limiter.hit(limit, "key")
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert await limiter.hit(limit, "key")
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert not await limiter.hit(limit, "key")
         assert (await limiter.get_window_stats(limit, "key")).remaining == 0
         assert (
@@ -183,9 +184,9 @@ class TestAsyncSlidingWindow:
             # Avoid testing the behaviour when the window is about to be reset
             ttl = timestamp_based_key_ttl(limit)
             if ttl < 1:
-                time.sleep(ttl)
+                await asyncio.sleep(ttl)
         async with async_window(1) as (start, _):
-            assert all([await limiter.hit(limit) for _ in range(0, 10)])
+            assert all([await limiter.hit(limit) for _ in range(10)])
         assert not await limiter.hit(limit)
         assert (await limiter.get_window_stats(limit)).remaining == 0
         assert (await limiter.get_window_stats(limit)).reset_time == pytest.approx(
@@ -206,11 +207,11 @@ class TestAsyncSlidingWindow:
             # Avoid testing the behaviour when the window is about to be reset
             ttl = timestamp_based_key_ttl(limit)
             if ttl < 0.5:
-                time.sleep(ttl)
+                await asyncio.sleep(ttl)
         assert await limiter.hit(limit, cost=multiple)
         assert not await limiter.hit(limit)
         assert (await limiter.get_window_stats(limit)).remaining == 0
-        time.sleep(period * 2)
+        await asyncio.sleep(period * 2)
         assert (await limiter.get_window_stats(limit)).remaining == multiple
         assert (await limiter.get_window_stats(limit)).reset_time == pytest.approx(
             time.time(), abs=1e-2
@@ -225,7 +226,7 @@ class TestAsyncSlidingWindow:
             # Avoid testing the behaviour when the window is about to be reset
             ttl = timestamp_based_key_ttl(limit)
             if ttl < 0.5:
-                time.sleep(ttl)
+                await asyncio.sleep(ttl)
         assert await limiter.hit(limit)
         now = time.time()
         if isinstance(storage, TimestampedSlidingWindow):
@@ -250,7 +251,7 @@ class TestAsyncSlidingWindow:
             # Avoid testing the behaviour when the window is about to be reset
             ttl = timestamp_based_key_ttl(limit)
             if ttl < 0.3:
-                time.sleep(ttl + sleep_margin)
+                await asyncio.sleep(ttl + sleep_margin)
         t0 = time.time()
         previous_window_hits = 3
         await limiter.hit(limit)
@@ -267,7 +268,7 @@ class TestAsyncSlidingWindow:
         assert (await limiter.get_window_stats(limit)).remaining == 2
         # Wait for the next window
         sleep_time = expected_reset_time - time.time() + sleep_margin
-        time.sleep(sleep_time)
+        await asyncio.sleep(sleep_time)
         # A new hit should be available immediately after window shift
         # The limiter should reset in a fraction of a period, according to how many hits are in the previous window
         reset_time = (await limiter.get_window_stats(limit)).reset_time
@@ -293,7 +294,7 @@ class TestAsyncSlidingWindow:
                 limit.get_expiry() / previous_window_hits - (t1 - t0), abs=0.03
             )
             # Wait for the next hit available
-            time.sleep(reset_in + sleep_margin)
+            await asyncio.sleep(reset_in + sleep_margin)
 
     @async_fixed_start
     async def test_sliding_window_counter_empty_stats(self, uri, args, fixture):
@@ -314,9 +315,9 @@ class TestAsyncSlidingWindow:
         if isinstance(storage, TimestampedSlidingWindow):
             next_second_from_now = ceil(time.time())
         assert await limiter.hit(limit, "key")
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert await limiter.hit(limit, "key")
-        time.sleep(1)
+        await asyncio.sleep(1)
         assert not await limiter.hit(limit, "key")
         assert (await limiter.get_window_stats(limit, "key")).remaining == 0
         if isinstance(storage, TimestampedSlidingWindow):
@@ -343,7 +344,7 @@ class TestAsyncSlidingWindow:
             # Avoid testing the behaviour when the window is about to be reset
             ttl = timestamp_based_key_ttl(limit)
             if ttl < 0.5:
-                time.sleep(ttl)
+                await asyncio.sleep(ttl)
         assert not await limiter.hit(limit, "k1", cost=11)
         assert await limiter.hit(limit, "k2", cost=5)
         assert (await limiter.get_window_stats(limit, "k2")).remaining == 5

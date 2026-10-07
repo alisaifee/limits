@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING, cast
 
 from limits.aio.storage.redis.bridge import RedisBridge
 from limits.errors import ConfigurationError
-from limits.typing import AsyncRedisClient, Callable
+from limits.typing import AsyncRedisClient, Callable, ClassVar
 
 if TYPE_CHECKING:
     import redis.commands
 
 
 class RedispyBridge(RedisBridge):
-    DEFAULT_CLUSTER_OPTIONS: dict[str, float | str | bool] = {
+    DEFAULT_CLUSTER_OPTIONS: ClassVar[dict[str, float | str | bool]] = {
         "max_connections": 1000,
     }
     "Default options passed to :class:`redis.asyncio.RedisCluster`"
@@ -79,7 +79,7 @@ class RedispyBridge(RedisBridge):
         self.storage = self.dependency.asyncio.RedisCluster(
             **{
                 **self.DEFAULT_CLUSTER_OPTIONS,
-                **{"startup_nodes": cluster_hosts},
+                "startup_nodes": cluster_hosts,
                 **self.parsed_auth,
                 **options,
             },

@@ -17,7 +17,7 @@ class StorageRegistry(ABCMeta):
         cls = super().__new__(mcs, name, bases, dct)
 
         if storage_scheme:
-            if isinstance(storage_scheme, str):  # noqa
+            if isinstance(storage_scheme, str):
                 schemes = [storage_scheme]
             else:
                 schemes = storage_scheme

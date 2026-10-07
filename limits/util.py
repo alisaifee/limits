@@ -1,5 +1,3 @@
-""" """
-
 from __future__ import annotations
 
 import dataclasses
@@ -12,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from packaging.version import Version
 
-from limits.typing import NamedTuple
+from limits.typing import ClassVar, NamedTuple
 
 from .errors import ConfigurationError
 from .limits import GRANULARITIES, RateLimitItem
@@ -98,7 +96,7 @@ class LazyDependency:
     without having to import them explicitly.
     """
 
-    DEPENDENCIES: dict[str, Version | None] | list[str] = []
+    DEPENDENCIES: ClassVar[dict[str, Version | None] | list[str]] = []
     """
     The python modules this class has a dependency on.
     Used to lazily populate the :attr:`dependencies`
@@ -193,7 +191,7 @@ def parse(limit_string: str) -> RateLimitItem:
 
     """
 
-    return list(parse_many(limit_string))[0]
+    return next(iter(parse_many(limit_string)))
 
 
 def granularity_from_string(granularity_string: str) -> type[RateLimitItem]:

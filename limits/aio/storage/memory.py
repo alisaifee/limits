@@ -15,6 +15,7 @@ from limits.aio.storage.base import (
     Storage,
 )
 from limits.storage.base import TimestampedSlidingWindow
+from limits.typing import ClassVar
 
 
 class Entry:
@@ -33,7 +34,7 @@ class MemoryStorage(
     and a simple list to implement moving window strategy.
     """
 
-    STORAGE_SCHEME = ["async+memory"]
+    STORAGE_SCHEME: ClassVar[list[str]] = ["async+memory"]
     """
     The storage scheme for in process memory storage for use in an
     async context
@@ -283,5 +284,5 @@ class MemoryStorage(
         try:
             if self.timer and not self.timer.done():
                 self.timer.cancel()
-        except RuntimeError:  # noqa
+        except RuntimeError:
             pass

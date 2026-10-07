@@ -1,4 +1,3 @@
-#
 from __future__ import annotations
 
 import os
@@ -8,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.abspath("../../"))
 sys.path.insert(0, os.path.abspath("./"))
 
-from theme_config import *  # noqa
+from theme_config import *
 
 import limits
 
@@ -61,9 +60,7 @@ html_title = f"{project} <small><b style='color: var(--color-brand-primary)'>{{{
 try:
     ahead = int(ahead)
     if ahead > 0:
-        html_theme_options[  # noqa
-            "announcement"
-        ] = f"""
+        html_theme_options["announcement"] = f"""
         This is a development version. The documentation for the latest version: <b>{release}</b> can be found <a href="/en/stable">here</a>
         """
         html_title = f"{project} <small><b style='color: var(--color-brand-primary)'>{{dev}}</b></small>"

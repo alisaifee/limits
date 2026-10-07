@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
 from packaging.version import Version
 
@@ -9,7 +11,7 @@ from limits.util import LazyDependency
 
 def test_lazy_dependency_found():
     class Demo(LazyDependency):
-        DEPENDENCIES = ["redis"]
+        DEPENDENCIES: ClassVar[list[str]] = ["redis"]
 
     d = Demo()
     assert d.dependencies["redis"].version_found
@@ -17,7 +19,7 @@ def test_lazy_dependency_found():
 
 def test_lazy_dependency_version_low():
     class Demo(LazyDependency):
-        DEPENDENCIES = {
+        DEPENDENCIES: ClassVar[dict[str, Version]] = {
             "redis": Version("999.999"),
             "maythisneverexist": Version("1.0"),
         }

@@ -10,7 +10,7 @@ from limits.aio.storage.redis.bridge import RedisBridge
 from limits.aio.storage.redis.coredis import CoredisBridge
 from limits.aio.storage.redis.redispy import RedispyBridge
 from limits.aio.storage.redis.valkey import ValkeyBridge
-from limits.typing import Literal
+from limits.typing import ClassVar, Literal
 
 
 @versionadded(version="2.1")
@@ -36,7 +36,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     Depends on :pypi:`coredis` or :pypi:`redis`
     """
 
-    STORAGE_SCHEME = [
+    STORAGE_SCHEME: ClassVar[list[str]] = [
         "async+redis",
         "async+rediss",
         "async+redis+unix",
@@ -47,7 +47,7 @@ class RedisStorage(Storage, MovingWindowSupport, SlidingWindowCounterSupport):
     """
     The storage schemes for redis to be used in an async context
     """
-    DEPENDENCIES = {
+    DEPENDENCIES: ClassVar[dict[str, Version | None] | list[str]] = {
         "redis": Version("5.2.0"),
         "coredis": Version("3.4.0"),
         "valkey": Version("6.0"),
@@ -273,7 +273,10 @@ class RedisClusterStorage(RedisStorage):
     Depends on :pypi:`coredis` or :pypi:`redis`
     """
 
-    STORAGE_SCHEME = ["async+redis+cluster", "async+valkey+cluster"]
+    STORAGE_SCHEME: ClassVar[list[str]] = [
+        "async+redis+cluster",
+        "async+valkey+cluster",
+    ]
     """
     The storage schemes for redis cluster to be used in an async context
     """
@@ -354,7 +357,7 @@ class RedisSentinelStorage(RedisStorage):
     Depends on :pypi:`coredis` or :pypi:`redis`
     """
 
-    STORAGE_SCHEME = [
+    STORAGE_SCHEME: ClassVar[list[str]] = [
         "async+redis+sentinel",
         "async+valkey+sentinel",
     ]
@@ -362,7 +365,7 @@ class RedisSentinelStorage(RedisStorage):
 
     MODE = "SENTINEL"
 
-    DEPENDENCIES = {
+    DEPENDENCIES: ClassVar[dict[str, Version | None] | list[str]] = {
         "redis": Version("5.2.0"),
         "coredis": Version("3.4.0"),
         "coredis.sentinel": Version("3.4.0"),
