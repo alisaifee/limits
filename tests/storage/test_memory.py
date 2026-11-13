@@ -23,7 +23,7 @@ class TestMovingWindowExpiry:
             with patch("limits.storage.memory.time.time", return_value=1000):
                 storage = MemoryStorage()
                 assert storage.acquire_entry("expired", 1, 60)
-                assert storage.acquire_entry("live", 120)
+                assert storage.acquire_entry("live", 1, 120)
             with patch("limits.storage.memory.time.time", return_value=1061):
                 storage._MemoryStorage__expire_events()
                 # Repeated cleanup is a no-op for already removed keys.
