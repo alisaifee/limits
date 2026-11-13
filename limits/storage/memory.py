@@ -67,6 +67,7 @@ class MemoryStorage(
                     )
                     self.events[key] = self.events[key][:oldest]
                 if not self.events.get(key, None):
+                    self.events.pop(key, None)
                     self.locks.pop(key, None)
         for key in list(self.expirations.keys()):
             if self.expirations[key] <= time.time():
