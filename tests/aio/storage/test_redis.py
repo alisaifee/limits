@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from limits.errors import ConfigurationError
 from limits.storage import storage_from_string
 from tests.utils import ALL_STORAGES_ASYNC
 
@@ -33,3 +34,43 @@ class TestRedisStorage:
 
         assert 1 == await storage.incr("test", 10)
         assert 0 < fixture.ttl("LIMITS:test") <= 10
+
+
+class TestRedisStorageUri:
+    @pytest.mark.parametrize(
+        "uri, args",
+        [
+            ("async+redis://otherhost", {}),
+            ("async+redis://otherhost", {"implementation": "redispy"}),
+            ("async+valkey://otherhost", {}),
+        ],
+    )
+    async def test_location_without_port(self, uri, args):
+        storage = storage_from_string(uri, **args)
+        connection_kwargs = storage.bridge.storage.connection_pool.connection_kwargs
+        assert not storage.bridge.uri_is_empty
+        assert connection_kwargs["host"] == "otherhost"
+
+    @pytest.mark.parametrize(
+        "uri",
+        [
+            "async+redis+cluster://localhost",
+            "async+redis+sentinel://localhost/service",
+            "async+valkey+cluster://localhost",
+        ],
+    )
+    async def test_cluster_sentinel_location_without_port(self, uri):
+        with pytest.raises(ConfigurationError, match="Missing host or port"):
+            storage_from_string(uri)
+
+    @pytest.mark.parametrize(
+        "uri, args",
+        [
+            ("async+redis://user:pass@otherhost", {}),
+            ("async+redis://otherhost", {"username": "user", "password": "pass"}),
+            ("async+valkey://user:pass@otherhost", {}),
+        ],
+    )
+    async def test_auth_without_port(self, uri, args):
+        storage = storage_from_string(uri, **args)
+        assert storage.bridge.parsed_auth == {"username": "user", "password": "pass"}
