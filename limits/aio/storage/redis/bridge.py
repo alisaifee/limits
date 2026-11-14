@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import functools
+import urllib.parse
 from abc import ABC, abstractmethod
 from types import ModuleType
 
-from limits._storage_scheme import parse_storage_uri
+from limits._storage_scheme import StorageURIOptions, parse_storage_uri
 from limits.util import get_package_data
 
 
@@ -29,14 +31,24 @@ class RedisBridge(ABC):
         **options: float | str | bool,
     ) -> None:
         self.uri = uri
-        self.options_from_uri = parse_storage_uri(self.uri)
+        self.parsed_uri = urllib.parse.urlparse(self.uri)
         self.dependency = dependency
         self.parsed_auth = {}
         self.key_prefix = key_prefix
-        if username := options.get("username", self.options_from_uri.username):
+        if username := options.get("username", self.parsed_uri.username):
             self.parsed_auth["username"] = username
-        if password := options.get("password", self.options_from_uri.password):
+        if password := options.get("password", self.parsed_uri.password):
             self.parsed_auth["password"] = password
+
+    @functools.cached_property
+    def options_from_uri(self) -> StorageURIOptions:
+        return parse_storage_uri(self.uri)
+
+    @property
+    def uri_is_empty(self) -> bool:
+        return not (
+            self.parsed_uri.netloc or self.parsed_uri.path or self.parsed_uri.query
+        )
 
     def prefixed_key(self, key: str) -> str:
         return f"{self.key_prefix}:{key}"

@@ -58,7 +58,7 @@ class CoredisBridge(RedisBridge):
                 connection_pool=connection_pool, **options
             )
         else:
-            if self.options_from_uri.empty:
+            if self.uri_is_empty:
                 self.storage = self.dependency.Redis(**options)
             else:
                 self.storage = self.dependency.Redis.from_url(self.uri, **options)
